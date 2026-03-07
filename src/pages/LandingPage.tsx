@@ -1,0 +1,103 @@
+import { useNavigate } from 'react-router-dom';
+import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
+import { KineticSpark } from '../components/KineticSpark';
+
+function TiltCard({ children, onClick, className }: { children: React.ReactNode, onClick: () => void, className: string }) {
+    const x = useMotionValue(0);
+    const y = useMotionValue(0);
+
+    const mouseXSpring = useSpring(x);
+    const mouseYSpring = useSpring(y);
+
+    const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["10deg", "-10deg"]);
+    const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-10deg", "10deg"]);
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const width = rect.width;
+        const height = rect.height;
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        const xPct = mouseX / width - 0.5;
+        const yPct = mouseY / height - 0.5;
+
+        x.set(xPct);
+        y.set(yPct);
+    };
+
+    const handleMouseLeave = () => {
+        x.set(0);
+        y.set(0);
+    };
+
+    return (
+        <motion.div
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            onClick={onClick}
+            style={{
+                rotateY,
+                rotateX,
+                transformStyle: "preserve-3d",
+            }}
+            className={className}
+        >
+            <div className="card-inner-content">
+                {children}
+            </div>
+        </motion.div>
+    );
+}
+
+export function LandingPage() {
+    const navigate = useNavigate();
+
+    return (
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-seljuk-pattern">
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                className="w-full max-w-4xl"
+            >
+                {/* Brand Logo with Kinetic Spark Animation */}
+                <KineticSpark showTagline delay={0.5} className="mb-16" />
+
+                {/* Role Selection Buttons with 3D Tilt */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-2xl mx-auto">
+
+                    <TiltCard
+                        onClick={() => navigate('/host/setup')}
+                        className="group relative overflow-hidden p-8 rounded-3xl transition-all glass-panel-alaz hover:border-alaz-orange/50 cursor-pointer"
+                    >
+                        <div className="relative z-10 text-left">
+                            <span className="text-alaz-orange text-xs uppercase tracking-widest font-black block mb-2 opacity-70 group-hover:opacity-100 transition-opacity">Yayıncı / Kurucu</span>
+                            <h2 className="text-3xl font-black text-white mb-2 italic tracking-tight uppercase">Oda Kur</h2>
+                            <p className="text-gray-400 text-sm leading-relaxed">TV ekranında ateş yak, arkadaşlarını davet et!</p>
+                        </div>
+                        <div className="absolute -inset-full bg-gradient-to-br from-alaz-orange/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-2xl" />
+                    </TiltCard>
+
+                    <TiltCard
+                        onClick={() => navigate('/join')}
+                        className="group relative overflow-hidden p-8 rounded-3xl transition-all glass-panel-neon-blue hover:border-neon-blue/50 cursor-pointer"
+                    >
+                        <div className="relative z-10 text-left">
+                            <span className="text-neon-blue text-xs uppercase tracking-widest font-black block mb-2 opacity-70 group-hover:opacity-100 transition-opacity">Oyuncu / Misafir</span>
+                            <h2 className="text-3xl font-black text-white mb-2 italic tracking-tight uppercase">Katıl</h2>
+                            <p className="text-gray-400 text-sm leading-relaxed">Telefonunla oyuna gir, zihninin ateşini göster!</p>
+                        </div>
+                        <div className="absolute -inset-full bg-gradient-to-br from-neon-blue/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-2xl" />
+                    </TiltCard>
+
+                </div>
+
+                <div className="mt-20">
+                    <p className="text-gray-500 text-sm uppercase tracking-widest font-medium">Ready for the ultimate mythical challenge?</p>
+                </div>
+
+            </motion.div>
+        </div>
+    );
+}
