@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { NeonIcon } from '../../components/NeonIcon';
 import { KineticSpark } from '../../components/KineticSpark';
 import { CATEGORY_PRESETS } from '../../lib/categoryPresets';
@@ -23,6 +23,12 @@ export function HostSetup() {
     const [totalRounds, setTotalRounds] = useState('3');
     const [isCreating, setIsCreating] = useState(false);
     const [activePreset, setActivePreset] = useState<string | null>(null);
+    const [showIntro, setShowIntro] = useState(true);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setShowIntro(false), 4000);
+        return () => clearTimeout(timer);
+    }, []);
 
     const applyPreset = (name: string) => {
         setCategories(CATEGORY_PRESETS[name].join(', '));
@@ -71,16 +77,43 @@ export function HostSetup() {
     };
 
     return (
-        <div className="flex-1 p-10 max-w-5xl mx-auto w-full bg-seljuk-pattern">
-            <header className="mb-12 pointer-events-none">
-                <KineticSpark
-                    fontSizeAlaz="text-6xl"
-                    fontSizeNeon="text-5xl"
-                    sparkRadius={3}
-                    className="max-w-md"
-                    delay={0.3}
-                />
-            </header>
+        <div className="flex-1 p-10 max-w-5xl mx-auto w-full bg-seljuk-pattern min-h-screen relative overflow-hidden">
+            <AnimatePresence mode="wait">
+                {showIntro ? (
+                    <motion.div
+                        key="intro"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0, scale: 1.2, filter: 'blur(40px)' }}
+                        transition={{ duration: 1.5, ease: "circIn" }}
+                        className="bg-black fixed inset-0 z-[100] flex items-center justify-center overflow-hidden noise-suppression"
+                    >
+                        <div className="relative w-full max-w-7xl flex flex-col items-center justify-center">
+                            <KineticSpark delay={0.5} showTagline tagline="Kadim Ateş • Modern Ruh" />
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: [0, 0.1, 0.05, 0.15] }}
+                                transition={{ delay: 2, duration: 4, repeat: Infinity, repeatType: "mirror" }}
+                                className="absolute inset-0 bg-alaz-orange/10 blur-[150px] -z-10 rounded-full"
+                            />
+                        </div>
+                    </motion.div>
+                ) : (
+                    <motion.div
+                        key="content"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 1 }}
+                        className="w-full h-full"
+                    >
+                        <header className="mb-12 pointer-events-none opacity-80 scale-75 origin-left">
+                            <KineticSpark
+                                fontSizeAlaz="text-6xl"
+                                fontSizeNeon="text-5xl"
+                                className="max-w-md"
+                                delay={0.1}
+                            />
+                        </header>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 auto-rows-[minmax(220px,auto)]">
 
@@ -247,8 +280,10 @@ export function HostSetup() {
                         </div>
                     </div>
                 </div>
-
             </div>
-        </div>
-    );
+        </motion.div>
+    )}
+</AnimatePresence>
+</div>
+);
 }

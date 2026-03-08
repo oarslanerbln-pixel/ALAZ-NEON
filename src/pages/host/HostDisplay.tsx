@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { ParticleBackground } from '../../components/ParticleBackground';
 import { NeonIcon } from '../../components/NeonIcon';
@@ -24,7 +24,7 @@ type RoundResultInfo = {
     name: string;
     roundScore: number;
     totalScore: number;
-    answers: Record<string, { value: string; isUnique: boolean; points: number }>;
+    answers: Record<string, { value: string; isUnique: boolean; points: number; isValid: boolean }>;
     earlyBonus: boolean;
 };
 
@@ -118,10 +118,11 @@ export function HostDisplay() {
         setIsAnalyzing(true);
 
         await supabase.from('rooms').update({ status: 'review' }).eq('id', roomId);
-        // Brief artificial delay for "analysis" feel and ensuring DB consistency
+        // Brief artificial delay for "analysis" feel
         await new Promise(resolve => setTimeout(resolve, 2500));
 
         const letterToQuery = room.active_letter || currentLetter;
+        const normalizedLetter = letterToQuery.toLowerCase();
 
         const { data: roundAnswersArray } = await supabase
             .from('answers')
@@ -132,6 +133,7 @@ export function HostDisplay() {
 
         if (!roundAnswersArray || roundAnswersArray.length === 0) {
             console.log("Cevap bulunamadı. Sorgu harfi:", letterToQuery);
+            setIsAnalyzing(false);
             return;
         }
 
@@ -142,9 +144,14 @@ export function HostDisplay() {
         roundAnswersArray.forEach(answer => {
             const ansData = answer.data as Record<string, string>;
             (room.categories || []).forEach(cat => {
-                const val = ansData[cat]?.trim().toLowerCase();
+                const valRaw = ansData[cat] || '';
+                const val = valRaw.trim().toLowerCase();
                 if (val) {
-                    categoryCounts[cat][val] = (categoryCounts[cat][val] || 0) + 1;
+                    // Pre-filter: Must start with the correct letter
+                    // Turkish character handling could be added here if needed (e.g., i/İ)
+                    if (val.startsWith(normalizedLetter)) {
+                        categoryCounts[cat][val] = (categoryCounts[cat][val] || 0) + 1;
+                    }
                 }
             });
         });
@@ -165,7 +172,7 @@ export function HostDisplay() {
         for (const answer of roundAnswersArray) {
             const ansData = answer.data as Record<string, string>;
             let roundScore = 0;
-            const answersBreakdown: Record<string, { value: string; isUnique: boolean; points: number }> = {};
+            const answersBreakdown: Record<string, { value: string; isUnique: boolean; points: number; isValid: boolean }> = {};
 
             const playerInfo = currentPlayers.find(p => p.id === answer.player_id);
             if (!playerInfo) continue;
@@ -175,18 +182,26 @@ export function HostDisplay() {
                 const val = valRaw.trim().toLowerCase();
                 let isUnique = false;
                 let pts = 0;
+                let isValid = false;
 
                 if (val) {
-                    if (categoryCounts[cat][val] === 1) {
-                        isUnique = true;
-                        pts = 20;
+                    // Check first letter
+                    if (val.startsWith(normalizedLetter)) {
+                        isValid = true;
+                        if (categoryCounts[cat][val] === 1) {
+                            isUnique = true;
+                            pts = 20;
+                        } else {
+                            pts = 10;
+                        }
                     } else {
-                        pts = 10;
+                        isValid = false;
+                        pts = 0;
                     }
                 }
 
                 roundScore += pts;
-                answersBreakdown[cat] = { value: valRaw, isUnique, points: pts };
+                answersBreakdown[cat] = { value: valRaw, isUnique, points: pts, isValid };
             });
 
             const gotEarlyBonus = answer.player_id === earliestPlayerId;
@@ -201,7 +216,7 @@ export function HostDisplay() {
                 earlyBonus: gotEarlyBonus
             });
 
-            // Calculate Badge Stats increment for this player
+            // Update local statistics increments
             const currentStats = playerStats[playerInfo.id] || { uniqueCount: 0, earlyCount: 0, blankCount: 0 };
             const newStats = { ...currentStats };
             if (gotEarlyBonus) newStats.earlyCount++;
@@ -210,7 +225,7 @@ export function HostDisplay() {
                 const ans = answersBreakdown[cat];
                 if (!ans.value) {
                     newStats.blankCount++;
-                } else if (ans.isUnique) {
+                } else if (ans.isUnique && ans.isValid) {
                     newStats.uniqueCount++;
                 }
             });
@@ -219,15 +234,9 @@ export function HostDisplay() {
                 ...prev,
                 [playerInfo.id]: newStats
             }));
-
-            // Update player totally
-            await supabase.from('players').update({ total_score: playerInfo.total_score + roundScore }).eq('id', playerInfo.id);
         }
 
         setRoundResults(newRoundResults.sort((a, b) => b.totalScore - a.totalScore));
-        const { data: updatedPlayers } = await supabase.from('players').select('id, name, total_score').eq('room_id', roomId);
-        if (updatedPlayers) setPlayers(updatedPlayers);
-
         setIsAnalyzing(false);
     };
 
@@ -277,8 +286,54 @@ export function HostDisplay() {
         setGameState('playing');
     };
 
+    const toggleAnswerValidity = (playerId: string, category: string) => {
+        setRoundResults(prev => prev.map(res => {
+            if (res.playerId !== playerId) return res;
+
+            const targetAns = res.answers[category];
+            const wasValid = targetAns.isValid;
+            const newValid = !wasValid;
+            
+            // Recalculate uniqueness points if toggled to valid
+            // In a simple system, we just toggle 0 vs (10/20)
+            // But to be precise, we stick to the original assigned points if it was unique
+            const originalPoints = targetAns.points;
+            let newPoints = 0;
+
+            if (newValid) {
+                // Determine what the points SHOULD have been
+                // We'll simplify: if it was unique, 20, else 10.
+                // We already have isUnique stored.
+                newPoints = targetAns.isUnique ? 20 : 10;
+            }
+
+            const pointDiff = newPoints - (wasValid ? originalPoints : 0);
+
+            return {
+                ...res,
+                roundScore: res.roundScore + pointDiff,
+                totalScore: res.totalScore + pointDiff,
+                answers: {
+                    ...res.answers,
+                    [category]: { ...targetAns, isValid: newValid, points: newPoints }
+                }
+            };
+        }));
+    };
+
     const nextStep = async () => {
         if (!roomId || !room) return;
+
+        // --- BULK SYNC TO DATABASE ---
+        // Now that host finished reviewing, we commit the results to the players table
+        for (const res of roundResults) {
+            await supabase.from('players').update({ total_score: res.totalScore }).eq('id', res.playerId);
+        }
+
+        // Refresh player list from DB for visual consistency
+        const { data: updatedPlayers } = await supabase.from('players').select('id, name, total_score').eq('room_id', roomId);
+        if (updatedPlayers) setPlayers(updatedPlayers);
+
         if (room.current_round >= room.total_rounds) {
             // Game Finish
             await supabase.from('rooms').update({ status: 'finished' }).eq('id', roomId);
@@ -509,16 +564,45 @@ export function HostDisplay() {
                                                         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                                                             {roundResults.map(res => {
                                                                 const ans = res.answers[cat];
+                                                                const isRejected = !ans?.isValid;
                                                                 return (
-                                                                    <div key={res.playerId} className={`p-4 rounded-xl border ${ans?.points > 0 ? (ans.isUnique ? 'border-green-500/50 bg-green-500/10' : 'border-white/20 bg-white/10') : 'border-red-500/20 bg-red-500/5'} flex flex-col justify-between`}>
+                                                                    <motion.div 
+                                                                        key={res.playerId} 
+                                                                        whileHover={{ scale: 1.02 }}
+                                                                        whileTap={{ scale: 0.98 }}
+                                                                        onClick={() => toggleAnswerValidity(res.playerId, cat)}
+                                                                        className={`p-4 rounded-xl border cursor-pointer transition-all duration-300 relative overflow-hidden group/ans
+                                                                            ${!isRejected 
+                                                                                ? (ans.isUnique ? 'border-green-500/50 bg-green-500/10 shadow-[0_0_15px_rgba(34,197,94,0.1)]' : 'border-white/20 bg-white/10') 
+                                                                                : 'border-red-500/40 bg-red-500/10 grayscale-[0.5]'
+                                                                            }`}
+                                                                    >
+                                                                        {/* Reject Hover Overlay */}
+                                                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/ans:opacity-100 flex items-center justify-center transition-opacity z-10">
+                                                                            <span className="text-[10px] font-black tracking-widest text-white uppercase bg-red-600 px-3 py-1 rounded-full shadow-lg">
+                                                                                {isRejected ? 'ONAYLA' : 'REDDET'}
+                                                                            </span>
+                                                                        </div>
+
                                                                         <div className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1 truncate">{res.name}</div>
-                                                                        <div className="text-lg font-bold text-white mb-2 truncate">
-                                                                            {ans?.value || <span className="text-red-500/50 text-sm">BOŞ</span>}
+                                                                        <div className={`text-lg font-bold mb-2 truncate ${isRejected ? 'text-gray-500 line-through decoration-red-500/50' : 'text-white'}`}>
+                                                                            {ans?.value || <span className="text-red-500/50 text-sm italic">BOŞ</span>}
                                                                         </div>
-                                                                        <div className={`text-[10px] font-black uppercase ${ans?.points > 0 ? (ans.isUnique ? 'text-green-400' : 'text-white') : 'text-red-400'}`}>
-                                                                            {ans?.points > 0 ? `+${ans.points} Puan ${ans.isUnique ? '(Benzersiz)' : ''}` : '+0 Puan'}
+                                                                        <div className={`text-[10px] font-black uppercase flex items-center gap-1.5 ${!isRejected ? (ans.isUnique ? 'text-green-400' : 'text-white') : 'text-red-400'}`}>
+                                                                            {!isRejected ? (
+                                                                                <>
+                                                                                    <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                                                                                    +{ans.points} Puan {ans.isUnique ? '(Benzersiz)' : ''}
+                                                                                </>
+                                                                            ) : (
+                                                                                <>
+                                                                                    <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                                                                    {ans?.value && ans.value.toLowerCase().startsWith((room?.active_letter || currentLetter).toLowerCase()) 
+                                                                                        ? 'HOST REDDETTİ' : 'GEÇERSİZ HARF'}
+                                                                                </>
+                                                                            )}
                                                                         </div>
-                                                                    </div>
+                                                                    </motion.div>
                                                                 );
                                                             })}
                                                         </div>

@@ -1,5 +1,6 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
+import { motion, useMotionValue, useTransform, useSpring, AnimatePresence } from 'framer-motion';
 import { KineticSpark } from '../components/KineticSpark';
 
 function TiltCard({ children, onClick, className }: { children: React.ReactNode, onClick: () => void, className: string }) {
@@ -52,17 +53,47 @@ function TiltCard({ children, onClick, className }: { children: React.ReactNode,
 
 export function LandingPage() {
     const navigate = useNavigate();
+    const [showIntro, setShowIntro] = useState(true);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setShowIntro(false), 4000);
+        return () => clearTimeout(timer);
+    }, []);
 
     return (
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-seljuk-pattern">
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                className="w-full max-w-4xl"
-            >
-                {/* Brand Logo with Kinetic Spark Animation */}
-                <KineticSpark showTagline delay={0.5} className="mb-16" />
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-seljuk-pattern min-h-screen relative overflow-hidden">
+            <AnimatePresence mode="wait">
+                {showIntro ? (
+                    <motion.div
+                        key="intro"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0, scale: 1.2, filter: 'blur(40px)' }}
+                        transition={{ duration: 1.5, ease: "circIn" }}
+                        className="bg-black fixed inset-0 z-[100] flex items-center justify-center overflow-hidden noise-suppression"
+                    >
+                        <div className="relative w-full max-w-7xl flex flex-col items-center justify-center">
+                            <KineticSpark delay={0.5} showTagline tagline="Kadim Ateş • Modern Ruh" />
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: [0, 0.1, 0.05, 0.15] }}
+                                transition={{ delay: 2, duration: 4, repeat: Infinity, repeatType: "mirror" }}
+                                className="absolute inset-0 bg-alaz-orange/10 blur-[150px] -z-10 rounded-full"
+                            />
+                        </div>
+                    </motion.div>
+                ) : (
+                    <motion.div
+                        key="content"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 1 }}
+                        className="w-full max-w-4xl"
+                    >
+                        {/* Brand Logo - Integrated into page */}
+                        <div className="mb-16 pointer-events-none opacity-80 scale-90">
+                            <KineticSpark showTagline delay={0.2} />
+                        </div>
 
                 {/* Role Selection Buttons with 3D Tilt */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-2xl mx-auto">
@@ -97,7 +128,9 @@ export function LandingPage() {
                     <p className="text-gray-500 text-sm uppercase tracking-widest font-medium">Ready for the ultimate mythical challenge?</p>
                 </div>
 
-            </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

@@ -18,6 +18,12 @@ export function PlayerGame() {
     const [currentRound, setCurrentRound] = useState(0);
     const [totalScore, setTotalScore] = useState(0);
     const [roundPoints, setRoundPoints] = useState<number | null>(null);
+    const [showIntro, setShowIntro] = useState(true);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setShowIntro(false), 4000);
+        return () => clearTimeout(timer);
+    }, []);
 
     const playerName = localStorage.getItem('cafe_game_playerName') || 'Oyuncu';
     const roomId = localStorage.getItem('cafe_game_roomId');
@@ -146,8 +152,36 @@ export function PlayerGame() {
     };
 
     return (
-        <div className="flex-1 flex flex-col p-4 min-h-[100dvh] relative z-10 bg-seljuk-pattern">
-            <header className="flex justify-between items-center py-4 px-6 glass-panel-alaz border-white/10 mb-6 mt-2">
+        <div className="flex-1 flex flex-col p-4 min-h-[100dvh] relative z-10 bg-seljuk-pattern overflow-hidden">
+            <AnimatePresence mode="wait">
+                {showIntro ? (
+                    <motion.div
+                        key="intro"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0, scale: 1.2, filter: 'blur(40px)' }}
+                        transition={{ duration: 1.5, ease: "circIn" }}
+                        className="bg-black fixed inset-0 z-[100] flex items-center justify-center overflow-hidden noise-suppression"
+                    >
+                        <div className="relative w-full max-w-7xl flex flex-col items-center justify-center">
+                            <KineticSpark delay={0.5} showTagline tagline="Kadim Ateş • Modern Ruh" />
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: [0, 0.1, 0.05, 0.15] }}
+                                transition={{ delay: 2, duration: 4, repeat: Infinity, repeatType: "mirror" }}
+                                className="absolute inset-0 bg-alaz-orange/10 blur-[150px] -z-10 rounded-full"
+                            />
+                        </div>
+                    </motion.div>
+                ) : (
+                    <motion.div
+                        key="content"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 1 }}
+                        className="flex-1 flex flex-col h-full"
+                    >
+                        <header className="flex justify-between items-center py-4 px-6 glass-panel-alaz border-white/10 mb-6 mt-2">
                 <div className="flex items-center gap-3">
                     <NeonIcon type="users" color="orange" className="w-6 h-6" />
                     <div className="font-black text-white tracking-tight uppercase text-glow-alaz">{playerName}</div>
@@ -193,13 +227,12 @@ export function PlayerGame() {
                 <AnimatePresence mode="wait">
                     {roomStatus === 'lobby' && (
                         <motion.div key="lobby" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, y: -20 }} className="flex-1 flex flex-col items-center justify-center text-center space-y-10">
-                            <div className="relative w-full max-w-xs mx-auto">
+                            <div className="relative w-full max-w-xs mx-auto opacity-80 scale-75">
                                 <KineticSpark
-                                    fontSizeAlaz="text-5xl"
-                                    fontSizeNeon="text-4xl"
-                                    sparkRadius={3}
-                                    delay={0.1}
-                                />
+                        fontSizeAlaz="text-[6rem] md:text-[5rem]"
+                        fontSizeNeon="text-[5rem] md:text-[4rem]"
+                        delay={0.1}
+                    />
                                 <div className="absolute inset-0 bg-alaz-orange/5 blur-3xl rounded-full -z-10 animate-pulse" />
                             </div>
                             <div className="space-y-4">
@@ -229,15 +262,35 @@ export function PlayerGame() {
                                             <NeonIcon type="lightbulb" color="orange" className="w-3 h-3 opacity-40" />
                                             <label className="text-[10px] text-alaz-orange font-black uppercase tracking-[0.2em]">{category}</label>
                                         </div>
-                                        <input
-                                            type="text"
-                                            value={answers[category] || ''}
-                                            onChange={(e) => handleInputChange(category, e.target.value)}
-                                            disabled={isLocked}
-                                            autoComplete="off"
-                                            className={`w-full bg-white/5 border rounded-2xl px-6 pt-10 pb-5 focus:outline-none transition-all text-white text-xl font-bold ${isLocked ? 'border-red-500/20 opacity-40 cursor-not-allowed' : 'border-white/10 focus:border-alaz-orange focus:shadow-[0_0_20px_rgba(255,77,0,0.1)]'}`}
-                                            placeholder="..."
-                                        />
+                                        {(() => {
+                                            const val = answers[category] || '';
+                                            const isWrongLetter = val.trim() !== '' && !val.trim().toLowerCase().startsWith(activeLetter.toLowerCase());
+                                            return (
+                                                <>
+                                                    <input
+                                                        type="text"
+                                                        value={val}
+                                                        onChange={(e) => handleInputChange(category, e.target.value)}
+                                                        disabled={isLocked}
+                                                        autoComplete="off"
+                                                        className={`w-full bg-white/5 border rounded-2xl px-6 pt-10 pb-5 focus:outline-none transition-all text-white text-xl font-bold 
+                                                            ${isLocked ? 'border-red-500/20 opacity-40 cursor-not-allowed' : 
+                                                              isWrongLetter ? 'border-red-500/50 bg-red-500/5 shadow-[0_0_15px_rgba(239,68,68,0.1)]' : 
+                                                              'border-white/10 focus:border-alaz-orange focus:shadow-[0_0_20px_rgba(255,77,0,0.1)]'}`}
+                                                        placeholder="..."
+                                                    />
+                                                    {isWrongLetter && !isLocked && (
+                                                        <motion.span 
+                                                            initial={{ opacity: 0, scale: 0.8 }}
+                                                            animate={{ opacity: 1, scale: 1 }}
+                                                            className="absolute right-4 bottom-2 text-[8px] font-black text-red-500 uppercase tracking-widest"
+                                                        >
+                                                            Yanlış Harf! "{activeLetter}" ile başlamalı
+                                                        </motion.span>
+                                                    )}
+                                                </>
+                                            );
+                                        })()}
                                     </motion.div>
                                 ))}
                             </div>
@@ -306,9 +359,11 @@ export function PlayerGame() {
                             )}
                         </motion.div>
                     )}
-
                 </AnimatePresence>
             </div>
-        </div>
-    );
+        </motion.div>
+    )}
+</AnimatePresence>
+</div>
+);
 }

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { KineticSpark } from '../../components/KineticSpark';
 
@@ -12,6 +12,12 @@ export function PlayerJoin() {
     const [nickname, setNickname] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
+    const [showIntro, setShowIntro] = useState(true);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setShowIntro(false), 4000);
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleJoin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -74,23 +80,44 @@ export function PlayerJoin() {
     };
 
     return (
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center min-h-[100dvh] bg-seljuk-pattern">
-            <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                className="w-full max-w-md"
-            >
-                {/* Brand Experience - ALAZ NEON */}
-                <header className="mb-10 pointer-events-none">
-                    <KineticSpark
-                        fontSizeAlaz="text-[8rem] md:text-[7rem]"
-                        fontSizeNeon="text-[7rem] md:text-[6rem]"
-                        sparkRadius={4}
-                        showTagline
-                        delay={0.2}
-                    />
-                </header>
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center min-h-[100dvh] bg-seljuk-pattern relative overflow-hidden">
+            <AnimatePresence mode="wait">
+                {showIntro ? (
+                    <motion.div
+                        key="intro"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0, scale: 1.2, filter: 'blur(40px)' }}
+                        transition={{ duration: 1.5, ease: "circIn" }}
+                        className="bg-black fixed inset-0 z-[100] flex items-center justify-center overflow-hidden noise-suppression"
+                    >
+                        <div className="relative w-full max-w-7xl flex flex-col items-center justify-center">
+                            <KineticSpark delay={0.5} showTagline tagline="Kadim Ateş • Modern Ruh" />
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: [0, 0.1, 0.05, 0.15] }}
+                                transition={{ delay: 2, duration: 4, repeat: Infinity, repeatType: "mirror" }}
+                                className="absolute inset-0 bg-alaz-orange/10 blur-[150px] -z-10 rounded-full"
+                            />
+                        </div>
+                    </motion.div>
+                ) : (
+                    <motion.div
+                        key="content"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                        className="w-full max-w-md"
+                    >
+                        {/* Brand Experience - ALAZ NEON (Mini version) */}
+                        <header className="mb-10 pointer-events-none opacity-80 scale-75">
+                            <KineticSpark
+                                fontSizeAlaz="text-[8rem] md:text-[7rem]"
+                                fontSizeNeon="text-[7rem] md:text-[6rem]"
+                                showTagline
+                                delay={0.2}
+                            />
+                        </header>
 
                 <form onSubmit={handleJoin} className="glass-panel-alaz p-8 md:p-10 space-y-8 relative overflow-hidden group">
                     {/* Background glow for the panel */}
@@ -153,7 +180,9 @@ export function PlayerJoin() {
                 <div className="mt-12 opacity-30">
                     <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em] font-black">Powered by ALAZ NEON OS</p>
                 </div>
-            </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
