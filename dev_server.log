@@ -6,10 +6,9 @@
 - Local:         http://localhost:3000
 - Network:       http://192.168.0.2:3000
 - Environments: .env
-✓ Ready in 542ms
+✓ Ready in 644ms
 
-○ Compiling / ...
- GET / 200 in 5.5s (next.js: 5.2s, application-code: 340ms)
+ GET /login 200 in 2.8s (next.js: 2.1s, application-code: 685ms)
 [browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
 
 - A server/client branch `if (typeof window !== 'undefined')`.
@@ -23,34 +22,60 @@ It can also happen if the client has a browser extension installed which messes 
 https://react.dev/link/hydration-mismatch
 
   ...
-    <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
-      <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
-        <LoadingBoundary name="/" loading={null}>
-          <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
-            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={{...}} forbidden={undefined} unauthorized={undefined} ...>
-              <RedirectBoundary>
-                <RedirectErrorBoundary router={{...}}>
-                  <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
-                    <SegmentViewNode type="page" pagePath="src/page.tsx">
-                      <SegmentTrieNode>
-                      <Home>
-                        <div className="space-y-8 ...">
+    <LoadingBoundary name="login/" loading={null}>
+      <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
+        <RedirectBoundary>
+          <RedirectErrorBoundary router={{...}}>
+            <InnerLayoutRouter url="/login" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+              <SegmentViewNode type="page" pagePath="src/login/...">
+                <SegmentTrieNode>
+                <ClientPageRoot Component={function LoginPage} serverProvidedParams={{...}}>
+                  <LoginPage params={Promise} searchParams={Promise}>
+                    <div className="flex flex-...">
+                      <div className="bg-gray-80...">
+                        <h2>
+                        <p>
+                        <form onSubmit={function handleSubmit} className="space-y-6">
                           <div>
-                          <UploadDocument>
-                            <div className="bg-gray-80...">
-                              <h2>
-                              <div className="flex flex-...">
-                                <button>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  capture="environment"
-                                  className="hidden"
-                                  ref={{current:null}}
-                                  onChange={function handleFileUpload}
--                                 style={{caret-color:"transparent"}}
-                                >
+                            <label>
+                            <div className="relative">
+                              <Mail>
+                              <input
+                                id="email"
+                                type="email"
+                                required={true}
+                                value=""
+                                onChange={function onChange}
+                                placeholder="ornek@email.com"
+                                className="w-full bg-gray-900 border-2 border-gray-600 rounded-xl py-4 pl-14 pr-4 text..."
+-                               style={{caret-color:"transparent"}}
+                              >
                           ...
-                    ...
-                  ...
-      ...
+              ...
+            ...
+
+prisma:warn In production, we recommend using `prisma generate --no-engine` (See: `prisma generate --help`)
+ POST /api/auth/login 200 in 2.2s (next.js: 1913ms, application-code: 246ms)
+Login Error: Error [PrismaClientKnownRequestError]:
+Invalid `prisma.user.findUnique()` invocation in
+/app/.next/dev/server/chunks/[root-of-the-server]__0rtw~3o._.js:94:38
+
+  91     });
+  92 }
+  93 // Kullanıcıyı bul veya oluştur
+→ 94 let user = await prisma.user.findUnique(
+Cannot fetch data from service:
+fetch failed
+    at <unknown> (src/app/api/auth/login/route.ts:17:34)
+    at async POST (src/app/api/auth/login/route.ts:17:16)
+  15 |
+  16 |     // Kullanıcıyı bul veya oluştur
+> 17 |     let user = await prisma.user.findUnique({ where: { email } });
+     |                                  ^
+  18 |     if (!user) {
+  19 |       user = await prisma.user.create({ data: { email } });
+  20 |     } {
+  code: 'P5010',
+  clientVersion: '5.22.0',
+  meta: { modelName: 'User' }
+}

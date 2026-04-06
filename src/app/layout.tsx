@@ -7,6 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "MediSade - Akıllı Sağlık Asistanı",
   description: "Tıbbi raporlarınızı kolayca anlayın ve ilaçlarınızı takip edin.",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
