@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  --color-gray-900: #121212;
+  --color-gray-800: #1e1e1e;
+  --color-gray-700: #333333;
+  --color-yellow-400: #facc15;
+}
+
+/* Yüksek Kontrast Ayarları */
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 18px; /* Erişilebilirlik için minimum font boyutu büyütüldü */
+}
+
+/* Scrollbar styling for better contrast */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #facc15;
+}

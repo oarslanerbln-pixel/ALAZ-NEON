@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  medications Medication[]
+}
+
+model Medication {
+  id        String   @id @default(cuid())
+  // Hassas veriler (AES-256 şifreli olarak saklanacak)
+  nameEncrypted      String
+  dosageEncrypted    String?
+  timeEncrypted      String?
+
+  isTaken   Boolean  @default(false)
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
