@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+:root {
+  /* High Contrast Mode Default (Yellow on Black) */
+  --background: #000000;
+  --foreground: #ffff00;
+
+  /* Accent colors with high contrast */
+  --accent-primary: #00ffff; /* Cyan */
+  --accent-secondary: #ff00ff; /* Magenta */
+  --accent-success: #00ff00; /* Bright Green for 'Alındı' buttons */
+
+  --error: #ff0000; /* Bright Red */
+}
+
+@layer base {
+  html {
+    font-size: 18px; /* Minimum 18px font size for elderly users */
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+    line-height: 1.6;
+  }
+}
+
+@layer utilities {
+  .btn-large {
+    @apply px-8 py-6 text-2xl font-bold border-4 rounded-xl shadow-lg hover:opacity-80 transition-opacity active:scale-95;
+  }
+
+  .btn-success {
+    @apply border-[var(--accent-success)] text-[var(--background)] bg-[var(--accent-success)];
+  }
+
+  .btn-outline {
+    @apply border-[var(--foreground)] text-[var(--foreground)] bg-transparent hover:bg-[var(--foreground)] hover:text-[var(--background)];
+  }
+}
