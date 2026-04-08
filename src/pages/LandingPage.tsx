@@ -32,17 +32,27 @@ function TiltCard({ children, onClick, className }: { children: React.ReactNode,
         y.set(0);
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick();
+        }
+    };
+
     return (
         <motion.div
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
             onClick={onClick}
+            onKeyDown={handleKeyDown}
+            role="button"
+            tabIndex={0}
             style={{
                 rotateY,
                 rotateX,
                 transformStyle: "preserve-3d",
             }}
-            className={className}
+            className={`${className} focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-alaz-orange/50`}
         >
             <div className="card-inner-content">
                 {children}
