@@ -1,3 +1,3 @@
-## 2026-04-07 - Custom Button Accessibility
-**Learning:** When using Framer Motion to create interactive `motion.div` elements that act as buttons (like `TiltCard`), they lack default keyboard accessibility. Adding `role="button"`, `tabIndex={0}`, `onKeyDown` handlers for 'Enter' and 'Space', and Tailwind `focus-visible` classes is essential for screen readers and keyboard navigation.
-**Action:** Ensure all custom interactive `div` or `motion.div` components meant to behave like buttons include proper ARIA roles, keyboard event handlers, and visible focus states.
+## 2024-04-09 - [MediSade Initial Setup]
+**Learning:** High Contrast Mode implementation defaults require overriding Next.js boilerplate styling to ensure all elements explicitly handle black/white contrasts. Form interactions must strictly use keyboard-accessible events (onKeyDown for Enter/Space) alongside standard onClick events for custom components like the upload dropzone and medication toggles.
+**Action:** Enforced `bg-black text-white` across main layout and component skeletons, and verified `tabIndex={0}`, `role="button"`, and keydown handlers in `MedicationDashboard` and `UploadDocument`.
