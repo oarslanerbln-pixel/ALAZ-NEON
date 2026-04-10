@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Since Prisma 7.7.0+ the 'url' is removed from the schema
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  medications Medication[]
+}
+
+model Medication {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  // Encrypted fields via AES-256 (as per memory directives)
+  nameEncrypted      String
+  dosageEncrypted    String
+  scheduleEncrypted  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
