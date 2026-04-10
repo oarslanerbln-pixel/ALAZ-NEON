@@ -135,8 +135,9 @@ export function HostSetup() {
                         <div className="space-y-6">
                             {/* Timer */}
                             <div>
-                                <label className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Süre / Tempo</label>
+                                <label htmlFor="timer-select" className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Süre / Tempo</label>
                                 <select
+                                    id="timer-select"
                                     value={timerValue}
                                     onChange={(e) => setTimerValue(e.target.value)}
                                     className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:border-alaz-orange focus:outline-none transition-all font-bold text-base"
@@ -156,6 +157,7 @@ export function HostSetup() {
                                         <button
                                             key={r}
                                             onClick={() => setTotalRounds(r)}
+                                            aria-pressed={totalRounds === r}
                                             className={`py-3 rounded-xl font-black text-sm transition-all border ${totalRounds === r
                                                 ? 'bg-alaz-orange text-black border-alaz-orange shadow-[0_0_20px_rgba(255,77,0,0.3)]'
                                                 : 'bg-white/5 border-white/10 text-gray-400 hover:border-alaz-orange/40 hover:text-white'
@@ -188,6 +190,7 @@ export function HostSetup() {
                                         <button
                                             key={name}
                                             onClick={() => applyPreset(name)}
+                                            aria-pressed={activePreset === name}
                                             className={`px-3 py-1.5 rounded-full text-[10px] font-black tracking-wide transition-all border ${activePreset === name
                                                 ? 'bg-alaz-orange/20 border-alaz-orange text-alaz-orange'
                                                 : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/30 hover:text-white'
@@ -201,8 +204,9 @@ export function HostSetup() {
 
                             {/* Categories textarea */}
                             <div className="flex flex-col flex-1">
-                                <label className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Kategoriler (Virgülle Ayır)</label>
+                                <label htmlFor="categories-textarea" className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Kategoriler (Virgülle Ayır)</label>
                                 <textarea
+                                    id="categories-textarea"
                                     rows={5}
                                     value={categories}
                                     onChange={(e) => { setCategories(e.target.value); setActivePreset(null); }}
