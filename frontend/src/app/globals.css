@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #000000;
+  --color-foreground: #ffffff;
+  --color-primary: #ffff00;
+  --color-primary-dark: #ccaa00;
+  --color-secondary: #00ffff;
+  --color-border: #ffffff;
+}
+
+@layer base {
+  html {
+    font-size: 16px; /* Enforces minimum font size 16px as per requirement */
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: Arial, Helvetica, sans-serif;
+    /* Enforce High Contrast Mode styling (white text on black background defaults) */
+  }
+}
+
+@layer utilities {
+  .focus-visible-ring {
+    @apply focus:outline-none focus-visible:ring-4 focus-visible:ring-(--color-primary) focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+}

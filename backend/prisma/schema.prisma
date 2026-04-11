@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  magicLinks  MagicLinkToken[]
+  medications EncryptedMedication[]
+}
+
+model MagicLinkToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  expiresAt DateTime
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model EncryptedMedication {
+  id            Int      @id @default(autoincrement())
+  encryptedData String // AES-256 encrypted string containing medication details
+  iv            String // Initialization Vector for encryption
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
