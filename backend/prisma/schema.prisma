@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  medications Medication[]
+}
+
+model Medication {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  name        String   // Encrypted before saving
+  dosage      String   // Encrypted before saving
+  frequency   String   // Encrypted before saving
+  timeOfDay   String   // Encrypted before saving (e.g., "morning", "evening")
+  isTaken     Boolean  @default(false)
+  lastTakenAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

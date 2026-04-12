@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --color-hc-bg: #000000;
+  --color-hc-text: #ffff00;
+  --color-hc-accent: #00ffff;
+  --color-hc-error: #ff0000;
+  --color-hc-success: #00ff00;
+  --color-hc-border: #ffffff;
+}
+
+/* High Contrast Mode Base (Default) */
+html,
+body {
+  background-color: var(--color-hc-bg);
+  color: var(--color-hc-text);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px; /* Enforced 16px min base font */
+  min-height: 100vh;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Base link styles */
+a {
+  color: var(--color-hc-accent);
+  text-decoration: underline;
+}
+
+a:focus, button:focus, input:focus {
+  outline: 3px solid var(--color-hc-accent);
+  outline-offset: 2px;
+}
+
+/* Utilities */
+@layer utilities {
+  .focus-visible-hc {
+    @apply focus-visible:outline-3 focus-visible:outline-[var(--color-hc-accent)] focus-visible:outline-offset-2;
+  }
+}
