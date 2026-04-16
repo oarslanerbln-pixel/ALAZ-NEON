@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Yüksek Kontrast (High Contrast) Modu - Yaşlılar için okumayı kolaylaştırır */
+:root {
+  --background: #000000;
+  --foreground: #ffffff;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-sans);
+  /* Minimum font boyutu: 16px */
+  font-size: 16px;
+}
+
+@layer utilities {
+  /* Odak (Focus) stilleri erişilebilirlik (A11Y) için kritik */
+  .focus-ring {
+    @apply focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black;
+  }
+}
