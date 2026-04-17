@@ -155,6 +155,7 @@ export function HostSetup() {
                                     {['3', '5', '7', '10'].map(r => (
                                         <button
                                             key={r}
+                                            aria-pressed={totalRounds === r}
                                             onClick={() => setTotalRounds(r)}
                                             className={`py-3 rounded-xl font-black text-sm transition-all border ${totalRounds === r
                                                 ? 'bg-alaz-orange text-black border-alaz-orange shadow-[0_0_20px_rgba(255,77,0,0.3)]'
@@ -187,6 +188,7 @@ export function HostSetup() {
                                     {Object.keys(CATEGORY_PRESETS).map(name => (
                                         <button
                                             key={name}
+                                            aria-pressed={activePreset === name}
                                             onClick={() => applyPreset(name)}
                                             className={`px-3 py-1.5 rounded-full text-[10px] font-black tracking-wide transition-all border ${activePreset === name
                                                 ? 'bg-alaz-orange/20 border-alaz-orange text-alaz-orange'

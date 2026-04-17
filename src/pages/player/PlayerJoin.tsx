@@ -125,6 +125,8 @@ export function PlayerJoin() {
 
                     {errorMsg && (
                         <motion.div
+                            role="alert"
+                            aria-live="assertive"
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: 'auto', opacity: 1 }}
                             className="bg-red-500/10 text-red-400 border border-red-500/30 p-4 rounded-2xl text-sm font-bold"
@@ -134,12 +136,14 @@ export function PlayerJoin() {
                     )}
 
                     <div className="space-y-3 text-left">
-                        <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">Oda Kodu</label>
+                        <label htmlFor="roomCode" className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">Oda Kodu</label>
                         <div className="relative">
                             <input
+                                id="roomCode"
                                 type="text"
                                 required
                                 maxLength={4}
+                                aria-invalid={!!errorMsg}
                                 value={roomCode}
                                 onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
                                 placeholder="ÖRN: 4X9B"
@@ -150,8 +154,9 @@ export function PlayerJoin() {
                     </div>
 
                     <div className="space-y-3 text-left">
-                        <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">Nickname / Team Name</label>
+                        <label htmlFor="nickname" className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">Nickname / Team Name</label>
                         <input
+                            id="nickname"
                             type="text"
                             required
                             value={nickname}
