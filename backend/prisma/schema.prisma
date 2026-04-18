@@ -1,0 +1,36 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String       @id @default(uuid())
+  email        String       @unique
+  name         String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  magicLinks   MagicLink[]
+  medications  Medication[]
+}
+
+model MagicLink {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Medication {
+  id        String   @id @default(uuid())
+  name      String   // Encrypted
+  dosage    String?  // Encrypted
+  frequency String?  // Encrypted
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
