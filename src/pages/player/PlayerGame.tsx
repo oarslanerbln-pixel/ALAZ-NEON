@@ -81,7 +81,7 @@ export function PlayerGame() {
             .subscribe();
 
         // Separate subscription for current player's score
-        let playerChannel: any;
+        let playerChannel: ReturnType<typeof supabase.channel>;
         if (playerId) {
             const fetchPlayer = async () => {
                 const { data } = await supabase.from('players').select('total_score').eq('id', playerId).single();
@@ -107,13 +107,6 @@ export function PlayerGame() {
         };
     }, [roomId, roomStatus]);
 
-    useEffect(() => {
-        if (isLocked && !hasSubmitted.current) {
-            hasSubmitted.current = true;
-            submitAnswers(false);
-        }
-    }, [isLocked]);
-
     const submitAnswers = async (isEarly: boolean = false) => {
         if (!roomId || !playerId || hasSubmitted.current && !isEarly) return;
         setSubmitStatus('submitting');
@@ -137,6 +130,13 @@ export function PlayerGame() {
         }
         setSubmitStatus('submitted');
     };
+
+    useEffect(() => {
+        if (isLocked && !hasSubmitted.current) {
+            hasSubmitted.current = true;
+            setTimeout(() => submitAnswers(false), 0);
+        }
+    }, [isLocked]);
 
     const handleInputChange = (category: string, value: string) => {
         if (isLocked) return;

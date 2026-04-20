@@ -356,7 +356,7 @@ export function HostDisplay() {
             }, 1000);
             return () => clearTimeout(timer);
         } else if (gameState === 'playing' && timeLeft === 0) {
-            endRound();
+            setTimeout(() => endRound(), 0);
         }
     }, [gameState, timeLeft]);
 
