@@ -1,3 +1,6 @@
 ## 2026-04-07 - Custom Button Accessibility
 **Learning:** When using Framer Motion to create interactive `motion.div` elements that act as buttons (like `TiltCard`), they lack default keyboard accessibility. Adding `role="button"`, `tabIndex={0}`, `onKeyDown` handlers for 'Enter' and 'Space', and Tailwind `focus-visible` classes is essential for screen readers and keyboard navigation.
 **Action:** Ensure all custom interactive `div` or `motion.div` components meant to behave like buttons include proper ARIA roles, keyboard event handlers, and visible focus states.
+## 2024-04-23 - [High Contrast UI Rendering]
+**Learning:** In Next.js with Tailwind CSS v4, global background and text colors defined in `globals.css` might not correctly apply to the entire page due to preflight styles or component overrides. Global styles set via the body tag in layout.tsx are much more robust. Additionally, when using next-pwa with Next.js 15+, `withPWA(nextConfig)` fails strict typescript type checks, requiring explicit casting as `withPWA(nextConfig as unknown as Record<string, unknown>)`.
+**Action:** Always apply core theme background and foreground utility classes directly to the `<body>` tag in `layout.tsx` (e.g., `bg-black text-yellow-400`) to guarantee high-contrast styling is globally enforced.

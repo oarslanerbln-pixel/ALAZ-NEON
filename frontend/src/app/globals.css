@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+:root {
+  --background: #000000;
+  --foreground: #FFFF00;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px; /* Minimum font size 16px for accessibility */
+}
+
+/* Base link styles for high contrast */
+a {
+  color: #00FFFF;
+  text-decoration: underline;
+}
+
+/* Ensure inputs are high contrast */
+input, textarea {
+  background-color: #000000;
+  color: #FFFF00;
+  border: 2px solid #FFFF00;
+}
