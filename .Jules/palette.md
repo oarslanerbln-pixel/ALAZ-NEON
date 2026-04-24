@@ -1,3 +1,3 @@
-## 2026-04-07 - Custom Button Accessibility
-**Learning:** When using Framer Motion to create interactive `motion.div` elements that act as buttons (like `TiltCard`), they lack default keyboard accessibility. Adding `role="button"`, `tabIndex={0}`, `onKeyDown` handlers for 'Enter' and 'Space', and Tailwind `focus-visible` classes is essential for screen readers and keyboard navigation.
-**Action:** Ensure all custom interactive `div` or `motion.div` components meant to behave like buttons include proper ARIA roles, keyboard event handlers, and visible focus states.
+## 2024-04-24 - [next-pwa Type Checking]
+**Learning:** When using `next-pwa` in Next.js 15+ projects, the `next build` command runs a strict type check which will fail because `next-pwa` lacks native TypeScript declarations.
+**Action:** Always install `@types/next-pwa` as a dev dependency to resolve the 'implicitly has an "any" type' compilation errors during `pnpm build`.

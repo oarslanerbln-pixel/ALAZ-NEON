@@ -1,0 +1,34 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Configuration is handled via prisma.config.ts in Prisma 7.7.0+
+}
+
+model User {
+  id        String       @id @default(uuid())
+  email     String       @unique
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  // Relations
+  medications Medication[]
+}
+
+model Medication {
+  id             String   @id @default(uuid())
+  userId         String
+
+  // AES-256 encrypted fields
+  encryptedName  String   // Store AES-256 encrypted string
+  encryptedDose  String   // Store AES-256 encrypted string
+
+  takenToday     Boolean  @default(false)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
