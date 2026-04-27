@@ -1,0 +1,41 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  medications Medication[]
+}
+
+// Medical documents must be processed ephemerally with zero server storage.
+// This model is here just to show we might store audit logs but NEVER the text content.
+model Document {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  // No text content or URLs stored due to KVKK/HIPAA compliance
+}
+
+model Medication {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+
+  // Any saved sensitive data (e.g., medications) must be end-to-end encrypted using AES-256.
+  encryptedName String
+
+  takenToday    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
