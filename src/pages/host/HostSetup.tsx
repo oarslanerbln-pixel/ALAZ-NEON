@@ -135,8 +135,9 @@ export function HostSetup() {
                         <div className="space-y-6">
                             {/* Timer */}
                             <div>
-                                <label className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Süre / Tempo</label>
+                                <label htmlFor="timerSetting" className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Süre / Tempo</label>
                                 <select
+                                    id="timerSetting"
                                     value={timerValue}
                                     onChange={(e) => setTimerValue(e.target.value)}
                                     className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:border-alaz-orange focus:outline-none transition-all font-bold text-base"
@@ -201,8 +202,9 @@ export function HostSetup() {
 
                             {/* Categories textarea */}
                             <div className="flex flex-col flex-1">
-                                <label className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Kategoriler (Virgülle Ayır)</label>
+                                <label htmlFor="categoriesInput" className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Kategoriler (Virgülle Ayır)</label>
                                 <textarea
+                                    id="categoriesInput"
                                     rows={5}
                                     value={categories}
                                     onChange={(e) => { setCategories(e.target.value); setActivePreset(null); }}

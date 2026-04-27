@@ -260,7 +260,7 @@ export function PlayerGame() {
                                     <motion.div key={`${currentRound}-${category}`} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }} className="relative group">
                                         <div className="absolute left-6 top-3 z-10 flex items-center gap-2">
                                             <NeonIcon type="lightbulb" color="orange" className="w-3 h-3 opacity-40" />
-                                            <label className="text-[10px] text-alaz-orange font-black uppercase tracking-[0.2em]">{category}</label>
+                                            <label htmlFor={`category-${idx}`} className="text-[10px] text-alaz-orange font-black uppercase tracking-[0.2em]">{category}</label>
                                         </div>
                                         {(() => {
                                             const val = answers[category] || '';
@@ -268,11 +268,14 @@ export function PlayerGame() {
                                             return (
                                                 <>
                                                     <input
+                                                        id={`category-${idx}`}
                                                         type="text"
                                                         value={val}
                                                         onChange={(e) => handleInputChange(category, e.target.value)}
                                                         disabled={isLocked}
                                                         autoComplete="off"
+                                                        aria-invalid={isWrongLetter}
+                                                        aria-describedby={isWrongLetter ? `error-${idx}` : undefined}
                                                         className={`w-full bg-white/5 border rounded-2xl px-6 pt-10 pb-5 focus:outline-none transition-all text-white text-xl font-bold 
                                                             ${isLocked ? 'border-red-500/20 opacity-40 cursor-not-allowed' : 
                                                               isWrongLetter ? 'border-red-500/50 bg-red-500/5 shadow-[0_0_15px_rgba(239,68,68,0.1)]' : 
@@ -281,6 +284,8 @@ export function PlayerGame() {
                                                     />
                                                     {isWrongLetter && !isLocked && (
                                                         <motion.span 
+                                                            id={`error-${idx}`}
+                                                            role="alert"
                                                             initial={{ opacity: 0, scale: 0.8 }}
                                                             animate={{ opacity: 1, scale: 1 }}
                                                             className="absolute right-4 bottom-2 text-[8px] font-black text-red-500 uppercase tracking-widest"

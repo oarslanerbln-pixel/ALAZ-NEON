@@ -134,9 +134,10 @@ export function PlayerJoin() {
                     )}
 
                     <div className="space-y-3 text-left">
-                        <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">Oda Kodu</label>
+                        <label htmlFor="roomCode" className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">Oda Kodu</label>
                         <div className="relative">
                             <input
+                                id="roomCode"
                                 type="text"
                                 required
                                 maxLength={4}
@@ -150,8 +151,9 @@ export function PlayerJoin() {
                     </div>
 
                     <div className="space-y-3 text-left">
-                        <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">Nickname / Team Name</label>
+                        <label htmlFor="nickname" className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">Nickname / Team Name</label>
                         <input
+                            id="nickname"
                             type="text"
                             required
                             value={nickname}
