@@ -1,3 +1,6 @@
 ## 2026-04-07 - Custom Button Accessibility
 **Learning:** When using Framer Motion to create interactive `motion.div` elements that act as buttons (like `TiltCard`), they lack default keyboard accessibility. Adding `role="button"`, `tabIndex={0}`, `onKeyDown` handlers for 'Enter' and 'Space', and Tailwind `focus-visible` classes is essential for screen readers and keyboard navigation.
 **Action:** Ensure all custom interactive `div` or `motion.div` components meant to behave like buttons include proper ARIA roles, keyboard event handlers, and visible focus states.
+## 2024-05-18 - Form Accessibility Pattern
+**Learning:** In Vite/React apps heavily relying on `framer-motion` for dynamic UI states (like error messages appearing), simply rendering the element isn't enough for screen readers. The dynamically injected `motion.div` must explicitly carry `role="alert"` and `aria-live="assertive"` to forcefully announce the state change (like a validation error) to assistive technologies as soon as it mounts.
+**Action:** Always pair `aria-live` and `role="alert"` on dynamically rendered validation message containers, and always ensure `htmlFor` explicitly binds to the `id` of inputs rather than relying on implied wrapping, especially when the DOM is deeply nested with `div` layouts.
