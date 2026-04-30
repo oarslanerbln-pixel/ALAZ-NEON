@@ -1,3 +1,7 @@
 ## 2026-04-07 - Custom Button Accessibility
 **Learning:** When using Framer Motion to create interactive `motion.div` elements that act as buttons (like `TiltCard`), they lack default keyboard accessibility. Adding `role="button"`, `tabIndex={0}`, `onKeyDown` handlers for 'Enter' and 'Space', and Tailwind `focus-visible` classes is essential for screen readers and keyboard navigation.
 **Action:** Ensure all custom interactive `div` or `motion.div` components meant to behave like buttons include proper ARIA roles, keyboard event handlers, and visible focus states.
+
+## 2026-05-01 - Form Validation Accessibility
+**Learning:** For screen readers to announce form validation errors dynamically, components rendering these messages (like conditionally rendered error divs in `PlayerJoin.tsx`) must explicitly include `role="alert"` and `aria-live="assertive"`. Furthermore, linking form `<label>` and `<input>` using matching `htmlFor` and `id` attributes is critical for context and allows users to click the label to focus the input. Semantically invalid inputs should also use `aria-invalid`.
+**Action:** Always link form labels to inputs using `htmlFor` and `id`. Add `role="alert"` and `aria-live="assertive"` to dynamic validation error messages, and apply `aria-invalid={true}` to fields failing validation.
