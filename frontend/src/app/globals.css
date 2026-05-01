@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .high-contrast-bg {
+    background-color: #000000;
+  }
+  .high-contrast-text {
+    color: #FFD700;
+  }
+}
+
+body {
+  background-color: #000000;
+  color: #FFD700;
+  font-size: 16px;
+  min-height: 100vh;
+}
