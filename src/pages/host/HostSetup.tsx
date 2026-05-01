@@ -135,8 +135,9 @@ export function HostSetup() {
                         <div className="space-y-6">
                             {/* Timer */}
                             <div>
-                                <label className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Süre / Tempo</label>
+                                <label htmlFor="timerValue" className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Süre / Tempo</label>
                                 <select
+                                    id="timerValue"
                                     value={timerValue}
                                     onChange={(e) => setTimerValue(e.target.value)}
                                     className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:border-alaz-orange focus:outline-none transition-all font-bold text-base"
@@ -150,11 +151,13 @@ export function HostSetup() {
 
                             {/* Total Rounds */}
                             <div>
-                                <label className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Tur Sayısı</label>
-                                <div className="grid grid-cols-4 gap-2">
+                                <span id="rounds-label" className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Tur Sayısı</span>
+                                <div className="grid grid-cols-4 gap-2" role="group" aria-labelledby="rounds-label">
                                     {['3', '5', '7', '10'].map(r => (
                                         <button
                                             key={r}
+                                            type="button"
+                                            aria-pressed={totalRounds === r}
                                             onClick={() => setTotalRounds(r)}
                                             className={`py-3 rounded-xl font-black text-sm transition-all border ${totalRounds === r
                                                 ? 'bg-alaz-orange text-black border-alaz-orange shadow-[0_0_20px_rgba(255,77,0,0.3)]'
@@ -182,11 +185,13 @@ export function HostSetup() {
                         <div className="flex flex-col gap-4">
                             {/* Preset Buttons */}
                             <div>
-                                <label className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Hızlı Preset</label>
-                                <div className="flex flex-wrap gap-2">
+                                <span id="preset-label" className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Hızlı Preset</span>
+                                <div className="flex flex-wrap gap-2" role="group" aria-labelledby="preset-label">
                                     {Object.keys(CATEGORY_PRESETS).map(name => (
                                         <button
                                             key={name}
+                                            type="button"
+                                            aria-pressed={activePreset === name}
                                             onClick={() => applyPreset(name)}
                                             className={`px-3 py-1.5 rounded-full text-[10px] font-black tracking-wide transition-all border ${activePreset === name
                                                 ? 'bg-alaz-orange/20 border-alaz-orange text-alaz-orange'
@@ -201,8 +206,9 @@ export function HostSetup() {
 
                             {/* Categories textarea */}
                             <div className="flex flex-col flex-1">
-                                <label className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Kategoriler (Virgülle Ayır)</label>
+                                <label htmlFor="categories" className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Kategoriler (Virgülle Ayır)</label>
                                 <textarea
+                                    id="categories"
                                     rows={5}
                                     value={categories}
                                     onChange={(e) => { setCategories(e.target.value); setActivePreset(null); }}
