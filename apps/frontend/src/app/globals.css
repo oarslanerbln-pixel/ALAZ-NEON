@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Base styles removed to allow body utility classes in layout.tsx to take full effect */
