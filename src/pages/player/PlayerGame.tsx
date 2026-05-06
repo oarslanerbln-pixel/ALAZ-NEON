@@ -260,7 +260,7 @@ export function PlayerGame() {
                                     <motion.div key={`${currentRound}-${category}`} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }} className="relative group">
                                         <div className="absolute left-6 top-3 z-10 flex items-center gap-2">
                                             <NeonIcon type="lightbulb" color="orange" className="w-3 h-3 opacity-40" />
-                                            <label className="text-[10px] text-alaz-orange font-black uppercase tracking-[0.2em]">{category}</label>
+                                            <label htmlFor={`input-${category}`} className="text-[10px] text-alaz-orange font-black uppercase tracking-[0.2em]">{category}</label>
                                         </div>
                                         {(() => {
                                             const val = answers[category] || '';
@@ -268,6 +268,7 @@ export function PlayerGame() {
                                             return (
                                                 <>
                                                     <input
+                                                        id={`input-${category}`}
                                                         type="text"
                                                         value={val}
                                                         onChange={(e) => handleInputChange(category, e.target.value)}
