@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@layer utilities {
+  .focus-visible-high-contrast {
+    @apply focus-visible:outline-4 focus-visible:outline-yellow-400 focus-visible:outline-offset-4;
+  }
+}
