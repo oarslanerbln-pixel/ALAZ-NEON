@@ -135,8 +135,9 @@ export function HostSetup() {
                         <div className="space-y-6">
                             {/* Timer */}
                             <div>
-                                <label className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Süre / Tempo</label>
+                                <label htmlFor="timer-select" className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Süre / Tempo</label>
                                 <select
+                                    id="timer-select"
                                     value={timerValue}
                                     onChange={(e) => setTimerValue(e.target.value)}
                                     className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:border-alaz-orange focus:outline-none transition-all font-bold text-base"
@@ -151,11 +152,12 @@ export function HostSetup() {
                             {/* Total Rounds */}
                             <div>
                                 <label className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Tur Sayısı</label>
-                                <div className="grid grid-cols-4 gap-2">
+                                <div className="grid grid-cols-4 gap-2" role="group" aria-label="Tur Sayısı">
                                     {['3', '5', '7', '10'].map(r => (
                                         <button
                                             key={r}
                                             onClick={() => setTotalRounds(r)}
+                                            aria-pressed={totalRounds === r}
                                             className={`py-3 rounded-xl font-black text-sm transition-all border ${totalRounds === r
                                                 ? 'bg-alaz-orange text-black border-alaz-orange shadow-[0_0_20px_rgba(255,77,0,0.3)]'
                                                 : 'bg-white/5 border-white/10 text-gray-400 hover:border-alaz-orange/40 hover:text-white'
@@ -183,11 +185,12 @@ export function HostSetup() {
                             {/* Preset Buttons */}
                             <div>
                                 <label className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Hızlı Preset</label>
-                                <div className="flex flex-wrap gap-2">
+                                <div className="flex flex-wrap gap-2" role="group" aria-label="Hızlı Preset">
                                     {Object.keys(CATEGORY_PRESETS).map(name => (
                                         <button
                                             key={name}
                                             onClick={() => applyPreset(name)}
+                                            aria-pressed={activePreset === name}
                                             className={`px-3 py-1.5 rounded-full text-[10px] font-black tracking-wide transition-all border ${activePreset === name
                                                 ? 'bg-alaz-orange/20 border-alaz-orange text-alaz-orange'
                                                 : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/30 hover:text-white'
@@ -201,8 +204,9 @@ export function HostSetup() {
 
                             {/* Categories textarea */}
                             <div className="flex flex-col flex-1">
-                                <label className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Kategoriler (Virgülle Ayır)</label>
+                                <label htmlFor="categories-input" className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Kategoriler (Virgülle Ayır)</label>
                                 <textarea
+                                    id="categories-input"
                                     rows={5}
                                     value={categories}
                                     onChange={(e) => { setCategories(e.target.value); setActivePreset(null); }}
@@ -221,6 +225,7 @@ export function HostSetup() {
                         whileTap={{ scale: 0.99 }}
                         onClick={startLobby}
                         disabled={isCreating}
+                        aria-busy={isCreating}
                         className={`w-full py-6 mt-10 font-black text-2xl rounded-2xl transition-all duration-500 ${isCreating
                             ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
                             : 'bg-white text-black hover:bg-alaz-orange hover:text-white shadow-[0_0_50px_rgba(255,77,0,0.2)] uppercase tracking-tight'
