@@ -135,8 +135,9 @@ export function HostSetup() {
                         <div className="space-y-6">
                             {/* Timer */}
                             <div>
-                                <label className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Süre / Tempo</label>
+                                <label htmlFor="timerValue" className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Süre / Tempo</label>
                                 <select
+                                    id="timerValue"
                                     value={timerValue}
                                     onChange={(e) => setTimerValue(e.target.value)}
                                     className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:border-alaz-orange focus:outline-none transition-all font-bold text-base"
@@ -201,8 +202,9 @@ export function HostSetup() {
 
                             {/* Categories textarea */}
                             <div className="flex flex-col flex-1">
-                                <label className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Kategoriler (Virgülle Ayır)</label>
+                                <label htmlFor="categories" className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Kategoriler (Virgülle Ayır)</label>
                                 <textarea
+                                    id="categories"
                                     rows={5}
                                     value={categories}
                                     onChange={(e) => { setCategories(e.target.value); setActivePreset(null); }}
@@ -221,6 +223,7 @@ export function HostSetup() {
                         whileTap={{ scale: 0.99 }}
                         onClick={startLobby}
                         disabled={isCreating}
+                        aria-busy={isCreating}
                         className={`w-full py-6 mt-10 font-black text-2xl rounded-2xl transition-all duration-500 ${isCreating
                             ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
                             : 'bg-white text-black hover:bg-alaz-orange hover:text-white shadow-[0_0_50px_rgba(255,77,0,0.2)] uppercase tracking-tight'
