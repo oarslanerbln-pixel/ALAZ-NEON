@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { CheckCircle2, Circle } from 'lucide-react';
+import { CheckCircle2, Circle, ChevronLeft } from 'lucide-react';
 
 const MOCK_MEDS = [
   { id: 1, name: "Parol 500mg", time: "Sabah", taken: false },
@@ -19,7 +19,13 @@ export default function MedicationsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4 mb-4">
-        <Link href="/" className="px-4 py-2 bg-gray-800 rounded-lg font-bold">Geri</Link>
+        <Link
+          href="/"
+          className="flex items-center gap-2 px-4 py-2 bg-gray-800 rounded-lg font-bold hover:bg-gray-700 transition-colors focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none"
+        >
+          <ChevronLeft size={20} />
+          Geri
+        </Link>
         <h1 className="text-2xl font-bold">İlaçlarım</h1>
       </div>
 
