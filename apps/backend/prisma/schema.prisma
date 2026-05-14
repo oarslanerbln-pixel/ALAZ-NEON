@@ -11,29 +11,18 @@ model User {
   email       String       @unique
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-  documents   Document[]
   medications Medication[]
 }
 
-model Document {
-  id           String   @id @default(uuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id])
-  originalText String
-  summary      String
-  language     String   @default("tr")
-  createdAt    DateTime @default(now())
-}
-
 model Medication {
-  id          String    @id @default(uuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id])
-  name        String
-  dosage      String
-  timeOfDay   String
-  taken       Boolean   @default(false)
-  lastTakenAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id                 String    @id @default(uuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id])
+  encryptedName      String
+  encryptedDosage    String
+  encryptedTimeOfDay String
+  taken              Boolean   @default(false)
+  lastTakenAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }
