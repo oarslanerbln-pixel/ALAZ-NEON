@@ -1,0 +1,20 @@
+
+> medisade-monorepo@1.0.0 dev:frontend /app
+> pnpm --filter frontend dev
+
+
+> frontend@0.1.0 dev /app/apps/frontend
+> next dev
+
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 508ms
+
+○ Compiling / ...
+ GET / 200 in 4.6s (next.js: 4.1s, application-code: 488ms)
+ GET /scan 200 in 2.1s (next.js: 1999ms, application-code: 52ms)
+ GET / 200 in 76ms (next.js: 5ms, application-code: 71ms)
+ GET /scan 200 in 41ms (next.js: 6ms, application-code: 36ms)
+ GET / 200 in 27ms (next.js: 3ms, application-code: 24ms)
+ GET /medications 200 in 534ms (next.js: 451ms, application-code: 83ms)
