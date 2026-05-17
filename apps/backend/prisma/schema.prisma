@@ -7,22 +7,13 @@ datasource db {
 }
 
 model User {
-  id          String       @id @default(uuid())
-  email       String       @unique
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  documents   Document[]
-  medications Medication[]
-}
-
-model Document {
-  id           String   @id @default(uuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id])
-  originalText String
-  summary      String
-  language     String   @default("tr")
-  createdAt    DateTime @default(now())
+  id                 String       @id @default(uuid())
+  email              String       @unique
+  magicLinkToken     String?      @unique
+  magicLinkExpiresAt DateTime?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  medications        Medication[]
 }
 
 model Medication {
