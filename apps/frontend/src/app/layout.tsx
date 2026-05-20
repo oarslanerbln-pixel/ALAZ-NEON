@@ -30,11 +30,11 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-white text-lg`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-white text-xl`}
       >
-        <div className="flex flex-col min-h-screen max-w-md mx-auto w-full">
+        <div className="flex flex-col min-h-screen max-w-md mx-auto w-full focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none">
           <main className="flex-grow p-4">{children}</main>
-          <footer className="p-4 bg-gray-900 text-center text-sm border-t border-gray-800 text-yellow-400 font-bold">
+          <footer className="p-4 bg-gray-900 text-center text-lg border-t-4 border-yellow-400 text-yellow-400 font-bold">
             Bu bir tıbbi tavsiye değildir, yalnızca dil sadeleştirme aracıdır. Lütfen doktorunuza danışın.
           </footer>
         </div>

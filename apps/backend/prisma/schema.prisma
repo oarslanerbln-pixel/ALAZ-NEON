@@ -11,18 +11,18 @@ model User {
   email       String       @unique
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-  documents   Document[]
   medications Medication[]
+  magicLinks  MagicLink[]
 }
 
-model Document {
-  id           String   @id @default(uuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id])
-  originalText String
-  summary      String
-  language     String   @default("tr")
-  createdAt    DateTime @default(now())
+model MagicLink {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 model Medication {
