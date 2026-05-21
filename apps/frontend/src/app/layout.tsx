@@ -16,10 +16,18 @@ export const metadata: Metadata = {
   title: "MediSade",
   description: "Tıbbi raporlarınızı ve ilaçlarınızı kolayca takip edin.",
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "MediSade",
+  },
 };
 
 export const viewport = {
   themeColor: "#000000",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
 };
 
 export default function RootLayout({
