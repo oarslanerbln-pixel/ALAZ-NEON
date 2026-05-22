@@ -8,21 +8,40 @@ export default function UploadDocument() {
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState<string | null>(null);
 
+  const [language, setLanguage] = useState<string>('tr');
+
   const handleSimulateScan = () => {
     setIsScanning(true);
     setTimeout(() => {
       setIsScanning(false);
-      setResult("Simüle edilmiş özet:\n1. Durumunuz Nedir?\n2. Doktorunuz Ne Demek İstiyor?\n3. Dikkat Etmeniz Gerekenler");
+      setResult("1. Durumunuz Nedir?\nKan tahlili sonuçlarınıza göre genel sağlık durumunuz iyi görünmektedir.\n\n2. Doktorunuz Ne Demek İstiyor?\nDeğerleriniz normal sınırlar içerisinde, endişe edecek bir durum yok.\n\n3. Dikkat Etmeniz Gerekenler\nDüzenli beslenmeye ve yeterli su içmeye devam edin.");
     }, 3000);
   };
 
   return (
     <div className="flex flex-col gap-6 items-center w-full">
+      <div className="flex w-full bg-gray-800 p-2 rounded-xl gap-2 justify-between">
+        {[{ id: 'tr', label: 'Türkçe' }, { id: 'en', label: 'English' }, { id: 'ar', label: 'العربية' }].map((lang) => (
+          <button
+            key={lang.id}
+            onClick={() => setLanguage(lang.id)}
+            className={`flex-1 py-3 px-2 rounded-lg font-bold transition-colors focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none ${
+              language === lang.id
+                ? 'bg-blue-600 text-white'
+                : 'bg-transparent text-gray-300 hover:bg-gray-700'
+            }`}
+            aria-pressed={language === lang.id}
+          >
+            {lang.label}
+          </button>
+        ))}
+      </div>
+
       <div className="grid grid-cols-2 gap-4 w-full">
         <button
           onClick={handleSimulateScan}
           disabled={isScanning}
-          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 transition-colors focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none"
           aria-label="Kamera ile çek"
         >
           <Camera size={32} className="mb-2" />
@@ -31,7 +50,7 @@ export default function UploadDocument() {
         <button
           onClick={handleSimulateScan}
           disabled={isScanning}
-          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 transition-colors focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none"
           aria-label="Dosya yükle"
         >
           <Upload size={32} className="mb-2" />
