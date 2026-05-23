@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function UploadDocument() {
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const [language, setLanguage] = useState<'tr' | 'en' | 'ar'>('tr');
 
   const handleSimulateScan = () => {
     setIsScanning(true);
@@ -18,11 +19,38 @@ export default function UploadDocument() {
 
   return (
     <div className="flex flex-col gap-6 items-center w-full">
+      <div className="w-full">
+        <h2 className="text-xl font-bold mb-3">Dil Seçimi</h2>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setLanguage('tr')}
+            className={`flex-1 py-3 rounded-lg font-bold transition-colors focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none ${language === 'tr' ? 'bg-blue-600 text-white' : 'bg-gray-800 hover:bg-gray-700 text-gray-200'}`}
+            aria-pressed={language === 'tr'}
+          >
+            Türkçe
+          </button>
+          <button
+            onClick={() => setLanguage('en')}
+            className={`flex-1 py-3 rounded-lg font-bold transition-colors focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none ${language === 'en' ? 'bg-blue-600 text-white' : 'bg-gray-800 hover:bg-gray-700 text-gray-200'}`}
+            aria-pressed={language === 'en'}
+          >
+            English
+          </button>
+          <button
+            onClick={() => setLanguage('ar')}
+            className={`flex-1 py-3 rounded-lg font-bold transition-colors focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none ${language === 'ar' ? 'bg-blue-600 text-white' : 'bg-gray-800 hover:bg-gray-700 text-gray-200'}`}
+            aria-pressed={language === 'ar'}
+          >
+            العربية
+          </button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 gap-4 w-full">
         <button
           onClick={handleSimulateScan}
           disabled={isScanning}
-          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 transition-colors focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none"
           aria-label="Kamera ile çek"
         >
           <Camera size={32} className="mb-2" />
@@ -31,7 +59,7 @@ export default function UploadDocument() {
         <button
           onClick={handleSimulateScan}
           disabled={isScanning}
-          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 transition-colors focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none"
           aria-label="Dosya yükle"
         >
           <Upload size={32} className="mb-2" />
