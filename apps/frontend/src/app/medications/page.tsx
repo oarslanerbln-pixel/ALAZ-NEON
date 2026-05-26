@@ -19,7 +19,9 @@ export default function MedicationsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4 mb-4">
-        <Link href="/" className="px-4 py-2 bg-gray-800 rounded-lg font-bold">Geri</Link>
+        <Link href="/" className="px-4 py-2 bg-gray-800 rounded-lg font-bold hover:bg-gray-700 transition-colors focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none">
+          Geri
+        </Link>
         <h1 className="text-2xl font-bold">İlaçlarım</h1>
       </div>
 
@@ -28,14 +30,19 @@ export default function MedicationsPage() {
           <button
             key={med.id}
             onClick={() => toggleMed(med.id)}
-            className={`flex items-center justify-between p-6 rounded-xl text-left transition-colors border-2 ${med.taken ? 'bg-green-900 border-green-600' : 'bg-gray-800 border-gray-600 hover:bg-gray-700'}`}
+            className={`flex items-center justify-between p-6 rounded-xl text-left transition-colors border-2 focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none ${med.taken ? 'bg-green-900 border-green-600 text-white' : 'bg-gray-800 border-gray-600 hover:bg-gray-700 text-white'}`}
             aria-pressed={med.taken}
           >
             <div>
               <h2 className="text-2xl font-bold">{med.name}</h2>
               <p className="text-gray-300 mt-1">{med.time}</p>
             </div>
-            {med.taken ? <CheckCircle2 size={40} className="text-green-400" /> : <Circle size={40} className="text-gray-400" />}
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-bold">
+                {med.taken ? 'Alındı' : 'Alınmadı'}
+              </span>
+              {med.taken ? <CheckCircle2 size={40} className="text-green-400" /> : <Circle size={40} className="text-gray-400" />}
+            </div>
           </button>
         ))}
       </div>
