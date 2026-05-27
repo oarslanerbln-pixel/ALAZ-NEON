@@ -56,7 +56,7 @@ export default function UploadDocument() {
       </AnimatePresence>
 
       {result && (
-        <div className="w-full bg-gray-800 p-6 rounded-xl mt-4">
+        <div className="w-full bg-gray-800 p-6 rounded-xl mt-4" role="status" aria-live="polite">
           <h2 className="text-2xl font-bold mb-4 text-yellow-400">Sonuç</h2>
           <p className="whitespace-pre-line">{result}</p>
         </div>
