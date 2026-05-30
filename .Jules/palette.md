@@ -1,3 +1,7 @@
 ## 2026-04-07 - Custom Button Accessibility
 **Learning:** When using Framer Motion to create interactive `motion.div` elements that act as buttons (like `TiltCard`), they lack default keyboard accessibility. Adding `role="button"`, `tabIndex={0}`, `onKeyDown` handlers for 'Enter' and 'Space', and Tailwind `focus-visible` classes is essential for screen readers and keyboard navigation.
 **Action:** Ensure all custom interactive `div` or `motion.div` components meant to behave like buttons include proper ARIA roles, keyboard event handlers, and visible focus states.
+
+## 2026-05-18 - High Contrast Focus States in Dark Themes
+**Learning:** In applications using dark themes (like MediSade's high-contrast `bg-gray-800` backgrounds), the browser's default focus ring is frequently invisible, completely breaking keyboard accessibility. Relying solely on `tabIndex` or semantic HTML isn't enough when visually relying on CSS. Furthermore, dynamically rendered non-urgent content updates (e.g. text summaries) are not inherently read by screen readers.
+**Action:** Always explicitly define high-contrast focus rings (e.g., `focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none`) for all interactive elements in dark-themed applications to ensure clear keyboard accessibility. Additionally, wrap dynamically rendered text containers with `role="status"` and `aria-live="polite"` so screen readers reliably announce the changes.
