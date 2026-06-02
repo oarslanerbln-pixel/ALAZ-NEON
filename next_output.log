@@ -1,0 +1,8 @@
+
+> frontend@0.1.0 start /app/apps/frontend
+> next start
+
+▲ Next.js 16.2.6
+- Local:         http://localhost:3001
+- Network:       http://192.168.0.2:3001
+✓ Ready in 194ms
