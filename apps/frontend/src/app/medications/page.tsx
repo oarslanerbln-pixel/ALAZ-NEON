@@ -28,14 +28,15 @@ export default function MedicationsPage() {
           <button
             key={med.id}
             onClick={() => toggleMed(med.id)}
-            className={`flex items-center justify-between p-6 rounded-xl text-left transition-colors border-2 ${med.taken ? 'bg-green-900 border-green-600' : 'bg-gray-800 border-gray-600 hover:bg-gray-700'}`}
+            className={`flex items-center justify-between p-6 rounded-xl text-left transition-colors border-2 focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none ${med.taken ? 'bg-black border-green-400' : 'bg-black border-gray-400 hover:bg-gray-900'}`}
             aria-pressed={med.taken}
+            aria-label={`${med.name} alındı olarak işaretle`}
           >
             <div>
-              <h2 className="text-2xl font-bold">{med.name}</h2>
+              <h2 className={`text-2xl font-bold ${med.taken ? 'text-green-400' : 'text-white'}`}>{med.name}</h2>
               <p className="text-gray-300 mt-1">{med.time}</p>
             </div>
-            {med.taken ? <CheckCircle2 size={40} className="text-green-400" /> : <Circle size={40} className="text-gray-400" />}
+            {med.taken ? <CheckCircle2 size={40} className="text-green-400" /> : <Circle size={40} className="text-white" />}
           </button>
         ))}
       </div>
