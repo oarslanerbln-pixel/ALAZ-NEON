@@ -22,7 +22,7 @@ export default function UploadDocument() {
         <button
           onClick={handleSimulateScan}
           disabled={isScanning}
-          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          className="flex flex-col items-center justify-center p-6 bg-gray-900 rounded-xl border-2 border-dashed border-gray-500 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none transition-colors"
           aria-label="Kamera ile çek"
         >
           <Camera size={32} className="mb-2" />
@@ -31,7 +31,7 @@ export default function UploadDocument() {
         <button
           onClick={handleSimulateScan}
           disabled={isScanning}
-          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          className="flex flex-col items-center justify-center p-6 bg-gray-900 rounded-xl border-2 border-dashed border-gray-500 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none transition-colors"
           aria-label="Dosya yükle"
         >
           <Upload size={32} className="mb-2" />
@@ -39,28 +39,28 @@ export default function UploadDocument() {
         </button>
       </div>
 
-      <AnimatePresence>
-        {isScanning && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="flex flex-col items-center gap-4 p-8 bg-blue-900 rounded-xl w-full"
-            role="alert"
-            aria-live="assertive"
-          >
-            <Loader2 size={48} className="animate-spin text-blue-300" />
-            <p className="text-xl font-bold text-center">Raporunuz taranıyor...</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div role="status" aria-live="polite" className="w-full flex flex-col items-center gap-4">
+        <AnimatePresence>
+          {isScanning && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center gap-4 p-8 bg-blue-900 rounded-xl w-full"
+            >
+              <Loader2 size={48} className="animate-spin text-blue-300" />
+              <p className="text-xl font-bold text-center">Raporunuz taranıyor...</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-      {result && (
-        <div className="w-full bg-gray-800 p-6 rounded-xl mt-4">
-          <h2 className="text-2xl font-bold mb-4 text-yellow-400">Sonuç</h2>
-          <p className="whitespace-pre-line">{result}</p>
-        </div>
-      )}
+        {result && (
+          <div className="w-full bg-gray-900 p-6 rounded-xl mt-4 border border-gray-600">
+            <h2 className="text-2xl font-bold mb-4 text-yellow-400">Sonuç</h2>
+            <p className="whitespace-pre-line">{result}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
