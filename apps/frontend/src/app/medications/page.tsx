@@ -28,7 +28,7 @@ export default function MedicationsPage() {
           <button
             key={med.id}
             onClick={() => toggleMed(med.id)}
-            className={`flex items-center justify-between p-6 rounded-xl text-left transition-colors border-2 ${med.taken ? 'bg-green-900 border-green-600' : 'bg-gray-800 border-gray-600 hover:bg-gray-700'}`}
+            className={`flex items-center justify-between p-8 rounded-xl text-left transition-colors border-4 focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none ${med.taken ? 'bg-green-800 border-green-400 text-white' : 'bg-gray-800 border-gray-500 text-white hover:bg-gray-700'}`}
             aria-pressed={med.taken}
           >
             <div>
