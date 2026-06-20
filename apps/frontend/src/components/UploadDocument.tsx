@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function UploadDocument() {
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const [language, setLanguage] = useState<'tr' | 'en' | 'ar'>('tr');
 
   const handleSimulateScan = () => {
     setIsScanning(true);
@@ -18,11 +19,35 @@ export default function UploadDocument() {
 
   return (
     <div className="flex flex-col gap-6 items-center w-full">
+      <div className="flex flex-col gap-2 w-full mb-2">
+        <h2 className="text-lg font-bold">Dil Seçimi / Language / اللغة</h2>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setLanguage('tr')}
+            className={`flex-1 p-3 rounded-lg font-bold focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none transition-colors border-2 ${language === 'tr' ? 'bg-blue-600 border-blue-400' : 'bg-gray-800 border-gray-600 hover:bg-gray-700'}`}
+          >
+            Türkçe
+          </button>
+          <button
+            onClick={() => setLanguage('en')}
+            className={`flex-1 p-3 rounded-lg font-bold focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none transition-colors border-2 ${language === 'en' ? 'bg-blue-600 border-blue-400' : 'bg-gray-800 border-gray-600 hover:bg-gray-700'}`}
+          >
+            English
+          </button>
+          <button
+            onClick={() => setLanguage('ar')}
+            className={`flex-1 p-3 rounded-lg font-bold focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none transition-colors border-2 ${language === 'ar' ? 'bg-blue-600 border-blue-400' : 'bg-gray-800 border-gray-600 hover:bg-gray-700'}`}
+          >
+            العربية
+          </button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 gap-4 w-full">
         <button
           onClick={handleSimulateScan}
           disabled={isScanning}
-          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none transition-colors"
           aria-label="Kamera ile çek"
         >
           <Camera size={32} className="mb-2" />
@@ -31,7 +56,7 @@ export default function UploadDocument() {
         <button
           onClick={handleSimulateScan}
           disabled={isScanning}
-          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none transition-colors"
           aria-label="Dosya yükle"
         >
           <Upload size={32} className="mb-2" />
@@ -56,9 +81,14 @@ export default function UploadDocument() {
       </AnimatePresence>
 
       {result && (
-        <div className="w-full bg-gray-800 p-6 rounded-xl mt-4">
+        <div className="w-full bg-gray-800 p-6 rounded-xl mt-4" role="status" aria-live="polite">
           <h2 className="text-2xl font-bold mb-4 text-yellow-400">Sonuç</h2>
-          <p className="whitespace-pre-line">{result}</p>
+          <p className="whitespace-pre-line mb-4">{result}</p>
+          <div className="mt-4 pt-4 border-t border-gray-700">
+            <p className="text-sm text-yellow-400 font-bold">
+              Bu bir tıbbi tavsiye değildir, yalnızca dil sadeleştirme aracıdır. Lütfen doktorunuza danışın.
+            </p>
+          </div>
         </div>
       )}
     </div>
