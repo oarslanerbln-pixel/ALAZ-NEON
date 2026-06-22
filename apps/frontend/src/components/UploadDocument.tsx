@@ -18,11 +18,16 @@ export default function UploadDocument() {
 
   return (
     <div className="flex flex-col gap-6 items-center w-full">
+      <div className="flex gap-4 mb-4">
+        <button className="px-4 py-2 bg-gray-800 rounded-lg font-bold focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none hover:bg-gray-700 transition-colors">TR</button>
+        <button className="px-4 py-2 bg-gray-800 rounded-lg font-bold focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none hover:bg-gray-700 transition-colors">EN</button>
+        <button className="px-4 py-2 bg-gray-800 rounded-lg font-bold focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none hover:bg-gray-700 transition-colors">AR</button>
+      </div>
       <div className="grid grid-cols-2 gap-4 w-full">
         <button
           onClick={handleSimulateScan}
           disabled={isScanning}
-          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none"
           aria-label="Kamera ile çek"
         >
           <Camera size={32} className="mb-2" />
@@ -31,7 +36,7 @@ export default function UploadDocument() {
         <button
           onClick={handleSimulateScan}
           disabled={isScanning}
-          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none"
           aria-label="Dosya yükle"
         >
           <Upload size={32} className="mb-2" />
@@ -56,9 +61,14 @@ export default function UploadDocument() {
       </AnimatePresence>
 
       {result && (
-        <div className="w-full bg-gray-800 p-6 rounded-xl mt-4">
+        <div className="w-full bg-gray-800 p-6 rounded-xl mt-4" role="status" aria-live="polite">
           <h2 className="text-2xl font-bold mb-4 text-yellow-400">Sonuç</h2>
           <p className="whitespace-pre-line">{result}</p>
+          <div className="mt-6 p-4 bg-gray-900 border border-gray-700 rounded-lg">
+            <p className="text-sm text-yellow-400 font-bold text-center">
+              Bu bir tıbbi tavsiye değildir, yalnızca dil sadeleştirme aracıdır. Lütfen doktorunuza danışın.
+            </p>
+          </div>
         </div>
       )}
     </div>
