@@ -22,7 +22,7 @@ export default function UploadDocument() {
         <button
           onClick={handleSimulateScan}
           disabled={isScanning}
-          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none"
           aria-label="Kamera ile çek"
         >
           <Camera size={32} className="mb-2" />
@@ -31,7 +31,7 @@ export default function UploadDocument() {
         <button
           onClick={handleSimulateScan}
           disabled={isScanning}
-          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none"
           aria-label="Dosya yükle"
         >
           <Upload size={32} className="mb-2" />
@@ -58,7 +58,15 @@ export default function UploadDocument() {
       {result && (
         <div className="w-full bg-gray-800 p-6 rounded-xl mt-4">
           <h2 className="text-2xl font-bold mb-4 text-yellow-400">Sonuç</h2>
-          <p className="whitespace-pre-line">{result}</p>
+          <div className="flex gap-2 mb-4">
+            <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold transition-colors focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none">TR</button>
+            <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg font-bold transition-colors focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none">EN</button>
+            <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg font-bold transition-colors focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none">AR</button>
+          </div>
+          <p className="whitespace-pre-line mb-6">{result}</p>
+          <p className="text-sm text-yellow-400 font-bold border-t border-gray-600 pt-4 mt-4">
+            Bu bir tıbbi tavsiye değildir, yalnızca dil sadeleştirme aracıdır. Lütfen doktorunuza danışın.
+          </p>
         </div>
       )}
     </div>
