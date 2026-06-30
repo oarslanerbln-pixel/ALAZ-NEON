@@ -7,22 +7,34 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function UploadDocument() {
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const [language, setLanguage] = useState<'tr' | 'en' | 'ar'>('tr');
 
   const handleSimulateScan = () => {
     setIsScanning(true);
+    setResult(null);
     setTimeout(() => {
       setIsScanning(false);
-      setResult("Simüle edilmiş özet:\n1. Durumunuz Nedir?\n2. Doktorunuz Ne Demek İstiyor?\n3. Dikkat Etmeniz Gerekenler");
+      const summaries = {
+        tr: "Simüle edilmiş özet:\n1. Durumunuz Nedir?\n2. Doktorunuz Ne Demek İstiyor?\n3. Dikkat Etmeniz Gerekenler",
+        en: "Simulated summary:\n1. What is your condition?\n2. What does your doctor mean?\n3. Things to pay attention to",
+        ar: "ملخص محاكى:\n1. ما هي حالتك؟\n2. ماذا يعني طبيبك؟\n3. أشياء يجب الانتباه إليها"
+      };
+      setResult(summaries[language]);
     }, 3000);
   };
 
   return (
     <div className="flex flex-col gap-6 items-center w-full">
+      <div className="flex flex-row gap-4 w-full justify-center">
+        <button onClick={() => setLanguage('tr')} className={`px-4 py-2 rounded-xl font-bold transition-colors focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none ${language === 'tr' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}>Türkçe</button>
+        <button onClick={() => setLanguage('en')} className={`px-4 py-2 rounded-xl font-bold transition-colors focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none ${language === 'en' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}>English</button>
+        <button onClick={() => setLanguage('ar')} className={`px-4 py-2 rounded-xl font-bold transition-colors focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none ${language === 'ar' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}>العربية</button>
+      </div>
       <div className="grid grid-cols-2 gap-4 w-full">
         <button
           onClick={handleSimulateScan}
           disabled={isScanning}
-          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none"
           aria-label="Kamera ile çek"
         >
           <Camera size={32} className="mb-2" />
@@ -31,7 +43,7 @@ export default function UploadDocument() {
         <button
           onClick={handleSimulateScan}
           disabled={isScanning}
-          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none"
           aria-label="Dosya yükle"
         >
           <Upload size={32} className="mb-2" />
@@ -56,9 +68,14 @@ export default function UploadDocument() {
       </AnimatePresence>
 
       {result && (
-        <div className="w-full bg-gray-800 p-6 rounded-xl mt-4">
+        <div className="w-full bg-gray-800 p-6 rounded-xl mt-4" role="status" aria-live="polite">
           <h2 className="text-2xl font-bold mb-4 text-yellow-400">Sonuç</h2>
-          <p className="whitespace-pre-line">{result}</p>
+          <p className="whitespace-pre-line text-lg mb-6">{result}</p>
+          <div className="p-4 bg-gray-900 border-l-4 border-yellow-500 mt-4">
+            <p className="text-sm font-bold text-yellow-400">
+              Bu bir tıbbi tavsiye değildir, yalnızca dil sadeleştirme aracıdır. Lütfen doktorunuza danışın.
+            </p>
+          </div>
         </div>
       )}
     </div>
