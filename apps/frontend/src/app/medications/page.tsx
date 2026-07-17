@@ -19,8 +19,8 @@ export default function MedicationsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4 mb-4">
-        <Link href="/" className="px-4 py-2 bg-gray-800 rounded-lg font-bold">Geri</Link>
-        <h1 className="text-2xl font-bold">İlaçlarım</h1>
+        <Link href="/" className="px-4 py-2 bg-black border-2 border-white rounded-lg font-bold text-xl hover:bg-gray-800 focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none">Geri</Link>
+        <h1 className="text-4xl font-bold">İlaçlarım</h1>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -28,14 +28,14 @@ export default function MedicationsPage() {
           <button
             key={med.id}
             onClick={() => toggleMed(med.id)}
-            className={`flex items-center justify-between p-6 rounded-xl text-left transition-colors border-2 ${med.taken ? 'bg-green-900 border-green-600' : 'bg-gray-800 border-gray-600 hover:bg-gray-700'}`}
+            className={`flex items-center justify-between p-6 rounded-xl text-left transition-colors border-4 focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none ${med.taken ? 'bg-black border-green-400' : 'bg-black border-white hover:bg-gray-900'}`}
             aria-pressed={med.taken}
           >
             <div>
-              <h2 className="text-2xl font-bold">{med.name}</h2>
-              <p className="text-gray-300 mt-1">{med.time}</p>
+              <h2 className="text-3xl font-bold">{med.name}</h2>
+              <p className="text-xl text-gray-300 mt-2">{med.time}</p>
             </div>
-            {med.taken ? <CheckCircle2 size={40} className="text-green-400" /> : <Circle size={40} className="text-gray-400" />}
+            {med.taken ? <CheckCircle2 size={48} className="text-green-400" /> : <Circle size={48} className="text-white" />}
           </button>
         ))}
       </div>
