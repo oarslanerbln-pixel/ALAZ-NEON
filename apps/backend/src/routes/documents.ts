@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../prisma.js';
 import { getDemoUserId } from '../demoUser.js';
+import { summarizeReport } from '../summarize.js';
 
 export const documentsRouter = Router();
 
@@ -14,9 +15,17 @@ documentsRouter.get('/', async (req, res) => {
 });
 
 documentsRouter.post('/', async (req, res) => {
-  const { originalText, summary, language } = req.body;
-  if (!originalText || !summary) {
-    return res.status(400).json({ error: 'originalText ve summary zorunludur' });
+  const { originalText, language } = req.body;
+  if (!originalText) {
+    return res.status(400).json({ error: 'originalText zorunludur' });
+  }
+
+  let summary: string;
+  try {
+    summary = await summarizeReport(originalText);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Özetleme başarısız oldu';
+    return res.status(502).json({ error: message });
   }
 
   const userId = await getDemoUserId();

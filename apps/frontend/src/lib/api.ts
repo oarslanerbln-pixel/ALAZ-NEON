@@ -9,6 +9,14 @@ export type Medication = {
   lastTakenAt: string | null;
 };
 
+export type Document = {
+  id: string;
+  originalText: string;
+  summary: string;
+  language: string;
+  createdAt: string;
+};
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
@@ -29,4 +37,6 @@ export const api = {
     request<Medication>(`/medications/${id}`, { method: 'PATCH', body: JSON.stringify({ taken }) }),
   deleteMedication: (id: string) =>
     request<void>(`/medications/${id}`, { method: 'DELETE' }),
+  createDocument: (originalText: string) =>
+    request<Document>('/documents', { method: 'POST', body: JSON.stringify({ originalText }) }),
 };
