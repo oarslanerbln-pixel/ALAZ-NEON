@@ -8,12 +8,13 @@ datasource db {
 }
 
 model User {
-  id          String       @id @default(uuid())
-  email       String       @unique
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  documents   Document[]
-  medications Medication[]
+  id           String       @id @default(uuid())
+  email        String       @unique
+  passwordHash String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  documents    Document[]
+  medications  Medication[]
 }
 
 model Document {

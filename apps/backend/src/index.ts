@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { authRouter } from './routes/auth.js';
 import { medicationsRouter } from './routes/medications.js';
 import { documentsRouter } from './routes/documents.js';
 
@@ -15,6 +16,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'MediSade API is running' });
 });
 
+app.use('/auth', authRouter);
 app.use('/medications', medicationsRouter);
 app.use('/documents', documentsRouter);
 

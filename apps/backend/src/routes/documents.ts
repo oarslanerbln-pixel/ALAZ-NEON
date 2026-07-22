@@ -1,14 +1,14 @@
 import { Router } from 'express';
 import { prisma } from '../prisma.js';
-import { getDemoUserId } from '../demoUser.js';
+import { requireAuth } from '../middleware/requireAuth.js';
 import { summarizeReport } from '../summarize.js';
 
 export const documentsRouter = Router();
+documentsRouter.use(requireAuth);
 
 documentsRouter.get('/', async (req, res) => {
-  const userId = await getDemoUserId();
   const documents = await prisma.document.findMany({
-    where: { userId },
+    where: { userId: req.userId },
     orderBy: { createdAt: 'desc' },
   });
   res.json(documents);
@@ -28,9 +28,8 @@ documentsRouter.post('/', async (req, res) => {
     return res.status(502).json({ error: message });
   }
 
-  const userId = await getDemoUserId();
   const document = await prisma.document.create({
-    data: { userId, originalText, summary, language: language ?? 'tr' },
+    data: { userId: req.userId!, originalText, summary, language: language ?? 'tr' },
   });
   res.status(201).json(document);
 });

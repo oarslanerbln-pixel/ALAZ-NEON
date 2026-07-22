@@ -1,3 +1,5 @@
+import { getToken, clearToken } from './auth';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 export type Medication = {
@@ -17,19 +19,38 @@ export type Document = {
   createdAt: string;
 };
 
+export type AuthResult = {
+  token: string;
+  user: { id: string; email: string };
+};
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getToken();
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...init?.headers,
+    },
   });
   if (!res.ok) {
-    throw new Error(`API ${path} failed: ${res.status}`);
+    if (res.status === 401 && typeof window !== 'undefined') {
+      clearToken();
+      window.location.href = '/login';
+    }
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.error ?? `İstek başarısız oldu (${res.status})`);
   }
   if (res.status === 204) return undefined as T;
   return res.json();
 }
 
 export const api = {
+  register: (email: string, password: string) =>
+    request<AuthResult>('/auth/register', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  login: (email: string, password: string) =>
+    request<AuthResult>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   getMedications: () => request<Medication[]>('/medications'),
   createMedication: (data: { name: string; dosage: string; timeOfDay: string }) =>
     request<Medication>('/medications', { method: 'POST', body: JSON.stringify(data) }),

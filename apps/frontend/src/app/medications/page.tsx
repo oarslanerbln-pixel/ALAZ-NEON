@@ -2,12 +2,24 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CheckCircle2, Circle, Loader2, Plus, Trash2, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { CheckCircle2, Circle, LogOut, Loader2, Plus, Trash2, X } from 'lucide-react';
 import { api, type Medication } from '@/lib/api';
+import { clearToken } from '@/lib/auth';
+import AuthGuard from '@/components/AuthGuard';
 
 const TIME_OPTIONS = ['Sabah', 'Öğle', 'Akşam', 'Gece'];
 
 export default function MedicationsPage() {
+  return (
+    <AuthGuard>
+      <MedicationsView />
+    </AuthGuard>
+  );
+}
+
+function MedicationsView() {
+  const router = useRouter();
   const [meds, setMeds] = useState<Medication[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +64,11 @@ export default function MedicationsPage() {
     }
   };
 
+  const handleLogout = () => {
+    clearToken();
+    router.push('/login');
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4 mb-4">
@@ -63,6 +80,13 @@ export default function MedicationsPage() {
         >
           {formOpen ? <X size={20} /> : <Plus size={20} />}
           {formOpen ? 'Vazgeç' : 'İlaç Ekle'}
+        </button>
+        <button
+          onClick={handleLogout}
+          aria-label="Çıkış yap"
+          className="p-2 text-gray-400 hover:text-red-400 transition-colors"
+        >
+          <LogOut size={24} />
         </button>
       </div>
 

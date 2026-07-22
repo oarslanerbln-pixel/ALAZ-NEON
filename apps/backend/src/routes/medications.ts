@@ -1,13 +1,13 @@
 import { Router } from 'express';
 import { prisma } from '../prisma.js';
-import { getDemoUserId } from '../demoUser.js';
+import { requireAuth } from '../middleware/requireAuth.js';
 
 export const medicationsRouter = Router();
+medicationsRouter.use(requireAuth);
 
 medicationsRouter.get('/', async (req, res) => {
-  const userId = await getDemoUserId();
   const medications = await prisma.medication.findMany({
-    where: { userId },
+    where: { userId: req.userId },
     orderBy: { createdAt: 'asc' },
   });
   res.json(medications);
@@ -19,9 +19,8 @@ medicationsRouter.post('/', async (req, res) => {
     return res.status(400).json({ error: 'name, dosage ve timeOfDay zorunludur' });
   }
 
-  const userId = await getDemoUserId();
   const medication = await prisma.medication.create({
-    data: { userId, name, dosage, timeOfDay },
+    data: { userId: req.userId!, name, dosage, timeOfDay },
   });
   res.status(201).json(medication);
 });
@@ -29,6 +28,11 @@ medicationsRouter.post('/', async (req, res) => {
 medicationsRouter.patch('/:id', async (req, res) => {
   const { id } = req.params;
   const { taken, name, dosage, timeOfDay } = req.body;
+
+  const owned = await prisma.medication.findFirst({ where: { id, userId: req.userId } });
+  if (!owned) {
+    return res.status(404).json({ error: 'İlaç bulunamadı' });
+  }
 
   const medication = await prisma.medication.update({
     where: { id },
@@ -44,6 +48,12 @@ medicationsRouter.patch('/:id', async (req, res) => {
 
 medicationsRouter.delete('/:id', async (req, res) => {
   const { id } = req.params;
+
+  const owned = await prisma.medication.findFirst({ where: { id, userId: req.userId } });
+  if (!owned) {
+    return res.status(404).json({ error: 'İlaç bulunamadı' });
+  }
+
   await prisma.medication.delete({ where: { id } });
   res.status(204).send();
 });
