@@ -4,13 +4,15 @@ import { useRef, useState } from 'react';
 import { Camera, Upload, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { extractTextFromImage } from '@/lib/ocr';
-import { api } from '@/lib/api';
+import { api, type MedicationCandidate } from '@/lib/api';
+import MedicationSuggestions from '@/components/MedicationSuggestions';
 
 type Stage = 'idle' | 'reading' | 'summarizing';
 
 export default function UploadDocument() {
   const [stage, setStage] = useState<Stage>('idle');
   const [summary, setSummary] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<MedicationCandidate[]>([]);
   const [error, setError] = useState<string | null>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -18,6 +20,7 @@ export default function UploadDocument() {
   const processFile = async (file: File) => {
     setError(null);
     setSummary(null);
+    setSuggestions([]);
     try {
       setStage('reading');
       const text = await extractTextFromImage(file);
@@ -28,6 +31,7 @@ export default function UploadDocument() {
       setStage('summarizing');
       const document = await api.createDocument(text);
       setSummary(document.summary);
+      setSuggestions(document.suggestedMedications);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Rapor işlenemedi.');
     } finally {
@@ -112,6 +116,8 @@ export default function UploadDocument() {
           <p className="whitespace-pre-line">{summary}</p>
         </div>
       )}
+
+      <MedicationSuggestions candidates={suggestions} />
     </div>
   );
 }

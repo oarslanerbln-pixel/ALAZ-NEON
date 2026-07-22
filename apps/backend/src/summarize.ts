@@ -34,3 +34,57 @@ export async function summarizeReport(originalText: string): Promise<string> {
   }
   return textBlock.text;
 }
+
+export type MedicationCandidate = {
+  name: string;
+  dosage: string;
+  timeOfDay: string;
+};
+
+const TIME_OF_DAY_VALUES = ['Sabah', 'Öğle', 'Akşam', 'Gece'] as const;
+
+const EXTRACT_SYSTEM_PROMPT = `Sen bir tıbbi rapor/reçete metninden bahsedilen ilaçları çıkaran bir asistansın.
+Metinde açıkça adı geçen ilaçları listele. Emin olmadığın, tahmin gerektiren hiçbir ilacı ekleme.
+Metinde hiç ilaç adı geçmiyorsa boş bir liste döndür. Yeni ilaç uydurma, sadece metinde yazılanı çıkar.`;
+
+export async function extractMedicationCandidates(originalText: string): Promise<MedicationCandidate[]> {
+  const message = await getClient().messages.create({
+    model: 'claude-sonnet-5',
+    max_tokens: 1024,
+    system: EXTRACT_SYSTEM_PROMPT,
+    messages: [{ role: 'user', content: originalText }],
+    tools: [
+      {
+        name: 'record_medications',
+        description: 'Rapor metninde açıkça geçen ilaçları kaydet.',
+        input_schema: {
+          type: 'object',
+          properties: {
+            medications: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string', description: 'İlacın adı (raporda yazıldığı gibi)' },
+                  dosage: { type: 'string', description: 'Doz bilgisi, örn. "1 tablet" veya "500mg"' },
+                  timeOfDay: { type: 'string', enum: [...TIME_OF_DAY_VALUES], description: 'Kullanım zamanı, belirsizse Sabah' },
+                },
+                required: ['name', 'dosage', 'timeOfDay'],
+              },
+            },
+          },
+          required: ['medications'],
+        },
+      },
+    ],
+    tool_choice: { type: 'tool', name: 'record_medications' },
+  });
+
+  const toolUse = message.content.find((block) => block.type === 'tool_use');
+  if (!toolUse || toolUse.type !== 'tool_use') {
+    return [];
+  }
+
+  const input = toolUse.input as { medications?: MedicationCandidate[] };
+  return input.medications ?? [];
+}

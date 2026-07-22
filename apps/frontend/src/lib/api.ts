@@ -11,12 +11,19 @@ export type Medication = {
   lastTakenAt: string | null;
 };
 
+export type MedicationCandidate = {
+  name: string;
+  dosage: string;
+  timeOfDay: string;
+};
+
 export type Document = {
   id: string;
   originalText: string;
   summary: string;
   language: string;
   createdAt: string;
+  suggestedMedications: MedicationCandidate[];
 };
 
 export type AuthResult = {

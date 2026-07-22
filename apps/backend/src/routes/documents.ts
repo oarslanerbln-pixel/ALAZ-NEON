@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../prisma.js';
 import { requireAuth } from '../middleware/requireAuth.js';
-import { summarizeReport } from '../summarize.js';
+import { summarizeReport, extractMedicationCandidates } from '../summarize.js';
 
 export const documentsRouter = Router();
 documentsRouter.use(requireAuth);
@@ -28,8 +28,11 @@ documentsRouter.post('/', async (req, res) => {
     return res.status(502).json({ error: message });
   }
 
+  // Suggestions are best-effort: a failure here shouldn't block the summary the user actually asked for.
+  const suggestedMedications = await extractMedicationCandidates(originalText).catch(() => []);
+
   const document = await prisma.document.create({
     data: { userId: req.userId!, originalText, summary, language: language ?? 'tr' },
   });
-  res.status(201).json(document);
+  res.status(201).json({ ...document, suggestedMedications });
 });
