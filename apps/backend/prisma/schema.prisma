@@ -8,19 +8,21 @@ datasource db {
 }
 
 model User {
-  id           String       @id @default(uuid())
-  email        String       @unique
-  passwordHash String
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  documents    Document[]
-  medications  Medication[]
+  id                String       @id @default(uuid())
+  email             String       @unique
+  passwordHash      String
+  consentAcceptedAt DateTime
+  consentVersion    String
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  documents         Document[]
+  medications       Medication[]
 }
 
 model Document {
   id           String   @id @default(uuid())
   userId       String
-  user         User     @relation(fields: [userId], references: [id])
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   originalText String
   summary      String
   language     String   @default("tr")
@@ -30,7 +32,7 @@ model Document {
 model Medication {
   id          String    @id @default(uuid())
   userId      String
-  user        User      @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   name        String
   dosage      String
   timeOfDay   String

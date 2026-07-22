@@ -30,6 +30,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [consentAccepted, setConsentAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const copy = COPY[mode];
@@ -39,7 +40,9 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     setError(null);
     setSubmitting(true);
     try {
-      const result = mode === 'login' ? await api.login(email, password) : await api.register(email, password);
+      const result = mode === 'login'
+        ? await api.login(email, password)
+        : await api.register(email, password, consentAccepted);
       setToken(result.token);
       router.push('/');
     } catch (err) {
@@ -79,11 +82,27 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           />
         </div>
 
+        {mode === 'register' && (
+          <label className="flex items-start gap-3 text-sm text-gray-300">
+            <input
+              type="checkbox"
+              checked={consentAccepted}
+              onChange={e => setConsentAccepted(e.target.checked)}
+              required
+              className="mt-1 h-5 w-5 accent-blue-600 shrink-0"
+            />
+            <span>
+              <Link href="/kvkk" className="text-blue-400 font-bold">KVKK Aydınlatma Metni</Link>&apos;ni
+              okudum, sağlık verilerimin işlenmesine açık rıza veriyorum.
+            </span>
+          </label>
+        )}
+
         {error && <p className="text-red-400" role="alert">{error}</p>}
 
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || (mode === 'register' && !consentAccepted)}
           className="flex items-center justify-center gap-2 p-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg font-bold transition-colors"
         >
           {submitting && <Loader2 size={20} className="animate-spin" />}

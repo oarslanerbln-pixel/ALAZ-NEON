@@ -81,6 +81,7 @@ function MedicationsView() {
           {formOpen ? <X size={20} /> : <Plus size={20} />}
           {formOpen ? 'Vazgeç' : 'İlaç Ekle'}
         </button>
+        <Link href="/account" className="px-3 py-2 bg-gray-800 rounded-lg font-bold">Hesabım</Link>
         <button
           onClick={handleLogout}
           aria-label="Çıkış yap"

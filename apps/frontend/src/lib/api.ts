@@ -24,6 +24,12 @@ export type AuthResult = {
   user: { id: string; email: string };
 };
 
+export type Profile = {
+  id: string;
+  email: string;
+  consentAcceptedAt: string;
+};
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken();
   const res = await fetch(`${API_URL}${path}`, {
@@ -47,10 +53,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  register: (email: string, password: string) =>
-    request<AuthResult>('/auth/register', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  register: (email: string, password: string, consentAccepted: boolean) =>
+    request<AuthResult>('/auth/register', { method: 'POST', body: JSON.stringify({ email, password, consentAccepted }) }),
   login: (email: string, password: string) =>
     request<AuthResult>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  getProfile: () => request<Profile>('/auth/me'),
+  deleteAccount: () => request<void>('/auth/me', { method: 'DELETE' }),
   getMedications: () => request<Medication[]>('/medications'),
   createMedication: (data: { name: string; dosage: string; timeOfDay: string }) =>
     request<Medication>('/medications', { method: 'POST', body: JSON.stringify(data) }),
