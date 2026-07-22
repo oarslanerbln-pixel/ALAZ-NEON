@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import { authRouter } from './routes/auth.js';
 import { medicationsRouter } from './routes/medications.js';
 import { documentsRouter } from './routes/documents.js';
+import { pushRouter } from './routes/push.js';
+import { startReminderScheduler } from './reminderScheduler.js';
 
 dotenv.config();
 
@@ -19,9 +21,11 @@ app.get('/health', (req, res) => {
 app.use('/auth', authRouter);
 app.use('/medications', medicationsRouter);
 app.use('/documents', documentsRouter);
+app.use('/push', pushRouter);
 
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  startReminderScheduler();
 });

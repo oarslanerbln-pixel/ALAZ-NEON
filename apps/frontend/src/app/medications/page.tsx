@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, Circle, LogOut, Loader2, Plus, Trash2, X } from 'lucide-react';
+import { Bell, CheckCircle2, Circle, LogOut, Loader2, Plus, Trash2, X } from 'lucide-react';
 import { api, type Medication } from '@/lib/api';
 import { clearToken } from '@/lib/auth';
+import { enablePushReminders, getPushSubscriptionStatus } from '@/lib/push';
 import AuthGuard from '@/components/AuthGuard';
 
 const TIME_OPTIONS = ['Sabah', 'Öğle', 'Akşam', 'Gece'];
@@ -91,6 +92,8 @@ function MedicationsView() {
         </button>
       </div>
 
+      <NotificationBanner />
+
       {formOpen && (
         <AddMedicationForm onSubmit={addMedication} onError={setError} />
       )}
@@ -134,6 +137,57 @@ function MedicationsView() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function NotificationBanner() {
+  const [status, setStatus] = useState<'granted' | 'denied' | 'default' | 'unsupported' | 'loading'>('loading');
+  const [enabling, setEnabling] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getPushSubscriptionStatus().then(setStatus);
+  }, []);
+
+  const handleEnable = async () => {
+    setEnabling(true);
+    setError(null);
+    try {
+      await enablePushReminders();
+      setStatus('granted');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Bildirimler açılamadı.');
+    } finally {
+      setEnabling(false);
+    }
+  };
+
+  if (status === 'loading' || status === 'unsupported' || status === 'granted') {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-col gap-2 p-4 bg-blue-950 border-2 border-blue-800 rounded-xl">
+      <div className="flex items-center gap-3">
+        <Bell size={24} className="text-blue-300 shrink-0" />
+        <p className="text-sm text-gray-200 flex-1">
+          {status === 'denied'
+            ? 'Bildirimler engellenmiş. Tarayıcı ayarlarından MediSade için bildirimlere izin verirsen ilaç zamanı geldiğinde hatırlatabiliriz.'
+            : 'İlaç zamanı geldiğinde hatırlatma bildirimi almak ister misin?'}
+        </p>
+      </div>
+      {status === 'default' && (
+        <button
+          onClick={handleEnable}
+          disabled={enabling}
+          className="flex items-center justify-center gap-2 p-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg font-bold transition-colors"
+        >
+          {enabling && <Loader2 size={18} className="animate-spin" />}
+          Bildirimleri Aç
+        </button>
+      )}
+      {error && <p className="text-red-400 text-sm">{error}</p>}
     </div>
   );
 }

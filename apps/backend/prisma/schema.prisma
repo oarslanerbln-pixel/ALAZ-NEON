@@ -8,15 +8,26 @@ datasource db {
 }
 
 model User {
-  id                String       @id @default(uuid())
-  email             String       @unique
-  passwordHash      String
-  consentAcceptedAt DateTime
-  consentVersion    String
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
-  documents         Document[]
-  medications       Medication[]
+  id                 String             @id @default(uuid())
+  email              String             @unique
+  passwordHash       String
+  consentAcceptedAt  DateTime
+  consentVersion     String
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  documents          Document[]
+  medications        Medication[]
+  pushSubscriptions  PushSubscription[]
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
 }
 
 model Document {

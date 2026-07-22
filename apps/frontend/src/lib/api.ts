@@ -75,4 +75,7 @@ export const api = {
     request<void>(`/medications/${id}`, { method: 'DELETE' }),
   createDocument: (originalText: string) =>
     request<Document>('/documents', { method: 'POST', body: JSON.stringify({ originalText }) }),
+  getPushPublicKey: () => request<{ publicKey: string }>('/push/public-key'),
+  subscribePush: (subscription: { endpoint: string; keys: { p256dh: string; auth: string } }) =>
+    request<{ ok: true }>('/push/subscribe', { method: 'POST', body: JSON.stringify(subscription) }),
 };
