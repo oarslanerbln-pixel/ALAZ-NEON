@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -32,12 +33,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-white text-lg`}
       >
-        <div className="flex flex-col min-h-screen max-w-md mx-auto w-full">
-          <main className="flex-grow p-4">{children}</main>
-          <footer className="p-4 bg-gray-900 text-center text-sm border-t border-gray-800 text-yellow-400 font-bold">
-            Bu bir tıbbi tavsiye değildir, yalnızca dil sadeleştirme aracıdır. Lütfen doktorunuza danışın.
-          </footer>
-        </div>
+        <AuthProvider>
+          <div className="flex flex-col min-h-screen max-w-md mx-auto w-full">
+            <main className="flex-grow p-4">{children}</main>
+            <footer className="p-4 bg-gray-900 text-center text-sm border-t border-gray-800 text-yellow-400 font-bold">
+              Bu bir tıbbi tavsiye değildir, yalnızca dil sadeleştirme aracıdır. Lütfen doktorunuza danışın.
+            </footer>
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );

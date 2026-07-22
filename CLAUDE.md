@@ -14,10 +14,9 @@ The UI is Turkish, mobile-first, and high-contrast (large text, dark theme) for 
 users. A permanent disclaimer footer states the app is **not medical advice** — only a language
 simplification tool. Keep that disclaimer intact and never present output as clinical advice.
 
-The project is currently an **early skeleton/MVP**: the frontend renders working UI with mocked
-data (scan is simulated, medications are a hardcoded list), and the backend exposes only a
-`/health` endpoint. The Prisma schema and dependencies (OCR, Supabase, JWT) signal the intended
-direction but are not yet wired end-to-end.
+The project is an evolving **MVP**: authentication (JWT + bcrypt) and İlaçlarım (medications) are
+now wired end-to-end against a real PostgreSQL database via Prisma. Rapor Tara (report scanning)
+is still simulated on the frontend — OCR (`tesseract.js`) and AI summarization are not yet wired up.
 
 ## Repository layout
 
@@ -29,12 +28,16 @@ This is a **pnpm workspace monorepo** (`pnpm-workspace.yaml` → `apps/*`, `pack
 ├── pnpm-workspace.yaml     # Workspaces: apps/*, packages/*
 ├── apps/
 │   ├── frontend/           # Next.js 16 + React 19 PWA (the active app)
-│   │   ├── src/app/        # App Router: /, /scan, /medications
+│   │   ├── src/app/        # App Router: /, /login, /register, /scan, /medications
 │   │   ├── src/components/ # UploadDocument.tsx, etc.
+│   │   ├── src/lib/        # api.ts (backend fetch client), auth-context.tsx
 │   │   ├── AGENTS.md       # ⚠️ Next.js version warning (read it)
 │   │   └── CLAUDE.md       # Re-exports AGENTS.md via @AGENTS.md
 │   └── backend/            # Express + Prisma + PostgreSQL API
-│       ├── src/index.ts    # Express app (currently only /health)
+│       ├── src/index.ts    # Express app: /health, /auth/*, /medications/*
+│       ├── src/routes/     # auth.ts (register/login), medications.ts (CRUD)
+│       ├── src/middleware/ # auth.ts — requireAuth JWT middleware
+│       ├── src/lib/        # prisma.ts (client + driver adapter), asyncHandler.ts
 │       └── prisma/schema.prisma
 ├── src/                    # ⚠️ LEGACY duplicate of the frontend app (see below)
 └── .Jules/palette.md       # Engineering learnings log
@@ -59,13 +62,25 @@ deletion of the root `src/` rather than keeping the two copies in sync.
 - `@supabase/supabase-js` for backend-as-a-service data/auth
 - `next-pwa` for PWA/manifest support
 - `clsx` + `tailwind-merge` for className composition
+- `src/lib/api.ts` — thin fetch client for the backend (`NEXT_PUBLIC_API_URL`, defaults to
+  `http://localhost:3001`); `src/lib/auth-context.tsx` — client-side auth state (JWT + user in
+  `localStorage`, synced via `useSyncExternalStore`, wrapped around `children` in `layout.tsx`)
 
 **Backend** (`apps/backend`)
 - Express 4, ES modules (`"type": "module"`)
-- Prisma (`@prisma/client` v7) against **PostgreSQL**; `jsonwebtoken` for auth, `pg`, `dotenv`, `cors`
-- Data model (`prisma/schema.prisma`): `User`, `Document` (originalText + summary + language),
-  `Medication` (name, dosage, timeOfDay, taken, lastTakenAt). Reflects the intended data flow.
-- Requires `DATABASE_URL` in the environment (see `prisma.config.ts`).
+- Prisma (`@prisma/client` v7, keep in lockstep major version with the `prisma` CLI dependency)
+  against **PostgreSQL** via `@prisma/adapter-pg`; `jsonwebtoken` + `bcryptjs` for auth, `pg`, `dotenv`, `cors`
+- Data model (`prisma/schema.prisma`): `User` (email + hashed password), `Document` (originalText +
+  summary + language — not yet used by any route), `Medication` (name, dosage, timeOfDay, taken, lastTakenAt).
+- Routes: `GET /health`; `POST /auth/register`, `POST /auth/login` (return a JWT); `GET|POST /medications`,
+  `PATCH|DELETE /medications/:id` (all require `Authorization: Bearer <token>`, scoped to the caller's user).
+- Every async route handler is wrapped in `asyncHandler` (`src/lib/asyncHandler.ts`) and errors are
+  caught by a catch-all error middleware in `index.ts` — **Express 4 does not catch rejected promises
+  in async handlers on its own**, so a new route without `asyncHandler` can crash the whole process.
+- Requires `DATABASE_URL` and `JWT_SECRET` in the environment (see `apps/backend/.env.example`).
+  `prisma.config.ts` supplies `DATABASE_URL` to the Prisma CLI (`generate`/`migrate`); at runtime
+  `src/lib/prisma.ts` passes it to `PrismaClient` via a `PrismaPg` driver adapter — Prisma 7 no longer
+  reads a `url` field from the `datasource` block in `schema.prisma`.
 
 ## Development workflows
 
@@ -86,6 +101,12 @@ Per-app:
 - Backend: `pnpm --filter backend <dev|build>` (`build` = `tsc` → `dist/`)
 
 Prisma (from `apps/backend`, with `DATABASE_URL` set): `pnpm prisma generate`, `pnpm prisma migrate dev`.
+
+Copy `apps/backend/.env.example` → `.env` (needs `DATABASE_URL`, `JWT_SECRET`) and
+`apps/frontend/.env.example` → `.env.local` (needs `NEXT_PUBLIC_API_URL`) before running either app
+against a real database. After `pnpm install`, if you see an "Ignored build scripts" warning, run
+`pnpm approve-builds --all` (or rely on the `allowBuilds` list already checked into
+`pnpm-workspace.yaml`) so Prisma's engine binaries actually get built.
 
 There is **no test suite** yet. If you add tests, wire them into workspace scripts.
 
