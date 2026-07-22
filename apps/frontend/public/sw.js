@@ -11,8 +11,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(payload.title ?? 'MediSade', {
       body: payload.body ?? '',
-      icon: '/next.svg',
-      badge: '/next.svg',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
     })
   );
 });

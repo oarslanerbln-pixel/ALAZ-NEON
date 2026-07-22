@@ -4,7 +4,8 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "prisma generate && tsc",
+    "start": "prisma migrate deploy && node dist/index.js",
     "dev": "tsx watch src/index.ts"
   },
   "keywords": [],

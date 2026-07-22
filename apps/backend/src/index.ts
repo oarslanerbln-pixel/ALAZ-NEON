@@ -11,7 +11,9 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
+// CORS_ORIGIN unset (local dev) falls back to allowing any origin.
+const corsOrigin = process.env.CORS_ORIGIN;
+app.use(cors(corsOrigin ? { origin: corsOrigin } : {}));
 app.use(express.json());
 
 app.get('/health', (req, res) => {
