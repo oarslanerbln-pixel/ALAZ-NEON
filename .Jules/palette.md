@@ -9,3 +9,6 @@
 ## 2026-07-22 - Express 4 async routes need explicit error handling
 **Learning:** Express 4 does not catch rejected promises thrown from `async` route handlers. An unhandled Prisma error (e.g. database unreachable) inside a plain `async (req, res) => {...}` handler crashes the entire Node process instead of returning an error response — confirmed by reproducing it locally (an unreachable DB during `/auth/register` took the whole server down).
 **Action:** Wrap every async Express route handler with a small `asyncHandler` utility (`apps/backend/src/lib/asyncHandler.ts`) that forwards rejections to `next(err)`, and register a catch-all error-handling middleware (4-arg signature) as the last `app.use()` in `index.ts` so failures return a JSON 500 instead of taking the process down.
+## 2025-02-27 - Screen Reader Announcements for Dynamic Summaries
+**Learning:** Dynamically rendered non-urgent content (like scan results) needs explicit ARIA live regions, otherwise screen readers might miss them entirely.
+**Action:** Always wrap dynamic result containers in `role="status"` and `aria-live="polite"` to ensure they are announced without interrupting the user.
