@@ -91,7 +91,7 @@ export default function MedicationsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4 mb-4">
-        <Link href="/" className="px-4 py-2 bg-gray-800 rounded-lg font-bold">Geri</Link>
+        <Link href="/" className="px-4 py-2 bg-gray-800 rounded-lg font-bold focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400">Geri</Link>
         <h1 className="text-2xl font-bold">İlaçlarım</h1>
       </div>
 
@@ -121,7 +121,7 @@ export default function MedicationsPage() {
         <button
           type="submit"
           disabled={isAdding}
-          className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white p-3 rounded-lg font-bold transition-colors"
+          className="bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white p-3 rounded-lg font-bold transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400"
         >
           {isAdding ? 'Ekleniyor...' : 'Ekle'}
         </button>
@@ -146,7 +146,7 @@ export default function MedicationsPage() {
           >
             <button
               onClick={() => handleToggle(med)}
-              className="flex items-center gap-4 text-left flex-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-lg"
+              className="flex items-center gap-4 text-left flex-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400 rounded-lg"
               aria-pressed={med.taken}
               aria-label={`${med.name}, ${med.taken ? 'alındı, değiştirmek için dokun' : 'alınmadı, işaretlemek için dokun'}`}
             >
@@ -163,7 +163,7 @@ export default function MedicationsPage() {
             <button
               onClick={() => handleDelete(med.id)}
               aria-label={`${med.name} ilacını sil`}
-              className="p-2 text-red-400 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 rounded-lg"
+              className="p-2 text-red-400 hover:text-red-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400 rounded-lg"
             >
               <Trash2 size={24} />
             </button>
