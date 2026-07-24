@@ -1,13 +1,16 @@
+import './env.js';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import authRouter from './routes/auth.js';
 import medicationsRouter from './routes/medications.js';
-
-dotenv.config();
+import documentsRouter from './routes/documents.js';
 
 if (!process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET ortam değişkeni tanımlı değil. Bkz. .env.example');
+}
+
+if (!process.env.ANTHROPIC_API_KEY) {
+  throw new Error('ANTHROPIC_API_KEY ortam değişkeni tanımlı değil. Bkz. .env.example');
 }
 
 const app = express();
@@ -21,6 +24,7 @@ app.get('/health', (req, res) => {
 
 app.use('/auth', authRouter);
 app.use('/medications', medicationsRouter);
+app.use('/documents', documentsRouter);
 
 app.use((err: unknown, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err);
