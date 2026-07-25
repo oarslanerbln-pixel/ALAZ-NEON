@@ -9,3 +9,6 @@
 ## 2026-07-22 - Express 4 async routes need explicit error handling
 **Learning:** Express 4 does not catch rejected promises thrown from `async` route handlers. An unhandled Prisma error (e.g. database unreachable) inside a plain `async (req, res) => {...}` handler crashes the entire Node process instead of returning an error response — confirmed by reproducing it locally (an unreachable DB during `/auth/register` took the whole server down).
 **Action:** Wrap every async Express route handler with a small `asyncHandler` utility (`apps/backend/src/lib/asyncHandler.ts`) that forwards rejections to `next(err)`, and register a catch-all error-handling middleware (4-arg signature) as the last `app.use()` in `index.ts` so failures return a JSON 500 instead of taking the process down.
+## 2026-07-25 - High Contrast Focus & Disabled States
+**Learning:** High contrast focus rings (ring-4 ring-yellow-400) and explicit disabled states (cursor-not-allowed) are critical for keyboard navigation and clarity in dark mode for elderly users.
+**Action:** Always add focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none and disabled:cursor-not-allowed to interactive elements.
