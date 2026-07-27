@@ -63,7 +63,7 @@ export default function RegisterPage() {
             aria-describedby="password-hint"
             className="p-4 rounded-xl bg-gray-800 border-2 border-gray-600 focus-visible:outline-none focus-visible:border-blue-500"
           />
-          <p id="password-hint" className="text-gray-400 text-sm">En az 8 karakter olmalı.</p>
+          <p id="password-hint" className="text-gray-400 text-base">En az 8 karakter olmalı.</p>
         </div>
 
         {error && (

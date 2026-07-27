@@ -9,3 +9,7 @@
 ## 2026-07-22 - Express 4 async routes need explicit error handling
 **Learning:** Express 4 does not catch rejected promises thrown from `async` route handlers. An unhandled Prisma error (e.g. database unreachable) inside a plain `async (req, res) => {...}` handler crashes the entire Node process instead of returning an error response — confirmed by reproducing it locally (an unreachable DB during `/auth/register` took the whole server down).
 **Action:** Wrap every async Express route handler with a small `asyncHandler` utility (`apps/backend/src/lib/asyncHandler.ts`) that forwards rejections to `next(err)`, and register a catch-all error-handling middleware (4-arg signature) as the last `app.use()` in `index.ts` so failures return a JSON 500 instead of taking the process down.
+
+## 2026-07-27 - Minimum Font Size Accessibility
+**Learning:** To adhere to MediSade's WCAG 2.1 AA requirement (especially given its target demographic of elderly users), text elements cannot fall below a 16px minimum font size. Using Tailwind's `text-sm` class results in 14px text which violates this rule, even for secondary information like disclaimers or input hints.
+**Action:** Avoid `text-sm` entirely in this UI. Always ensure text uses at least `text-base` for readability.
