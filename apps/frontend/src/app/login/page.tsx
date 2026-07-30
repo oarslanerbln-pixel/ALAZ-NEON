@@ -72,7 +72,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white p-4 rounded-xl text-xl font-bold transition-colors"
+          className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white p-4 rounded-xl text-xl font-bold transition-colors"
         >
           {isSubmitting ? 'Giriş yapılıyor...' : 'Giriş Yap'}
         </button>

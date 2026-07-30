@@ -121,7 +121,7 @@ export default function MedicationsPage() {
         <button
           type="submit"
           disabled={isAdding}
-          className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white p-3 rounded-lg font-bold transition-colors"
+          className="bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white p-3 rounded-lg font-bold transition-colors"
         >
           {isAdding ? 'Ekleniyor...' : 'Ekle'}
         </button>
