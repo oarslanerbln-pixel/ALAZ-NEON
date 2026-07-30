@@ -102,26 +102,26 @@ export default function MedicationsPage() {
           onChange={(e) => setName(e.target.value)}
           placeholder="İlaç adı (örn: Parol 500mg)"
           aria-label="İlaç adı"
-          className="p-3 rounded-lg bg-gray-800 border-2 border-gray-600 focus-visible:outline-none focus-visible:border-blue-500"
+          className="p-3 rounded-lg bg-gray-800 border-2 border-gray-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400"
         />
         <input
           value={dosage}
           onChange={(e) => setDosage(e.target.value)}
           placeholder="Doz (örn: 1 tablet)"
           aria-label="Doz"
-          className="p-3 rounded-lg bg-gray-800 border-2 border-gray-600 focus-visible:outline-none focus-visible:border-blue-500"
+          className="p-3 rounded-lg bg-gray-800 border-2 border-gray-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400"
         />
         <input
           value={timeOfDay}
           onChange={(e) => setTimeOfDay(e.target.value)}
           placeholder="Zaman (örn: Sabah)"
           aria-label="Zaman"
-          className="p-3 rounded-lg bg-gray-800 border-2 border-gray-600 focus-visible:outline-none focus-visible:border-blue-500"
+          className="p-3 rounded-lg bg-gray-800 border-2 border-gray-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400"
         />
         <button
           type="submit"
           disabled={isAdding}
-          className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white p-3 rounded-lg font-bold transition-colors"
+          className="bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white p-3 rounded-lg font-bold transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400"
         >
           {isAdding ? 'Ekleniyor...' : 'Ekle'}
         </button>
@@ -146,7 +146,7 @@ export default function MedicationsPage() {
           >
             <button
               onClick={() => handleToggle(med)}
-              className="flex items-center gap-4 text-left flex-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-lg"
+              className="flex items-center gap-4 text-left flex-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400 rounded-lg"
               aria-pressed={med.taken}
               aria-label={`${med.name}, ${med.taken ? 'alındı, değiştirmek için dokun' : 'alınmadı, işaretlemek için dokun'}`}
             >
