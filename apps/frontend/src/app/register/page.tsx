@@ -75,7 +75,7 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white p-4 rounded-xl text-xl font-bold transition-colors"
+          className="bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white p-4 rounded-xl text-xl font-bold transition-colors"
         >
           {isSubmitting ? 'Kayıt oluşturuluyor...' : 'Kayıt Ol'}
         </button>

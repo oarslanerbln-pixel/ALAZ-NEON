@@ -9,3 +9,6 @@
 ## 2026-07-22 - Express 4 async routes need explicit error handling
 **Learning:** Express 4 does not catch rejected promises thrown from `async` route handlers. An unhandled Prisma error (e.g. database unreachable) inside a plain `async (req, res) => {...}` handler crashes the entire Node process instead of returning an error response — confirmed by reproducing it locally (an unreachable DB during `/auth/register` took the whole server down).
 **Action:** Wrap every async Express route handler with a small `asyncHandler` utility (`apps/backend/src/lib/asyncHandler.ts`) that forwards rejections to `next(err)`, and register a catch-all error-handling middleware (4-arg signature) as the last `app.use()` in `index.ts` so failures return a JSON 500 instead of taking the process down.
+## 2026-07-31 - Enhance Disabled State Feedback
+**Learning:** Relying solely on `opacity-50` for disabled buttons can leave users uncertain about the button's interactive state, as the default pointer cursor might still appear on hover.
+**Action:** Always combine `disabled:opacity-50` with `disabled:cursor-not-allowed` in Tailwind to provide explicit visual feedback that the element is not currently interactive.
