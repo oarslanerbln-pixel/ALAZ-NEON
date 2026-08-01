@@ -17,13 +17,12 @@ model User {
 }
 
 model Document {
-  id           String   @id @default(uuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id])
-  originalText String
-  summary      String
-  language     String   @default("tr")
-  createdAt    DateTime @default(now())
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+  encryptedSummary String
+  language         String   @default("tr")
+  createdAt        DateTime @default(now())
 }
 
 model Medication {
