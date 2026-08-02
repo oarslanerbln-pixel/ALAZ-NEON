@@ -9,3 +9,7 @@
 ## 2026-07-22 - Express 4 async routes need explicit error handling
 **Learning:** Express 4 does not catch rejected promises thrown from `async` route handlers. An unhandled Prisma error (e.g. database unreachable) inside a plain `async (req, res) => {...}` handler crashes the entire Node process instead of returning an error response — confirmed by reproducing it locally (an unreachable DB during `/auth/register` took the whole server down).
 **Action:** Wrap every async Express route handler with a small `asyncHandler` utility (`apps/backend/src/lib/asyncHandler.ts`) that forwards rejections to `next(err)`, and register a catch-all error-handling middleware (4-arg signature) as the last `app.use()` in `index.ts` so failures return a JSON 500 instead of taking the process down.
+
+## 2026-08-02 - High-Visibility Focus Rings on Links
+**Learning:** Next.js Links styled with background colors via Tailwind CSS lack sufficient default focus indicators for keyboard navigation, particularly in high-contrast or dark mode environments.
+**Action:** Always explicitly define 'focus-visible' styles (e.g., 'focus-visible:ring-4 focus-visible:ring-yellow-400 focus-visible:outline-none') on interactive elements like Links and buttons to ensure WCAG AA compliance.
