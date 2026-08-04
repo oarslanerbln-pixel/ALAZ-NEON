@@ -12,7 +12,7 @@ const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 
 export default function UploadDocument() {
-  const { token } = useAuth();
+  const { user } = useAuth();
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -103,12 +103,12 @@ export default function UploadDocument() {
 
     setRawText(text);
 
-    if (!token) return; // Giriş yapılmamış: özetleme/kayıt atlanır, ham metin gösterilir.
+    if (!user) return; // Giriş yapılmamış: özetleme/kayıt atlanır, ham metin gösterilir.
 
     setIsSummarizing(true);
     setSummarizeError(null);
     try {
-      const doc = await createDocument(token, text);
+      const doc = await createDocument(text);
       setSummary(doc.summary);
     } catch (err) {
       setSummarizeError(err instanceof ApiError ? err.message : 'Özetleme sırasında bir hata oluştu.');
@@ -242,7 +242,7 @@ export default function UploadDocument() {
             <p role="alert" aria-live="assertive" className="text-sm text-red-400 mb-4">
               {summarizeError}
             </p>
-          ) : !token ? (
+          ) : !user ? (
             <p className="text-sm text-gray-400 mb-4">
               Bu metni yapay zekayla sadeleştirmek ve kaydetmek için{' '}
               <Link href="/login" className="text-blue-400 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded">

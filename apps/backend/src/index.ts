@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
@@ -20,8 +21,13 @@ const allowedOrigins = (process.env.FRONTEND_URL ?? 'http://localhost:3000')
   .map((origin) => origin.trim());
 
 app.use(helmet());
-app.use(cors({ origin: allowedOrigins }));
+// credentials: true is required so the browser sends/accepts the httpOnly auth
+// cookie cross-origin (frontend and backend run on different ports/origins in
+// dev); CORS forbids origin: '*' together with credentials, so this only works
+// because `allowedOrigins` is always an explicit allowlist, never a wildcard.
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
+app.use(cookieParser());
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

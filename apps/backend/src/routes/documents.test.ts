@@ -6,6 +6,7 @@ vi.mock('../lib/anthropic.js', () => ({
 }));
 
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma.js';
@@ -14,6 +15,7 @@ import documentsRouter from './documents.js';
 
 const app = express();
 app.use(express.json());
+app.use(cookieParser());
 app.use('/documents', documentsRouter);
 
 function tokenFor(userId: string) {
@@ -35,7 +37,7 @@ describe('GET /documents', () => {
 
     const res = await request(app)
       .get('/documents')
-      .set('Authorization', `Bearer ${tokenFor('u1')}`);
+      .set('Cookie', `token=${tokenFor('u1')}`);
 
     expect(res.status).toBe(200);
     expect(prisma.document.findMany).toHaveBeenCalledWith(
@@ -59,7 +61,7 @@ describe('POST /documents', () => {
   it('boş metinde 400 döner', async () => {
     const res = await request(app)
       .post('/documents')
-      .set('Authorization', `Bearer ${tokenFor('u1')}`)
+      .set('Cookie', `token=${tokenFor('u1')}`)
       .send({ originalText: '' });
 
     expect(res.status).toBe(400);
@@ -71,7 +73,7 @@ describe('POST /documents', () => {
 
     const res = await request(app)
       .post('/documents')
-      .set('Authorization', `Bearer ${tokenFor('u1')}`)
+      .set('Cookie', `token=${tokenFor('u1')}`)
       .send({ originalText: 'Test rapor metni.' });
 
     expect(res.status).toBe(503);
@@ -83,7 +85,7 @@ describe('POST /documents', () => {
 
     const res = await request(app)
       .post('/documents')
-      .set('Authorization', `Bearer ${tokenFor('u1')}`)
+      .set('Cookie', `token=${tokenFor('u1')}`)
       .send({ originalText: 'Test rapor metni.' });
 
     expect(res.status).toBe(502);
@@ -96,7 +98,7 @@ describe('POST /documents', () => {
 
     const res = await request(app)
       .post('/documents')
-      .set('Authorization', `Bearer ${tokenFor('u1')}`)
+      .set('Cookie', `token=${tokenFor('u1')}`)
       .send({ originalText: 'Test rapor metni.' });
 
     expect(res.status).toBe(201);
@@ -118,7 +120,7 @@ describe('DELETE /documents/:id', () => {
 
     const res = await request(app)
       .delete('/documents/d1')
-      .set('Authorization', `Bearer ${tokenFor('u1')}`);
+      .set('Cookie', `token=${tokenFor('u1')}`);
 
     expect(res.status).toBe(404);
     expect(prisma.document.findFirst).toHaveBeenCalledWith(

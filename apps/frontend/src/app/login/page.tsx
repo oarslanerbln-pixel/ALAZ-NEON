@@ -19,8 +19,8 @@ export default function LoginPage() {
     setError(null);
     setIsSubmitting(true);
     try {
-      const { token, user } = await login(email, password);
-      signIn(token, user);
+      const { user } = await login(email, password);
+      signIn(user);
       router.push('/medications');
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Giriş yapılamadı. Lütfen tekrar deneyin.');

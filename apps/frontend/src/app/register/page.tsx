@@ -19,8 +19,8 @@ export default function RegisterPage() {
     setError(null);
     setIsSubmitting(true);
     try {
-      const { token, user } = await register(email, password);
-      signIn(token, user);
+      const { user } = await register(email, password);
+      signIn(user);
       router.push('/medications');
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Kayıt oluşturulamadı. Lütfen tekrar deneyin.');

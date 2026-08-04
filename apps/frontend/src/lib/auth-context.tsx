@@ -1,94 +1,61 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useSyncExternalStore, ReactNode } from 'react';
-import type { AuthUser } from '@/lib/api';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
+import { getMe, logout as apiLogout, ApiError, type AuthUser } from '@/lib/api';
 
 type AuthContextValue = {
-  token: string | null;
   user: AuthUser | null;
   isLoading: boolean;
-  signIn: (token: string, user: AuthUser) => void;
+  signIn: (user: AuthUser) => void;
   signOut: () => void;
 };
 
-type Session = { token: string | null; user: AuthUser | null };
-
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-const TOKEN_KEY = 'medisade_token';
-const USER_KEY = 'medisade_user';
-
-const EMPTY_SESSION: Session = { token: null, user: null };
-
-const listeners = new Set<() => void>();
-let cachedSession: Session | null = null;
-
-function readSessionFromStorage(): Session {
-  const token = localStorage.getItem(TOKEN_KEY);
-  const rawUser = localStorage.getItem(USER_KEY);
-
-  if (!token || !rawUser) {
-    return EMPTY_SESSION;
-  }
-
-  try {
-    return { token, user: JSON.parse(rawUser) };
-  } catch {
-    return EMPTY_SESSION;
-  }
-}
-
-function getSnapshot(): Session {
-  if (cachedSession === null) {
-    cachedSession = readSessionFromStorage();
-  }
-  return cachedSession;
-}
-
-function getServerSnapshot(): Session {
-  return EMPTY_SESSION;
-}
-
-function subscribe(callback: () => void) {
-  listeners.add(callback);
-  return () => listeners.delete(callback);
-}
-
-function writeSession(session: Session) {
-  if (session.token && session.user) {
-    localStorage.setItem(TOKEN_KEY, session.token);
-    localStorage.setItem(USER_KEY, JSON.stringify(session.user));
-  } else {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-  }
-  cachedSession = session;
-  listeners.forEach((listener) => listener());
-}
-
-function useHasHydrated() {
-  return useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false
-  );
-}
-
+// Oturum artık tamamen httpOnly cookie üzerinden yönetiliyor — token'ın
+// kendisi JS'e hiç görünmüyor. Bu context yalnızca "kim giriş yapmış"
+// bilgisini (id, email) tutuyor; sayfa yüklendiğinde GET /auth/me ile
+// cookie'nin geçerli olup olmadığı sorgulanıp bu state hydrate ediliyor.
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const session = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const hasHydrated = useHasHydrated();
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const signIn = useCallback((newToken: string, newUser: AuthUser) => {
-    writeSession({ token: newToken, user: newUser });
+  useEffect(() => {
+    let cancelled = false;
+
+    getMe()
+      .then(({ user }) => {
+        if (!cancelled) setUser(user);
+      })
+      .catch(() => {
+        if (!cancelled) setUser(null);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const signIn = useCallback((newUser: AuthUser) => {
+    setUser(newUser);
   }, []);
 
   const signOut = useCallback(() => {
-    writeSession(EMPTY_SESSION);
+    setUser(null);
+    // Cookie'yi temizlemek sunucu tarafında yapılmalı (httpOnly — JS silemez).
+    // Yanıtı beklemeden yerel state'i hemen temizliyoruz; ağ hatası olsa bile
+    // kullanıcı arayüzde çıkış yapmış görünür.
+    apiLogout().catch((err) => {
+      if (!(err instanceof ApiError)) console.error('Çıkış isteği başarısız:', err);
+    });
   }, []);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ ...session, isLoading: !hasHydrated, signIn, signOut }),
-    [session, hasHydrated, signIn, signOut]
+    () => ({ user, isLoading, signIn, signOut }),
+    [user, isLoading, signIn, signOut]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -10,7 +10,7 @@ export type Medication = {
 };
 
 export type AuthUser = { id: string; email: string };
-export type AuthResponse = { token: string; user: AuthUser };
+export type AuthResponse = { user: AuthUser };
 
 export type ReportDocument = {
   id: string;
@@ -22,12 +22,16 @@ export type ReportDocument = {
 
 export class ApiError extends Error {}
 
-async function request<T>(path: string, options: RequestInit = {}, token?: string | null): Promise<T> {
+// Auth durumu artık httpOnly bir cookie'de tutuluyor (JS'ten erişilemez —
+// XSS ile token sızdırma riskine karşı). `credentials: 'include'` her
+// istekte bu cookie'nin gönderilmesini/kabul edilmesini sağlıyor; ayrıca
+// token parametresi/Authorization header'ı yok artık, tarayıcı hallediyor.
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
   });
@@ -58,22 +62,30 @@ export function login(email: string, password: string) {
   });
 }
 
-export function getMedications(token: string) {
-  return request<Medication[]>('/medications', {}, token);
+export function logout() {
+  return request<void>('/auth/logout', { method: 'POST' });
 }
 
-export function addMedication(token: string, data: { name: string; dosage: string; timeOfDay: string }) {
-  return request<Medication>('/medications', { method: 'POST', body: JSON.stringify(data) }, token);
+export function getMe() {
+  return request<AuthResponse>('/auth/me');
 }
 
-export function toggleMedication(token: string, id: string, taken: boolean) {
-  return request<Medication>(`/medications/${id}`, { method: 'PATCH', body: JSON.stringify({ taken }) }, token);
+export function getMedications() {
+  return request<Medication[]>('/medications');
 }
 
-export function deleteMedication(token: string, id: string) {
-  return request<void>(`/medications/${id}`, { method: 'DELETE' }, token);
+export function addMedication(data: { name: string; dosage: string; timeOfDay: string }) {
+  return request<Medication>('/medications', { method: 'POST', body: JSON.stringify(data) });
 }
 
-export function createDocument(token: string, originalText: string) {
-  return request<ReportDocument>('/documents', { method: 'POST', body: JSON.stringify({ originalText }) }, token);
+export function toggleMedication(id: string, taken: boolean) {
+  return request<Medication>(`/medications/${id}`, { method: 'PATCH', body: JSON.stringify({ taken }) });
+}
+
+export function deleteMedication(id: string) {
+  return request<void>(`/medications/${id}`, { method: 'DELETE' });
+}
+
+export function createDocument(originalText: string) {
+  return request<ReportDocument>('/documents', { method: 'POST', body: JSON.stringify({ originalText }) });
 }

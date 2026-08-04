@@ -1,13 +1,13 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import { AUTH_COOKIE_NAME } from '../lib/authCookie.js';
 
 export interface AuthRequest extends Request {
   userId?: string;
 }
 
 export function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
-  const header = req.headers.authorization;
-  const token = header?.startsWith('Bearer ') ? header.slice(7) : undefined;
+  const token: string | undefined = req.cookies?.[AUTH_COOKIE_NAME];
 
   if (!token) {
     res.status(401).json({ error: 'Yetkilendirme gerekli.' });

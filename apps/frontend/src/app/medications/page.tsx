@@ -16,7 +16,7 @@ import {
 
 export default function MedicationsPage() {
   const router = useRouter();
-  const { token, isLoading: isAuthLoading } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [meds, setMeds] = useState<Medication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,21 +29,20 @@ export default function MedicationsPage() {
   useEffect(() => {
     if (isAuthLoading) return;
 
-    if (!token) {
+    if (!user) {
       router.push('/login');
       return;
     }
 
-    getMedications(token)
+    getMedications()
       .then(setMeds)
       .catch((err) => setError(err instanceof ApiError ? err.message : 'İlaçlar yüklenemedi.'))
       .finally(() => setIsLoading(false));
-  }, [token, isAuthLoading, router]);
+  }, [user, isAuthLoading, router]);
 
   const handleToggle = async (med: Medication) => {
-    if (!token) return;
     try {
-      const updated = await toggleMedication(token, med.id, !med.taken);
+      const updated = await toggleMedication(med.id, !med.taken);
       setMeds((prev) => prev.map((m) => (m.id === med.id ? updated : m)));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'İlaç güncellenemedi.');
@@ -51,9 +50,8 @@ export default function MedicationsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!token) return;
     try {
-      await deleteMedication(token, id);
+      await deleteMedication(id);
       setMeds((prev) => prev.filter((m) => m.id !== id));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'İlaç silinemedi.');
@@ -62,12 +60,12 @@ export default function MedicationsPage() {
 
   const handleAdd = async (event: FormEvent) => {
     event.preventDefault();
-    if (!token || !name.trim() || !dosage.trim() || !timeOfDay.trim()) return;
+    if (!name.trim() || !dosage.trim() || !timeOfDay.trim()) return;
 
     setIsAdding(true);
     setError(null);
     try {
-      const med = await addMedication(token, { name, dosage, timeOfDay });
+      const med = await addMedication({ name, dosage, timeOfDay });
       setMeds((prev) => [...prev, med]);
       setName('');
       setDosage('');
@@ -79,7 +77,7 @@ export default function MedicationsPage() {
     }
   };
 
-  if (isAuthLoading || !token || isLoading) {
+  if (isAuthLoading || !user || isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
         <Loader2 size={48} className="animate-spin text-blue-300" />

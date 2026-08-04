@@ -4,6 +4,8 @@ import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
+import { requireAuth, AuthRequest } from '../middleware/auth.js';
+import { setAuthCookie, clearAuthCookie } from '../lib/authCookie.js';
 
 const router = Router();
 
@@ -41,7 +43,8 @@ router.post('/register', asyncHandler(async (req, res) => {
   });
 
   const token = signToken(user.id);
-  res.status(201).json({ token, user: { id: user.id, email: user.email } });
+  setAuthCookie(res, token);
+  res.status(201).json({ user: { id: user.id, email: user.email } });
 }));
 
 router.post('/login', asyncHandler(async (req, res) => {
@@ -59,7 +62,22 @@ router.post('/login', asyncHandler(async (req, res) => {
   }
 
   const token = signToken(user.id);
-  res.json({ token, user: { id: user.id, email: user.email } });
+  setAuthCookie(res, token);
+  res.json({ user: { id: user.id, email: user.email } });
+}));
+
+router.post('/logout', (req, res) => {
+  clearAuthCookie(res);
+  res.status(204).send();
+});
+
+router.get('/me', requireAuth, asyncHandler(async (req: AuthRequest, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.userId } });
+  if (!user) {
+    res.status(401).json({ error: 'Geçersiz veya süresi dolmuş oturum.' });
+    return;
+  }
+  res.json({ user: { id: user.id, email: user.email } });
 }));
 
 export default router;

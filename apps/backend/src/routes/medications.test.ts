@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 vi.mock('../lib/prisma.js');
 
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma.js';
@@ -10,6 +11,7 @@ import medicationsRouter from './medications.js';
 
 const app = express();
 app.use(express.json());
+app.use(cookieParser());
 app.use('/medications', medicationsRouter);
 
 function tokenFor(userId: string) {
@@ -31,7 +33,7 @@ describe('GET /medications', () => {
 
     const res = await request(app)
       .get('/medications')
-      .set('Authorization', `Bearer ${tokenFor('u1')}`);
+      .set('Cookie', `token=${tokenFor('u1')}`);
 
     expect(res.status).toBe(200);
     expect(prisma.medication.findMany).toHaveBeenCalledWith(
@@ -48,7 +50,7 @@ describe('POST /medications', () => {
   it('eksik alanlarda 400 döner', async () => {
     const res = await request(app)
       .post('/medications')
-      .set('Authorization', `Bearer ${tokenFor('u1')}`)
+      .set('Cookie', `token=${tokenFor('u1')}`)
       .send({ name: '' });
 
     expect(res.status).toBe(400);
@@ -59,7 +61,7 @@ describe('POST /medications', () => {
 
     const res = await request(app)
       .post('/medications')
-      .set('Authorization', `Bearer ${tokenFor('u1')}`)
+      .set('Cookie', `token=${tokenFor('u1')}`)
       .send({ name: 'Parol', dosage: '500mg', timeOfDay: 'sabah' });
 
     expect(res.status).toBe(201);
@@ -79,7 +81,7 @@ describe('DELETE /medications/:id', () => {
 
     const res = await request(app)
       .delete('/medications/m1')
-      .set('Authorization', `Bearer ${tokenFor('u1')}`);
+      .set('Cookie', `token=${tokenFor('u1')}`);
 
     expect(res.status).toBe(404);
     expect(prisma.medication.findFirst).toHaveBeenCalledWith(
