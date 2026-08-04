@@ -15,12 +15,12 @@ export default function Home() {
         <p className="text-gray-300 text-center">{user.email} olarak giriş yaptınız</p>
       )}
 
-      <Link href="/scan" className="w-full flex items-center justify-center gap-4 bg-blue-600 hover:bg-blue-700 text-white p-8 rounded-2xl text-2xl font-bold transition-colors">
+      <Link href="/scan" className="w-full flex items-center justify-center gap-4 bg-blue-600 hover:bg-blue-700 text-white p-8 rounded-2xl text-2xl font-bold transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400">
         <Camera size={48} />
         Rapor Tara
       </Link>
 
-      <Link href="/medications" className="w-full flex items-center justify-center gap-4 bg-green-600 hover:bg-green-700 text-white p-8 rounded-2xl text-2xl font-bold transition-colors">
+      <Link href="/medications" className="w-full flex items-center justify-center gap-4 bg-green-600 hover:bg-green-700 text-white p-8 rounded-2xl text-2xl font-bold transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400">
         <Pill size={48} />
         İlaçlarım
       </Link>
@@ -47,7 +47,7 @@ export default function Home() {
       {!isLoading && user && (
         <button
           onClick={signOut}
-          className="w-full flex items-center justify-center gap-3 bg-gray-800 hover:bg-gray-700 text-white p-4 rounded-xl text-lg font-bold transition-colors mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+          className="w-full flex items-center justify-center gap-3 bg-gray-800 hover:bg-gray-700 text-white p-4 rounded-xl text-lg font-bold transition-colors mt-2 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400"
         >
           <LogOut size={24} />
           Çıkış Yap

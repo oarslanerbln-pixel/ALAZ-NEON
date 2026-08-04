@@ -146,7 +146,7 @@ export default function MedicationsPage() {
           >
             <button
               onClick={() => handleToggle(med)}
-              className="flex items-center gap-4 text-left flex-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-lg"
+              className="flex items-center gap-4 text-left flex-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400 rounded-lg"
               aria-pressed={med.taken}
               aria-label={`${med.name}, ${med.taken ? 'alındı, değiştirmek için dokun' : 'alınmadı, işaretlemek için dokun'}`}
             >
@@ -163,7 +163,7 @@ export default function MedicationsPage() {
             <button
               onClick={() => handleDelete(med.id)}
               aria-label={`${med.name} ilacını sil`}
-              className="p-2 text-red-400 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 rounded-lg"
+              className="p-2 text-red-400 hover:text-red-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400 rounded-lg"
             >
               <Trash2 size={24} />
             </button>
