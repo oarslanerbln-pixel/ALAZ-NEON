@@ -19,17 +19,19 @@ model User {
 model Document {
   id           String   @id @default(uuid())
   userId       String
-  user         User     @relation(fields: [userId], references: [id])
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   originalText String
   summary      String
   language     String   @default("tr")
   createdAt    DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Medication {
   id          String    @id @default(uuid())
   userId      String
-  user        User      @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   name        String
   dosage      String
   timeOfDay   String
@@ -37,4 +39,6 @@ model Medication {
   lastTakenAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
 }

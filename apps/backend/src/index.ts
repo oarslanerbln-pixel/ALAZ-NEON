@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import authRouter from './routes/auth.js';
 import medicationsRouter from './routes/medications.js';
@@ -12,14 +14,27 @@ if (!process.env.JWT_SECRET) {
 
 const app = express();
 
-app.use(cors());
+const allowedOrigins = (process.env.FRONTEND_URL ?? 'http://localhost:3000')
+  .split(',')
+  .map((origin) => origin.trim());
+
+app.use(helmet());
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Çok fazla istek gönderildi. Lütfen daha sonra tekrar deneyin.' },
+});
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'MediSade API is running' });
 });
 
-app.use('/auth', authRouter);
+app.use('/auth', authLimiter, authRouter);
 app.use('/medications', medicationsRouter);
 
 app.use((err: unknown, req: express.Request, res: express.Response, next: express.NextFunction) => {

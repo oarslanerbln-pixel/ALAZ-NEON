@@ -1,29 +1,33 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
 
 const router = Router();
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const registerSchema = z.object({
+  email: z.string().trim().toLowerCase().email('Geçerli bir e-posta adresi girin.').max(255),
+  password: z.string().min(8, 'Şifre en az 8 karakter olmalı.').max(72, 'Şifre en fazla 72 karakter olabilir.'),
+});
+
+const loginSchema = z.object({
+  email: z.string().trim().toLowerCase().max(255),
+  password: z.string().max(72),
+});
 
 function signToken(userId: string) {
   return jwt.sign({ userId }, process.env.JWT_SECRET as string, { expiresIn: '7d' });
 }
 
 router.post('/register', asyncHandler(async (req, res) => {
-  const { email, password } = req.body ?? {};
-
-  if (typeof email !== 'string' || !EMAIL_REGEX.test(email)) {
-    res.status(400).json({ error: 'Geçerli bir e-posta adresi girin.' });
+  const parsed = registerSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Geçersiz istek.' });
     return;
   }
-
-  if (typeof password !== 'string' || password.length < 8) {
-    res.status(400).json({ error: 'Şifre en az 8 karakter olmalı.' });
-    return;
-  }
+  const { email, password } = parsed.data;
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
@@ -41,12 +45,12 @@ router.post('/register', asyncHandler(async (req, res) => {
 }));
 
 router.post('/login', asyncHandler(async (req, res) => {
-  const { email, password } = req.body ?? {};
-
-  if (typeof email !== 'string' || typeof password !== 'string') {
+  const parsed = loginSchema.safeParse(req.body);
+  if (!parsed.success) {
     res.status(400).json({ error: 'E-posta ve şifre gerekli.' });
     return;
   }
+  const { email, password } = parsed.data;
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || !(await bcrypt.compare(password, user.password))) {
