@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,7 +17,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "MediSade",
   description: "Tıbbi raporlarınızı ve ilaçlarınızı kolayca takip edin.",
-  manifest: "/manifest.json",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export const viewport = {
@@ -33,6 +37,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-white text-lg`}
       >
+        <ServiceWorkerRegister />
         <AuthProvider>
           <div className="flex flex-col min-h-screen max-w-md mx-auto w-full">
             <main className="flex-grow p-4">{children}</main>
