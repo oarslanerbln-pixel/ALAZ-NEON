@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { Camera, Upload, Loader2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { createWorker } from 'tesseract.js';
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
@@ -11,6 +12,7 @@ export default function UploadDocument() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<string | null>(null);
 
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -37,7 +39,7 @@ export default function UploadDocument() {
       return URL.createObjectURL(file);
     });
 
-    handleSimulateScan();
+    void runOcr(file);
   };
 
   const handleReset = () => {
@@ -47,16 +49,35 @@ export default function UploadDocument() {
     });
     setResult(null);
     setError(null);
+    setProgress(0);
     if (cameraInputRef.current) cameraInputRef.current.value = '';
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleSimulateScan = () => {
+  const runOcr = async (file: File) => {
     setIsScanning(true);
-    setTimeout(() => {
+    setProgress(0);
+
+    let worker: Awaited<ReturnType<typeof createWorker>> | null = null;
+    try {
+      worker = await createWorker('tur', 1, {
+        logger: (m) => {
+          if (m.status === 'recognizing text') {
+            setProgress(Math.round(m.progress * 100));
+          }
+        },
+      });
+      const { data } = await worker.recognize(file);
+      const text = data.text.trim();
+      setResult(
+        text || 'Görselden okunabilir bir metin bulunamadı. Lütfen daha net ve iyi aydınlatılmış bir fotoğrafla tekrar deneyin.'
+      );
+    } catch {
+      setError('Tarama sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+    } finally {
+      if (worker) await worker.terminate();
       setIsScanning(false);
-      setResult("Simüle edilmiş özet:\n1. Durumunuz Nedir?\n2. Doktorunuz Ne Demek İstiyor?\n3. Dikkat Etmeniz Gerekenler");
-    }, 3000);
+    }
   };
 
   return (
@@ -133,18 +154,21 @@ export default function UploadDocument() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             className="flex flex-col items-center gap-4 p-8 bg-blue-900 rounded-xl w-full"
-            role="alert"
-            aria-live="assertive"
+            role="status"
+            aria-live="polite"
           >
             <Loader2 size={48} className="animate-spin text-blue-300" />
-            <p className="text-xl font-bold text-center">Raporunuz taranıyor...</p>
+            <p className="text-xl font-bold text-center">Görsel taranıyor... %{progress}</p>
           </motion.div>
         )}
       </AnimatePresence>
 
       {result && (
         <div className="w-full bg-gray-800 p-6 rounded-xl mt-4">
-          <h2 className="text-2xl font-bold mb-4 text-yellow-400">Sonuç</h2>
+          <h2 className="text-2xl font-bold mb-2 text-yellow-400">Okunan Metin</h2>
+          <p className="text-sm text-gray-400 mb-4">
+            Bu, taranan görselden çıkarılan ham metindir. Yapay zeka destekli sadeleştirme henüz bu sürümde yok.
+          </p>
           <p className="whitespace-pre-line">{result}</p>
         </div>
       )}
