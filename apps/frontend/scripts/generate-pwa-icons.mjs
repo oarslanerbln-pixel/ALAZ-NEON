@@ -4,10 +4,10 @@
  * `zlib` module (no image library / native binary dependency — none was available in
  * the environment this was first written in: no ImageMagick, no `sharp`, no rsvg-convert).
  *
- * Design: a minimalist crescent (hilal) with a medical cross (artı/haç) sitting in its
- * opening — echoing the familiar crescent-and-star composition, with the star swapped
- * for a health cross. White symbol on a turquoise background (brand colors: turquoise
- * #14B8A6 background, white #FFFFFF symbol).
+ * Design: a minimalist medicine capsule tilted 45°, with a small ascending trend line
+ * (two segments + dot markers) beside it — a simplified nod to "medication + health
+ * data trending in the right direction". White symbol on a turquoise background (brand
+ * colors: turquoise #14B8A6 background, white #FFFFFF symbol).
  *
  * Re-run with `node scripts/generate-pwa-icons.mjs` from `apps/frontend/` any time the
  * icon design needs to change; it overwrites the PNGs under `public/`.
@@ -27,15 +27,24 @@ function dist(x1, y1, x2, y2) {
   return Math.hypot(x1 - x2, y1 - y2);
 }
 
+function distToSegment(px, py, x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const lengthSq = dx * dx + dy * dy;
+  let t = lengthSq === 0 ? 0 : ((px - x1) * dx + (py - y1) * dy) / lengthSq;
+  t = Math.max(0, Math.min(1, t));
+  return dist(px, py, x1 + t * dx, y1 + t * dy);
+}
+
 /**
- * Draws a crescent (outer circle minus an offset inner circle) with a plus/cross sign
- * sitting in the crescent's opening.
+ * Draws a tilted capsule (stadium shape) with a small ascending trend line (two
+ * segments + dot markers at each vertex) sitting above its upper-right end.
  * @param {number} size canvas size in px (square)
  * @param {[number,number,number,number]} bg
  * @param {[number,number,number,number]} fg
  * @param {number} scale fraction of `size` the whole symbol is allowed to occupy (smaller = more padding, needed for maskable icons)
  */
-function drawCrescentCross(size, bg, fg, scale) {
+function drawCapsuleTrend(size, bg, fg, scale) {
   const pixels = new Uint8Array(size * size * 4);
   for (let i = 0; i < size * size; i++) pixels.set(bg, i * 4);
 
@@ -43,17 +52,27 @@ function drawCrescentCross(size, bg, fg, scale) {
   const cy = size / 2;
   const unit = size * scale;
 
-  // Crescent: big circle minus a smaller circle offset to the right.
-  const outerR = unit * 0.5;
-  const innerR = unit * 0.44;
-  const innerOffset = unit * 0.24;
-  const innerCx = cx + innerOffset;
+  // Capsule: a stadium shape (rectangle + two semicircular caps), tilted 45° so it
+  // reads as a classic medicine capsule (bottom-left to top-right).
+  const theta = Math.PI / 4;
+  const cosT = Math.cos(theta);
+  const sinT = Math.sin(theta);
+  const capCx = cx - unit * 0.13;
+  const capCy = cy + unit * 0.15;
+  const capHalfLen = unit * 0.4;
+  const capHalfWidth = unit * 0.145;
+  const capStraight = capHalfLen - capHalfWidth; // half-length of the straight section
 
-  // Cross sitting in the crescent's opening (to the right of center).
-  const crossCx = cx + outerR * 0.66;
-  const crossCy = cy;
-  const crossArm = unit * 0.34;
-  const crossWidth = crossArm * 0.34;
+  // Trend line: two ascending segments with dot markers, kept visually separate
+  // from the capsule (a clear gap) so the two elements don't read as one fused shape.
+  const lineHalfWidth = unit * 0.045;
+  const dotRadius = unit * 0.055;
+  const p0x = cx + unit * 0.1;
+  const p0y = cy - unit * 0.16;
+  const p1x = cx + unit * 0.28;
+  const p1y = cy - unit * 0.32;
+  const p2x = cx + unit * 0.44;
+  const p2y = cy - unit * 0.48;
 
   const setPixel = (x, y) => {
     if (x < 0 || x >= size || y < 0 || y >= size) return;
@@ -62,15 +81,29 @@ function drawCrescentCross(size, bg, fg, scale) {
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      const inCrescent =
-        dist(x, y, cx, cy) <= outerR && dist(x, y, innerCx, cy) > innerR;
+      const dx = x - capCx;
+      const dy = y - capCy;
+      const lx = dx * cosT + dy * sinT;
+      const ly = -dx * sinT + dy * cosT;
 
-      const inCrossV =
-        Math.abs(x - crossCx) <= crossWidth / 2 && Math.abs(y - crossCy) <= crossArm / 2;
-      const inCrossH =
-        Math.abs(y - crossCy) <= crossWidth / 2 && Math.abs(x - crossCx) <= crossArm / 2;
+      let inCapsule;
+      if (Math.abs(lx) <= capStraight) {
+        inCapsule = Math.abs(ly) <= capHalfWidth;
+      } else {
+        const capCenterX = lx > 0 ? capStraight : -capStraight;
+        inCapsule = dist(lx, ly, capCenterX, 0) <= capHalfWidth;
+      }
 
-      if (inCrescent || inCrossV || inCrossH) setPixel(x, y);
+      const inLine =
+        distToSegment(x, y, p0x, p0y, p1x, p1y) <= lineHalfWidth ||
+        distToSegment(x, y, p1x, p1y, p2x, p2y) <= lineHalfWidth;
+
+      const inDot =
+        dist(x, y, p0x, p0y) <= dotRadius ||
+        dist(x, y, p1x, p1y) <= dotRadius ||
+        dist(x, y, p2x, p2y) <= dotRadius;
+
+      if (inCapsule || inLine || inDot) setPixel(x, y);
     }
   }
 
@@ -137,18 +170,18 @@ function encodePng(pixels, size) {
 }
 
 function writeIcon(filename, size, scale) {
-  const pixels = drawCrescentCross(size, TURQUOISE, WHITE, scale);
+  const pixels = drawCapsuleTrend(size, TURQUOISE, WHITE, scale);
   const png = encodePng(pixels, size);
   writeFileSync(path.join(publicDir, filename), png);
   console.log(`wrote ${filename} (${size}x${size})`);
 }
 
 // Standard icons: symbol can use most of the canvas.
-writeIcon('icon-192.png', 192, 0.72);
-writeIcon('icon-512.png', 512, 0.72);
+writeIcon('icon-192.png', 192, 0.7);
+writeIcon('icon-512.png', 512, 0.7);
 // Maskable icon: OS may crop to a circle/rounded-square, so keep content inside
 // the ~80% "safe zone" centered on the canvas.
-writeIcon('icon-512-maskable.png', 512, 0.5);
+writeIcon('icon-512-maskable.png', 512, 0.48);
 // Apple touch icon: iOS rounds the corners itself, no extra safe-zone needed beyond
 // a little breathing room.
-writeIcon('apple-touch-icon.png', 180, 0.7);
+writeIcon('apple-touch-icon.png', 180, 0.68);
