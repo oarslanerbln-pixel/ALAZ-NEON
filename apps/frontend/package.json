@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "vendor:ocr": "node scripts/vendor-ocr-assets.mjs",
+    "postinstall": "node scripts/vendor-ocr-assets.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -20,12 +22,14 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@tesseract.js-data/tur": "^1.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
+    "tesseract.js-core": "^7.0.0",
     "typescript": "^5"
   }
 }

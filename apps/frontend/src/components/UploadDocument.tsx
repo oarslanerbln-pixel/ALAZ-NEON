@@ -77,6 +77,13 @@ export default function UploadDocument() {
     let worker: Awaited<ReturnType<typeof createWorker>> | null = null;
     try {
       worker = await createWorker('tur', 1, {
+        // Self-hosted (apps/frontend/scripts/vendor-ocr-assets.mjs) instead of
+        // tesseract.js's default cdn.jsdelivr.net fetch — required for OCR to
+        // work offline as a PWA; the service worker's generic fetch handler
+        // (public/sw.js) then caches whichever of these gets requested.
+        workerPath: '/tesseract/worker.min.js',
+        corePath: '/tesseract-core',
+        langPath: '/tesseract-lang',
         logger: (m) => {
           if (m.status === 'recognizing text') {
             setProgress(Math.round(m.progress * 100));

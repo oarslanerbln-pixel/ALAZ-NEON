@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored, minified third-party OCR assets (apps/frontend/scripts/vendor-ocr-assets.mjs)
+    "public/tesseract/**",
+    "public/tesseract-core/**",
   ]),
 ]);
 

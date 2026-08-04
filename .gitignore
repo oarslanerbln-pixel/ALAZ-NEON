@@ -7,3 +7,9 @@ out
 .env.local
 .env.*.local
 
+# Vendored OCR assets (apps/frontend/scripts/vendor-ocr-assets.mjs) — build
+# artifacts copied from node_modules on `pnpm install`, not source.
+apps/frontend/public/tesseract/
+apps/frontend/public/tesseract-core/
+apps/frontend/public/tesseract-lang/
+
