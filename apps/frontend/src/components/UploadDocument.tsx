@@ -1,26 +1,42 @@
 "use client";
 
 import { useRef, useState } from 'react';
+import Link from 'next/link';
 import { Camera, Upload, Loader2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createWorker } from 'tesseract.js';
+import { useAuth } from '@/lib/auth-context';
+import { createDocument, ApiError } from '@/lib/api';
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 
 export default function UploadDocument() {
+  const { token } = useAuth();
+
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [result, setResult] = useState<string | null>(null);
+  const [noTextFound, setNoTextFound] = useState(false);
+  const [rawText, setRawText] = useState<string | null>(null);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [summarizeError, setSummarizeError] = useState<string | null>(null);
 
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const resetResults = () => {
+    setNoTextFound(false);
+    setRawText(null);
+    setSummary(null);
+    setSummarizeError(null);
+  };
+
   const handleFileSelected = (file: File | undefined) => {
     setError(null);
-    setResult(null);
+    resetResults();
 
     if (!file) return;
 
@@ -39,7 +55,7 @@ export default function UploadDocument() {
       return URL.createObjectURL(file);
     });
 
-    void runOcr(file);
+    void processFile(file);
   };
 
   const handleReset = () => {
@@ -47,14 +63,14 @@ export default function UploadDocument() {
       if (prev) URL.revokeObjectURL(prev);
       return null;
     });
-    setResult(null);
     setError(null);
     setProgress(0);
+    resetResults();
     if (cameraInputRef.current) cameraInputRef.current.value = '';
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const runOcr = async (file: File) => {
+  const runOcr = async (file: File): Promise<string> => {
     setIsScanning(true);
     setProgress(0);
 
@@ -68,15 +84,36 @@ export default function UploadDocument() {
         },
       });
       const { data } = await worker.recognize(file);
-      const text = data.text.trim();
-      setResult(
-        text || 'Görselden okunabilir bir metin bulunamadı. Lütfen daha net ve iyi aydınlatılmış bir fotoğrafla tekrar deneyin.'
-      );
+      return data.text.trim();
     } catch {
       setError('Tarama sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+      return '';
     } finally {
       if (worker) await worker.terminate();
       setIsScanning(false);
+    }
+  };
+
+  const processFile = async (file: File) => {
+    const text = await runOcr(file);
+    if (!text) {
+      setNoTextFound(true);
+      return;
+    }
+
+    setRawText(text);
+
+    if (!token) return; // Giriş yapılmamış: özetleme/kayıt atlanır, ham metin gösterilir.
+
+    setIsSummarizing(true);
+    setSummarizeError(null);
+    try {
+      const doc = await createDocument(token, text);
+      setSummary(doc.summary);
+    } catch (err) {
+      setSummarizeError(err instanceof ApiError ? err.message : 'Özetleme sırasında bir hata oluştu.');
+    } finally {
+      setIsSummarizing(false);
     }
   };
 
@@ -161,15 +198,60 @@ export default function UploadDocument() {
             <p className="text-xl font-bold text-center">Görsel taranıyor... %{progress}</p>
           </motion.div>
         )}
+        {isSummarizing && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col items-center gap-4 p-8 bg-blue-900 rounded-xl w-full"
+            role="status"
+            aria-live="polite"
+          >
+            <Loader2 size={48} className="animate-spin text-blue-300" />
+            <p className="text-xl font-bold text-center">Rapor sadeleştiriliyor...</p>
+          </motion.div>
+        )}
       </AnimatePresence>
 
-      {result && (
+      {noTextFound && (
+        <p className="w-full text-center text-gray-400">
+          Görselden okunabilir bir metin bulunamadı. Lütfen daha net ve iyi aydınlatılmış bir
+          fotoğrafla tekrar deneyin.
+        </p>
+      )}
+
+      {summary && (
+        <div className="w-full bg-gray-800 p-6 rounded-xl mt-4">
+          <h2 className="text-2xl font-bold mb-2 text-yellow-400">Sadeleştirilmiş Özet</h2>
+          <p className="whitespace-pre-line">{summary}</p>
+          {rawText && (
+            <details className="mt-4">
+              <summary className="cursor-pointer text-sm text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded">
+                Taranan ham metni göster
+              </summary>
+              <p className="whitespace-pre-line text-sm text-gray-400 mt-2">{rawText}</p>
+            </details>
+          )}
+        </div>
+      )}
+
+      {!summary && rawText && (
         <div className="w-full bg-gray-800 p-6 rounded-xl mt-4">
           <h2 className="text-2xl font-bold mb-2 text-yellow-400">Okunan Metin</h2>
-          <p className="text-sm text-gray-400 mb-4">
-            Bu, taranan görselden çıkarılan ham metindir. Yapay zeka destekli sadeleştirme henüz bu sürümde yok.
-          </p>
-          <p className="whitespace-pre-line">{result}</p>
+          {summarizeError ? (
+            <p role="alert" aria-live="assertive" className="text-sm text-red-400 mb-4">
+              {summarizeError}
+            </p>
+          ) : !token ? (
+            <p className="text-sm text-gray-400 mb-4">
+              Bu metni yapay zekayla sadeleştirmek ve kaydetmek için{' '}
+              <Link href="/login" className="text-blue-400 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded">
+                giriş yapın
+              </Link>
+              .
+            </p>
+          ) : null}
+          <p className="whitespace-pre-line">{rawText}</p>
         </div>
       )}
     </div>

@@ -12,6 +12,14 @@ export type Medication = {
 export type AuthUser = { id: string; email: string };
 export type AuthResponse = { token: string; user: AuthUser };
 
+export type ReportDocument = {
+  id: string;
+  originalText: string;
+  summary: string;
+  language: string;
+  createdAt: string;
+};
+
 export class ApiError extends Error {}
 
 async function request<T>(path: string, options: RequestInit = {}, token?: string | null): Promise<T> {
@@ -64,4 +72,8 @@ export function toggleMedication(token: string, id: string, taken: boolean) {
 
 export function deleteMedication(token: string, id: string) {
   return request<void>(`/medications/${id}`, { method: 'DELETE' }, token);
+}
+
+export function createDocument(token: string, originalText: string) {
+  return request<ReportDocument>('/documents', { method: 'POST', body: JSON.stringify({ originalText }) }, token);
 }

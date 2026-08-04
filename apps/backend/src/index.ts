@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import authRouter from './routes/auth.js';
 import medicationsRouter from './routes/medications.js';
+import documentsRouter from './routes/documents.js';
 
 dotenv.config();
 
@@ -30,12 +31,23 @@ const authLimiter = rateLimit({
   message: { error: 'Çok fazla istek gönderildi. Lütfen daha sonra tekrar deneyin.' },
 });
 
+// Separate, tighter limiter for /documents — each POST triggers a paid Claude
+// API call, so this also functions as basic cost-abuse protection.
+const documentsLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Çok fazla istek gönderildi. Lütfen daha sonra tekrar deneyin.' },
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'MediSade API is running' });
 });
 
 app.use('/auth', authLimiter, authRouter);
 app.use('/medications', medicationsRouter);
+app.use('/documents', documentsLimiter, documentsRouter);
 
 app.use((err: unknown, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err);

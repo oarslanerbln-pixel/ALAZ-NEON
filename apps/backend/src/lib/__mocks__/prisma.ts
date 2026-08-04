@@ -12,4 +12,10 @@ export const prisma = {
     update: vi.fn(),
     delete: vi.fn(),
   },
+  document: {
+    findMany: vi.fn(),
+    create: vi.fn(),
+    findFirst: vi.fn(),
+    delete: vi.fn(),
+  },
 };
