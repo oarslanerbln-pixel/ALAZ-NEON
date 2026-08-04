@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Tıbbi raporlarınızı ve ilaçlarınızı kolayca takip edin.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#14b8a6',
-    theme_color: '#14b8a6',
+    background_color: '#0a1f44',
+    theme_color: '#0a1f44',
     lang: 'tr',
     icons: [
       {
