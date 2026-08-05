@@ -22,7 +22,7 @@ export default function UploadDocument() {
         <button
           onClick={handleSimulateScan}
           disabled={isScanning}
-          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400 transition-colors"
           aria-label="Kamera ile çek"
         >
           <Camera size={32} className="mb-2" />
@@ -31,7 +31,7 @@ export default function UploadDocument() {
         <button
           onClick={handleSimulateScan}
           disabled={isScanning}
-          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400 transition-colors"
           aria-label="Dosya yükle"
         >
           <Upload size={32} className="mb-2" />
@@ -55,12 +55,17 @@ export default function UploadDocument() {
         )}
       </AnimatePresence>
 
-      {result && (
-        <div className="w-full bg-gray-800 p-6 rounded-xl mt-4">
-          <h2 className="text-2xl font-bold mb-4 text-yellow-400">Sonuç</h2>
-          <p className="whitespace-pre-line">{result}</p>
-        </div>
-      )}
+      <div role="status" aria-live="polite" className="w-full mt-4">
+        {result && (
+          <div className="w-full bg-gray-800 p-6 rounded-xl">
+            <h2 className="text-2xl font-bold mb-4 text-yellow-400">Sonuç</h2>
+            <p className="whitespace-pre-line mb-4">{result}</p>
+            <p className="text-sm text-gray-400 border-t border-gray-700 pt-4 mt-2">
+              Bu bir tıbbi tavsiye değildir, yalnızca dil sadeleştirme aracıdır. Lütfen doktorunuza danışın.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

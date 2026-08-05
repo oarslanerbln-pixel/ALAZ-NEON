@@ -9,3 +9,7 @@
 ## 2026-07-22 - Express 4 async routes need explicit error handling
 **Learning:** Express 4 does not catch rejected promises thrown from `async` route handlers. An unhandled Prisma error (e.g. database unreachable) inside a plain `async (req, res) => {...}` handler crashes the entire Node process instead of returning an error response — confirmed by reproducing it locally (an unreachable DB during `/auth/register` took the whole server down).
 **Action:** Wrap every async Express route handler with a small `asyncHandler` utility (`apps/backend/src/lib/asyncHandler.ts`) that forwards rejections to `next(err)`, and register a catch-all error-handling middleware (4-arg signature) as the last `app.use()` in `index.ts` so failures return a JSON 500 instead of taking the process down.
+
+## 2026-08-05 - Persistent ARIA Live Regions
+**Learning:** When dynamically rendering non-urgent content updates (like scan results), conditionally rendering `role="status"` and `aria-live="polite"` alongside the content often fails to trigger screen readers.
+**Action:** Place `role="status"` and `aria-live="polite"` on a persistent parent wrapper div that is always in the DOM, so screen readers reliably detect and announce the content when it is injected inside.
