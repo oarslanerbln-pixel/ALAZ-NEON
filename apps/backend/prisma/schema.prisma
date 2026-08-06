@@ -20,8 +20,7 @@ model Document {
   id           String   @id @default(uuid())
   userId       String
   user         User     @relation(fields: [userId], references: [id])
-  originalText String
-  summary      String
+  encryptedSummary String
   language     String   @default("tr")
   createdAt    DateTime @default(now())
 }
