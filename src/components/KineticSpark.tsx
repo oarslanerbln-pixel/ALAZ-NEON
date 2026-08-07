@@ -97,7 +97,7 @@ export function KineticSpark({
               </feMerge>
             </filter>
 
-            <filter id="whiteNeonGlow">
+            <filter id="whiteNeonGlow" x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur stdDeviation="8" result="blur" />
               <feMerge>
                 <feMergeNode in="blur" />
@@ -105,7 +105,7 @@ export function KineticSpark({
               </feMerge>
             </filter>
             
-            <filter id="goldGlow">
+            <filter id="goldGlow" x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur stdDeviation="12" result="blur" />
               <feMerge>
                 <feMergeNode in="blur" />
