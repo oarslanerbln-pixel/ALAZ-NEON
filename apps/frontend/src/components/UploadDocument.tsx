@@ -22,7 +22,7 @@ export default function UploadDocument() {
         <button
           onClick={handleSimulateScan}
           disabled={isScanning}
-          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400"
           aria-label="Kamera ile çek"
         >
           <Camera size={32} className="mb-2" />
@@ -31,7 +31,7 @@ export default function UploadDocument() {
         <button
           onClick={handleSimulateScan}
           disabled={isScanning}
-          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400"
           aria-label="Dosya yükle"
         >
           <Upload size={32} className="mb-2" />
