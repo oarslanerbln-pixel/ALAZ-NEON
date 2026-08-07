@@ -33,6 +33,12 @@ const translations = {
     tr: "Ready for the ultimate mythical challenge?",
     de: "Bereit für die ultimative Herausforderung?",
   },
+  "attract.joinNow": { tr: "OYUNA KATIL", de: "JETZT BEITRETEN" },
+  "attract.scanToJoin": { tr: "QR KODU OKUT", de: "QR-CODE SCANNEN" },
+  "attract.howToPlay": { tr: "NASIL OYNANIR?", de: "SPIELANLEITUNG" },
+  "attract.step1": { tr: "1. ODAYA GİR", de: "1. RAUM BEITRETEN" },
+  "attract.step2": { tr: "2. KELİME BUL", de: "2. WÖRTER FINDEN" },
+  "attract.step3": { tr: "3. ATEŞLE!", de: "3. FEUER!" },
 
   // ═══════════════════════════════════════════
   // HOST SETUP
@@ -115,6 +121,18 @@ const translations = {
     tr: "Geçmiş bulunamadı",
     de: "Kein Verlauf gefunden",
   },
+  "setup.errorNoCategory": {
+    tr: "Lütfen en az bir kategori girin.",
+    de: "Bitte geben Sie mindestens eine Kategorie ein.",
+  },
+  "setup.errorCreate": {
+    tr: "Oda oluşturulurken bir hata oluştu: ",
+    de: "Fehler beim Erstellen des Raums: ",
+  },
+  "setup.errorFirebase": {
+    tr: "⚠️ Firebase bağlantı hatası! Proje erişilemez durumda. .env.local dosyasındaki VITE_FIREBASE_API_KEY değerini kontrol edin.",
+    de: "⚠️ Firebase Verbindungsfehler! Projekt nicht erreichbar. Überprüfen Sie VITE_FIREBASE_API_KEY in .env.local.",
+  },
 
   // ═══════════════════════════════════════════
   // HOST LOBBY
@@ -139,6 +157,11 @@ const translations = {
   "lobby.playerReady": { tr: "Savaşçı Hazır", de: "Krieger Bereit" },
   "lobby.startGame": { tr: "OYUNU BAŞLAT →", de: "SPIEL STARTEN →" },
   "lobby.noCategory": { tr: "Kategori Eksik!", de: "Kategorien Fehlen!" },
+  "lobby.networkConnected": { tr: "> AĞA_BAĞLANILDI", de: "> NETZWERK_VERBUNDEN" },
+  "lobby.waitingSystems": {
+    tr: "Diğer sistemler bekleniyor. Veri akışı başlamak üzere...",
+    de: "Warte auf andere Systeme. Datenfluss beginnt in Kürze...",
+  },
 
   // ═══════════════════════════════════════════
   // HOST PLAYING
@@ -314,11 +337,15 @@ const translations = {
   "join.roomPlaceholder": { tr: "ÖRN: 4X9B", de: "z.B.: 4X9B" },
   "join.nickname": { tr: "Nickname", de: "Nickname" },
   "join.nicknamePlaceholder": { tr: "Efsane Oyuncu", de: "Legendärer Spieler" },
+  "join.nicknamePlaceholderShort": { tr: "SAVAŞÇI", de: "KRIEGER" },
   "join.teamLabel": { tr: "Masa No / Takım Adı", de: "Tisch Nr. / Teamname" },
   "join.teamPlaceholder": {
     tr: "Masa 5 / Mavi Takım",
     de: "Tisch 5 / Blaues Team",
   },
+  "join.teamPlaceholderShort": { tr: "TAKIM ADI", de: "TEAMNAME" },
+  "join.terminalHeader": { tr: "ALAZ_SYS // TERMİNAL_v2.1", de: "ALAZ_SYS // TERMINAL_v2.1" },
+  "join.terminalFooter": { tr: "ALAZ NEON // NO SYSTEM IS SAFE", de: "ALAZ NEON // KEIN SYSTEM IST SICHER" },
   "join.connecting": {
     tr: "BAĞLANILIYOR...",
     de: "VERBINDUNG WIRD HERGESTELLT...",

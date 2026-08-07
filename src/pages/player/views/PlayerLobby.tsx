@@ -1,7 +1,10 @@
 import { motion } from "framer-motion";
 import { KineticSpark } from "../../../components/KineticSpark";
 
+import { useLocale } from "../../../hooks/useLocale";
+
 export function PlayerLobby() {
+  const { t } = useLocale();
   return (
     <motion.div
       key="lobby"
@@ -12,10 +15,10 @@ export function PlayerLobby() {
     >
       <KineticSpark />
       <h2 className="text-3xl font-black font-mono text-hacker-green animate-glitch mt-8 mb-4">
-        &gt; AĞA_BAĞLANILDI
+        {t("lobby.networkConnected")}
       </h2>
       <p className="text-cyber-yellow/80 font-mono max-w-xs mx-auto mb-10 leading-relaxed">
-        Diğer sistemler bekleniyor. Veri akışı başlamak üzere...
+        {t("lobby.waitingSystems")}
       </p>
       <div className="flex gap-3">
         {[1, 2, 3].map((i) => (

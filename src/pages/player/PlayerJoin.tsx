@@ -15,7 +15,7 @@ export function PlayerJoin() {
   const [errorMsg, setErrorMsg] = useState("");
   const [teamName, setTeamName] = useState("");
   const [gameMode, setGameMode] = useState<"individual" | "team">("individual");
-  const { t } = useLocale();
+  const { t, switchLocale } = useLocale();
 
   // Check room mode when code changes
   useEffect(() => {
@@ -56,6 +56,10 @@ export function PlayerJoin() {
         setErrorMsg(t("join.errorStarted"));
         setIsLoading(false);
         return;
+      }
+
+      if (room.locale) {
+        switchLocale(room.locale);
       }
 
       try {
@@ -113,7 +117,7 @@ export function PlayerJoin() {
               <div className="w-3 h-3 border border-alaz-orange/50 bg-alaz-orange/20" />
               <div className="w-3 h-3 border border-white/50 bg-white/20" />
             </div>
-            <span className="text-[10px] text-alaz-orange/60 uppercase tracking-widest font-bold">ALAZ_SYS // TERMINAL_v2.1</span>
+            <span className="text-[10px] text-alaz-orange/60 uppercase tracking-widest font-bold">{t("join.terminalHeader")}</span>
           </div>
 
           <form onSubmit={handleJoin} className="p-6 md:p-10 space-y-8">
@@ -182,7 +186,7 @@ export function PlayerJoin() {
                     autoFocus={!!urlCode}
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
-                    placeholder="SAVAŞÇI"
+                    placeholder={t("join.nicknamePlaceholderShort")}
                     maxLength={15}
                     className="w-full px-4 py-4 text-xl tracking-[0.2em] uppercase font-bold focus:outline-none bg-transparent text-alaz-orange placeholder:text-alaz-orange/20"
                   />
@@ -210,7 +214,7 @@ export function PlayerJoin() {
                         required
                         value={teamName}
                         onChange={(e) => setTeamName(e.target.value)}
-                        placeholder="TAKIM ADI"
+                        placeholder={t("join.teamPlaceholderShort")}
                         maxLength={20}
                         className="w-full px-4 py-4 text-xl tracking-[0.2em] uppercase font-bold focus:outline-none bg-transparent text-[#ff003c] placeholder:text-[#ff003c]/20"
                       />
@@ -255,7 +259,7 @@ export function PlayerJoin() {
 
         <div className="mt-8 text-center">
           <p className="text-[9px] text-alaz-orange/40 uppercase tracking-[0.5em] font-bold">
-            ALAZ NEON // NO SYSTEM IS SAFE
+            {t("join.terminalFooter")}
           </p>
         </div>
       </motion.div>

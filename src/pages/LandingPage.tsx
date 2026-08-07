@@ -10,6 +10,7 @@ import {
 import { KineticSpark } from "../components/KineticSpark";
 import { SoundManager, sounds } from "../lib/audio";
 import { useLocale } from "../hooks/useLocale";
+import { AttractMode } from "../components/AttractMode";
 
 function TiltCard({
   children,
@@ -79,6 +80,7 @@ export function LandingPage() {
   const [showIntro, setShowIntro] = useState(true);
   const { t } = useLocale();
   const [bgIndex, setBgIndex] = useState(0);
+  const [isIdle, setIsIdle] = useState(false);
 
   // Background slider logic
   useEffect(() => {
@@ -87,6 +89,37 @@ export function LandingPage() {
     }, 6000); // 6 seconds per image
     return () => clearInterval(interval);
   }, []);
+
+  // Idle Timer logic
+  useEffect(() => {
+    let idleTimeout: number;
+
+    const resetIdleTimer = () => {
+      if (isIdle) setIsIdle(false);
+      clearTimeout(idleTimeout);
+      // Wait 30 seconds before showing attract mode
+      idleTimeout = window.setTimeout(() => {
+        setIsIdle(true);
+      }, 30000); 
+    };
+
+    // Attach listeners
+    window.addEventListener("mousemove", resetIdleTimer);
+    window.addEventListener("keydown", resetIdleTimer);
+    window.addEventListener("touchstart", resetIdleTimer);
+    window.addEventListener("click", resetIdleTimer);
+
+    // Initial start
+    resetIdleTimer();
+
+    return () => {
+      clearTimeout(idleTimeout);
+      window.removeEventListener("mousemove", resetIdleTimer);
+      window.removeEventListener("keydown", resetIdleTimer);
+      window.removeEventListener("touchstart", resetIdleTimer);
+      window.removeEventListener("click", resetIdleTimer);
+    };
+  }, [isIdle]);
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-6 text-center min-h-screen relative overflow-hidden bg-black">
@@ -270,6 +303,10 @@ export function LandingPage() {
             </div>
           </motion.div>
         )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isIdle && <AttractMode onClose={() => setIsIdle(false)} />}
       </AnimatePresence>
     </div>
   );

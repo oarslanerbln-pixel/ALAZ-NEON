@@ -81,9 +81,7 @@ export function HostSetup() {
         .filter(Boolean);
       if (parsedCategories.length === 0) {
         showToast(
-          locale === "tr"
-            ? "Lütfen en az bir kategori girin."
-            : "Bitte geben Sie mindestens eine Kategorie ein.",
+          t("setup.errorNoCategory"),
           "warning",
         );
         setIsCreating(false);
@@ -101,22 +99,21 @@ export function HostSetup() {
           current_round: 0,
           time_left: 0,
           game_mode: gameMode,
+          locale: locale,
           created_at: Date.now()
         });
         
         navigate(`/host/display?roomId=${docRef.id}`);
       } catch (err: any) {
         console.error("Error creating room:", err);
-        showToast("Oda oluşturulurken bir hata oluştu: " + err.message, "error");
+        showToast(t("setup.errorCreate") + err.message, "error");
         setIsCreating(false);
         return;
       }
     } catch (error) {
       console.error("Unexpected error:", error);
       showToast(
-        locale === "tr"
-          ? "⚠️ Firebase bağlantı hatası! Proje erişilemez durumda. .env.local dosyasındaki VITE_FIREBASE_API_KEY değerini kontrol edin."
-          : "⚠️ Firebase Verbindungsfehler! Projekt nicht erreichbar. Überprüfen Sie VITE_FIREBASE_API_KEY in .env.local.",
+        t("setup.errorFirebase"),
         "error",
       );
       setIsCreating(false);
