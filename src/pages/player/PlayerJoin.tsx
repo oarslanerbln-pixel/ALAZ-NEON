@@ -1,188 +1,264 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '../../lib/supabase';
-import { KineticSpark } from '../../components/KineticSpark';
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
+import { db } from "../../lib/firebase";
+import { useLocale } from "../../hooks/useLocale";
 
 export function PlayerJoin() {
-    const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    const urlCode = searchParams.get('code');
-    const [roomCode, setRoomCode] = useState(urlCode || '');
-    const [nickname, setNickname] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [errorMsg, setErrorMsg] = useState('');
-    const [showIntro, setShowIntro] = useState(true);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const urlCode = searchParams.get("code");
+  const [roomCode, setRoomCode] = useState(urlCode || "");
+  const [nickname, setNickname] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [teamName, setTeamName] = useState("");
+  const [gameMode, setGameMode] = useState<"individual" | "team">("individual");
+  const { t } = useLocale();
 
-    useEffect(() => {
-        const timer = setTimeout(() => setShowIntro(false), 4000);
-        return () => clearTimeout(timer);
-    }, []);
-
-    const handleJoin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setErrorMsg('');
-        setIsLoading(true);
-
-        try {
-            const cleanCode = roomCode.trim().toUpperCase();
-
-            // 1. Check if room exists and is in lobby state
-            const { data: room, error: roomError } = await supabase
-                .from('rooms')
-                .select('id, status')
-                .eq('code', cleanCode)
-                .single();
-
-            if (roomError || !room) {
-                setErrorMsg('Oda bulunamadı. Lütfen TV ekranındaki kodu kontrol edin.');
-                setIsLoading(false);
-                return;
-            }
-
-            if (room.status !== 'lobby') {
-                setErrorMsg('Bu odaya şu an giriş yapılamaz (Oyun çoktan başlamış).');
-                setIsLoading(false);
-                return;
-            }
-
-            // 2. Insert Player into DB
-            const { data: player, error: playerError } = await supabase
-                .from('players')
-                .insert([
-                    {
-                        room_id: room.id,
-                        name: nickname.trim(),
-                    }
-                ])
-                .select()
-                .single();
-
-            if (playerError) {
-                setErrorMsg('Oyuncu kaydı oluşturulamadı: ' + playerError.message);
-                setIsLoading(false);
-                return;
-            }
-
-            // 3. Save player session locally and navigate to Waiting/Play screen
-            if (player && player.id) {
-                localStorage.setItem('cafe_game_playerId', player.id);
-                localStorage.setItem('cafe_game_roomId', room.id);
-                localStorage.setItem('cafe_game_playerName', player.name);
-                navigate('/play');
-            }
-
-        } catch (err) {
-            console.error(err);
-            setErrorMsg('Beklenmeyen bir hata oluştu.');
-            setIsLoading(false);
+  // Check room mode when code changes
+  useEffect(() => {
+    if (roomCode.length === 4) {
+      const checkMode = async () => {
+        const q = query(collection(db, "rooms"), where("code", "==", roomCode.toUpperCase()));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const data = querySnapshot.docs[0].data();
+          setGameMode(data.game_mode || "individual");
         }
-    };
+      };
+      checkMode();
+    }
+  }, [roomCode]);
 
-    return (
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center min-h-[100dvh] bg-seljuk-pattern relative overflow-hidden">
-            <AnimatePresence mode="wait">
-                {showIntro ? (
-                    <motion.div
-                        key="intro"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0, scale: 1.2, filter: 'blur(40px)' }}
-                        transition={{ duration: 1.5, ease: "circIn" }}
-                        className="bg-black fixed inset-0 z-[100] flex items-center justify-center overflow-hidden noise-suppression"
-                    >
-                        <div className="relative w-full max-w-7xl flex flex-col items-center justify-center">
-                            <KineticSpark delay={0.5} showTagline tagline="Kadim Ateş • Modern Ruh" />
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: [0, 0.1, 0.05, 0.15] }}
-                                transition={{ delay: 2, duration: 4, repeat: Infinity, repeatType: "mirror" }}
-                                className="absolute inset-0 bg-alaz-orange/10 blur-[150px] -z-10 rounded-full"
-                            />
-                        </div>
-                    </motion.div>
-                ) : (
-                    <motion.div
-                        key="content"
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                        className="w-full max-w-md"
-                    >
-                        {/* Brand Experience - ALAZ NEON (Mini version) */}
-                        <header className="mb-10 pointer-events-none opacity-80 scale-75">
-                            <KineticSpark
-                                fontSizeAlaz="text-[8rem] md:text-[7rem]"
-                                fontSizeNeon="text-[7rem] md:text-[6rem]"
-                                showTagline
-                                delay={0.2}
-                            />
-                        </header>
+  const handleJoin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg("");
+    setIsLoading(true);
 
-                <form onSubmit={handleJoin} className="glass-panel-alaz p-8 md:p-10 space-y-8 relative overflow-hidden group">
-                    {/* Background glow for the panel */}
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-alaz-orange/10 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-alaz-orange/20 transition-colors duration-700" />
+    try {
+      const cleanCode = roomCode.trim().toUpperCase();
 
-                    {errorMsg && (
-                        <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            className="bg-red-500/10 text-red-400 border border-red-500/30 p-4 rounded-2xl text-sm font-bold"
-                        >
-                            {errorMsg}
-                        </motion.div>
-                    )}
+      const q = query(collection(db, "rooms"), where("code", "==", cleanCode));
+      const querySnapshot = await getDocs(q);
 
-                    <div className="space-y-3 text-left">
-                        <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">Oda Kodu</label>
-                        <div className="relative">
-                            <input
-                                type="text"
-                                required
-                                maxLength={4}
-                                value={roomCode}
-                                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                                placeholder="ÖRN: 4X9B"
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-center text-4xl tracking-[0.2em] uppercase font-black focus:outline-none focus:border-alaz-orange focus:ring-1 focus:ring-alaz-orange transition-all placeholder:opacity-20 text-white"
-                            />
-                            <div className="absolute inset-0 rounded-2xl pointer-events-none border border-alaz-orange/10 group-focus-within:border-alaz-orange/30 transition-colors" />
-                        </div>
-                    </div>
+      if (querySnapshot.empty) {
+        setErrorMsg(t("join.errorNoRoom"));
+        setIsLoading(false);
+        return;
+      }
+      
+      const roomDoc = querySnapshot.docs[0];
+      const room = { id: roomDoc.id, ...roomDoc.data() } as any;
 
-                    <div className="space-y-3 text-left">
-                        <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">Nickname / Team Name</label>
-                        <input
-                            type="text"
-                            required
-                            value={nickname}
-                            onChange={(e) => setNickname(e.target.value)}
-                            placeholder="Efsane Takım"
-                            maxLength={20}
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-center text-2xl font-bold focus:outline-none focus:border-neon-blue focus:ring-1 focus:ring-neon-blue transition-all placeholder:opacity-20 text-white"
-                        />
-                    </div>
+      if (room.status !== "lobby") {
+        setErrorMsg(t("join.errorStarted"));
+        setIsLoading(false);
+        return;
+      }
 
-                    <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        transition={{ type: 'spring', stiffness: 400, damping: 10 }}
-                        type="submit"
-                        disabled={isLoading}
-                        className={`w-full py-5 font-black text-xl rounded-2xl transition-all ${isLoading
-                            ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                            : 'bg-white text-black hover:bg-alaz-orange hover:text-white shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:shadow-[0_0_40px_rgba(255,77,0,0.4)]'
-                            }`}
-                    >
-                        {isLoading ? 'BAĞLANILIYOR...' : 'SAVAŞA KATIL →'}
-                    </motion.button>
-                </form>
+      try {
+        const playerRef = await addDoc(collection(db, "players"), {
+            room_id: room.id,
+            nickname: nickname.trim(),
+            team_name: room.game_mode === "team" ? teamName.trim() : null,
+            total_score: 0,
+            created_at: Date.now()
+        });
 
-                <div className="mt-12 opacity-30">
-                    <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em] font-black">Powered by ALAZ NEON OS</p>
-                </div>
-                    </motion.div>
-                )}
+        localStorage.setItem("cafe_game_playerId", playerRef.id);
+        localStorage.setItem("cafe_game_roomId", room.id);
+        localStorage.setItem("cafe_game_playerName", nickname.trim());
+        localStorage.setItem("cafe_game_teamName", room.game_mode === "team" ? teamName.trim() : "");
+        navigate("/play");
+      } catch (playerError: any) {
+        setErrorMsg(t("join.errorPlayer") + playerError.message);
+        setIsLoading(false);
+        return;
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorMsg(t("join.errorGeneral"));
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center p-4 min-h-[100dvh] bg-black relative overflow-hidden font-mono selection:bg-alaz-orange selection:text-black">
+      {/* CRT Scanline Overlay */}
+      <div className="absolute inset-0 pointer-events-none z-50 opacity-[0.03] bg-[linear-gradient(rgba(255,255,255,0)_50%,rgba(0,0,0,1)_50%)] bg-[length:100%_4px]" />
+      
+      {/* Radial Glow */}
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(255,77,0,0.1)_0%,transparent_100%)]" />
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="w-full max-w-lg z-10"
+      >
+        <button
+          onClick={() => navigate("/")}
+          className="mb-4 flex items-center gap-2 text-alaz-orange/70 hover:text-alaz-orange transition-colors text-xs font-bold uppercase tracking-widest"
+        >
+          <span className="text-xl">←</span> {t("common.back", "ANA SAYFA")}
+        </button>
+        <div className="border border-alaz-orange/30 bg-black/80 backdrop-blur-sm shadow-[0_0_30px_rgba(255,77,0,0.1)] relative">
+          
+          {/* Terminal Header */}
+          <div className="border-b border-alaz-orange/30 bg-alaz-orange/5 p-3 flex items-center justify-between">
+            <div className="flex gap-2">
+              <div className="w-3 h-3 border border-[#ff003c]/50 bg-[#ff003c]/20" />
+              <div className="w-3 h-3 border border-alaz-orange/50 bg-alaz-orange/20" />
+              <div className="w-3 h-3 border border-white/50 bg-white/20" />
+            </div>
+            <span className="text-[10px] text-alaz-orange/60 uppercase tracking-widest font-bold">ALAZ_SYS // TERMINAL_v2.1</span>
+          </div>
+
+          <form onSubmit={handleJoin} className="p-6 md:p-10 space-y-8">
+            <div className="text-center mb-8 flex flex-col items-center">
+              <h1 className="text-2xl md:text-4xl font-bold text-alaz-orange uppercase tracking-widest drop-shadow-[0_0_10px_rgba(255,77,0,0.8)] flex justify-center items-center gap-2">
+                &gt; {t("join.title")} <span className="w-3 h-8 bg-alaz-orange animate-pulse" />
+              </h1>
+              <p className="text-[#ff003c] mt-4 uppercase tracking-[0.3em] text-xs">
+                {t("join.subtitle")}
+              </p>
+            </div>
+
+            <AnimatePresence>
+              {errorMsg && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="bg-[#ff003c]/10 border-l-2 border-[#ff003c] p-4 text-[#ff003c] text-xs uppercase tracking-wider"
+                >
+                  <span className="font-bold">ERR:</span> {errorMsg}
+                </motion.div>
+              )}
             </AnimatePresence>
+
+            <div className="space-y-6">
+              {/* Room Code */}
+              <div className="group">
+                <label className="flex items-center gap-2 text-alaz-orange/70 text-xs font-bold uppercase tracking-widest mb-2">
+                  <span className="text-[#ff003c]">[1]</span> {t("join.roomCode")}
+                </label>
+                <div className="flex bg-alaz-orange/5 border border-alaz-orange/30 group-focus-within:border-alaz-orange transition-colors">
+                  <div className="px-4 py-4 border-r border-alaz-orange/30 text-alaz-orange font-bold bg-alaz-orange/10 flex items-center justify-center">
+                    C:\&gt;
+                  </div>
+                  {urlCode ? (
+                    <div className="w-full px-4 py-4 text-2xl tracking-[0.3em] uppercase font-bold text-alaz-orange bg-transparent flex items-center">
+                      {roomCode}
+                    </div>
+                  ) : (
+                    <input
+                      type="text"
+                      required
+                      maxLength={4}
+                      value={roomCode}
+                      onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                      placeholder="****"
+                      className="w-full px-4 py-4 text-2xl tracking-[0.3em] uppercase font-bold focus:outline-none bg-transparent text-alaz-orange placeholder:text-alaz-orange/20"
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Nickname */}
+              <div className="group">
+                <label className="flex items-center gap-2 text-alaz-orange/70 text-xs font-bold uppercase tracking-widest mb-2">
+                  <span className="text-[#ff003c]">[2]</span> {t("join.nickname")}
+                </label>
+                <div className="flex bg-alaz-orange/5 border border-alaz-orange/30 group-focus-within:border-alaz-orange transition-colors">
+                  <div className="px-4 py-4 border-r border-alaz-orange/30 text-alaz-orange font-bold bg-alaz-orange/10 flex items-center justify-center">
+                    USR_
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    autoFocus={!!urlCode}
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                    placeholder="SAVAŞÇI"
+                    maxLength={15}
+                    className="w-full px-4 py-4 text-xl tracking-[0.2em] uppercase font-bold focus:outline-none bg-transparent text-alaz-orange placeholder:text-alaz-orange/20"
+                  />
+                </div>
+              </div>
+
+              {/* Team Name */}
+              <AnimatePresence>
+                {gameMode === "team" && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="group"
+                  >
+                    <label className="flex items-center gap-2 text-[#ff003c]/70 text-xs font-bold uppercase tracking-widest mb-2">
+                      <span className="text-alaz-orange">[3]</span> {t("join.teamLabel")}
+                    </label>
+                    <div className="flex bg-[#ff003c]/5 border border-[#ff003c]/30 group-focus-within:border-[#ff003c] transition-colors">
+                      <div className="px-4 py-4 border-r border-[#ff003c]/30 text-[#ff003c] font-bold bg-[#ff003c]/10 flex items-center justify-center">
+                        TEAM
+                      </div>
+                      <input
+                        type="text"
+                        required
+                        value={teamName}
+                        onChange={(e) => setTeamName(e.target.value)}
+                        placeholder="TAKIM ADI"
+                        maxLength={20}
+                        className="w-full px-4 py-4 text-xl tracking-[0.2em] uppercase font-bold focus:outline-none bg-transparent text-[#ff003c] placeholder:text-[#ff003c]/20"
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <motion.button
+              whileHover={!isLoading ? { scale: 1.01, backgroundColor: "rgba(255, 77, 0, 0.2)" } : {}}
+              whileTap={!isLoading ? { scale: 0.99 } : {}}
+              type="submit"
+              disabled={isLoading}
+              className={`w-full py-5 border-2 transition-all font-bold tracking-[0.3em] uppercase text-sm mt-8 ${
+                isLoading
+                  ? "border-gray-700 text-gray-500 cursor-not-allowed"
+                  : nickname.trim().length > 0
+                    ? "border-alaz-orange text-alaz-orange bg-alaz-orange/10 hover:shadow-[0_0_20px_rgba(255,77,0,0.4)]"
+                    : "border-alaz-orange/30 text-alaz-orange/50 hover:border-alaz-orange hover:text-alaz-orange"
+              }`}
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-3">
+                  <span className="w-3 h-3 bg-alaz-orange animate-ping" />
+                  {t("join.connecting")}
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-3">
+                  [ {t("join.submit")} ]
+                </span>
+              )}
+            </motion.button>
+          </form>
+
+          {/* Decorative Corner Accents */}
+          <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-alaz-orange" />
+          <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-alaz-orange" />
+          <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-alaz-orange" />
+          <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-alaz-orange" />
         </div>
-    );
+
+        <div className="mt-8 text-center">
+          <p className="text-[9px] text-alaz-orange/40 uppercase tracking-[0.5em] font-bold">
+            ALAZ NEON // NO SYSTEM IS SAFE
+          </p>
+        </div>
+      </motion.div>
+    </div>
+  );
 }

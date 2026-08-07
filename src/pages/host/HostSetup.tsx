@@ -1,289 +1,446 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
-import { motion, AnimatePresence } from 'framer-motion';
-import { NeonIcon } from '../../components/NeonIcon';
-import { KineticSpark } from '../../components/KineticSpark';
-import { CATEGORY_PRESETS } from '../../lib/categoryPresets';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "../../lib/firebase";
+import { motion } from "framer-motion";
+import { NeonIcon } from "../../components/NeonIcon";
+import { KineticSpark } from "../../components/KineticSpark";
+import { ParticleBackground } from "../../components/ParticleBackground";
+import { CATEGORY_PRESETS } from "../../lib/categoryPresets";
+import { useLocale } from "../../hooks/useLocale";
+import { useToast } from "../../contexts/ToastContextCore";
+
+// Premium Glass Panel with Looping Neon Animation
+function GlassPanel({ 
+  children, 
+  className = "", 
+  neonColor = "rgba(255,215,0,0.8)",
+  delay = "0s"
+}: { 
+  children: React.ReactNode; 
+  className?: string;
+  neonColor?: string;
+  delay?: string;
+}) {
+  return (
+    <div 
+      className={`relative overflow-hidden rounded-3xl border border-white/10 group shadow-2xl ${className}`}
+    >
+      <div className="absolute inset-0 z-0">
+        <div 
+          className="absolute inset-0 bg-[linear-gradient(45deg,transparent_35%,var(--neon-color)_50%,transparent_65%)] bg-[length:300%_300%] animate-shine opacity-20" 
+          style={{ '--neon-color': neonColor, animationDelay: delay } as React.CSSProperties}
+        />
+        <div 
+          className="absolute inset-[1px] bg-[#0a0a0f]/70 backdrop-blur-2xl rounded-3xl z-10 transition-colors duration-500 group-hover:bg-[#15151f]/70" 
+        />
+      </div>
+      <div className="relative z-20 h-full">
+        {children}
+      </div>
+    </div>
+  );
+}
 
 // Helper to generate a 4-character random code
 const generateRoomCode = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let code = '';
-    for (let i = 0; i < 4; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return code;
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 4; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
 };
 
 export function HostSetup() {
-    const navigate = useNavigate();
-    const [categories, setCategories] = useState('Şehir, Ülke, İsim, Eşya, Hayvan');
-    const [timerValue, setTimerValue] = useState('60');
-    const [totalRounds, setTotalRounds] = useState('3');
-    const [isCreating, setIsCreating] = useState(false);
-    const [activePreset, setActivePreset] = useState<string | null>(null);
-    const [showIntro, setShowIntro] = useState(true);
+  const navigate = useNavigate();
+  const { t, locale, switchLocale } = useLocale();
+  const { showToast } = useToast();
+  const [categories, setCategories] = useState(t("categories.default"));
+  const [timerValue, setTimerValue] = useState("60");
+  const [gameMode, setGameMode] = useState<"individual" | "team">("individual");
+  const [totalRounds, setTotalRounds] = useState("3");
+  const [isCreating, setIsCreating] = useState(false);
+  const [activePreset, setActivePreset] = useState<string | null>(null);
 
-    useEffect(() => {
-        const timer = setTimeout(() => setShowIntro(false), 4000);
-        return () => clearTimeout(timer);
-    }, []);
+  const applyPreset = (name: string) => {
+    setCategories(CATEGORY_PRESETS[name].join(", "));
+    setActivePreset(name);
+  };
 
-    const applyPreset = (name: string) => {
-        setCategories(CATEGORY_PRESETS[name].join(', '));
-        setActivePreset(name);
-    };
+  const startLobby = async () => {
+    setIsCreating(true);
+    localStorage.setItem("cafe_game_timer", timerValue);
+    localStorage.setItem("cafe_game_categories", categories);
+    localStorage.setItem("cafe_game_mode", gameMode);
 
-    const startLobby = async () => {
-        setIsCreating(true);
-        localStorage.setItem('cafe_game_timer', timerValue);
-        localStorage.setItem('cafe_game_categories', categories);
+    try {
+      const parsedCategories = categories
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean);
+      if (parsedCategories.length === 0) {
+        showToast(
+          locale === "tr"
+            ? "Lütfen en az bir kategori girin."
+            : "Bitte geben Sie mindestens eine Kategorie ein.",
+          "warning",
+        );
+        setIsCreating(false);
+        return;
+      }
+      const roomCode = generateRoomCode();
 
-        try {
-            const parsedCategories = categories.split(',').map(c => c.trim()).filter(Boolean);
-            const roomCode = generateRoomCode();
+      try {
+        const docRef = await addDoc(collection(db, "rooms"), {
+          code: roomCode,
+          status: "lobby",
+          categories: parsedCategories,
+          timer_setting: parseInt(timerValue, 10),
+          total_rounds: parseInt(totalRounds, 10),
+          current_round: 0,
+          time_left: 0,
+          game_mode: gameMode,
+          created_at: Date.now()
+        });
+        
+        navigate(`/host/display?roomId=${docRef.id}`);
+      } catch (err: any) {
+        console.error("Error creating room:", err);
+        showToast("Oda oluşturulurken bir hata oluştu: " + err.message, "error");
+        setIsCreating(false);
+        return;
+      }
+    } catch (error) {
+      console.error("Unexpected error:", error);
+      showToast(
+        locale === "tr"
+          ? "⚠️ Firebase bağlantı hatası! Proje erişilemez durumda. .env.local dosyasındaki VITE_FIREBASE_API_KEY değerini kontrol edin."
+          : "⚠️ Firebase Verbindungsfehler! Projekt nicht erreichbar. Überprüfen Sie VITE_FIREBASE_API_KEY in .env.local.",
+        "error",
+      );
+      setIsCreating(false);
+    }
+  };
 
-            const { data, error } = await supabase
-                .from('rooms')
-                .insert([
-                    {
-                        code: roomCode,
-                        status: 'lobby',
-                        categories: parsedCategories,
-                        timer_setting: parseInt(timerValue, 10),
-                        total_rounds: parseInt(totalRounds, 10),
-                        current_round: 0,
-                        time_left: 0,
-                    }
-                ])
-                .select()
-                .single();
+  return (
+    <div className="flex-1 w-full min-h-screen relative overflow-hidden bg-black">
+      {/* Deep Cinematic Background */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,77,0,0.15),transparent_50%),radial-gradient(ellipse_at_bottom_left,rgba(0,243,255,0.1),transparent_50%)] pointer-events-none" />
+      <ParticleBackground speedMultiplier={0.3} />
 
-            if (error) {
-                console.error('Error creating room:', error);
-                alert('Oda oluşturulurken bir hata oluştu: ' + error.message);
-                setIsCreating(false);
-                return;
-            }
-
-            if (data && data.id) {
-                navigate(`/host/display?roomId=${data.id}`);
-            }
-        } catch (error) {
-            console.error('Unexpected error:', error);
-            setIsCreating(false);
-        }
-    };
-
-    return (
-        <div className="flex-1 p-10 max-w-5xl mx-auto w-full bg-seljuk-pattern min-h-screen relative overflow-hidden">
-            <AnimatePresence mode="wait">
-                {showIntro ? (
-                    <motion.div
-                        key="intro"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0, scale: 1.2, filter: 'blur(40px)' }}
-                        transition={{ duration: 1.5, ease: "circIn" }}
-                        className="bg-black fixed inset-0 z-[100] flex items-center justify-center overflow-hidden noise-suppression"
-                    >
-                        <div className="relative w-full max-w-7xl flex flex-col items-center justify-center">
-                            <KineticSpark delay={0.5} showTagline tagline="Kadim Ateş • Modern Ruh" />
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: [0, 0.1, 0.05, 0.15] }}
-                                transition={{ delay: 2, duration: 4, repeat: Infinity, repeatType: "mirror" }}
-                                className="absolute inset-0 bg-alaz-orange/10 blur-[150px] -z-10 rounded-full"
-                            />
-                        </div>
-                    </motion.div>
-                ) : (
-                    <motion.div
-                        key="content"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 1 }}
-                        className="w-full h-full"
-                    >
-                        <header className="mb-12 pointer-events-none opacity-80 scale-75 origin-left">
-                            <KineticSpark
-                                fontSizeAlaz="text-6xl"
-                                fontSizeNeon="text-5xl"
-                                className="max-w-md"
-                                delay={0.1}
-                            />
-                        </header>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 auto-rows-[minmax(220px,auto)]">
-
-                {/* Main Settings Panel */}
-                <div className="md:col-span-2 md:row-span-2 glass-panel-alaz p-10 flex flex-col relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-alaz-orange/5 blur-[100px] -mr-32 -mt-32" />
-
-                    <div className="flex justify-between items-start mb-10 relative z-10">
-                        <div>
-                            <h2 className="text-3xl font-black text-glow-alaz italic tracking-tighter uppercase">OYUN AYARLARI</h2>
-                            <p className="text-gray-500 text-sm">Zamanı, tur sayısını ve kategorileri belirle.</p>
-                        </div>
-                        <div className="bg-alaz-orange/10 text-alaz-orange px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest border border-alaz-orange/30 uppercase">
-                            Premium Mode
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 flex-1 relative z-10">
-                        <div className="space-y-6">
-                            {/* Timer */}
-                            <div>
-                                <label className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Süre / Tempo</label>
-                                <select
-                                    value={timerValue}
-                                    onChange={(e) => setTimerValue(e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:border-alaz-orange focus:outline-none transition-all font-bold text-base"
-                                >
-                                    <option value="30">30 Saniye (Ateş Hattı)</option>
-                                    <option value="45">45 Saniye (Yüksek Tempo)</option>
-                                    <option value="60">60 Saniye (Standart)</option>
-                                    <option value="90">90 Saniye (Zor Mod)</option>
-                                </select>
-                            </div>
-
-                            {/* Total Rounds */}
-                            <div>
-                                <label className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Tur Sayısı</label>
-                                <div className="grid grid-cols-4 gap-2">
-                                    {['3', '5', '7', '10'].map(r => (
-                                        <button
-                                            key={r}
-                                            onClick={() => setTotalRounds(r)}
-                                            className={`py-3 rounded-xl font-black text-sm transition-all border ${totalRounds === r
-                                                ? 'bg-alaz-orange text-black border-alaz-orange shadow-[0_0_20px_rgba(255,77,0,0.3)]'
-                                                : 'bg-white/5 border-white/10 text-gray-400 hover:border-alaz-orange/40 hover:text-white'
-                                                }`}
-                                        >
-                                            {r}
-                                        </button>
-                                    ))}
-                                </div>
-                                <p className="text-[10px] text-gray-600 mt-2 italic">{totalRounds} tur × {timerValue}sn = maks {parseInt(totalRounds) * parseInt(timerValue)}sn oyun</p>
-                            </div>
-
-                            {/* Language badge */}
-                            <div>
-                                <label className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Dil Seçimi</label>
-                                <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white/40 italic flex items-center justify-between">
-                                    <span>Türkçe (Kadim)</span>
-                                    <div className="w-2 h-2 rounded-full bg-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Categories Column */}
-                        <div className="flex flex-col gap-4">
-                            {/* Preset Buttons */}
-                            <div>
-                                <label className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Hızlı Preset</label>
-                                <div className="flex flex-wrap gap-2">
-                                    {Object.keys(CATEGORY_PRESETS).map(name => (
-                                        <button
-                                            key={name}
-                                            onClick={() => applyPreset(name)}
-                                            className={`px-3 py-1.5 rounded-full text-[10px] font-black tracking-wide transition-all border ${activePreset === name
-                                                ? 'bg-alaz-orange/20 border-alaz-orange text-alaz-orange'
-                                                : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/30 hover:text-white'
-                                                }`}
-                                        >
-                                            {name}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Categories textarea */}
-                            <div className="flex flex-col flex-1">
-                                <label className="block text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-3">Kategoriler (Virgülle Ayır)</label>
-                                <textarea
-                                    rows={5}
-                                    value={categories}
-                                    onChange={(e) => { setCategories(e.target.value); setActivePreset(null); }}
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:border-alaz-orange focus:outline-none flex-1 resize-none font-medium leading-relaxed"
-                                    placeholder="Şehir, Ülke, İsim..."
-                                />
-                                <p className="text-[10px] text-gray-500 mt-2 italic opacity-60">
-                                    * 4-6 kategori en iyi oyun deneyimini sağlar.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <motion.button
-                        whileHover={{ scale: 1.01 }}
-                        whileTap={{ scale: 0.99 }}
-                        onClick={startLobby}
-                        disabled={isCreating}
-                        className={`w-full py-6 mt-10 font-black text-2xl rounded-2xl transition-all duration-500 ${isCreating
-                            ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                            : 'bg-white text-black hover:bg-alaz-orange hover:text-white shadow-[0_0_50px_rgba(255,77,0,0.2)] uppercase tracking-tight'
-                            }`}
-                    >
-                        {isCreating ? 'BAŞLATILIYOR...' : `LOBİYİ AÇ (${totalRounds} TUR) →`}
-                    </motion.button>
-                </div>
-
-                {/* Status Bento */}
-                <div className="glass-panel-alaz p-8 flex flex-col justify-center group relative overflow-hidden">
-                    <div className="absolute -bottom-4 -right-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <NeonIcon type="crown" color="orange" className="w-24 h-24" />
-                    </div>
-                    <div className="flex items-center gap-3 mb-6 relative z-10">
-                        <NeonIcon type="crown" color="orange" className="w-6 h-6 animate-beat" />
-                        <span className="text-alaz-orange text-[10px] font-black tracking-widest uppercase">Sistem Durumu</span>
-                    </div>
-                    <h3 className="text-3xl font-black mb-3 text-white">BEKLEMEDE</h3>
-                    <p className="text-gray-400 text-xs leading-relaxed font-medium">
-                        Kadim ateş henüz yakılmadı. Lobi oluşturmak için ana paneli kullanın.
-                    </p>
-                </div>
-
-                {/* Scoring Info Bento */}
-                <div className="glass-panel-alaz p-8 bg-gradient-to-br from-white/5 to-transparent group relative overflow-hidden">
-                    <div className="w-14 h-14 rounded-2xl bg-alaz-orange/10 flex items-center justify-center mb-5 border border-alaz-orange/20 relative z-10">
-                        <NeonIcon type="lightbulb" color="orange" />
-                    </div>
-                    <h3 className="text-lg font-black mb-3 text-white uppercase tracking-tight relative z-10">Puanlama</h3>
-                    <div className="space-y-2 relative z-10">
-                        <div className="flex justify-between text-[11px]">
-                            <span className="text-gray-500">Benzersiz cevap</span>
-                            <span className="text-alaz-orange font-black">+20 puan</span>
-                        </div>
-                        <div className="flex justify-between text-[11px]">
-                            <span className="text-gray-500">Paylaşılan cevap</span>
-                            <span className="text-white font-black">+10 puan</span>
-                        </div>
-                        <div className="flex justify-between text-[11px]">
-                            <span className="text-gray-500">Erken teslim bonusu</span>
-                            <span className="text-neon-blue font-black">+15 puan</span>
-                        </div>
-                    </div>
-                    <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-alaz-orange/5 blur-3xl rounded-full" />
-                </div>
-
-                {/* History Bento */}
-                <div className="glass-panel-alaz p-6 md:col-span-1 border-white/5 opacity-40 flex items-center justify-between group overflow-hidden relative">
-                    <div className="flex items-center gap-5">
-                        <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
-                            <NeonIcon type="history" color="blue" className="w-5 h-5 opacity-50" />
-                        </div>
-                        <div>
-                            <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest">Son Oyunlar</h3>
-                            <p className="text-[10px] text-gray-600">Geçmiş bulunamadı</p>
-                        </div>
-                    </div>
-                </div>
+      <div className="p-10 max-w-5xl mx-auto w-full relative z-10">
+        <motion.div
+          key="content"
+          initial={{ opacity: 0, y: 40, filter: "blur(20px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full h-full relative"
+        >
+          <header className="mb-12 pointer-events-none opacity-90 scale-[0.6] origin-left">
+            <div className="absolute top-10 w-full h-[120px] opacity-20 pointer-events-none">
+              <KineticSpark
+                className="scale-50"
+                delay={-1}
+              />
             </div>
+          </header>
+
+          <button
+            onClick={() => navigate("/")}
+            className="mb-8 flex items-center gap-2 text-alaz-orange/70 hover:text-alaz-orange transition-colors text-xs font-bold uppercase tracking-widest relative z-20"
+          >
+            <span className="text-xl">←</span> {t("common.back", "ANA SAYFA")}
+          </button>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 auto-rows-[minmax(220px,auto)]">
+            {/* Main Settings Panel */}
+            <GlassPanel className="md:col-span-2 md:row-span-2" neonColor="rgba(255,215,0,0.8)">
+              <div className="p-10 flex flex-col h-full relative">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-alaz-orange/5 blur-[100px] -mr-32 -mt-32 pointer-events-none" />
+
+              <div className="flex justify-between items-start mb-10 relative z-10">
+                <div>
+                  <h2 className="text-3xl font-sans font-semibold text-white tracking-tight uppercase">
+                    {t("setup.title")}
+                  </h2>
+                  <p className="text-gray-400 font-medium text-sm mt-1">{t("setup.subtitle")}</p>
+                </div>
+                <div className="bg-alaz-orange/10 text-alaz-orange px-4 py-1.5 rounded-full text-[10px] font-semibold tracking-widest border border-alaz-orange/30 uppercase">
+                  {t("setup.premiumMode")}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 flex-1 relative z-10">
+                <div className="space-y-6">
+                  {/* Timer */}
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
+                      {t("setup.timerLabel")}
+                    </label>
+                    <select
+                      aria-label={t("setup.timerAriaLabel")}
+                      value={timerValue}
+                      onChange={(e) => setTimerValue(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 p-5 text-white focus:border-alaz-orange focus:outline-none transition-all font-sans font-medium text-[14px] uppercase tracking-[0.1em] rounded-2xl"
+                    >
+                      <option
+                        className="bg-[#0a0a0f] text-white py-2"
+                        value="30"
+                      >
+                        {t("setup.timer30")}
+                      </option>
+                      <option
+                        className="bg-[#0a0a0f] text-white py-2"
+                        value="45"
+                      >
+                        {t("setup.timer45")}
+                      </option>
+                      <option
+                        className="bg-[#0a0a0f] text-white py-2"
+                        value="60"
+                      >
+                        {t("setup.timer60")}
+                      </option>
+                      <option
+                        className="bg-[#0a0a0f] text-white py-2"
+                        value="90"
+                      >
+                        {t("setup.timer90")}
+                      </option>
+                    </select>
+                  </div>
+
+                  {/* Total Rounds */}
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
+                      {t("setup.roundsLabel")}
+                    </label>
+                    <div className="grid grid-cols-4 gap-4">
+                      {["3", "5", "7", "10"].map((r) => (
+                        <button
+                          key={r}
+                          onClick={() => setTotalRounds(r)}
+                          className={`py-4 font-sans font-medium text-lg transition-all border rounded-2xl ${
+                            totalRounds === r
+                              ? "bg-alaz-orange text-black border-alaz-orange"
+                              : "bg-white/5 border-white/10 text-gray-400 hover:border-alaz-orange/40 hover:text-white"
+                          }`}
+                        >
+                          {r}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-gray-600 mt-2 italic">
+                      {t(
+                        "setup.roundsCalc",
+                        totalRounds,
+                        timerValue,
+                        parseInt(totalRounds) * parseInt(timerValue),
+                      )}
+                    </p>
+                  </div>
+
+                  {/* Game Mode */}
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
+                      {t("setup.gameModeLabel")}
+                    </label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <button
+                        onClick={() => setGameMode("individual")}
+                        className={`py-4 font-sans font-medium text-xs uppercase tracking-widest transition-all border flex items-center justify-center rounded-2xl ${
+                          gameMode === "individual"
+                            ? "bg-white text-black border-white"
+                            : "bg-white/5 border-white/10 text-gray-400 hover:border-white/40"
+                        }`}
+                      >
+                        {t("setup.individual")}
+                      </button>
+                      <button
+                        onClick={() => setGameMode("team")}
+                        className={`py-4 font-sans font-medium text-xs uppercase tracking-widest transition-all border flex items-center justify-center rounded-2xl ${
+                          gameMode === "team"
+                            ? "bg-alaz-orange text-black border-alaz-orange"
+                            : "bg-white/5 border-white/10 text-gray-400 hover:border-alaz-orange/40"
+                        }`}
+                      >
+                        {t("setup.team")}
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-gray-600 mt-2 italic">
+                      {gameMode === "individual"
+                        ? t("setup.individualDesc")
+                        : t("setup.teamDesc")}
+                    </p>
+                  </div>
+
+                  {/* Language Selector */}
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
+                      {t("setup.languageLabel")}
+                    </label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <button
+                        onClick={() => {
+                          switchLocale("tr");
+                          setCategories(t("categories.default"));
+                        }}
+                        className={`py-4 font-sans font-medium text-xs uppercase tracking-widest transition-all border flex items-center justify-center rounded-2xl ${
+                          locale === "tr"
+                            ? "bg-white/20 text-white border-white/40"
+                            : "bg-white/5 border-white/10 text-gray-400 hover:border-white/30 hover:text-white"
+                        }`}
+                      >
+                        TÜRKÇE
+                      </button>
+                      <button
+                        onClick={() => {
+                          switchLocale("de");
+                          setCategories(t("categories.default"));
+                        }}
+                        className={`py-4 font-sans font-medium text-xs uppercase tracking-widest transition-all border flex items-center justify-center rounded-2xl ${
+                          locale === "de"
+                            ? "bg-white/20 text-white border-white/40"
+                            : "bg-white/5 border-white/10 text-gray-400 hover:border-white/30 hover:text-white"
+                        }`}
+                      >
+                        DEUTSCH
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Categories Column */}
+                <div className="flex flex-col gap-4">
+                  {/* Preset Buttons */}
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
+                      {t("setup.presetLabel")}
+                    </label>
+                    <div className="flex flex-wrap gap-3">
+                      {Object.keys(CATEGORY_PRESETS).map((name) => (
+                        <button
+                          key={name}
+                          onClick={() => applyPreset(name)}
+                          className={`px-5 py-2.5 font-sans font-medium text-[11px] uppercase tracking-widest transition-all border rounded-xl ${
+                            activePreset === name
+                              ? "bg-white border-white text-black"
+                              : "bg-white/5 border-white/10 text-gray-400 hover:border-white/30 hover:text-white"
+                          }`}
+                        >
+                          {name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Categories textarea */}
+                  <div className="flex flex-col flex-1">
+                    <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
+                      {t("setup.categoriesLabel")}
+                    </label>
+                    <textarea
+                      rows={5}
+                      value={categories}
+                      onChange={(e) => {
+                        setCategories(e.target.value);
+                        setActivePreset(null);
+                      }}
+                      className="w-full bg-white/5 border border-white/10 p-5 text-white focus:border-alaz-orange focus:outline-none flex-1 resize-none font-medium leading-relaxed rounded-2xl"
+                      placeholder={t("setup.categoriesPlaceholder")}
+                    />
+                    <p className="text-[10px] text-gray-500 mt-2 italic opacity-60">
+                      {t("setup.categoriesHint")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={startLobby}
+                disabled={isCreating}
+                className={`w-full py-6 mt-10 font-sans font-semibold text-lg uppercase tracking-widest transition-all duration-500 relative z-50 cursor-pointer rounded-2xl ${
+                  isCreating
+                    ? "bg-gray-800 text-gray-500 cursor-not-allowed"
+                    : "bg-white text-black hover:bg-alaz-orange hover:text-white"
+                }`}
+              >
+                {isCreating
+                  ? t("setup.starting")
+                  : t("setup.startButton", totalRounds)}
+              </motion.button>
+              </div>
+            </GlassPanel>
+
+            {/* Status Bento */}
+            <GlassPanel neonColor="rgba(255,0,60,0.8)" delay="-1s">
+              <div className="p-8 flex flex-col justify-center h-full relative">
+                <div className="absolute -bottom-4 -right-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                  <NeonIcon type="crown" color="pink" className="w-24 h-24" />
+                </div>
+              <div className="flex items-center gap-3 mb-6 relative z-10">
+                <span className="text-[#ff003c] text-[10px] font-semibold tracking-widest uppercase">
+                  {t("setup.statusTitle")}
+                </span>
+              </div>
+              <h3 className="text-2xl font-sans font-semibold mb-3 text-white tracking-tight uppercase">
+                {t("setup.statusWaiting")}
+              </h3>
+              <p className="text-gray-400 text-xs leading-relaxed font-medium">
+                {t("setup.statusDesc")}
+              </p>
+              </div>
+            </GlassPanel>
+
+            {/* Scoring Info Bento */}
+            <GlassPanel neonColor="rgba(0,243,255,0.8)" delay="-2s">
+              <div className="p-8 flex flex-col h-full relative">
+              <h3 className="text-lg font-sans font-semibold mb-5 text-white uppercase tracking-tight relative z-10">
+                {t("setup.scoringTitle")}
+              </h3>
+              <div className="space-y-2 relative z-10">
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-gray-500">
+                    {t("setup.scoreUnique")}
+                  </span>
+                  <span className="text-neon-blue font-black">+20</span>
+                </div>
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-gray-500">
+                    {t("setup.scoreShared")}
+                  </span>
+                  <span className="text-white font-black">+10</span>
+                </div>
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-gray-500">{t("setup.scoreEarly")}</span>
+                  <span className="text-neon-blue font-black">+15</span>
+                </div>
+              </div>
+                <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-neon-blue/5 blur-3xl rounded-full" />
+              </div>
+            </GlassPanel>
+
+            {/* History Bento */}
+            <GlassPanel className="md:col-span-1" neonColor="rgba(255,0,60,0.8)" delay="-3s">
+              <div className="p-6 flex items-center justify-between h-full opacity-60 hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-5">
+                <div>
+                  <h3 className="text-xs font-sans font-semibold text-gray-500 uppercase tracking-widest mb-1">
+                    {t("setup.historyTitle")}
+                  </h3>
+                  <p className="text-[10px] text-gray-600">
+                    {t("setup.historyEmpty")}
+                  </p>
+                </div>
+              </div>
+              </div>
+            </GlassPanel>
+          </div>
         </motion.div>
-    )}
-</AnimatePresence>
-</div>
-);
+      </div>
+    </div>
+  );
 }

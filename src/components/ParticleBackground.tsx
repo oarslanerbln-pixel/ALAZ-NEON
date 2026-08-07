@@ -1,88 +1,138 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
 interface Particle {
-    x: number;
-    y: number;
-    size: number;
-    speedX: number;
-    speedY: number;
-    color: string;
+  x: number;
+  y: number;
+  size: number;
+  baseX: number;
+  baseY: number;
+  vx: number;
+  vy: number;
+  color: string;
 }
 
-export function ParticleBackground({ speedMultiplier = 1 }: { speedMultiplier?: number }) {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+export function ParticleBackground({
+  speedMultiplier = 1,
+}: {
+  speedMultiplier?: number;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mouseRef = useRef({ x: 0, y: 0, radius: 150 });
 
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+    const ctx = canvas.getContext("2d", { alpha: true });
+    if (!ctx) return;
 
-        let animationFrameId: number;
-        let particles: Particle[] = [];
+    let animationFrameId: number;
+    let particles: Particle[] = [];
+    const particleCount = 200;
+    const colors = ["#00ff41", "#00ff41", "#00f3ff", "#fcee0a"]; // more green weight
 
-        const resizeCanvas = () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            initParticles();
-        };
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      initParticles();
+    };
 
-        const initParticles = () => {
-            particles = [];
-            const particleCount = 50;
-            const colors = ['#00f3ff', '#ff00ff', '#ffffff'];
+    const initParticles = () => {
+      particles = [];
+      for (let i = 0; i < particleCount; i++) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        particles.push({
+          x,
+          y,
+          baseX: x,
+          baseY: y,
+          size: Math.random() * 1.5 + 0.5,
+          vx: 0,
+          vy: (Math.random() + 0.5) * 2 * speedMultiplier,
+          color: colors[Math.floor(Math.random() * colors.length)],
+        });
+      }
+    };
 
-            for (let i = 0; i < particleCount; i++) {
-                particles.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    size: Math.random() * 2 + 0.5,
-                    speedX: (Math.random() - 0.5) * 0.5,
-                    speedY: (Math.random() - 0.5) * 0.5,
-                    color: colors[Math.floor(Math.random() * colors.length)]
-                });
-            }
-        };
+    const drawParticles = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        const drawParticles = () => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
 
-            particles.forEach((p) => {
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fillStyle = p.color;
-                ctx.globalAlpha = 0.3;
-                ctx.fill();
+        // Mouse interaction
+        const dx = mouseRef.current.x - p.x;
+        const dy = mouseRef.current.y - p.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
 
-                // Update position
-                p.x += p.speedX * speedMultiplier;
-                p.y += p.speedY * speedMultiplier;
+        if (distance < mouseRef.current.radius) {
+          const force =
+            (mouseRef.current.radius - distance) / mouseRef.current.radius;
+          p.vx -= (dx / distance) * force * 0.5;
+          p.vy -= (dy / distance) * force * 0.5;
+        }
 
-                // Wrap around screen
-                if (p.x < 0) p.x = canvas.width;
-                if (p.x > canvas.width) p.x = 0;
-                if (p.y < 0) p.y = canvas.height;
-                if (p.y > canvas.height) p.y = 0;
-            });
+        // Update position (falling down like matrix/rain)
+        p.y += p.vy;
 
-            animationFrameId = requestAnimationFrame(drawParticles);
-        };
+        // Reset if it goes off bottom
+        if (p.y > canvas.height) {
+          p.y = 0;
+          p.x = Math.random() * canvas.width;
+        }
 
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-        drawParticles();
+        // Draw Particle (Line/Laser)
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x, p.y - p.size * 15); // Trail length
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = p.size;
+        ctx.globalAlpha = 0.8;
+        ctx.stroke();
 
-        return () => {
-            window.removeEventListener('resize', resizeCanvas);
-            cancelAnimationFrame(animationFrameId);
-        };
-    }, [speedMultiplier]);
+        // Draw glowing head
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 1.5, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.globalAlpha = 0.9;
+        ctx.fill();
+      }
 
-    return (
-        <canvas
-            ref={canvasRef}
-            className="fixed inset-0 pointer-events-none z-[-1] opacity-50"
-        />
-    );
+      animationFrameId = requestAnimationFrame(drawParticles);
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseRef.current.x = e.clientX;
+      mouseRef.current.y = e.clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches[0]) {
+        mouseRef.current.x = e.touches[0].clientX;
+        mouseRef.current.y = e.touches[0].clientY;
+      }
+    };
+
+    window.addEventListener("resize", resizeCanvas);
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("touchmove", handleTouchMove);
+
+    resizeCanvas();
+    drawParticles();
+
+    return () => {
+      window.removeEventListener("resize", resizeCanvas);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("touchmove", handleTouchMove);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [speedMultiplier]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 pointer-events-none z-[-2] opacity-80"
+    />
+  );
 }

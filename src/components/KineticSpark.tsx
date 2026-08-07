@@ -1,179 +1,256 @@
-import { useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { playCinematicWhoosh } from '../lib/soundSynth';
+import { useEffect } from "react";
+import { motion } from "framer-motion";
+import { playCinematicWhoosh } from "../lib/soundSynth";
+import { SoundManager, sounds } from "../lib/audio";
 
 interface KineticSparkProps {
-    className?: string;
-    fontSizeAlaz?: string;
-    fontSizeNeon?: string;
-    delay?: number;
-    showTagline?: boolean;
-    tagline?: string;
+  className?: string;
+  delay?: number;
+  showTagline?: boolean;
+  tagline?: string;
+  playAudio?: boolean;
 }
 
 export function KineticSpark({
-    className = "",
-    fontSizeAlaz = "text-[14rem]",
-    fontSizeNeon = "text-[12rem]",
-    delay = 0,
-    showTagline = false,
-    tagline = "Ancient Fire • Modern Soul"
+  className = "",
+  delay = 0,
+  showTagline = false,
+  tagline = "ALAZ NEON",
+  playAudio = false,
 }: KineticSparkProps) {
-    useEffect(() => {
-        // Impact 1: ALAZ Flash
-        const timer = setTimeout(() => {
-            playCinematicWhoosh();
-        }, (delay + 0.4) * 1000);
-       
-        // Impact 2: NEON Flash
-        const secondTimer = setTimeout(() => {
-            playCinematicWhoosh();
-        }, (delay + 0.8) * 1000);
+  useEffect(() => {
+    if (!playAudio) return;
 
-        return () => {
-            clearTimeout(timer);
-            clearTimeout(secondTimer);
-        };
-    }, [delay]);
+    // Premium Start Jazz Sound (Subtle buildup)
+    const audioTimer = setTimeout(() => {
+      SoundManager.getInstance().playSFX(sounds.START_JAZZ, 0.4);
+    }, delay * 1000);
 
-    return (
-        <div className={`relative w-full h-full noise-suppression overflow-visible flex items-center justify-center ${className}`}>
-            {/* Screen Shake Container */}
-            <motion.div
-                animate={{
-                    x: [0, -10, 10, -5, 5, 0],
-                    y: [0, 5, -5, 2, -2, 0]
-                }}
-                transition={{
-                    delay: delay + 0.5, // Trigger on impact
-                    duration: 0.4,
-                    ease: "easeInOut"
-                }}
-                className="relative w-full overflow-visible"
-            >
-                <svg viewBox="0 0 1000 450" className="w-full h-auto overflow-visible">
-                    <defs>
-                        {/* Solar Flare Glow */}
-                        <radialGradient id="solarFlareGradient" cx="50%" cy="50%" r="50%">
-                            <stop offset="0%" stopColor="#ff4d00" stopOpacity="0.8" />
-                            <stop offset="100%" stopColor="#ff4d00" stopOpacity="0" />
-                        </radialGradient>
-                      
-                        <filter id="ultraGlow">
-                            <feGaussianBlur stdDeviation="15" result="blur" />
-                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                        </filter>
-                    </defs>
-
-                    {/* Central Flare Burst */}
-                    <motion.circle
-                        cx="50%"
-                        cy="50%"
-                        r="0"
-                        fill="url(#solarFlareGradient)"
-                        initial={{ r: 0, opacity: 0 }}
-                        animate={{
-                            r: [0, 300, 450],
-                            opacity: [0, 1, 0]
-                        }}
-                        transition={{
-                            delay: delay + 0.2,
-                            duration: 0.8,
-                            times: [0, 0.4, 1],
-                            ease: "easeOut"
-                        }}
-                    />
-
-                    {/* ALAZ Reveal (Flying from center/back) */}
-                    <motion.text
-                        x="50%"
-                        y="40%"
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        className={`${fontSizeAlaz} font-black italic tracking-tighter`}
-                        initial={{ scale: 0, opacity: 0, fill: "#ff4d00" }}
-                        animate={{
-                            scale: [0.1, 1.2, 1],
-                            opacity: [0, 1, 1],
-                            fill: ["#ff4d00", "#ffffff", "transparent"]
-                        }}
-                        transition={{
-                            delay: delay + 0.4,
-                            duration: 1.2,
-                            times: [0, 0.6, 1],
-                            ease: "easeOut"
-                        }}
-                        style={{
-                            stroke: "var(--color-alaz-orange)",
-                            strokeWidth: 2,
-                            strokeDasharray: 2000,
-                            strokeDashoffset: 0
-                        }}
-                    >
-                        ALAZ
-                    </motion.text>
-
-                    {/* NEON Reveal (Flying from center/back) */}
-                    <motion.text
-                        x="50%"
-                        y="75%"
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        className={`${fontSizeNeon} font-black tracking-[0.3em]`}
-                        initial={{ scale: 0, opacity: 0, fill: "#00f3ff" }}
-                        animate={{
-                            scale: [0.1, 1.2, 1],
-                            opacity: [0, 1, 1],
-                            fill: ["#00f3ff", "#ffffff", "transparent"]
-                        }}
-                        transition={{
-                            delay: delay + 0.8,
-                            duration: 1.2,
-                            times: [0, 0.6, 1],
-                            ease: "easeOut"
-                        }}
-                        style={{
-                            stroke: "var(--color-neon-blue)",
-                            strokeWidth: 2,
-                            strokeDasharray: 2000,
-                            strokeDashoffset: 0
-                        }}
-                    >
-                        NEON
-                    </motion.text>
-
-                    {/* Final Premium Glow Overlay */}
-                    <motion.g
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: delay + 1.8, duration: 1 }}
-                    >
-                        <text
-                            x="50%" y="40%" textAnchor="middle" dominantBaseline="middle"
-                            className={`${fontSizeAlaz} font-black italic tracking-tighter text-glow-premium-alaz fill-white/10`}
-                        >
-                            ALAZ
-                        </text>
-                        <text
-                            x="50%" y="75%" textAnchor="middle" dominantBaseline="middle"
-                            className={`${fontSizeNeon} font-black tracking-[0.3em] text-glow-premium-blue fill-white/10`}
-                        >
-                            NEON
-                        </text>
-                    </motion.g>
-                </svg>
-            </motion.div>
-
-            {showTagline && (
-                <motion.p
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 0.8, scale: 1 }}
-                    transition={{ delay: delay + 2.5, duration: 0.8 }}
-                    className="absolute bottom-10 text-alaz-orange text-xl md:text-2xl tracking-[0.5em] uppercase font-bold text-center"
-                >
-                    {tagline}
-                </motion.p>
-            )}
-        </div>
+    // Impact 1: ALAZ Flash (The Big Bang)
+    const timer = setTimeout(
+      () => {
+        playCinematicWhoosh();
+      },
+      (delay + 0.6) * 1000,
     );
+
+    // Impact 2: NEON Flash (The Energy Pulse)
+    const secondTimer = setTimeout(
+      () => {
+        playCinematicWhoosh();
+      },
+      (delay + 1.2) * 1000,
+    );
+
+    return () => {
+      clearTimeout(audioTimer);
+      clearTimeout(timer);
+      clearTimeout(secondTimer);
+    };
+  }, [delay, playAudio]);
+
+  return (
+    <div
+      className={`relative w-full h-full noise-suppression overflow-visible flex items-center justify-center ${className}`}
+    >
+
+      {/* Screen Shake Container */}
+      <motion.div
+        animate={{
+          x: [0, -10, 10, -5, 5, -2, 2, 0],
+          y: [0, 5, -5, 2, -2, 1, -1, 0],
+          scale: [1, 1.02, 1],
+        }}
+        transition={{
+          delay: delay + 0.6,
+          duration: 0.8,
+          ease: "easeOut",
+        }}
+        className="relative w-full h-full flex items-center justify-center overflow-visible"
+      >
+        <svg
+          viewBox="0 0 1000 600"
+          className="w-[90vw] max-w-[1200px] h-auto overflow-visible"
+        >
+          <defs>
+            <radialGradient id="coreFlare" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+              <stop offset="15%" stopColor="#FFD700" stopOpacity="0.9" />
+              <stop offset="40%" stopColor="#ff4d00" stopOpacity="0.5" />
+              <stop offset="100%" stopColor="#ff4d00" stopOpacity="0" />
+            </radialGradient>
+
+            <radialGradient id="neonFlare" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+              <stop offset="20%" stopColor="#FFD700" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#FFD700" stopOpacity="0" />
+            </radialGradient>
+
+            <filter id="hyperGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="30" result="blur" />
+              <feComponentTransfer in="blur" result="glow">
+                <feFuncA type="linear" slope="2.5" />
+              </feComponentTransfer>
+              <feMerge>
+                <feMergeNode in="glow" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+
+            <filter id="whiteNeonGlow">
+              <feGaussianBlur stdDeviation="8" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            
+            <filter id="goldGlow">
+              <feGaussianBlur stdDeviation="12" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
+          {/* Rotating Rings (Multiple for Depth) */}
+          <motion.circle
+            cx={500}
+            cy={300}
+            r={280}
+            stroke="rgba(255,215,0,0.8)"
+            strokeWidth="2"
+            fill="none"
+            strokeDasharray="50 150 200 100"
+            strokeLinecap="round"
+            initial={{ opacity: 0, rotate: -45, scale: 0.5 }}
+            animate={{
+              opacity: [0, 1, 1, 0],
+              rotate: 315,
+              scale: [0.5, 1.2, 1.3],
+            }}
+            transition={{ delay: delay + 0.2, duration: 4, ease: "easeInOut" }}
+            style={{ filter: "url(#goldGlow)", transformOrigin: "center" }}
+          />
+          <motion.circle
+            cx={500}
+            cy={300}
+            r={300}
+            stroke="rgba(255,77,0,0.6)"
+            strokeWidth="1.5"
+            fill="none"
+            strokeDasharray="100 300"
+            strokeLinecap="round"
+            initial={{ opacity: 0, rotate: 180, scale: 0.8 }}
+            animate={{
+              opacity: [0, 0.9, 0],
+              rotate: -180,
+              scale: [0.8, 1.3],
+            }}
+            transition={{ delay: delay + 0.5, duration: 4.5, ease: "easeInOut" }}
+            style={{ filter: "url(#whiteNeonGlow)", transformOrigin: "center" }}
+          />
+
+          {/* Cinematic Explosion Waves */}
+          <motion.circle
+            cx={500}
+            cy={300}
+            stroke="url(#coreFlare)"
+            strokeWidth="12"
+            fill="none"
+            initial={{ r: 1, opacity: 0 }}
+            animate={{ r: [1, 900], opacity: [0, 1, 0], strokeWidth: [30, 4] }}
+            transition={{ delay: delay + 0.6, duration: 1.8, ease: "easeOut" }}
+          />
+          <motion.circle
+            cx={500}
+            cy={300}
+            stroke="url(#neonFlare)"
+            strokeWidth="8"
+            fill="none"
+            initial={{ r: 1, opacity: 0 }}
+            animate={{ r: [1, 800], opacity: [0, 0.9, 0], strokeWidth: [20, 2] }}
+            transition={{ delay: delay + 1.0, duration: 1.8, ease: "easeOut" }}
+          />
+
+          {/* Central Supernova Core */}
+          <motion.circle
+            cx={500}
+            cy={300}
+            fill="url(#coreFlare)"
+            initial={{ r: 1, opacity: 0 }}
+            animate={{
+              r: [1, 700],
+              opacity: [0, 1, 0],
+            }}
+            transition={{ delay: delay + 0.5, duration: 1.5, ease: "circOut" }}
+          />
+          <motion.ellipse
+            cx={500}
+            cy={300}
+            fill="#ffffff"
+            initial={{ rx: 1, ry: 1, opacity: 0 }}
+            animate={{ rx: [1, 1000], ry: [1, 15], opacity: [0, 1, 0] }}
+            transition={{ delay: delay + 0.6, duration: 1, ease: "easeOut" }}
+            style={{ filter: "blur(6px)", transformOrigin: "center" }}
+          />
+
+          {/* MAIN TEXT - SOLID FILL, CONTINUOUS GRADIENT */}
+          <motion.text
+            x="50%"
+            y="50%"
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className="text-8xl md:text-[14rem] lg:text-[18rem] font-sans font-black tracking-tighter italic uppercase"
+            initial={{ scale: 5, opacity: 0, y: -50, letterSpacing: "-0.1em" }}
+            animate={{
+              scale: [5, 0.8, 1.1, 0.95, 1.02, 1],
+              opacity: [0, 1, 1, 1, 1, 1],
+              y: [-50, 0, 0, 0, 0, 0],
+              letterSpacing: ["-0.1em", "0.02em", "0.02em", "0.02em", "0.02em", "0.02em"],
+              fill: ["#ffffff", "#FFD700", "#ff4d00", "#ff0000", "#ff4d00", "#FFD700"],
+            }}
+            transition={{
+              scale: { delay: delay + 0.6, duration: 0.6, ease: "circOut" },
+              opacity: { delay: delay + 0.6, duration: 0.6, ease: "circOut" },
+              y: { delay: delay + 0.6, duration: 0.6, ease: "circOut" },
+              letterSpacing: { delay: delay + 0.6, duration: 0.6, ease: "circOut" },
+              fill: { delay: delay + 0.6, duration: 3, repeat: Infinity, ease: "linear" },
+            }}
+            style={{
+              filter: "url(#goldGlow)",
+            }}
+          >
+            ALAZ
+          </motion.text>
+        </svg>
+      </motion.div>
+
+      {showTagline && (
+        <motion.div
+          initial={{ opacity: 0, y: 30, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ delay: delay + 2.5, duration: 1.2, ease: "easeOut" }}
+          className="absolute bottom-16 flex flex-col items-center gap-3 z-20"
+        >
+          <motion.div
+            animate={{ width: ["0%", "100%", "0%"], opacity: [0, 1, 0] }}
+            transition={{
+              delay: delay + 2.5,
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="h-[1px] w-[180px] bg-gradient-to-r from-transparent via-[#FFD700]/80 to-transparent mb-3"
+          />
+          <p
+            className="text-[#FFD700]/80 text-sm md:text-base tracking-[1.5em] uppercase font-premium text-center px-4 [text-shadow:0_0_20px_rgba(255,215,0,0.5)]"
+          >
+            {tagline}
+          </p>
+        </motion.div>
+      )}
+    </div>
+  );
 }
