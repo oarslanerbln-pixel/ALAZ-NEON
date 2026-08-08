@@ -153,13 +153,19 @@ export function HostPodium({
           </motion.div>
         )}
 
-        {/* RECAP CARD */}
-        {awards && (awards.creative || awards.funny) && (
-          <div className="absolute right-0 bottom-0">
-             <ShareableRecapCard awards={awards} roomCode={room?.code} />
-          </div>
-        )}
       </div>
+
+      {/* RECAP CARD MOVED OUT OF PODIUM TO PREVENT OVERLAP */}
+      {awards && (awards.creative || awards.funny) && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 2 }}
+          className="mt-12 w-full max-w-md flex justify-center"
+        >
+          <ShareableRecapCard awards={awards} roomCode={room?.code} />
+        </motion.div>
+      )}
 
       {/* OYUNUN ENLERI (AWARDS) */}
       <motion.div

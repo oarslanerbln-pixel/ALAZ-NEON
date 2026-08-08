@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
@@ -21,6 +21,7 @@ import { PlayerLobby } from "./views/PlayerLobby";
 import { PlayerPlaying } from "./views/PlayerPlaying";
 import { PlayerReview } from "./views/PlayerReview";
 import { PlayerStandings } from "./views/PlayerStandings";
+import { PlayerQuizController } from "./quiz/PlayerQuizController";
 
 export function PlayerGame() {
   const [searchParams] = useSearchParams();
@@ -136,7 +137,7 @@ export function PlayerGame() {
           player_id: playerId,
           round_letter: activeLetter,
           data: finalData,
-          created_at: Date.now()
+          created_at: new Date().toISOString()
         });
       } catch (err) {
         submitError = err;
@@ -159,8 +160,8 @@ export function PlayerGame() {
   // Auto-submit when time is up or room moves to review
   useEffect(() => {
     let isMounted = true;
-    if (isLocked && !hasSubmitted.current && gameState === "playing") {
-      hasSubmitted.current = true;
+    if (isLocked && !hasSubmitted.current) {
+      // Don't set hasSubmitted.current here, let submitAnswers do it
       setTimeout(() => {
         if (isMounted) {
           submitAnswers(false).then();
@@ -173,7 +174,12 @@ export function PlayerGame() {
     return () => {
       isMounted = false;
     };
-  }, [isLocked, submitAnswers, gameState]);
+  }, [isLocked, submitAnswers]);
+
+  // Route to Quiz Controller if game_type is quiz
+  if (room?.game_type === "quiz" && player) {
+    return <PlayerQuizController room={room} player={player} />;
+  }
 
   if (gameState === "closed") {
     return (
@@ -222,6 +228,8 @@ export function PlayerGame() {
               onJokerChange={setJokerCategory}
               isLocked={isLocked}
               activeLetter={activeLetter}
+              onSubmitEarly={() => submitAnswers(true)}
+              submitStatus={submitStatus}
             />
           )}
 
@@ -229,35 +237,13 @@ export function PlayerGame() {
             <PlayerReview submitStatus={submitStatus} />
           )}
 
-          {gameState === "standings" && <PlayerStandings />}
+          {gameState === "standings" && (
+            <PlayerStandings currentPlayer={player} />
+          )}
         </AnimatePresence>
       </main>
 
-      {gameState === "playing" && (
-        <div className="fixed bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black via-black/90 to-transparent z-20">
-          <button
-            onClick={() => submitAnswers(true)}
-            disabled={isLocked || Object.values(answers).every((a) => !a)}
-            className={`w-full py-5 rounded-sm font-black font-mono text-lg tracking-widest transition-all relative overflow-hidden group border-2 ${
-              isLocked || Object.values(answers).every((a) => !a)
-                ? "bg-black/50 border-gray-800 text-gray-500 cursor-not-allowed scale-95 opacity-50"
-                : "bg-hacker-green/20 border-hacker-green text-hacker-green hover:bg-hacker-green hover:text-black shadow-[0_0_30px_rgba(0,255,65,0.4)] active:scale-95 animate-pulse"
-            }`}
-          >
-            <span className="relative z-10">
-              {submitStatus === "submitting"
-                ? "> " + t("game.submitting")
-                : "> " + t("game.submitEarly")}
-            </span>
-            {!isLocked && Object.values(answers).some((a) => a) && (
-              <motion.div className="absolute inset-0 bg-gradient-to-r from-transparent via-hacker-green/30 to-transparent -translate-x-full group-hover:animate-shimmer" />
-            )}
-          </button>
-          <p className="text-[10px] text-center text-gray-600 font-bold uppercase tracking-[0.3em] mt-4">
-            {t("game.earlyHint")}
-          </p>
-        </div>
-      )}
+
 
       {(gameState === "review" || gameState === "standings" || gameState === "finished") && (
         <EmojiToolbar onEmojiClick={sendReaction} />

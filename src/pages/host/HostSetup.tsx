@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { motion } from "framer-motion";
 import { NeonIcon } from "../../components/NeonIcon";
 import { KineticSpark } from "../../components/KineticSpark";
 import { ParticleBackground } from "../../components/ParticleBackground";
-import { CATEGORY_PRESETS } from "../../lib/categoryPresets";
+import { getCategoryPresets } from "../../lib/categoryPresets";
 import { useLocale } from "../../hooks/useLocale";
 import { useToast } from "../../contexts/ToastContextCore";
 
@@ -24,7 +24,7 @@ function GlassPanel({
 }) {
   return (
     <div 
-      className={`relative overflow-hidden rounded-3xl border border-white/10 group shadow-2xl ${className}`}
+      className={`relative overflow-hidden rounded-none border-[0.5px] border-white/20 group shadow-[0_10px_30px_rgba(0,0,0,0.8)] ${className}`}
     >
       <div className="absolute inset-0 z-0">
         <div 
@@ -32,7 +32,7 @@ function GlassPanel({
           style={{ '--neon-color': neonColor, animationDelay: delay } as React.CSSProperties}
         />
         <div 
-          className="absolute inset-[1px] bg-[#0a0a0f]/70 backdrop-blur-2xl rounded-3xl z-10 transition-colors duration-500 group-hover:bg-[#15151f]/70" 
+          className="absolute inset-[1px] bg-black/80 backdrop-blur-2xl rounded-none z-10 transition-colors duration-500 group-hover:bg-black/90" 
         />
       </div>
       <div className="relative z-20 h-full">
@@ -63,8 +63,13 @@ export function HostSetup() {
   const [isCreating, setIsCreating] = useState(false);
   const [activePreset, setActivePreset] = useState<string | null>(null);
 
+  const location = useLocation();
+  const gameType = location.state?.gameType || "scattegories";
+
+  const presets = getCategoryPresets(locale);
+
   const applyPreset = (name: string) => {
-    setCategories(CATEGORY_PRESETS[name].join(", "));
+    setCategories(presets[name].join(", "));
     setActivePreset(name);
   };
 
@@ -75,11 +80,14 @@ export function HostSetup() {
     localStorage.setItem("cafe_game_mode", gameMode);
 
     try {
-      const parsedCategories = categories
-        .split(",")
-        .map((c) => c.trim())
-        .filter(Boolean);
-      if (parsedCategories.length === 0) {
+      const parsedCategories = gameType === "quiz" 
+        ? [] 
+        : categories
+            .split(",")
+            .map((c) => c.trim())
+            .filter(Boolean);
+            
+      if (gameType === "scattegories" && parsedCategories.length === 0) {
         showToast(
           t("setup.errorNoCategory"),
           "warning",
@@ -99,6 +107,7 @@ export function HostSetup() {
           current_round: 0,
           time_left: 0,
           game_mode: gameMode,
+          game_type: gameType,
           locale: locale,
           created_at: Date.now()
         });
@@ -158,13 +167,10 @@ export function HostSetup() {
 
               <div className="flex justify-between items-start mb-10 relative z-10">
                 <div>
-                  <h2 className="text-3xl font-sans font-semibold text-white tracking-tight uppercase">
-                    {t("setup.title")}
+                  <h2 className="text-3xl font-sans font-black text-white tracking-tighter uppercase">
+                    {gameType === "quiz" ? "ALAZ QUIZ AYARLARI" : t("setup.title")}
                   </h2>
-                  <p className="text-gray-400 font-medium text-sm mt-1">{t("setup.subtitle")}</p>
-                </div>
-                <div className="bg-alaz-orange/10 text-alaz-orange px-4 py-1.5 rounded-full text-[10px] font-semibold tracking-widest border border-alaz-orange/30 uppercase">
-                  {t("setup.premiumMode")}
+                  <p className="text-gray-400 font-bold text-xs mt-1 uppercase tracking-widest">{t("setup.subtitle")}</p>
                 </div>
               </div>
 
@@ -179,7 +185,7 @@ export function HostSetup() {
                       aria-label={t("setup.timerAriaLabel")}
                       value={timerValue}
                       onChange={(e) => setTimerValue(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 p-5 text-white focus:border-alaz-orange focus:outline-none transition-all font-sans font-medium text-[14px] uppercase tracking-[0.1em] rounded-2xl"
+                      className="w-full bg-black/60 border-[0.5px] border-white/20 p-5 text-white focus:border-alaz-orange focus:outline-none transition-all font-sans font-black text-[14px] uppercase tracking-[0.1em] rounded-none shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]"
                     >
                       <option
                         className="bg-[#0a0a0f] text-white py-2"
@@ -218,10 +224,10 @@ export function HostSetup() {
                         <button
                           key={r}
                           onClick={() => setTotalRounds(r)}
-                          className={`py-4 font-sans font-medium text-lg transition-all border rounded-2xl ${
+                          className={`py-4 font-sans font-black text-lg transition-all border-[0.5px] rounded-none ${
                             totalRounds === r
                               ? "bg-alaz-orange text-black border-alaz-orange"
-                              : "bg-white/5 border-white/10 text-gray-400 hover:border-alaz-orange/40 hover:text-white"
+                              : "bg-black/60 border-white/20 text-gray-400 hover:border-alaz-orange/40 hover:text-white"
                           }`}
                         >
                           {r}
@@ -246,20 +252,20 @@ export function HostSetup() {
                     <div className="grid grid-cols-2 gap-4">
                       <button
                         onClick={() => setGameMode("individual")}
-                        className={`py-4 font-sans font-medium text-xs uppercase tracking-widest transition-all border flex items-center justify-center rounded-2xl ${
+                        className={`py-4 font-sans font-black text-xs uppercase tracking-widest transition-all border-[0.5px] flex items-center justify-center rounded-none ${
                           gameMode === "individual"
                             ? "bg-white text-black border-white"
-                            : "bg-white/5 border-white/10 text-gray-400 hover:border-white/40"
+                            : "bg-black/60 border-white/20 text-gray-400 hover:border-white/40"
                         }`}
                       >
                         {t("setup.individual")}
                       </button>
                       <button
                         onClick={() => setGameMode("team")}
-                        className={`py-4 font-sans font-medium text-xs uppercase tracking-widest transition-all border flex items-center justify-center rounded-2xl ${
+                        className={`py-4 font-sans font-black text-xs uppercase tracking-widest transition-all border-[0.5px] flex items-center justify-center rounded-none ${
                           gameMode === "team"
                             ? "bg-alaz-orange text-black border-alaz-orange"
-                            : "bg-white/5 border-white/10 text-gray-400 hover:border-alaz-orange/40"
+                            : "bg-black/60 border-white/20 text-gray-400 hover:border-alaz-orange/40"
                         }`}
                       >
                         {t("setup.team")}
@@ -283,10 +289,10 @@ export function HostSetup() {
                           switchLocale("tr");
                           setCategories(t("categories.default"));
                         }}
-                        className={`py-4 font-sans font-medium text-xs uppercase tracking-widest transition-all border flex items-center justify-center rounded-2xl ${
+                        className={`py-4 font-sans font-black text-xs uppercase tracking-widest transition-all border-[0.5px] flex items-center justify-center rounded-none ${
                           locale === "tr"
                             ? "bg-white/20 text-white border-white/40"
-                            : "bg-white/5 border-white/10 text-gray-400 hover:border-white/30 hover:text-white"
+                            : "bg-black/60 border-white/20 text-gray-400 hover:border-white/30 hover:text-white"
                         }`}
                       >
                         TÜRKÇE
@@ -296,10 +302,10 @@ export function HostSetup() {
                           switchLocale("de");
                           setCategories(t("categories.default"));
                         }}
-                        className={`py-4 font-sans font-medium text-xs uppercase tracking-widest transition-all border flex items-center justify-center rounded-2xl ${
+                        className={`py-4 font-sans font-black text-xs uppercase tracking-widest transition-all border-[0.5px] flex items-center justify-center rounded-none ${
                           locale === "de"
                             ? "bg-white/20 text-white border-white/40"
-                            : "bg-white/5 border-white/10 text-gray-400 hover:border-white/30 hover:text-white"
+                            : "bg-black/60 border-white/20 text-gray-400 hover:border-white/30 hover:text-white"
                         }`}
                       >
                         DEUTSCH
@@ -309,49 +315,59 @@ export function HostSetup() {
                 </div>
 
                 {/* Categories Column */}
-                <div className="flex flex-col gap-4">
-                  {/* Preset Buttons */}
-                  <div>
-                    <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
-                      {t("setup.presetLabel")}
-                    </label>
-                    <div className="flex flex-wrap gap-3">
-                      {Object.keys(CATEGORY_PRESETS).map((name) => (
-                        <button
-                          key={name}
-                          onClick={() => applyPreset(name)}
-                          className={`px-5 py-2.5 font-sans font-medium text-[11px] uppercase tracking-widest transition-all border rounded-xl ${
-                            activePreset === name
-                              ? "bg-white border-white text-black"
-                              : "bg-white/5 border-white/10 text-gray-400 hover:border-white/30 hover:text-white"
-                          }`}
-                        >
-                          {name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Categories textarea */}
-                  <div className="flex flex-col flex-1">
-                    <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
-                      {t("setup.categoriesLabel")}
-                    </label>
-                    <textarea
-                      rows={5}
-                      value={categories}
-                      onChange={(e) => {
-                        setCategories(e.target.value);
-                        setActivePreset(null);
-                      }}
-                      className="w-full bg-white/5 border border-white/10 p-5 text-white focus:border-alaz-orange focus:outline-none flex-1 resize-none font-medium leading-relaxed rounded-2xl"
-                      placeholder={t("setup.categoriesPlaceholder")}
-                    />
-                    <p className="text-[10px] text-gray-500 mt-2 italic opacity-60">
-                      {t("setup.categoriesHint")}
+                {gameType === "quiz" ? (
+                  <div className="flex flex-col gap-4 bg-blue-500/10 border border-blue-500/20 p-8 justify-center items-center text-center">
+                    <NeonIcon type="rocket" color="blue" className="w-16 h-16 mb-4 opacity-50" />
+                    <h3 className="text-xl font-black text-blue-400 uppercase tracking-widest mb-2">OTOMATİK SORU HAVUZU</h3>
+                    <p className="text-gray-400 text-sm font-medium">
+                      ALAZ QUIZ modunda kategorilere ihtiyacınız yoktur. Sorular yapay zeka tarafından seçilen global soru havuzundan Türkçe veya Almanca (dil seçiminize göre) otomatik olarak çekilecektir.
                     </p>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    {/* Preset Buttons */}
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
+                        {t("setup.presetLabel")}
+                      </label>
+                      <div className="flex flex-wrap gap-3">
+                        {Object.keys(presets).map((name) => (
+                          <button
+                            key={name}
+                            onClick={() => applyPreset(name)}
+                            className={`px-5 py-3 font-sans font-black text-[11px] uppercase tracking-widest transition-all border-[0.5px] rounded-none shadow-md ${
+                              activePreset === name
+                                ? "bg-white border-white text-black"
+                                : "bg-black/60 border-white/20 text-gray-400 hover:border-white/50 hover:text-white"
+                            }`}
+                          >
+                            {name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Categories textarea */}
+                    <div className="flex flex-col flex-1">
+                      <label className="block text-[11px] uppercase tracking-[0.3em] font-black text-alaz-orange mb-3 animate-pulse drop-shadow-[0_0_10px_rgba(255,77,0,0.8)]">
+                        {t("setup.categoriesLabel")}
+                      </label>
+                      <textarea
+                        rows={5}
+                        value={categories}
+                        onChange={(e) => {
+                          setCategories(e.target.value);
+                          setActivePreset(null);
+                        }}
+                        className="w-full bg-black/60 border-[0.5px] border-white/20 p-5 text-white focus:border-alaz-orange focus:outline-none flex-1 resize-none font-black leading-relaxed rounded-none shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]"
+                        placeholder={t("setup.categoriesPlaceholder")}
+                      />
+                      <p className="text-[10px] text-gray-500 mt-2 italic opacity-60">
+                        {t("setup.categoriesHint")}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <motion.button
@@ -359,10 +375,10 @@ export function HostSetup() {
                 whileTap={{ scale: 0.99 }}
                 onClick={startLobby}
                 disabled={isCreating}
-                className={`w-full py-6 mt-10 font-sans font-semibold text-lg uppercase tracking-widest transition-all duration-500 relative z-50 cursor-pointer rounded-2xl ${
+                className={`w-full py-6 mt-10 font-sans font-black text-xl uppercase tracking-[0.2em] transition-all duration-500 relative z-50 cursor-pointer rounded-none border-[0.5px] border-white/20 shadow-[0_0_30px_rgba(255,77,0,0.3)] hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] ${
                   isCreating
-                    ? "bg-gray-800 text-gray-500 cursor-not-allowed"
-                    : "bg-white text-black hover:bg-alaz-orange hover:text-white"
+                    ? "bg-black/80 text-gray-500 cursor-not-allowed"
+                    : "bg-alaz-orange text-black hover:bg-white hover:text-black"
                 }`}
               >
                 {isCreating

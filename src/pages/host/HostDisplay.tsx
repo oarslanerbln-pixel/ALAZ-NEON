@@ -23,6 +23,7 @@ import { HostPlaying } from "./views/HostPlaying";
 import { HostReview } from "./views/HostReview";
 import { HostStandings } from "./views/HostStandings";
 import { HostPodium } from "./views/HostPodium";
+import { HostQuizDisplay } from "./quiz/HostQuizDisplay";
 import { DatabaseStatus } from "../../components/DatabaseStatus";
 import { EmojiRain } from "../../components/EmojiRain";
 import { LetterSpinner } from "../../components/LetterSpinner";
@@ -78,6 +79,11 @@ export function HostDisplay() {
       { uniqueCount: number; earlyCount: number; blankCount: number }
     >
   >({});
+
+  // Route to Quiz Display if game_type is quiz
+  if (room?.game_type === "quiz") {
+    return <HostQuizDisplay />;
+  }
 
   // Orchestrate Intro and Music
   useEffect(() => {
@@ -136,6 +142,9 @@ export function HostDisplay() {
 
     await updateRoomStatus("review");
     SoundManager.getInstance().playSFX(sounds.SIREN);
+
+    // Give players 2.5 seconds to auto-submit their final answers
+    await new Promise((resolve) => setTimeout(resolve, 2500));
 
     const letterToQuery = room.active_letter || currentLetter;
 
@@ -246,10 +255,16 @@ export function HostDisplay() {
     if (!roomId || !room) return;
     SoundManager.getInstance().playSFX(sounds.BURN);
 
-    const letters = "ABCDEFGHIJKLMNOPRSTUVYZ";
-    const randomLetter = letters.charAt(
-      Math.floor(Math.random() * letters.length),
-    );
+    const letters = "ABCDEFGHIJKLMNOPRSTUVYZ".split("");
+    const usedLetters = room.used_letters || [];
+    let availableLetters = letters.filter(l => !usedLetters.includes(l));
+    
+    // If all letters used, reset pool
+    if (availableLetters.length === 0) {
+      availableLetters = letters;
+    }
+    
+    const randomLetter = availableLetters[Math.floor(Math.random() * availableLetters.length)];
     setNextLetter(randomLetter);
     
     if (room.current_round === 0) {
@@ -267,10 +282,13 @@ export function HostDisplay() {
     if (!roomId || !room) return;
 
     const nextRound = (room.current_round || 0) + 1;
+    const usedLetters = room.used_letters || [];
+    
     await updateRoomStatus("playing", {
       active_letter: nextLetter,
       current_round: nextRound,
       time_left: room.timer_setting,
+      used_letters: [...usedLetters, nextLetter]
     });
 
     setCurrentLetter(nextLetter);

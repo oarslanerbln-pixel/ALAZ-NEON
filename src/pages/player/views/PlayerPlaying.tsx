@@ -8,7 +8,12 @@ interface PlayerPlayingProps {
   onJokerChange: (category: string | null) => void;
   isLocked: boolean;
   activeLetter: string;
+  onSubmitEarly: () => void;
+  submitStatus: string;
 }
+
+import { HoldButton } from "../../../components/HoldButton";
+import { useLocale } from "../../../hooks/useLocale";
 
 export function PlayerPlaying({
   categories,
@@ -18,7 +23,10 @@ export function PlayerPlaying({
   onJokerChange,
   isLocked,
   activeLetter,
+  onSubmitEarly,
+  submitStatus,
 }: PlayerPlayingProps) {
+  const { t } = useLocale();
   const toggleJoker = (cat: string) => {
     if (isLocked) return;
     if (jokerCategory === cat) onJokerChange(null);
@@ -81,6 +89,23 @@ export function PlayerPlaying({
           </div>
         </motion.div>
       ))}
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: categories.length * 0.1 }}
+        className="pt-8 pb-12"
+      >
+        <HoldButton
+          onComplete={onSubmitEarly}
+          disabled={isLocked || Object.values(answers).every((a) => !a)}
+          text={submitStatus === "submitting" ? t("game.submitting") : t("game.submitEarly")}
+          holdText={t("game.submitting")}
+        />
+        <p className="text-[10px] text-center text-gray-600 font-bold uppercase tracking-[0.3em] mt-4">
+          {t("game.earlyHint")}
+        </p>
+      </motion.div>
     </motion.div>
   );
 }

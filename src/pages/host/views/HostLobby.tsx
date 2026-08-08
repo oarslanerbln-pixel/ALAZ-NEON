@@ -9,6 +9,8 @@ const CAFE_IMAGES = [
   "/wait-1.png",
   "/wait-2.png",
   "/wait-3.png",
+  "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?q=80&w=2000&auto=format&fit=crop", // Istanbul 1
+  "https://images.unsplash.com/photo-1527838832700-5059252407fa?q=80&w=2000&auto=format&fit=crop", // Istanbul 2
 ];
 
 declare const __LOCAL_IP__: string | undefined;
@@ -120,12 +122,12 @@ export function HostLobby({
               transition={{ duration: 10, ease: "linear" }}
               src={CAFE_IMAGES[bgIndex]}
               alt="Wait Screen Background"
-              className="w-full h-full object-cover object-center opacity-70 mix-blend-lighten"
+              className="w-full h-full object-cover object-center opacity-90"
             />
-            {/* Cinematic Gradient Overlays */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.7)_100%)] pointer-events-none" />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/20 to-black/95 pointer-events-none" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-black/80 pointer-events-none" />
+            {/* Cinematic Gradient Overlays - Reduced for visibility */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.5)_100%)] pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/60 pointer-events-none" />
           </motion.div>
         </AnimatePresence>
 

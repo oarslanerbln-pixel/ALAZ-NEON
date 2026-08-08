@@ -15,8 +15,8 @@ export function HostHeader({ room, onEndGameEarly }: HostHeaderProps) {
 
   return (
     <header className="flex justify-between items-center mb-8 relative z-20 bg-black/40 p-4 rounded-3xl border border-white/10 backdrop-blur-md">
-      <h1 className="text-3xl font-black text-glow-alaz tracking-widest animate-neon-flicker uppercase">
-        CAFE NIGHTLIFE
+      <h1 className="text-3xl font-black italic tracking-widest bg-gradient-to-r from-alaz-orange to-cyber-yellow bg-clip-text text-transparent">
+        ALAZ
       </h1>
       {(room.status === "playing" ||
         room.status === "review" ||

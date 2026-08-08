@@ -6,14 +6,30 @@ export type RoomStatus =
   | "countdown"
   | "finished"
   | "closed"
-  | "intro";
+  | "intro"
+  | "quiz_intro"
+  | "quiz_lobby"
+  | "question_intro"
+  | "question_active"
+  | "question_reveal"
+  | "quiz_leaderboard";
 
 export type GameMode = "individual" | "team";
+export type GameType = "scattegories" | "quiz";
+
+export interface QuizQuestion {
+  id: string;
+  text: string;
+  options: { A: string; B: string; C: string; D: string };
+  correctOption: "A" | "B" | "C" | "D";
+  difficulty: 1 | 2 | 3;
+}
 
 export interface Room {
   id: string;
   code: string;
   status: RoomStatus;
+  game_type?: GameType;
   categories: string[];
   timer_setting: number;
   total_rounds: number;
@@ -22,6 +38,10 @@ export interface Room {
   time_left?: number;
   round_end_time?: number;
   game_mode: GameMode;
+  used_letters?: string[];
+  locale?: string;
+  quiz_questions?: QuizQuestion[];
+  current_question_index?: number;
 }
 
 export interface Player {
@@ -105,6 +125,11 @@ export interface Database {
           time_left?: number;
           round_end_time?: number;
           game_mode: GameMode;
+          game_type?: GameType;
+          used_letters?: string[];
+          locale?: string;
+          quiz_questions?: QuizQuestion[];
+          current_question_index?: number;
           created_at?: string;
         };
         Update: {
@@ -119,6 +144,11 @@ export interface Database {
           time_left?: number;
           round_end_time?: number;
           game_mode?: GameMode;
+          game_type?: GameType;
+          used_letters?: string[];
+          locale?: string;
+          quiz_questions?: QuizQuestion[];
+          current_question_index?: number;
           created_at?: string;
         };
         Relationships: [];

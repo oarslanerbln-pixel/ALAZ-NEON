@@ -35,47 +35,48 @@ function CognitiveAnalytics({ results }: { results: RoundResultInfo[] }) {
       : 0;
 
   return (
-    <div className="grid grid-cols-3 gap-4 mb-8">
-      <div className="glass-panel-alaz p-4 border-alaz-orange/20 relative overflow-hidden group">
-        <div className="absolute inset-0 bg-alaz-orange/5 blur-xl -z-10" />
-        <span className="text-[10px] text-alaz-orange font-black uppercase tracking-widest block mb-1">
+    <div className="grid grid-cols-3 gap-6 mb-10">
+      <div className="bg-black/80 p-6 border-t-2 border-alaz-orange relative overflow-hidden group rounded-none shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+        <div className="absolute inset-0 bg-gradient-to-b from-alaz-orange/20 to-transparent -z-10" />
+        <span className="text-[11px] text-alaz-orange font-black uppercase tracking-[0.3em] block mb-2 opacity-80">
           {t("review.cognitiveAccuracy")}
         </span>
-        <div className="flex items-baseline gap-1">
-          <span className="text-3xl font-black text-white">%{avgAccuracy}</span>
-          <span className="text-xs text-gray-500 font-bold">
+        <div className="flex items-baseline gap-2">
+          <span className="text-4xl md:text-5xl font-black text-white tracking-tighter">%{avgAccuracy}</span>
+          <span className="text-[10px] text-gray-400 font-bold tracking-widest uppercase">
             {t("review.groupAverage")}
           </span>
         </div>
       </div>
-      <div className="glass-panel-neon-blue p-4 border-neon-blue/20">
-        <span className="text-[10px] text-neon-blue font-black uppercase tracking-widest block mb-1">
+      <div className="bg-black/80 p-6 border-t-2 border-neon-blue relative overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)] rounded-none">
+        <div className="absolute inset-0 bg-gradient-to-b from-neon-blue/20 to-transparent -z-10" />
+        <span className="text-[11px] text-neon-blue font-black uppercase tracking-[0.3em] block mb-2 opacity-80">
           {t("review.originalityDensity")}
         </span>
         <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-black text-white">
+          <span className="text-4xl md:text-5xl font-black text-white tracking-tighter">
             {uniqueDensity}
           </span>
-          <span className="text-xs text-gray-500 font-bold">
+          <span className="text-[10px] text-gray-400 font-bold tracking-widest uppercase">
             {t("review.uniquePerPlayer")}
           </span>
         </div>
       </div>
-      <div className="glass-panel-alaz p-4 border-white/10">
-        <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest block mb-1">
+      <div className="bg-black/80 p-6 border-t-2 border-white/40 relative overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)] rounded-none">
+        <span className="text-[11px] text-gray-400 font-black uppercase tracking-[0.3em] block mb-2 opacity-80">
           {t("review.mentalPerformance")}
         </span>
-        <div className="flex items-center gap-3">
-          <span className="text-3xl font-black text-white">
+        <div className="flex items-center gap-4 mt-2">
+          <span className="text-4xl md:text-5xl font-black text-white tracking-tighter">
             %{Math.round((avgAccuracy + uniqueDensity * 20) / 1.5)}
           </span>
-          <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+          <div className="flex-1 h-1 bg-white/10 rounded-none overflow-hidden mt-1">
             <motion.div
               initial={{ width: 0 }}
               animate={{
                 width: `${Math.min(100, (avgAccuracy + uniqueDensity * 20) / 1.5)}%`,
               }}
-              className="h-full bg-neon-blue shadow-[0_0_10px_#00f3ff]"
+              className="h-full bg-white shadow-[0_0_15px_#fff]"
             />
           </div>
         </div>
@@ -218,10 +219,10 @@ export function HostReview({
                       layout
                       initial={{ x: -20, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
-                      className={`p-5 rounded-sm border transition-all ${
+                      className={`p-5 rounded-none border-[0.5px] transition-all ${
                         isTop
-                          ? "glass-panel-alaz"
-                          : "bg-white/5 border-white/10"
+                          ? "bg-alaz-orange/5 border-alaz-orange/50 border-l-4 border-l-alaz-orange"
+                          : "bg-black/60 border-white/10"
                       }`}
                     >
                       <div className="flex justify-between items-center mb-3">
@@ -300,8 +301,8 @@ export function HostReview({
         </div>
 
         {/* Answers Breakdown */}
-        <div className="w-2/3 glass-panel-alaz p-6 border-white/5 flex flex-col relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-alaz-orange/5 blur-[100px] pointer-events-none" />
+        <div className="w-2/3 bg-black/40 p-8 border border-white/5 flex flex-col relative overflow-hidden rounded-none shadow-[0_0_50px_rgba(0,0,0,0.8)] backdrop-blur-xl">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-alaz-orange/10 blur-[150px] pointer-events-none" />
           <h3 className="text-sm font-black text-gray-500 uppercase tracking-widest mb-6 relative z-10">
             {t("review.categoryAnalysis")}
           </h3>
@@ -324,13 +325,13 @@ export function HostReview({
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => onToggleAnswer(res.playerId, cat)}
-                        className={`p-4 rounded-sm border cursor-pointer transition-all duration-300 relative overflow-hidden group/ans
+                        className={`p-5 rounded-none border cursor-pointer transition-all duration-300 relative overflow-hidden group/ans
                                                                             ${
                                                                               !isRejected
                                                                                 ? ans.isUnique
-                                                                                  ? "border-green-500/50 bg-green-500/10 shadow-[0_0_15px_rgba(34,197,94,0.1)]"
-                                                                                  : "border-white/20 bg-white/10"
-                                                                                : "border-red-500/40 bg-red-500/10 grayscale-[0.5]"
+                                                                                  ? "border-green-500 bg-green-500/10 shadow-[inset_4px_0_0_rgba(34,197,94,1)]"
+                                                                                  : "border-white/10 bg-black/80 shadow-[inset_4px_0_0_rgba(255,255,255,0.2)] hover:border-white/30"
+                                                                                : "border-red-500/40 bg-red-950/40 grayscale-[0.5] shadow-[inset_4px_0_0_rgba(239,68,68,0.5)]"
                                                                             }`}
                       >
                         {/* Reject Hover Overlay */}
@@ -438,8 +439,9 @@ export function HostReview({
           <div className="mt-8 relative z-10 flex justify-end">
             <motion.button
               onClick={onNextStep}
-              whileHover={{ scale: 1.05 }}
-              className="w-full py-5 bg-alaz-orange text-black font-black text-xl rounded-sm shadow-[0_0_30px_rgba(255,77,0,0.3)] transition-all"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full py-6 bg-alaz-orange text-black font-black text-2xl rounded-none uppercase tracking-[0.2em] shadow-[0_0_40px_rgba(255,77,0,0.4)] transition-all hover:bg-white hover:shadow-[0_0_40px_rgba(255,255,255,0.4)]"
             >
               {room!.current_round >= room!.total_rounds
                 ? t("review.seeResults")

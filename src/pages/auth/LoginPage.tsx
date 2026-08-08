@@ -37,11 +37,11 @@ export function LoginPage() {
           <div className="w-20 h-20 bg-alaz-orange/10 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-alaz-orange/30 shadow-[0_0_30px_rgba(255,77,0,0.2)]">
             <NeonIcon type="flame" color="orange" className="w-10 h-10" />
           </div>
-          <h1 className="text-4xl font-black italic tracking-tighter mb-2 uppercase">
-            {t("auth.welcomeBack")}
+          <h1 className="text-5xl font-black text-white italic tracking-tighter mb-4 uppercase drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+            ALAZ
           </h1>
           <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">
-            CAFE NIGHTLIFE GAME
+            ALAZ
           </p>
         </div>
 

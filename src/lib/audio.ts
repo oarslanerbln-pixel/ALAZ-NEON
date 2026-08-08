@@ -225,5 +225,7 @@ export const sounds = {
   VOTE_TICK: "synth:click",
   BURN: "synth:burn",
   START: "synth:burn",
-  SIREN: "synth:siren",
+  SIREN: "https://cdn.pixabay.com/audio/2021/08/09/audio_d0d4baecfc.mp3",
+  CINEMATIC_BOOM: "https://cdn.pixabay.com/audio/2022/03/15/audio_7cf6be6126.mp3",
+  CYBER_GLITCH: "https://cdn.pixabay.com/audio/2022/11/20/audio_b723528859.mp3",
 };

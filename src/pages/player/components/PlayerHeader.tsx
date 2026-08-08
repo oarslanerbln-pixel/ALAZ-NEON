@@ -1,6 +1,8 @@
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Badge } from "../../../components/Badge";
 import { ExperienceBar } from "../../../components/ExperienceBar";
+import { SoundManager, sounds } from "../../../lib/audio";
 
 interface PlayerHeaderProps {
   playerName: string;
@@ -27,6 +29,19 @@ export function PlayerHeader({
 }: PlayerHeaderProps) {
   const timeProgress = (timeLeft / (maxTime || 60)) * 100;
   const isPlaying = gameState === "playing";
+  const lastTimeRef = useRef(timeLeft);
+
+  useEffect(() => {
+    if (isPlaying && timeLeft <= 10 && timeLeft > 0 && lastTimeRef.current !== timeLeft) {
+      SoundManager.getInstance().playSFX(sounds.CLICK, 0.8);
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        try {
+          navigator.vibrate(100);
+        } catch (e) {}
+      }
+    }
+    lastTimeRef.current = timeLeft;
+  }, [timeLeft, isPlaying]);
 
   return (
     <div className="glass-2 p-6 border-b border-white/10 shadow-2xl relative overflow-hidden z-20">

@@ -43,14 +43,56 @@ function MatrixRain() {
   );
 }
 
+// Hacker Terminal Component
+function HackerTerminal() {
+  const [lines, setLines] = useState<string[]>([]);
+  const allLines = [
+    "INITIALIZING ROOTKIT...",
+    "BYPASSING KERNEL FIREWALL [OK]",
+    "DECRYPTING ADMIN CREDENTIALS... 0x8F9A2B",
+    "ACCESS GRANTED.",
+    "DOWNLOADING PLAYER DATA...",
+    "EXTRACTING NEURAL PATTERNS [||||||||||] 100%",
+    "INJECTING PAYLOAD AT MEMORY 0x00F83C",
+    "OVERRIDING MAIN PROTOCOL...",
+    "WARNING: UNAUTHORIZED ACCESS DETECTED",
+    "DISABLING ALARMS [OK]",
+    "CONNECTING TO ALAZ NEON MAINFRAME...",
+    "ESTABLISHED.",
+  ];
+
+  useEffect(() => {
+    let curr = 0;
+    const interval = setInterval(() => {
+      if (curr < allLines.length) {
+        setLines(prev => [...prev, allLines[curr]]);
+        curr++;
+      } else {
+        setLines(prev => [...prev, `[ROOT@ALAZ-NEON] ~$ ${Math.random().toString(36).substring(2)}`]);
+      }
+    }, 150);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="absolute inset-0 p-8 flex flex-col justify-end text-left pointer-events-none z-10 opacity-70">
+      {lines.slice(-15).map((line, i) => (
+        <div key={i} className="text-[#00ff00] text-2xl md:text-4xl font-mono tracking-widest drop-shadow-[0_0_5px_#00ff00]">
+          {line}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function HostIntro({ players, onComplete }: HostIntroProps) {
-  const [phase, setPhase] = useState<"boot" | "matrix" | "players" | "countdown">("boot");
+  const [phase, setPhase] = useState<"boot" | "matrix" | "players" | "countdown" | "wow">("boot");
   const [currentPlayerIdx, setCurrentPlayerIdx] = useState(0);
   const [countdown, setCountdown] = useState(3);
 
   useEffect(() => {
     // 1. Boot Phase
-    SoundManager.getInstance().playSFX(sounds.FAILURE); // Glitch/Error sound
+    SoundManager.getInstance().playSFX(sounds.CYBER_GLITCH, 0.8); // Glitch/Error sound
     const t1 = setTimeout(() => {
       setPhase("matrix");
     }, 2000);
@@ -60,10 +102,10 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
   useEffect(() => {
     // 2. Matrix Phase
     if (phase === "matrix") {
-      SoundManager.getInstance().playSFX(sounds.BURN); // Intense transition
+      SoundManager.getInstance().playSFX(sounds.CYBER_GLITCH, 1.0); // Intense transition
       const t2 = setTimeout(() => {
         setPhase("players");
-      }, 1500);
+      }, 3500); // Wait 3.5s for the hacker terminal to play out
       return () => clearTimeout(t2);
     }
   }, [phase]);
@@ -93,14 +135,23 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
         }, 1000);
         return () => clearTimeout(t4);
       } else {
-        SoundManager.getInstance().playSFX(sounds.SUCCESS); // Access Granted
-        const t5 = setTimeout(() => {
-          onComplete();
-        }, 1500);
-        return () => clearTimeout(t5);
+        setPhase("wow");
       }
     }
-  }, [phase, countdown, onComplete]);
+  }, [phase, countdown]);
+
+  useEffect(() => {
+    // 5. WOW Cinematic Phase
+    if (phase === "wow") {
+      SoundManager.getInstance().playSFX(sounds.CINEMATIC_BOOM, 1.0); // Massive explosion sound
+      SoundManager.getInstance().playSFX(sounds.SIREN, 0.5); // Add siren for urgency
+      
+      const t5 = setTimeout(() => {
+        onComplete();
+      }, 4500); // 4.5 seconds of pure WOW factor
+      return () => clearTimeout(t5);
+    }
+  }, [phase, onComplete]);
 
   return (
     <div className="w-full h-full flex items-center justify-center bg-black fixed inset-0 z-[100] overflow-hidden noise-suppression font-mono">
@@ -139,11 +190,21 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.2 }}
-            className="text-center z-20"
+            className="flex flex-col items-center justify-center z-20 w-full h-full"
           >
-            <h1 className="text-4xl md:text-6xl lg:text-8xl font-black text-[#00ff00] uppercase tracking-tighter drop-shadow-[0_0_30px_rgba(0,255,0,0.8)]">
-              SİSTEM HACKLENDİ.
-            </h1>
+            <HackerTerminal />
+            <motion.div
+              animate={{ opacity: [1, 0, 1, 0.5, 1], scale: [1, 1.05, 1] }}
+              transition={{ duration: 0.2, repeat: Infinity }}
+              className="text-center bg-red-600/20 border-4 border-red-500 p-10 z-20 backdrop-blur-sm"
+            >
+              <div className="text-red-500 font-mono text-4xl mb-4 animate-pulse uppercase">
+                SECURITY BREACH
+              </div>
+              <h1 className="text-6xl md:text-8xl lg:text-9xl font-black text-red-500 uppercase tracking-tighter drop-shadow-[0_0_50px_rgba(255,0,0,1)]">
+                SİSTEM HACKLENDİ
+              </h1>
+            </motion.div>
           </motion.div>
         )}
 
@@ -178,19 +239,73 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
           </motion.div>
         )}
 
-        {phase === "countdown" && countdown === 0 && (
+        {phase === "wow" && (
           <motion.div
-            key="start"
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0, textShadow: "0 0 100px rgba(0,255,0,1)" }}
-            className="flex flex-col items-center justify-center z-20"
+            key="wow"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.5, filter: "blur(20px)" }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="relative flex flex-col items-center justify-center z-50 w-full h-full"
           >
-            <div className="text-[120px] font-black text-white uppercase tracking-tighter leading-none mb-4">
-              ERİŞİM ONAYLANDI
-            </div>
-            <div className="text-3xl text-[#00ff00] uppercase tracking-[1em] animate-pulse">
-              ATEŞ SERBEST
-            </div>
+            {/* Blinding Flash */}
+            <motion.div
+              initial={{ opacity: 1 }}
+              animate={{ opacity: 0 }}
+              transition={{ duration: 1 }}
+              className="absolute inset-0 bg-white z-50 pointer-events-none"
+            />
+            
+            {/* Cinematic Screen Shake via Container */}
+            <motion.div
+              animate={{ 
+                x: [0, -20, 20, -10, 10, 0], 
+                y: [0, 20, -20, 10, -10, 0] 
+              }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+              className="relative flex flex-col items-center justify-center"
+            >
+              {/* Rotating glowing rings */}
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+                className="absolute w-[800px] h-[800px] border-[2px] border-alaz-orange/40 rounded-full border-dashed"
+              />
+              <motion.div
+                animate={{ rotate: -360 }}
+                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                className="absolute w-[600px] h-[600px] border-[6px] border-red-600/50 rounded-full border-dotted"
+              />
+
+              {/* Shockwave effect */}
+              <motion.div
+                initial={{ scale: 0, opacity: 1 }}
+                animate={{ scale: 6, opacity: 0 }}
+                transition={{ duration: 2, ease: "easeOut" }}
+                className="absolute w-40 h-40 bg-alaz-orange rounded-full pointer-events-none mix-blend-screen"
+              />
+
+              {/* Main Title ALAZ NEON */}
+              <motion.h1 
+                initial={{ y: 50, opacity: 0, scale: 0.8 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", bounce: 0.7 }}
+                className="text-[120px] md:text-[180px] font-black text-white tracking-tighter uppercase mb-4 text-center leading-none"
+                style={{ textShadow: "0 0 100px rgba(255,77,0,1), 0 0 40px rgba(255,255,255,0.8)" }}
+              >
+                ALAZ NEON
+              </motion.h1>
+
+              <motion.h2
+                initial={{ y: -50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.5, type: "spring", bounce: 0.5 }}
+                className="text-4xl md:text-6xl font-black text-[#00ff00] tracking-[0.5em] uppercase text-center"
+                style={{ textShadow: "0 0 50px rgba(0,255,0,0.8)" }}
+              >
+                ATEŞ SERBEST
+              </motion.h2>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

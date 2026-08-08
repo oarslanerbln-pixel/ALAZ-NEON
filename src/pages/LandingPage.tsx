@@ -81,6 +81,7 @@ export function LandingPage() {
   const { t } = useLocale();
   const [bgIndex, setBgIndex] = useState(0);
   const [isIdle, setIsIdle] = useState(false);
+  const [showGameSelection, setShowGameSelection] = useState(false);
 
   // Background slider logic
   useEffect(() => {
@@ -241,12 +242,13 @@ export function LandingPage() {
             </div>
 
             {/* Role Selection Buttons */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 w-full max-w-4xl mx-auto pb-20">
-              <TiltCard
-                onClick={() => {
-                  SoundManager.getInstance().playSFX(sounds.CLICK);
-                  navigate("/host/setup");
-                }}
+            {!showGameSelection ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10 w-full max-w-4xl mx-auto pb-20">
+                <TiltCard
+                  onClick={() => {
+                    SoundManager.getInstance().playSFX(sounds.CLICK);
+                    setShowGameSelection(true);
+                  }}
                 className="group relative overflow-hidden p-10 transition-all bg-black/40 backdrop-blur-xl border border-alaz-orange/30 hover:border-alaz-orange cursor-pointer"
                 style={{ clipPath: "polygon(25px 0, calc(100% - 25px) 0, 100% 25px, 100% calc(100% - 25px), calc(100% - 25px) 100%, 25px 100%, 0 calc(100% - 25px), 0 25px)" }}
               >
@@ -301,6 +303,56 @@ export function LandingPage() {
                 <div className="absolute inset-0 bg-[#ff003c]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20 mix-blend-screen" />
               </TiltCard>
             </div>
+            ) : (
+              <div className="w-full max-w-4xl mx-auto pb-20 flex flex-col items-center">
+                <h2 className="text-3xl font-black text-white mb-10 tracking-widest uppercase">
+                  Oyun Seçimi
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 w-full">
+                  <TiltCard
+                    onClick={() => {
+                      SoundManager.getInstance().playSFX(sounds.START);
+                      navigate("/host/setup", { state: { gameType: "scattegories" } });
+                    }}
+                    className="group relative overflow-hidden p-10 transition-all bg-black/40 backdrop-blur-xl border border-alaz-orange/30 hover:border-alaz-orange cursor-pointer"
+                    style={{ clipPath: "polygon(25px 0, calc(100% - 25px) 0, 100% 25px, 100% calc(100% - 25px), calc(100% - 25px) 100%, 25px 100%, 0 calc(100% - 25px), 0 25px)" }}
+                  >
+                    <div className="relative z-20 text-center flex flex-col items-center justify-center min-h-[160px]">
+                      <h2 className="text-3xl md:text-5xl font-black text-alaz-orange mb-4 tracking-tight uppercase">
+                        ALAZ NEON
+                      </h2>
+                      <p className="text-gray-400 text-sm leading-relaxed font-medium">
+                        Kelime yeteneğini test et. Klasik İsim Şehir oyununun hiper-modern versiyonu.
+                      </p>
+                    </div>
+                  </TiltCard>
+
+                  <TiltCard
+                    onClick={() => {
+                      SoundManager.getInstance().playSFX(sounds.START);
+                      navigate("/host/setup", { state: { gameType: "quiz" } });
+                    }}
+                    className="group relative overflow-hidden p-10 transition-all bg-black/40 backdrop-blur-xl border border-blue-500/30 hover:border-blue-500 cursor-pointer"
+                    style={{ clipPath: "polygon(25px 0, calc(100% - 25px) 0, 100% 25px, 100% calc(100% - 25px), calc(100% - 25px) 100%, 25px 100%, 0 calc(100% - 25px), 0 25px)" }}
+                  >
+                    <div className="relative z-20 text-center flex flex-col items-center justify-center min-h-[160px]">
+                      <h2 className="text-3xl md:text-5xl font-black text-blue-500 mb-4 tracking-tight uppercase">
+                        ALAZ QUIZ
+                      </h2>
+                      <p className="text-gray-400 text-sm leading-relaxed font-medium">
+                        Genel kültürünü kanıtla. Kim Milyoner Olmak İster tarzı zeka ve hız savaşı.
+                      </p>
+                    </div>
+                  </TiltCard>
+                </div>
+                <button
+                  onClick={() => setShowGameSelection(false)}
+                  className="mt-12 px-8 py-3 text-sm font-bold text-gray-400 hover:text-white transition-colors"
+                >
+                  &larr; GERİ DÖN
+                </button>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

@@ -18,7 +18,8 @@ export function calculateRoundScores(
   rawAnswers: Answer[],
   activeLetter: string,
 ): RoundResultInfo[] {
-  const normalizedLetter = normalizeTL(activeLetter);
+  const locale = room.locale || "tr";
+  const normalizedLetter = normalizeTL(activeLetter, locale);
 
   // Count occurrences of each answer per category with FUZZY LOGIC (0.85 threshold)
   const categoryCounts: Record<string, Record<string, number>> = {};
@@ -29,7 +30,7 @@ export function calculateRoundScores(
   rawAnswers.forEach((answer) => {
     const ansData = answer.data as Record<string, string>;
     room.categories.forEach((cat) => {
-      const val = normalizeTL(ansData[cat] || "");
+      const val = normalizeTL(ansData[cat] || "", locale);
       if (val && val.startsWith(normalizedLetter)) {
         // Fuzzy grouping: Check if a similar word already exists in counts
         let foundKey = val;
@@ -74,7 +75,7 @@ export function calculateRoundScores(
 
       room.categories.forEach((cat) => {
         const valRaw = ansData[cat] || "";
-        const val = normalizeTL(valRaw);
+        const val = normalizeTL(valRaw, locale);
         let isUnique = false;
         let pts = 0;
         let isValid = false;

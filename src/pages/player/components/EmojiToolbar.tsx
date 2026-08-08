@@ -9,32 +9,27 @@ export function EmojiToolbar({ onEmojiClick }: EmojiToolbarProps) {
 
   return (
     <div className="fixed bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black via-black/90 to-transparent z-40">
-      <div className="glass-panel-alaz p-4 rounded-sm flex justify-around items-center gap-2 overflow-x-auto">
+      <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 p-4 flex justify-between items-center gap-3 overflow-x-auto shadow-2xl relative rounded-none">
+        {/* Geometric accents */}
+        <div className="absolute top-0 left-0 w-1.5 h-1.5 bg-white/20" />
+        <div className="absolute top-0 right-0 w-1.5 h-1.5 bg-white/20" />
+        
         {emojis.map((emoji) => (
           <motion.button
             key={emoji}
-            whileTap={{ scale: 1.5 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => onEmojiClick(emoji)}
-            className={`text-4xl transition-all p-2 ${
-              emoji === "👍" || emoji === "👎"
-                ? "hover:scale-110"
-                : "grayscale hover:grayscale-0"
+            className={`text-2xl flex-1 py-3 bg-zinc-800/40 border border-zinc-700/50 hover:border-zinc-500 hover:bg-zinc-700/50 transition-colors rounded-none ${
+              emoji !== "👍" && emoji !== "👎" ? "grayscale hover:grayscale-0" : ""
             }`}
-            style={{
-              filter:
-                emoji === "👍"
-                  ? "drop-shadow(0 0 10px rgba(34,197,94,0.6))"
-                  : emoji === "👎"
-                    ? "drop-shadow(0 0 10px rgba(239,68,68,0.6))"
-                    : "",
-            }}
           >
             {emoji}
           </motion.button>
         ))}
       </div>
-      <p className="text-[10px] text-center text-gray-500 font-black uppercase tracking-widest mt-4">
-        EKRANDAKİ CEVABI OYLA / TEPKİ VER!
+      <p className="text-[10px] text-center text-zinc-500 font-light uppercase tracking-[0.4em] mt-6 mb-2">
+        TEPKİ GÖNDER
       </p>
     </div>
   );

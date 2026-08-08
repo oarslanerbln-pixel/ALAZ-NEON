@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { useEffect } from "react";
+import { motion, animate, useMotionValue, useTransform } from "framer-motion";
 import { useLocale } from "../../../hooks/useLocale";
 import type { Player, RoundResultInfo, Room } from "../../../types/database";
 
@@ -7,6 +8,17 @@ interface HostStandingsProps {
   players: Player[];
   roundResults: RoundResultInfo[];
   onNextStep: () => void;
+}
+function AnimatedCounter({ from, to, delay }: { from: number; to: number; delay: number }) {
+  const count = useMotionValue(from);
+  const rounded = useTransform(count, (latest) => Math.round(latest));
+
+  useEffect(() => {
+    const controls = animate(count, to, { duration: 1.5, delay, ease: "easeOut" });
+    return controls.stop;
+  }, [from, to, delay]);
+
+  return <motion.span>{rounded}</motion.span>;
 }
 
 export function HostStandings({
@@ -84,14 +96,14 @@ export function HostStandings({
               initial={{ x: -50, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.3 + index * 0.1, type: "spring" }}
-              className="relative w-full cyber-panel p-4 flex items-center bg-black/40 group overflow-hidden"
+              className="relative w-full bg-black/60 border-[0.5px] border-white/10 p-6 flex items-center group overflow-hidden rounded-none shadow-[0_5px_20px_rgba(0,0,0,0.5)]"
             >
               {/* Background Bar */}
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${widthPercent}%` }}
                 transition={{ delay: 0.8 + index * 0.1, duration: 1, ease: "easeOut" }}
-                className="absolute left-0 top-0 bottom-0 bg-alaz-orange/20 border-r-2 border-alaz-orange/50 -z-10"
+                className="absolute left-0 top-0 bottom-0 bg-alaz-orange/20 border-r-4 border-alaz-orange -z-10"
               />
               
               <div className="w-12 text-3xl font-black text-white/20 font-mono">
@@ -104,7 +116,7 @@ export function HostStandings({
               
               <div className="flex flex-col items-end">
                 <div className="text-3xl font-black text-glow-alaz text-alaz-orange font-mono">
-                  {item.score}
+                  <AnimatedCounter from={item.score - item.roundScore} to={item.score} delay={1.5 + index * 0.1} />
                 </div>
                 {item.roundScore > 0 && (
                   <motion.div
@@ -127,9 +139,9 @@ export function HostStandings({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 2 }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className="mt-8 px-10 py-5 bg-white text-black hover:bg-hacker-green hover:text-black font-black uppercase tracking-[0.2em] rounded-xl transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(0,255,65,0.4)] cursor-pointer"
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className="mt-8 px-12 py-6 bg-alaz-orange text-black hover:bg-white hover:text-black font-black uppercase tracking-[0.2em] rounded-none transition-all shadow-[0_0_40px_rgba(255,77,0,0.4)] hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] cursor-pointer text-2xl"
       >
         {room?.current_round === room?.total_rounds ? "FINISH GAME" : "NEXT ROUND"}
       </motion.button>
