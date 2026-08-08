@@ -24,3 +24,13 @@ dist-ssr
 *.sw?
 
 .vercel
+node_modules/
+.next/
+dist/
+build/
+.pnpm-store/
+.agents/
+.claude/
+*.log
+.env.local
+.env
