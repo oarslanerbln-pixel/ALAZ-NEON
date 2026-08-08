@@ -157,6 +157,13 @@ export function PlayerGame() {
     [roomId, playerId, activeLetter, answers, jokerCategory, showToast, t],
   );
 
+  // Auto-submit when local timer hits 0
+  useEffect(() => {
+    if (timeLeft === 0 && gameState === "playing" && !isLocked && !hasSubmitted.current) {
+      setIsLocked(true);
+    }
+  }, [timeLeft, gameState, isLocked]);
+
   // Auto-submit when time is up or room moves to review
   useEffect(() => {
     let isMounted = true;
