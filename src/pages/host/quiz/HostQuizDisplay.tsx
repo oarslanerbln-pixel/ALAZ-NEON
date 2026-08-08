@@ -37,6 +37,8 @@ export function HostQuizDisplay() {
     if (room && room.status !== gameState) {
       if (room.status.startsWith("quiz_") || room.status.startsWith("question_") || room.status === "finished") {
         setGameState(room.status);
+      } else if (room.status === "lobby") {
+        setGameState("quiz_lobby"); // Sync lobby to quiz_lobby to prevent mismatch
       }
       
       if (room.quiz_questions && room.current_question_index !== undefined) {
@@ -198,17 +200,19 @@ export function HostQuizDisplay() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, y: -50 }}
-              className="text-center"
+              className="w-full flex flex-col items-center"
             >
               <h1 className="text-6xl font-black text-blue-500 tracking-widest uppercase mb-10 drop-shadow-[0_0_30px_rgba(59,130,246,0.8)]">
                 ALAZ QUIZ
               </h1>
-              <HostLobby
-                room={room}
-                players={players}
-                onStartGame={startGame}
-                onUpdateCategories={() => {}}
-              />
+              <div className="w-full h-full relative">
+                <HostLobby
+                  room={room}
+                  players={players}
+                  onStartGame={startGame}
+                  onUpdateCategories={() => {}}
+                />
+              </div>
             </motion.div>
           )}
 

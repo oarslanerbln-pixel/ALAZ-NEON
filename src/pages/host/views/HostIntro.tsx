@@ -47,18 +47,21 @@ function MatrixRain() {
 function HackerTerminal() {
   const [lines, setLines] = useState<string[]>([]);
   const allLines = [
-    "INITIALIZING ROOTKIT...",
-    "BYPASSING KERNEL FIREWALL [OK]",
+    "[root@alaz-core] ~$ init_override -f",
+    "BYPASSING KERNEL FIREWALL... [SUCCESS]",
     "DECRYPTING ADMIN CREDENTIALS... 0x8F9A2B",
-    "ACCESS GRANTED.",
-    "DOWNLOADING PLAYER DATA...",
-    "EXTRACTING NEURAL PATTERNS [||||||||||] 100%",
+    "ACCESS GRANTED. ESCALATING PRIVILEGES.",
+    "WARN: UNAUTHORIZED ACCESS DETECTED",
+    "DISABLING ALARMS... [OK]",
     "INJECTING PAYLOAD AT MEMORY 0x00F83C",
+    "DOWNLOADING PLAYER NEURAL DATA...",
+    "[||||||              ] 30% [WARN: PACKET LOSS]",
+    "[||||||||||||        ] 60%",
+    "[||||||||||||||||||||] 100% [DATA SECURED]",
     "OVERRIDING MAIN PROTOCOL...",
-    "WARNING: UNAUTHORIZED ACCESS DETECTED",
-    "DISABLING ALARMS [OK]",
+    "SYSTEM COMPROMISED.",
     "CONNECTING TO ALAZ NEON MAINFRAME...",
-    "ESTABLISHED.",
+    "ESTABLISHED. WAKING UP THE MATRIX.",
   ];
 
   useEffect(() => {
@@ -68,19 +71,32 @@ function HackerTerminal() {
         setLines(prev => [...prev, allLines[curr]]);
         curr++;
       } else {
-        setLines(prev => [...prev, `[ROOT@ALAZ-NEON] ~$ ${Math.random().toString(36).substring(2)}`]);
+        setLines(prev => [...prev, `[root@alaz-core] ~$ ${Math.random().toString(36).substring(2)}`]);
       }
-    }, 150);
+    }, 120);
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="absolute inset-0 p-8 flex flex-col justify-end text-left pointer-events-none z-10 opacity-70">
-      {lines.slice(-15).map((line, i) => (
-        <div key={i} className="text-[#00ff00] text-2xl md:text-4xl font-mono tracking-widest drop-shadow-[0_0_5px_#00ff00]">
-          {line}
-        </div>
-      ))}
+    <div className="absolute inset-0 p-8 flex flex-col justify-end text-left pointer-events-none z-10 opacity-90">
+      <div className="absolute top-10 left-10 text-red-500 font-mono text-5xl font-black animate-pulse flex items-center gap-4 border-2 border-red-500 bg-red-500/20 p-4">
+        <span>⚠️</span> CRITICAL SYSTEM FAILURE
+      </div>
+      <div className="absolute top-10 right-10 text-red-500 font-mono text-xl text-right animate-pulse">
+        REMOTE IP: 192.168.1.{Math.floor(Math.random() * 255)}<br/>
+        PORT: 8080<br/>
+        STATUS: BREACHED
+      </div>
+      {lines.slice(-15).map((line, i) => {
+        const isWarn = line.includes("WARN") || line.includes("FAILURE") || line.includes("COMPROMISED");
+        return (
+          <div key={i} className={`text-2xl md:text-4xl font-mono tracking-widest drop-shadow-[0_0_5px_currentColor] mb-1 ${
+            isWarn ? "text-red-500 font-black animate-pulse" : "text-[#00ff00]"
+          }`}>
+            {line}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -267,20 +283,20 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
             >
               {/* Rotating glowing rings */}
               <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+                animate={{ rotate: 360, scale: [1, 1.2, 1] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
                 className="absolute w-[800px] h-[800px] border-[2px] border-alaz-orange/40 rounded-full border-dashed"
               />
               <motion.div
-                animate={{ rotate: -360 }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                animate={{ rotate: -360, scale: [1, 1.5, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                 className="absolute w-[600px] h-[600px] border-[6px] border-red-600/50 rounded-full border-dotted"
               />
 
               {/* Shockwave effect */}
               <motion.div
                 initial={{ scale: 0, opacity: 1 }}
-                animate={{ scale: 6, opacity: 0 }}
+                animate={{ scale: 8, opacity: 0 }}
                 transition={{ duration: 2, ease: "easeOut" }}
                 className="absolute w-40 h-40 bg-alaz-orange rounded-full pointer-events-none mix-blend-screen"
               />
