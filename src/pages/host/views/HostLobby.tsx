@@ -279,6 +279,7 @@ export function HostLobby({
                     {cat}
                     <button
                       onClick={() => handleRemoveCategory(idx)}
+                      aria-label="Kategoriyi sil"
                       className="text-white/20 hover:text-red-500 transition-colors text-lg leading-none"
                     >
                       ×
@@ -304,6 +305,7 @@ export function HostLobby({
               />
               <button
                 type="button"
+                aria-label="Kategori ekle"
                 onClick={handleAddCategory}
                 className="bg-alaz-orange hover:bg-orange-500 text-white w-12 h-12 rounded-sm transition-all shadow-[0_0_15px_rgba(255,77,0,0.4)] flex items-center justify-center text-xl font-black cursor-pointer active:scale-95"
               >
