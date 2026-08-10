@@ -5,14 +5,11 @@ import type { Room } from "../types/database";
 
 export function useRoom(roomId: string | null) {
   const [room, setRoom] = useState<Room | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(roomId));
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!roomId) {
-      setLoading(false);
-      return;
-    }
+    if (!roomId) return;
 
     const docRef = doc(db, "rooms", roomId);
     
@@ -42,7 +39,6 @@ export function useRoom(roomId: string | null) {
   const updateRoom = async (updates: Partial<Room>) => {
     if (!roomId) return;
     const docRef = doc(db, "rooms", roomId);
-    // @ts-ignore - updates might not match perfectly if omitting id
     await updateDoc(docRef, updates);
   };
 

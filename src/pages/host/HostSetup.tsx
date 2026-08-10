@@ -113,9 +113,10 @@ export function HostSetup() {
         });
         
         navigate(`/host/display?roomId=${docRef.id}`);
-      } catch (err: any) {
+      } catch (err) {
         console.error("Error creating room:", err);
-        showToast(t("setup.errorCreate") + err.message, "error");
+        const message = err instanceof Error ? err.message : String(err);
+        showToast(t("setup.errorCreate") + message, "error");
         setIsCreating(false);
         return;
       }

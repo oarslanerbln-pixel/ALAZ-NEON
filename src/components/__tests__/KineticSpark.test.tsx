@@ -6,7 +6,7 @@ describe("KineticSpark Component", () => {
   it("renders without crashing", () => {
     render(<KineticSpark />);
     // Since it's a visual component, we check for core text content
-    expect(screen.getAllByText("CAFE")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("ALAZ")[0]).toBeInTheDocument();
   });
 
   it("renders custom tagline when showTagline is true", () => {

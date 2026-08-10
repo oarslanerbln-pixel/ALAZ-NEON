@@ -19,5 +19,15 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // React Compiler readiness rules from eslint-plugin-react-hooks v7.
+      // This project doesn't use React Compiler; flag as warnings instead of
+      // failing the build, since fixing every animation/particle-generation
+      // callsite requires visual re-verification rather than a mechanical edit.
+      'react-hooks/purity': 'warn',
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/immutability': 'warn',
+      'react-hooks/refs': 'warn',
+    },
   },
 ])

@@ -16,7 +16,7 @@ function AnimatedCounter({ from, to, delay }: { from: number; to: number; delay:
   useEffect(() => {
     const controls = animate(count, to, { duration: 1.5, delay, ease: "easeOut" });
     return controls.stop;
-  }, [from, to, delay]);
+  }, [from, to, delay, count]);
 
   return <motion.span>{rounded}</motion.span>;
 }
