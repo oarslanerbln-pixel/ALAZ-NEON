@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { collection, addDoc, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { AnimatePresence, motion } from "framer-motion";
@@ -52,16 +52,9 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
     checkSubmission();
   }, [room.status, room.id, player.id, room.current_question_index, hasSubmitted]);
 
-  // Auto-submit on time up
-  useEffect(() => {
-    if (room.status === "question_reveal" && !hasSubmitted && selectedOption) {
-      handleSubmit(selectedOption);
-    }
-  }, [room.status, hasSubmitted, selectedOption]);
-
-  const handleSubmit = async (option: string) => {
+  const handleSubmit = useCallback(async (option: string) => {
     if (hasSubmitted) return;
-    
+
     SoundManager.getInstance().playSFX(sounds.CLICK);
     setSelectedOption(option);
     setHasSubmitted(true);
@@ -82,7 +75,14 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
       setHasSubmitted(false);
       setSelectedOption(null);
     }
-  };
+  }, [hasSubmitted, room.id, room.current_question_index, player.id]);
+
+  // Auto-submit on time up
+  useEffect(() => {
+    if (room.status === "question_reveal" && !hasSubmitted && selectedOption) {
+      handleSubmit(selectedOption);
+    }
+  }, [room.status, hasSubmitted, selectedOption, handleSubmit]);
 
   const currentQ = room.quiz_questions?.[room.current_question_index || 0];
 

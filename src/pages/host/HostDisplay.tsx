@@ -37,14 +37,26 @@ import {
 export function HostDisplay() {
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get("roomId");
-  const {
-    room,
-    players,
-    submittedPlayerIds,
-    updateRoomStatus,
-    updatePlayerScore,
-  } = useHostRoom(roomId);
+  const hostRoom = useHostRoom(roomId);
 
+  // Route to Quiz Display if game_type is quiz. This must happen before any
+  // of the classic-game-only hooks below are declared, so the quiz view
+  // never runs those hooks at all (keeps hook order stable either way).
+  if (hostRoom.room?.game_type === "quiz") {
+    return <HostQuizDisplay />;
+  }
+
+  return <HostDisplayGame roomId={roomId} {...hostRoom} />;
+}
+
+function HostDisplayGame({
+  roomId,
+  room,
+  players,
+  submittedPlayerIds,
+  updateRoomStatus,
+  updatePlayerScore,
+}: { roomId: string | null } & ReturnType<typeof useHostRoom>) {
   // Local UI States
   const [gameState, setGameState] = useState<
     | "intro"
@@ -79,11 +91,6 @@ export function HostDisplay() {
       { uniqueCount: number; earlyCount: number; blankCount: number }
     >
   >({});
-
-  // Route to Quiz Display if game_type is quiz
-  if (room?.game_type === "quiz") {
-    return <HostQuizDisplay />;
-  }
 
   // Orchestrate Intro and Music
   useEffect(() => {

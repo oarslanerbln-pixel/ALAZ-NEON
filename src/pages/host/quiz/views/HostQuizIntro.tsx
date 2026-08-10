@@ -1,102 +1,10 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SoundManager, sounds } from "../../../../lib/audio";
+import { MatrixRain, HackerTerminal } from "../../../../components/HackerBoot";
 
 interface HostQuizIntroProps {
   onComplete: () => void;
-}
-
-// Minimal Matrix Rain Component
-function MatrixRain() {
-  const [columns, setColumns] = useState<number>(0);
-
-  useEffect(() => {
-    setColumns(Math.floor(window.innerWidth / 30));
-    const handleResize = () => setColumns(Math.floor(window.innerWidth / 30));
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  return (
-    <div className="absolute inset-0 overflow-hidden flex justify-between opacity-30 pointer-events-none z-0 mix-blend-screen">
-      {Array.from({ length: columns }).map((_, i) => (
-        <motion.div
-          key={i}
-          initial={{ y: "-100%" }}
-          animate={{ y: "100vh" }}
-          transition={{
-            duration: Math.random() * 2 + 2,
-            repeat: Infinity,
-            ease: "linear",
-            delay: Math.random() * 2,
-          }}
-          className="text-[#00ff00] text-xl font-mono whitespace-nowrap [writing-mode:vertical-rl]"
-        >
-          {Array.from({ length: 20 })
-            .map(() => String.fromCharCode(0x30a0 + Math.random() * 96))
-            .join("")}
-        </motion.div>
-      ))}
-    </div>
-  );
-}
-
-// Hacker Terminal Component
-function HackerTerminal() {
-  const [lines, setLines] = useState<string[]>([]);
-  const allLines = [
-    "[root@alaz-core] ~$ init_override -f",
-    "BYPASSING KERNEL FIREWALL... [SUCCESS]",
-    "DECRYPTING ADMIN CREDENTIALS... 0x8F9A2B",
-    "ACCESS GRANTED. ESCALATING PRIVILEGES.",
-    "WARN: UNAUTHORIZED ACCESS DETECTED",
-    "DISABLING ALARMS... [OK]",
-    "INJECTING PAYLOAD AT MEMORY 0x00F83C",
-    "DOWNLOADING TRIVIA DATA...",
-    "[||||||              ] 30% [WARN: PACKET LOSS]",
-    "[||||||||||||        ] 60%",
-    "[||||||||||||||||||||] 100% [DATA SECURED]",
-    "OVERRIDING MAIN PROTOCOL...",
-    "SYSTEM COMPROMISED.",
-    "CONNECTING TO ALAZ QUIZ MAINFRAME...",
-    "ESTABLISHED. WAKING UP THE MATRIX.",
-  ];
-
-  useEffect(() => {
-    let curr = 0;
-    const interval = setInterval(() => {
-      if (curr < allLines.length) {
-        setLines(prev => [...prev, allLines[curr]]);
-        curr++;
-      } else {
-        setLines(prev => [...prev, `[root@alaz-core] ~$ ${Math.random().toString(36).substring(2)}`]);
-      }
-    }, 120);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="absolute inset-0 p-8 flex flex-col justify-end text-left pointer-events-none z-10 opacity-90">
-      <div className="absolute top-10 left-10 text-red-500 font-mono text-5xl font-black animate-pulse flex items-center gap-4 border-2 border-red-500 bg-red-500/20 p-4">
-        <span>⚠️</span> CRITICAL SYSTEM FAILURE
-      </div>
-      <div className="absolute top-10 right-10 text-red-500 font-mono text-xl text-right animate-pulse">
-        REMOTE IP: 192.168.1.{Math.floor(Math.random() * 255)}<br/>
-        PORT: 8080<br/>
-        STATUS: BREACHED
-      </div>
-      {lines.slice(-15).map((line, i) => {
-        const isWarn = line.includes("WARN") || line.includes("FAILURE") || line.includes("COMPROMISED");
-        return (
-          <div key={i} className={`text-2xl md:text-4xl font-mono tracking-widest drop-shadow-[0_0_5px_currentColor] mb-1 ${
-            isWarn ? "text-red-500 font-black animate-pulse" : "text-[#00ff00]"
-          }`}>
-            {line}
-          </div>
-        );
-      })}
-    </div>
-  );
 }
 
 export function HostQuizIntro({ onComplete }: HostQuizIntroProps) {
@@ -190,7 +98,10 @@ export function HostQuizIntro({ onComplete }: HostQuizIntroProps) {
             exit={{ opacity: 0, scale: 1.2 }}
             className="flex flex-col items-center justify-center z-20 w-full h-full"
           >
-            <HackerTerminal />
+            <HackerTerminal
+              downloadingLabel="DOWNLOADING TRIVIA DATA..."
+              mainframeLabel="CONNECTING TO ALAZ QUIZ MAINFRAME..."
+            />
             <motion.div
               animate={{ opacity: [1, 0, 1, 0.5, 1], scale: [1, 1.05, 1] }}
               transition={{ duration: 0.2, repeat: Infinity }}

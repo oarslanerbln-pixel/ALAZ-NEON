@@ -5,13 +5,10 @@ import type { Player } from "../types/database";
 
 export function usePlayer(playerId: string | null) {
   const [player, setPlayer] = useState<Player | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(playerId));
 
   useEffect(() => {
-    if (!playerId) {
-      setLoading(false);
-      return;
-    }
+    if (!playerId) return;
 
     const docRef = doc(db, "players", playerId);
     

@@ -37,7 +37,9 @@ export function PlayerHeader({
       if (typeof navigator !== "undefined" && "vibrate" in navigator) {
         try {
           navigator.vibrate(100);
-        } catch (e) {}
+        } catch {
+          // Vibration not supported/permitted on this device — ignore
+        }
       }
     }
     lastTimeRef.current = timeLeft;

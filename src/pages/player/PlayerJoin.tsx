@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { useLocale } from "../../hooks/useLocale";
+import type { Room } from "../../types/database";
 
 export function PlayerJoin() {
   const navigate = useNavigate();
@@ -50,7 +51,7 @@ export function PlayerJoin() {
       }
       
       const roomDoc = querySnapshot.docs[0];
-      const room = { id: roomDoc.id, ...roomDoc.data() } as any;
+      const room = { id: roomDoc.id, ...roomDoc.data() } as Room;
 
       if (room.status !== "lobby") {
         setErrorMsg(t("join.errorStarted"));
@@ -58,7 +59,7 @@ export function PlayerJoin() {
         return;
       }
 
-      if (room.locale) {
+      if (room.locale === "tr" || room.locale === "de") {
         switchLocale(room.locale);
       }
 
@@ -76,8 +77,9 @@ export function PlayerJoin() {
         localStorage.setItem("cafe_game_playerName", nickname.trim());
         localStorage.setItem("cafe_game_teamName", room.game_mode === "team" ? teamName.trim() : "");
         navigate("/play");
-      } catch (playerError: any) {
-        setErrorMsg(t("join.errorPlayer") + playerError.message);
+      } catch (playerError) {
+        const message = playerError instanceof Error ? playerError.message : String(playerError);
+        setErrorMsg(t("join.errorPlayer") + message);
         setIsLoading(false);
         return;
       }

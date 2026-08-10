@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 export function DatabaseStatus() {
   const [status, setStatus] = useState<
     "connected" | "reconnecting" | "disconnected"
-  >("connected");
+  >(() => (navigator.onLine ? "connected" : "disconnected"));
 
   useEffect(() => {
     const handleOnline = () => setStatus("connected");
@@ -13,8 +13,6 @@ export function DatabaseStatus() {
 
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
-
-    setStatus(navigator.onLine ? "connected" : "disconnected");
 
     return () => {
       window.removeEventListener("online", handleOnline);
