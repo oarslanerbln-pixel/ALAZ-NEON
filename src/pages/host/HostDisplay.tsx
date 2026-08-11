@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
-import { collection, query, where, getDocs, doc, writeBatch } from "firebase/firestore";
+import { collection, query, where, limit, getDocs, doc, writeBatch } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { ParticleBackground } from "../../components/ParticleBackground";
 import { KineticSpark } from "../../components/KineticSpark";
@@ -165,7 +165,8 @@ function HostDisplayGame({
     const q = query(
       collection(db, "answers"),
       where("room_id", "==", roomId),
-      where("round_letter", "==", letterToQuery)
+      where("round_letter", "==", letterToQuery),
+      limit(500)
     );
     const querySnapshot = await getDocs(q);
     const rawAnswers: Answer[] = [];

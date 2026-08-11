@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { collection, addDoc } from "firebase/firestore";
-import { db } from "../../lib/firebase";
+import { db, ensureAnonymousAuth } from "../../lib/firebase";
 import { motion } from "framer-motion";
 import { NeonIcon } from "../../components/NeonIcon";
 import { KineticSpark } from "../../components/KineticSpark";
@@ -99,6 +99,8 @@ export function HostSetup() {
         setIsCreating(false);
         return;
       }
+
+      const hostUser = await ensureAnonymousAuth();
       const roomCode = generateRoomCode();
 
       try {
@@ -113,6 +115,7 @@ export function HostSetup() {
           game_mode: gameMode,
           game_type: gameType,
           locale: locale,
+          host_uid: hostUser.uid,
           created_at: Date.now()
         });
         

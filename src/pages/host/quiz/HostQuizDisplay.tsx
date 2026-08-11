@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { collection, query, where, getDocs, doc, writeBatch } from "firebase/firestore";
+import { collection, query, where, limit, getDocs, doc, writeBatch } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { ParticleBackground } from "../../../components/ParticleBackground";
 import { SoundManager, sounds } from "../../../lib/audio";
@@ -99,7 +99,8 @@ export function HostQuizDisplay({
     const q = query(
       collection(db, "answers"),
       where("room_id", "==", roomId),
-      where("round_letter", "==", questionIndexStr)
+      where("round_letter", "==", questionIndexStr),
+      limit(500)
     );
     
     const querySnapshot = await getDocs(q);
