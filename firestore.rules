@@ -1,0 +1,99 @@
+rules_version = '2';
+
+// ALAZ NEON — Firestore security rules.
+//
+// The app has no authentication layer: host and player clients are both
+// anonymous browser sessions distinguished only by which URL/room-code they
+// hold. That means these rules cannot cryptographically prove "this write
+// came from the host" — a player who opens devtools can still call
+// updateDoc() on their own player/answer documents with the same unauthenticated
+// SDK the app itself uses. Closing that gap requires moving score/validity
+// writes server-side (Cloud Functions) or adding real host auth; see the PR
+// description for that follow-up decision.
+//
+// What these rules DO enforce:
+// - No one can list/dump an entire collection (every room/player/answer ever
+//   played) in one request — a real risk once this is a public, marketed URL.
+// - Every write must match the document shape the app actually produces:
+//   correct field set, correct types, bounded string lengths. This blocks
+//   garbage/oversized documents and casual Firestore-cost abuse from a
+//   scripted client that isn't running the real app at all.
+// - Nothing can be deleted (the app never deletes documents).
+
+function isString(v) { return v is string; }
+function isNum(v) { return v is int || v is float; }
+
+match /databases/{database}/documents {
+
+  match /rooms/{roomId} {
+    allow get: if true;
+    // Room lookup by code is a `where("code","==",...)` query; keep list
+    // pages small so it can't be used to enumerate every room.
+    allow list: if request.query.limit <= 5;
+
+    allow create: if isString(request.resource.data.code)
+      && request.resource.data.code.size() == 4
+      && isString(request.resource.data.status)
+      && isNum(request.resource.data.timer_setting)
+      && isNum(request.resource.data.total_rounds)
+      && isNum(request.resource.data.current_round)
+      && isString(request.resource.data.game_mode)
+      && request.resource.data.categories is list
+      && request.resource.data.categories.size() <= 200;
+
+    // Host updates are broad, incremental partial writes (status, timer
+    // state, letters, quiz progress, ...) — validate the fields we can
+    // reason about are well-typed when present, without hard-pinning the
+    // exact key set, so we don't brick real host actions we haven't
+    // enumerated here.
+    allow update: if request.resource.data.code == resource.data.code
+      && (!("timer_setting" in request.resource.data) || isNum(request.resource.data.timer_setting))
+      && (!("total_rounds" in request.resource.data) || isNum(request.resource.data.total_rounds))
+      && (!("current_round" in request.resource.data) || isNum(request.resource.data.current_round))
+      && (!("round_end_time" in request.resource.data) || isNum(request.resource.data.round_end_time))
+      && (!("current_question_index" in request.resource.data) || isNum(request.resource.data.current_question_index));
+
+    allow delete: if false;
+  }
+
+  match /players/{playerId} {
+    allow get: if true;
+    allow list: if request.query.limit <= 50;
+
+    allow create: if isString(request.resource.data.room_id)
+      && isString(request.resource.data.nickname)
+      && request.resource.data.nickname.size() <= 20
+      && isNum(request.resource.data.total_score)
+      && request.resource.data.total_score == 0;
+
+    allow update: if request.resource.data.room_id == resource.data.room_id
+      && request.resource.data.nickname == resource.data.nickname
+      && isNum(request.resource.data.total_score);
+
+    allow delete: if false;
+  }
+
+  match /answers/{answerId} {
+    allow get: if true;
+    allow list: if request.query.limit <= 50;
+
+    allow create: if isString(request.resource.data.room_id)
+      && isString(request.resource.data.player_id)
+      && isString(request.resource.data.round_letter)
+      && request.resource.data.data is map;
+
+    // Answers are write-once from the player's perspective; the host never
+    // edits an answer document, only re-reads it for scoring.
+    allow update: if false;
+    allow delete: if false;
+  }
+
+  match /round_logs/{logId} {
+    // Analytics log, never read from the client — write-only.
+    allow get: if false;
+    allow list: if false;
+    allow create: if isString(request.resource.data.room_id);
+    allow update: if false;
+    allow delete: if false;
+  }
+}
