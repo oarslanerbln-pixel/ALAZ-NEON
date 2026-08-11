@@ -66,6 +66,10 @@ export function HostSetup() {
   const location = useLocation();
   const gameType = location.state?.gameType || "scattegories";
 
+  // ALAZ QUIZ draws from a fixed 9-question-per-language bank; offering more
+  // rounds than that guarantees an exact repeat within the same session.
+  const roundOptions = gameType === "quiz" ? ["3", "5", "7", "9"] : ["3", "5", "7", "10"];
+
   const presets = getCategoryPresets(locale);
 
   const applyPreset = (name: string) => {
@@ -221,7 +225,7 @@ export function HostSetup() {
                       {t("setup.roundsLabel")}
                     </label>
                     <div className="grid grid-cols-4 gap-4">
-                      {["3", "5", "7", "10"].map((r) => (
+                      {roundOptions.map((r) => (
                         <button
                           key={r}
                           onClick={() => setTotalRounds(r)}

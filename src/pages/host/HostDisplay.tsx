@@ -43,7 +43,7 @@ export function HostDisplay() {
   // of the classic-game-only hooks below are declared, so the quiz view
   // never runs those hooks at all (keeps hook order stable either way).
   if (hostRoom.room?.game_type === "quiz") {
-    return <HostQuizDisplay />;
+    return <HostQuizDisplay roomId={roomId} {...hostRoom} />;
   }
 
   return <HostDisplayGame roomId={roomId} {...hostRoom} />;
@@ -141,6 +141,13 @@ function HostDisplayGame({
       }
     }
   }, [room, gameState, currentLetter]);
+
+  // Derive the round countdown from the persisted server timestamp, not local
+  // state alone — this is what lets the timer survive a host page refresh
+  // instead of freezing forever with a stale/null end time.
+  useEffect(() => {
+    setRoundEndTime(room?.round_end_time ?? null);
+  }, [room?.round_end_time]);
 
   const endRound = useCallback(async () => {
     if (!roomId || !room) return;
@@ -290,17 +297,17 @@ function HostDisplayGame({
 
     const nextRound = (room.current_round || 0) + 1;
     const usedLetters = room.used_letters || [];
-    
+
     await updateRoomStatus("playing", {
       active_letter: nextLetter,
       current_round: nextRound,
       time_left: room.timer_setting,
+      round_end_time: Date.now() + room.timer_setting * 1000,
       used_letters: [...usedLetters, nextLetter]
     });
 
     setCurrentLetter(nextLetter);
     setTimeLeft(room.timer_setting);
-    setRoundEndTime(Date.now() + room.timer_setting * 1000);
 
     // Notify Sentinel that the round timer has officially started
     Sentinel.radar.startRoundTime();
@@ -314,10 +321,16 @@ function HostDisplayGame({
       prev.map((res) => {
         if (res.playerId !== playerId) return res;
         const targetAns = Reflect.get(res.answers, category);
-        const wasValid = targetAns.isValid;
-        const newValid = !wasValid;
-        const newPoints = newValid ? (targetAns.isUnique ? 20 : 10) : 0;
-        const pointDiff = newPoints - (wasValid ? targetAns.points : 0);
+        const newValid = !targetAns.isValid;
+        const basePoints = newValid ? (targetAns.isUnique ? 20 : 10) : 0;
+        // Joker categories double valid points and carry a fixed -10 penalty
+        // when invalid — mirrors the scoring rules in lib/scoring.ts.
+        const newPoints = targetAns.isJoker
+          ? newValid
+            ? basePoints * 2
+            : -10
+          : basePoints;
+        const pointDiff = newPoints - targetAns.points;
 
         const updatedResult = {
           ...res,

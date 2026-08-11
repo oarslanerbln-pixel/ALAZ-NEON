@@ -79,7 +79,6 @@ export function PlayerGame() {
           setSubmitStatus("idle");
           setRoundPoints(null);
           setJokerCategory(null);
-          setLocalRoundEndTime(Date.now() + (room?.timer_setting || 60) * 1000);
         }
       }, 0);
     } else if (gameState === "review" || gameState === "standings" || gameState === "finished") {
@@ -90,7 +89,14 @@ export function PlayerGame() {
     return () => {
       isMounted = false;
     };
-  }, [gameState, room?.timer_setting]);
+  }, [gameState]);
+
+  // Derive the round countdown from the persisted server timestamp, not a
+  // freshly-guessed duration — otherwise a page refresh mid-round hands the
+  // player a full new timer instead of the time actually remaining.
+  useEffect(() => {
+    setLocalRoundEndTime(room?.round_end_time ?? null);
+  }, [room?.round_end_time]);
 
   // Timer Logic (Optimistic UI)
   useEffect(() => {
