@@ -157,6 +157,8 @@ const translations = {
   "lobby.playerReady": { tr: "Savaşçı Hazır", de: "Krieger Bereit" },
   "lobby.startGame": { tr: "OYUNU BAŞLAT →", de: "SPIEL STARTEN →" },
   "lobby.noCategory": { tr: "Kategori Eksik!", de: "Kategorien Fehlen!" },
+  "lobby.addCategory": { tr: "Kategori Ekle", de: "Kategorie Hinzufügen" },
+  "lobby.removeCategory": { tr: "Kategoriyi Sil", de: "Kategorie Entfernen" },
   "lobby.networkConnected": { tr: "> AĞA_BAĞLANILDI", de: "> NETZWERK_VERBUNDEN" },
   "lobby.waitingSystems": {
     tr: "Diğer sistemler bekleniyor. Veri akışı başlamak üzere...",
