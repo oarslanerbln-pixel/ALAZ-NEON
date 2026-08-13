@@ -279,7 +279,8 @@ export function HostLobby({
                     {cat}
                     <button
                       onClick={() => handleRemoveCategory(idx)}
-                      className="text-white/20 hover:text-red-500 transition-colors text-lg leading-none"
+                      aria-label={t("lobby.removeCategory")}
+                      className="text-white/20 hover:text-red-500 transition-colors text-lg leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded-full w-6 h-6 flex items-center justify-center"
                     >
                       ×
                     </button>
@@ -305,7 +306,8 @@ export function HostLobby({
               <button
                 type="button"
                 onClick={handleAddCategory}
-                className="bg-alaz-orange hover:bg-orange-500 text-white w-12 h-12 rounded-sm transition-all shadow-[0_0_15px_rgba(255,77,0,0.4)] flex items-center justify-center text-xl font-black cursor-pointer active:scale-95"
+                aria-label={t("lobby.addCategory")}
+                className="bg-alaz-orange hover:bg-orange-500 text-white w-12 h-12 rounded-sm transition-all shadow-[0_0_15px_rgba(255,77,0,0.4)] flex items-center justify-center text-xl font-black cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400"
               >
                 +
               </button>
