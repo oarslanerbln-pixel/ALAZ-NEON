@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+:root {
+  /* Yüksek Kontrast Modu Varsayılan */
+  --background: #ffffff;
+  --foreground: #000000;
+
+  --primary: #003366;
+  --primary-foreground: #ffffff;
+
+  --secondary: #ffcc00;
+  --secondary-foreground: #000000;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Zorunlu Karanlık/Yüksek Kontrast Ayarı */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #121212;
+    --foreground: #ffff00; /* Daha okunaklı sarı metin */
+
+    --primary: #ffffff;
+    --primary-foreground: #000000;
+
+    --secondary: #ff00ff;
+    --secondary-foreground: #ffffff;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px; /* WCAG 2.1 AA asgari kuralı */
+}
