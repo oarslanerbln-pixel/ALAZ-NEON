@@ -97,6 +97,7 @@ export function HackerTerminal({ downloadingLabel, mainframeLabel }: HackerTermi
         STATUS: BREACHED
       </div>
       {lines.slice(-15).map((line, i) => {
+        if (typeof line !== "string") return null;
         const isWarn = line.includes("WARN") || line.includes("FAILURE") || line.includes("COMPROMISED");
         return (
           <div key={i} className={`text-2xl md:text-4xl font-mono tracking-widest drop-shadow-[0_0_5px_currentColor] mb-1 ${
