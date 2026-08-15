@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { doc, collection, query, where, onSnapshot, updateDoc } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { doc, collection, query, where, limit, onSnapshot, updateDoc } from "firebase/firestore";
+import { db, ensureAnonymousAuth } from "../lib/firebase";
 import { Sentinel } from "../lib/sentinel";
 import type { Room, Player, Answer } from "../types/database";
 
@@ -13,6 +13,11 @@ export function useHostRoom(roomId: string | null) {
   useEffect(() => {
     if (!roomId) return;
 
+    // Re-establish the host's auth session on a fresh page load (e.g. a
+    // refresh) — Firestore rules require it to match the room's host_uid
+    // before accepting any privileged write.
+    ensureAnonymousAuth().catch((err) => console.error("Host auth failed:", err));
+
     // 1. Room Subscription
     const roomUnsub = onSnapshot(doc(db, "rooms", roomId), (docSnap) => {
       if (docSnap.exists()) {
@@ -22,7 +27,7 @@ export function useHostRoom(roomId: string | null) {
     });
 
     // 2. Player Subscription
-    const qPlayers = query(collection(db, "players"), where("room_id", "==", roomId));
+    const qPlayers = query(collection(db, "players"), where("room_id", "==", roomId), limit(500));
     const playersUnsub = onSnapshot(qPlayers, (snapshot) => {
       const pList: Player[] = [];
       snapshot.forEach(d => {
@@ -32,7 +37,7 @@ export function useHostRoom(roomId: string | null) {
     });
 
     // 3. Answer Tracking Subscription
-    const qAnswers = query(collection(db, "answers"), where("room_id", "==", roomId));
+    const qAnswers = query(collection(db, "answers"), where("room_id", "==", roomId), limit(5000));
     const answersUnsub = onSnapshot(qAnswers, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
         if (change.type === "added") {

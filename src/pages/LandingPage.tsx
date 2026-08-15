@@ -151,42 +151,6 @@ export function LandingPage() {
         </motion.div>
       </AnimatePresence>
 
-      <AnimatePresence>
-        {!showIntro && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="fixed top-0 left-0 right-0 z-50 w-full max-w-7xl mx-auto px-6 pt-6 flex justify-between items-center"
-          >
-            <div className="flex items-center gap-6">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                onClick={() => navigate("/leaderboard")}
-                className="flex items-center gap-2 px-6 py-3 bg-black/40 border border-white/20 hover:bg-white hover:text-black hover:border-white transition-all group backdrop-blur-md"
-                style={{ clipPath: "polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px)" }}
-              >
-                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white group-hover:text-black transition-colors">
-                  {t("leaderboard.title")}
-                </span>
-              </motion.button>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                onClick={() => navigate("/login")}
-                className="px-8 py-3 bg-black/40 border border-white/20 hover:bg-white hover:text-black hover:border-white transition-all group backdrop-blur-md"
-                style={{ clipPath: "polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px)" }}
-              >
-                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white group-hover:text-black transition-colors">
-                  {t("auth.login")}
-                </span>
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <AnimatePresence mode="wait">
         {showIntro ? (
           <motion.div

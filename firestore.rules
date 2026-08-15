@@ -1,0 +1,138 @@
+rules_version = '2';
+
+// ALAZ NEON — Firestore security rules.
+//
+// The app uses Firebase Anonymous Authentication (free on the Spark plan,
+// no billing required) to give every host and player browser session a
+// stable, unforgeable uid. That uid — not anything the client claims in a
+// write payload — is what these rules trust:
+//   - rooms/{roomId}.host_uid is set once, at room creation, to the
+//     creating browser's uid. Only that uid may update the room afterwards
+//     (round transitions, timer state, etc.).
+//   - players/{playerId}.owner_uid is set once, at join, to the joining
+//     browser's uid. Only the room's host_uid may update a player doc
+//     (that's how scores get written) and only the matching owner_uid may
+//     submit an answer under that player_id.
+// This means a player's devtools can no longer forge another player's
+// score or answers, or drive the room clock, without knowing a uid the
+// browser itself doesn't control — Firebase issues and verifies these,
+// they can't be typed in.
+//
+// Anonymous sign-in must be enabled once in the Firebase console
+// (Authentication > Sign-in method > Anonymous) — free, no Blaze plan
+// needed. Everything else here is enforced purely by these rules.
+//
+// What's still NOT covered (needs a real cost/scope decision, not done
+// here): a host reusing the same code path as a player could still submit
+// implausible scores through the legitimate host flow (these rules can't
+// judge whether a score is *correct*, only *who* is allowed to write it).
+// Fully closing that needs server-side score computation (Cloud
+// Functions), which does require the Blaze plan.
+
+function isString(v) { return v is string; }
+function isNum(v) { return v is int || v is float; }
+
+match /databases/{database}/documents {
+  function hostUidOf(roomId) {
+    return get(/databases/$(database)/documents/rooms/$(roomId)).data.host_uid;
+  }
+
+  function ownerUidOf(playerId) {
+    return get(/databases/$(database)/documents/players/$(playerId)).data.owner_uid;
+  }
+
+  match /rooms/{roomId} {
+    allow get: if true;
+    // Room lookup by code is a `where("code","==",...)` query; keep list
+    // pages small so it can't be used to enumerate every room.
+    allow list: if request.query.limit <= 5;
+
+    allow create: if request.auth != null
+      && request.resource.data.host_uid == request.auth.uid
+      && isString(request.resource.data.code)
+      && request.resource.data.code.size() == 4
+      && isString(request.resource.data.status)
+      && isNum(request.resource.data.timer_setting)
+      && isNum(request.resource.data.total_rounds)
+      && isNum(request.resource.data.current_round)
+      && isString(request.resource.data.game_mode)
+      && request.resource.data.categories is list
+      && request.resource.data.categories.size() <= 200;
+
+    // Host updates are broad, incremental partial writes (status, timer
+    // state, letters, quiz progress, ...) — validate the fields we can
+    // reason about are well-typed when present, without hard-pinning the
+    // exact key set, so we don't brick real host actions we haven't
+    // enumerated here.
+    allow update: if request.auth != null
+      && request.auth.uid == resource.data.host_uid
+      && request.resource.data.host_uid == resource.data.host_uid
+      && request.resource.data.code == resource.data.code
+      && (!("timer_setting" in request.resource.data) || isNum(request.resource.data.timer_setting))
+      && (!("total_rounds" in request.resource.data) || isNum(request.resource.data.total_rounds))
+      && (!("current_round" in request.resource.data) || isNum(request.resource.data.current_round))
+      && (!("round_end_time" in request.resource.data) || isNum(request.resource.data.round_end_time))
+      && (!("current_question_index" in request.resource.data) || isNum(request.resource.data.current_question_index));
+
+    allow delete: if false;
+  }
+
+  match /players/{playerId} {
+    allow get: if true;
+    // The host's players listener has no round-scoping filter, so this
+    // needs to comfortably cover a large cafe room's full roster, not just
+    // a page of it.
+    allow list: if request.query.limit <= 500;
+
+    allow create: if request.auth != null
+      && request.resource.data.owner_uid == request.auth.uid
+      && isString(request.resource.data.room_id)
+      && isString(request.resource.data.nickname)
+      && request.resource.data.nickname.size() <= 20
+      && isNum(request.resource.data.total_score)
+      && request.resource.data.total_score == 0;
+
+    // Scores are written by the host, not the player themselves.
+    allow update: if request.auth != null
+      && request.auth.uid == hostUidOf(resource.data.room_id)
+      && request.resource.data.room_id == resource.data.room_id
+      && request.resource.data.nickname == resource.data.nickname
+      && request.resource.data.owner_uid == resource.data.owner_uid
+      && isNum(request.resource.data.total_score);
+
+    allow delete: if false;
+  }
+
+  match /answers/{answerId} {
+    allow get: if true;
+    // The host's room-wide answer-tracking listener accumulates every
+    // answer across every round of the game, so this needs real headroom
+    // — it still blocks an unfiltered dump of the whole collection.
+    allow list: if request.query.limit <= 5000;
+
+    // Only the player who owns player_id (proven by their own auth uid,
+    // not just a claimed field) may submit an answer under that identity.
+    allow create: if request.auth != null
+      && isString(request.resource.data.room_id)
+      && isString(request.resource.data.player_id)
+      && ownerUidOf(request.resource.data.player_id) == request.auth.uid
+      && isString(request.resource.data.round_letter)
+      && request.resource.data.data is map;
+
+    // Answers are write-once from the player's perspective; the host never
+    // edits an answer document, only re-reads it for scoring.
+    allow update: if false;
+    allow delete: if false;
+  }
+
+  match /round_logs/{logId} {
+    // Analytics log, never read from the client — write-only, host-only.
+    allow get: if false;
+    allow list: if false;
+    allow create: if request.auth != null
+      && isString(request.resource.data.room_id)
+      && request.auth.uid == hostUidOf(request.resource.data.room_id);
+    allow update: if false;
+    allow delete: if false;
+  }
+}

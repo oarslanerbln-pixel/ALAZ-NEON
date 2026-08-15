@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
-import { db } from "../../lib/firebase";
+import { collection, query, where, limit, getDocs, addDoc } from "firebase/firestore";
+import { db, ensureAnonymousAuth } from "../../lib/firebase";
 import { useLocale } from "../../hooks/useLocale";
 import type { Room } from "../../types/database";
 
@@ -22,7 +22,7 @@ export function PlayerJoin() {
   useEffect(() => {
     if (roomCode.length === 4) {
       const checkMode = async () => {
-        const q = query(collection(db, "rooms"), where("code", "==", roomCode.toUpperCase()));
+        const q = query(collection(db, "rooms"), where("code", "==", roomCode.toUpperCase()), limit(1));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
           const data = querySnapshot.docs[0].data();
@@ -41,7 +41,7 @@ export function PlayerJoin() {
     try {
       const cleanCode = roomCode.trim().toUpperCase();
 
-      const q = query(collection(db, "rooms"), where("code", "==", cleanCode));
+      const q = query(collection(db, "rooms"), where("code", "==", cleanCode), limit(1));
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
@@ -64,11 +64,13 @@ export function PlayerJoin() {
       }
 
       try {
+        const playerUser = await ensureAnonymousAuth();
         const playerRef = await addDoc(collection(db, "players"), {
             room_id: room.id,
             nickname: nickname.trim(),
             team_name: room.game_mode === "team" ? teamName.trim() : null,
             total_score: 0,
+            owner_uid: playerUser.uid,
             created_at: Date.now()
         });
 

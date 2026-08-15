@@ -42,6 +42,7 @@ export interface Room {
   locale?: string;
   quiz_questions?: QuizQuestion[];
   current_question_index?: number;
+  host_uid?: string;
 }
 
 export interface Player {
@@ -50,6 +51,7 @@ export interface Player {
   team_name: string | null;
   total_score: number;
   room_id: string;
+  owner_uid?: string;
 }
 
 export interface Answer {

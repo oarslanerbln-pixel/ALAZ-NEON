@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { doc, onSnapshot, updateDoc } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { db, ensureAnonymousAuth } from "../lib/firebase";
 import type { Player } from "../types/database";
 
 export function usePlayer(playerId: string | null) {
@@ -9,6 +9,10 @@ export function usePlayer(playerId: string | null) {
 
   useEffect(() => {
     if (!playerId) return;
+
+    // Re-establish the player's auth session on a fresh page load — answer
+    // submissions require it to match this player doc's owner_uid.
+    ensureAnonymousAuth().catch((err) => console.error("Player auth failed:", err));
 
     const docRef = doc(db, "players", playerId);
     

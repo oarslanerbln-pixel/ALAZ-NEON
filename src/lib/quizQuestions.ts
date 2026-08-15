@@ -145,20 +145,24 @@ export const deQuestions: QuizQuestion[] = [
   }
 ];
 
-export function getQuizQuestions(locale: string = "tr", count: number = 5): QuizQuestion[] {
-  const pool = locale.startsWith("de") ? [...deQuestions] : [...trQuestions];
-  
-  // Shuffle the pool
-  for (let i = pool.length - 1; i > 0; i--) {
+function shuffled(pool: QuizQuestion[]): QuizQuestion[] {
+  const copy = [...pool];
+  for (let i = copy.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+export function getQuizQuestions(locale: string = "tr", count: number = 5): QuizQuestion[] {
+  const basePool = locale.startsWith("de") ? deQuestions : trQuestions;
+
+  // Re-shuffle each time the pool is exhausted, so a session longer than the
+  // question bank doesn't replay the exact same sequence back-to-back.
+  const result: QuizQuestion[] = [];
+  while (result.length < count) {
+    result.push(...shuffled(basePool));
   }
 
-  // Return exactly 'count' questions, repeating if necessary
-  const result: QuizQuestion[] = [];
-  for (let i = 0; i < count; i++) {
-    result.push(pool[i % pool.length]);
-  }
-  
-  return result;
+  return result.slice(0, count);
 }

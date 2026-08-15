@@ -1,14 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useSearchParams } from "react-router-dom";
-import { collection, query, where, getDocs, doc, writeBatch } from "firebase/firestore";
+import { collection, query, where, limit, getDocs, doc, writeBatch } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { ParticleBackground } from "../../../components/ParticleBackground";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { getQuizQuestions } from "../../../lib/quizQuestions";
 
 // Hooks
-import { useHostRoom } from "../../../hooks/useHostRoom";
+import type { useHostRoom } from "../../../hooks/useHostRoom";
 
 // Types
 import type { QuizQuestion, Answer } from "../../../types/database";
@@ -17,20 +16,25 @@ import { HostQuizIntro } from "./views/HostQuizIntro";
 import { HostHeader } from "../components/HostHeader";
 import { HostLobby } from "../views/HostLobby";
 
-export function HostQuizDisplay() {
-  const [searchParams] = useSearchParams();
-  const roomId = searchParams.get("roomId");
-  const {
-    room,
-    players,
-    updateRoomStatus,
-    updatePlayerScore,
-  } = useHostRoom(roomId);
+export function HostQuizDisplay({
+  roomId,
+  room,
+  players,
+  updateRoomStatus,
+  updatePlayerScore,
+}: { roomId: string | null } & ReturnType<typeof useHostRoom>) {
 
   const [gameState, setGameState] = useState(room?.status || "quiz_lobby");
   const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
   const [timeLeft, setTimeLeft] = useState(room?.timer_setting || 30);
   const [roundEndTime, setRoundEndTime] = useState<number | null>(null);
+
+  // Derive the question countdown from the persisted server timestamp, not
+  // local state alone — survives a host page refresh mid-question instead of
+  // freezing the round forever.
+  useEffect(() => {
+    setRoundEndTime(room?.round_end_time ?? null);
+  }, [room?.round_end_time]);
 
   // Sync game state
   useEffect(() => {
@@ -70,12 +74,13 @@ export function HostQuizDisplay() {
     SoundManager.getInstance().playMusic(sounds.GAME_PULSE, 0.4);
     const timeToAnswer = room.timer_setting || 30;
     
+    const endTime = Date.now() + timeToAnswer * 1000;
     await updateRoomStatus("question_active", {
-      time_left: timeToAnswer
+      time_left: timeToAnswer,
+      round_end_time: endTime
     });
-    
+
     setTimeLeft(timeToAnswer);
-    setRoundEndTime(Date.now() + timeToAnswer * 1000);
   };
 
   const endQuestion = useCallback(async () => {
@@ -94,7 +99,8 @@ export function HostQuizDisplay() {
     const q = query(
       collection(db, "answers"),
       where("room_id", "==", roomId),
-      where("round_letter", "==", questionIndexStr)
+      where("round_letter", "==", questionIndexStr),
+      limit(500)
     );
     
     const querySnapshot = await getDocs(q);
@@ -109,25 +115,23 @@ export function HostQuizDisplay() {
     
     const correctOption = currentQ.correctOption;
     
-    // Sort answers by time to give speed bonus
-    answers.sort((a, b) => (a.created_at || "").localeCompare(b.created_at || ""));
-    
-    for (let i = 0; i < answers.length; i++) {
-      const ans = answers[i];
-      const playerSelected = ans.data.selectedOption;
-      
-      if (playerSelected === correctOption) {
-        // Correct!
-        // 1000 points base + speed bonus (500 for first, 300 for second, etc)
-        let pts = 1000;
-        if (i === 0) pts += 500;
-        else if (i === 1) pts += 300;
-        else if (i === 2) pts += 100;
-        
-        const playerInfo = players.find(p => p.id === ans.player_id);
-        if (playerInfo) {
-          await updatePlayerScore(ans.player_id, playerInfo.total_score + pts);
-        }
+    // Rank speed bonus among CORRECT answers only — otherwise a fast wrong
+    // guess steals the #1 slot from the first player who was actually right.
+    const correctAnswers = answers
+      .filter((ans) => ans.data.selectedOption === correctOption)
+      .sort((a, b) => (a.created_at || "").localeCompare(b.created_at || ""));
+
+    for (let i = 0; i < correctAnswers.length; i++) {
+      const ans = correctAnswers[i];
+      // 1000 points base + speed bonus (500 for first, 300 for second, etc)
+      let pts = 1000;
+      if (i === 0) pts += 500;
+      else if (i === 1) pts += 300;
+      else if (i === 2) pts += 100;
+
+      const playerInfo = players.find(p => p.id === ans.player_id);
+      if (playerInfo) {
+        await updatePlayerScore(ans.player_id, playerInfo.total_score + pts);
       }
     }
   }, [roomId, room, players, updateRoomStatus, updatePlayerScore]);
