@@ -47,10 +47,11 @@ export function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">
+            <label htmlFor="email" className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">
               {t("auth.email")}
             </label>
             <input
+              id="email"
               type="email"
               required
               value={email}
@@ -61,10 +62,11 @@ export function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">
+            <label htmlFor="password" className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">
               {t("auth.password")}
             </label>
             <input
+              id="password"
               type="password"
               required
               value={password}
