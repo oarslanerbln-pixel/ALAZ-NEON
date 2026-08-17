@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { collection, addDoc, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { AnimatePresence, motion } from "framer-motion";
@@ -14,16 +14,22 @@ interface PlayerQuizControllerProps {
 export function PlayerQuizController({ room, player }: PlayerQuizControllerProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
-  const [prevQuestionIndex, setPrevQuestionIndex] = useState(room.current_question_index);
+  const [gameState, setGameState] = useState(room.status);
 
-  // Reset selections when question index changes
-  if (room.current_question_index !== prevQuestionIndex) {
-    setPrevQuestionIndex(room.current_question_index);
-    setSelectedOption(null);
-    setHasSubmitted(false);
+  // Oda durumunu RENDER sırasında senkronla (React'in "prop değişince state'i
+  // ayarla" deseni). Effect içinde yapmak fazladan bir render turu doğuruyordu.
+  if (room.status !== gameState) {
+    // Reset selections on new question
+    if (
+      (room.status === "question_intro" || room.status === "question_active") &&
+      gameState !== "question_active" &&
+      gameState !== "question_intro"
+    ) {
+      setSelectedOption(null);
+      setHasSubmitted(false);
+    }
+    setGameState(room.status);
   }
-
-  const gameState = room.status;
 
   // Check if player already submitted for this question
   useEffect(() => {
@@ -47,10 +53,9 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
     checkSubmission();
   }, [room.status, room.id, player.id, room.current_question_index, hasSubmitted]);
 
-
-  const handleSubmit = async (option: string) => {
+  const handleSubmit = useCallback(async (option: string) => {
     if (hasSubmitted) return;
-    
+
     SoundManager.getInstance().playSFX(sounds.CLICK);
     setSelectedOption(option);
     setHasSubmitted(true);
@@ -71,7 +76,17 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
       setHasSubmitted(false);
       setSelectedOption(null);
     }
-  };
+  }, [hasSubmitted, room.id, room.current_question_index, player.id]);
+
+  // Auto-submit on time up. Gönderimi bir tik sonraya alıyoruz: effect içinde
+  // senkron setState zincirleme render doğuruyor (PlayerGame'deki otomatik
+  // gönderim de aynı deseni kullanıyor).
+  useEffect(() => {
+    if (room.status === "question_reveal" && !hasSubmitted && selectedOption) {
+      const t = setTimeout(() => handleSubmit(selectedOption), 0);
+      return () => clearTimeout(t);
+    }
+  }, [room.status, hasSubmitted, selectedOption, handleSubmit]);
 
   const currentQ = room.quiz_questions?.[room.current_question_index || 0];
 
@@ -111,23 +126,6 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
                   Lütfen ana ekrana bakarak oyunun başlamasını bekleyin.
                 </p>
               </div>
-            </motion.div>
-          )}
-
-          {gameState === "quiz_intro" && (
-            <motion.div
-              key="quiz_intro"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-center"
-            >
-              <h2 className="text-3xl font-black text-white uppercase tracking-widest mb-4 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">
-                OYUN BAŞLIYOR
-              </h2>
-              <p className="text-blue-400 font-bold">
-                Lütfen ana ekrana bakın...
-              </p>
             </motion.div>
           )}
 

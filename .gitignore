@@ -25,6 +25,9 @@ dist-ssr
 
 .vercel
 
+# Firebase deploy cache
+.firebase
+
 # TypeScript incremental build cache
 *.tsbuildinfo
 

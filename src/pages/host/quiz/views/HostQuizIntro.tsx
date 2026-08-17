@@ -1,125 +1,15 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SoundManager, sounds } from "../../../../lib/audio";
+import { MatrixRain, HackerTerminal } from "../../../../components/HackerBoot";
 
 interface HostQuizIntroProps {
   onComplete: () => void;
 }
 
-// Minimal Matrix Rain Component
-function MatrixRain() {
-  const [particles, setParticles] = useState<{ id: number; duration: number; delay: number; chars: string }[]>([]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      const cols = Math.floor(window.innerWidth / 30);
-      setParticles(
-        Array.from({ length: cols }).map((_, i) => ({
-          id: i,
-          duration: Math.random() * 2 + 2,
-          delay: Math.random() * 2,
-          chars: Array.from({ length: 20 })
-            .map(() => String.fromCharCode(0x30a0 + Math.random() * 96))
-            .join(""),
-        }))
-      );
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  return (
-    <div className="absolute inset-0 overflow-hidden flex justify-between opacity-30 pointer-events-none z-0 mix-blend-screen">
-      {particles.map((p) => (
-        <motion.div
-          key={p.id}
-          initial={{ y: "-100%" }}
-          animate={{ y: "100vh" }}
-          transition={{
-            duration: p.duration,
-            repeat: Infinity,
-            ease: "linear",
-            delay: p.delay,
-          }}
-          className="text-[#00ff00] text-xl font-mono whitespace-nowrap [writing-mode:vertical-rl]"
-        >
-          {p.chars}
-        </motion.div>
-      ))}
-    </div>
-  );
-}
-
-// Hacker Terminal Component
-function HackerTerminal() {
-  const [lines, setLines] = useState<string[]>([]);
-  const [ipStr] = useState(() => Math.floor(Math.random() * 255));
-
-  useEffect(() => {
-    const allLines = [
-      "[root@alaz-core] ~$ init_override -f",
-      "BYPASSING KERNEL FIREWALL... [SUCCESS]",
-      "DECRYPTING ADMIN CREDENTIALS... 0x8F9A2B",
-      "ACCESS GRANTED. ESCALATING PRIVILEGES.",
-      "WARN: UNAUTHORIZED ACCESS DETECTED",
-      "DISABLING ALARMS... [OK]",
-      "INJECTING PAYLOAD AT MEMORY 0x00F83C",
-      "DOWNLOADING TRIVIA DATA...",
-      "[||||||              ] 30% [WARN: PACKET LOSS]",
-      "[||||||||||||        ] 60%",
-      "[||||||||||||||||||||] 100% [DATA SECURED]",
-      "OVERRIDING MAIN PROTOCOL...",
-      "SYSTEM COMPROMISED.",
-      "CONNECTING TO ALAZ QUIZ MAINFRAME...",
-      "ESTABLISHED. WAKING UP THE MATRIX.",
-    ];
-    let curr = 0;
-    const interval = setInterval(() => {
-      if (curr < allLines.length) {
-        const nextLine = allLines[curr];
-        setLines(prev => [...prev, nextLine]);
-        curr++;
-      } else {
-        setLines(prev => [...prev, `[root@alaz-core] ~$ ${Math.random().toString(36).substring(2)}`]);
-      }
-    }, 120);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="absolute inset-0 p-8 flex flex-col justify-end text-left pointer-events-none z-10 opacity-90">
-      <div className="absolute top-10 left-10 text-red-500 font-mono text-5xl font-black animate-pulse flex items-center gap-4 border-2 border-red-500 bg-red-500/20 p-4">
-        <span>⚠️</span> CRITICAL SYSTEM FAILURE
-      </div>
-      <div className="absolute top-10 right-10 text-red-500 font-mono text-xl text-right animate-pulse">
-        REMOTE IP: 192.168.1.{ipStr}<br/>
-        PORT: 8080<br/>
-        STATUS: BREACHED
-      </div>
-      {lines.slice(-15).map((line, i) => {
-        const safeLine = line ?? "";
-        const isWarn = safeLine.includes("WARN") || safeLine.includes("FAILURE") || safeLine.includes("COMPROMISED");
-        return (
-          <div key={i} className={`text-2xl md:text-4xl font-mono tracking-widest drop-shadow-[0_0_5px_currentColor] mb-1 ${
-            isWarn ? "text-red-500 font-black animate-pulse" : "text-[#00ff00]"
-          }`}>
-            {line}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 export function HostQuizIntro({ onComplete }: HostQuizIntroProps) {
   const [phase, setPhase] = useState<"boot" | "matrix" | "countdown" | "wow">("boot");
   const [countdown, setCountdown] = useState(3);
-
-  const onCompleteRef = useRef(onComplete);
-  useEffect(() => {
-    onCompleteRef.current = onComplete;
-  }, [onComplete]);
 
   useEffect(() => {
     // 1. Boot Phase
@@ -151,7 +41,9 @@ export function HostQuizIntro({ onComplete }: HostQuizIntroProps) {
         }, 1000);
         return () => clearTimeout(t4);
       } else {
-        setTimeout(() => setPhase("wow"), 0);
+        // Effect içinde senkron setPhase zincirleme render doğuruyordu
+        const t4 = setTimeout(() => setPhase("wow"), 200);
+        return () => clearTimeout(t4);
       }
     }
   }, [phase, countdown]);
@@ -163,22 +55,14 @@ export function HostQuizIntro({ onComplete }: HostQuizIntroProps) {
       SoundManager.getInstance().playSFX(sounds.SIREN, 0.5);
       
       const t5 = setTimeout(() => {
-        onCompleteRef.current();
+        onComplete();
       }, 4500);
       return () => clearTimeout(t5);
     }
-  }, [phase]);
+  }, [phase, onComplete]);
 
   return (
     <div className="w-full h-full flex items-center justify-center bg-black fixed inset-0 z-[100] overflow-hidden noise-suppression font-mono">
-      {/* Skip Button */}
-      <button
-        onClick={() => onCompleteRef.current()}
-        className="absolute top-6 right-6 z-50 px-4 py-2 bg-black/60 hover:bg-white/10 border border-white/20 hover:border-blue-500 text-gray-400 hover:text-white text-xs tracking-widest uppercase rounded-sm transition-all flex items-center gap-2 cursor-pointer backdrop-blur-md"
-      >
-        <span>GEÇ</span>
-        <span>&gt;&gt;</span>
-      </button>
       
       {/* Glitch Overlay for all phases after boot */}
       {(phase !== "boot") && (
@@ -216,7 +100,10 @@ export function HostQuizIntro({ onComplete }: HostQuizIntroProps) {
             exit={{ opacity: 0, scale: 1.2 }}
             className="flex flex-col items-center justify-center z-20 w-full h-full"
           >
-            <HackerTerminal />
+            <HackerTerminal
+              downloadingLabel="DOWNLOADING TRIVIA DATA..."
+              mainframeLabel="CONNECTING TO ALAZ QUIZ MAINFRAME..."
+            />
             <motion.div
               animate={{ opacity: [1, 0, 1, 0.5, 1], scale: [1, 1.05, 1] }}
               transition={{ duration: 0.2, repeat: Infinity }}
