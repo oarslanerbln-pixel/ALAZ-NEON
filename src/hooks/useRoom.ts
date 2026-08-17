@@ -5,14 +5,22 @@ import type { Room } from "../types/database";
 
 export function useRoom(roomId: string | null) {
   const [room, setRoom] = useState<Room | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(roomId));
   const [error, setError] = useState<Error | null>(null);
+  const [trackedRoomId, setTrackedRoomId] = useState(roomId);
+
+  // roomId değişince state'i RENDER sırasında sıfırla — React'in
+  // "prop değişince state'i ayarla" deseni. Bunu effect içinde yapmak
+  // fazladan bir render turu (cascading render) doğuruyordu.
+  if (roomId !== trackedRoomId) {
+    setTrackedRoomId(roomId);
+    setRoom(null);
+    setError(null);
+    setLoading(Boolean(roomId));
+  }
 
   useEffect(() => {
-    if (!roomId) {
-      setLoading(false);
-      return;
-    }
+    if (!roomId) return;
 
     const docRef = doc(db, "rooms", roomId);
     
@@ -39,11 +47,16 @@ export function useRoom(roomId: string | null) {
     };
   }, [roomId]);
 
-  const updateRoom = async (updates: Partial<Room>) => {
+  // `id` Firestore dokümanının alanı değil, doküman kimliği — güncellenemez.
+  // Omit ile dışlayınca @ts-ignore'a gerek kalmıyor.
+  const updateRoom = async (updates: Partial<Omit<Room, "id">>) => {
     if (!roomId) return;
-    const docRef = doc(db, "rooms", roomId);
-    // @ts-ignore - updates might not match perfectly if omitting id
-    await updateDoc(docRef, updates);
+    try {
+      await updateDoc(doc(db, "rooms", roomId), updates as Record<string, unknown>);
+    } catch (err) {
+      console.error("[useRoom] Oda güncellenemedi:", err);
+      setError(err as Error);
+    }
   };
 
   return { room, loading, error, updateRoom };
