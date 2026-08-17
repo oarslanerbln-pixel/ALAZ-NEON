@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
@@ -42,7 +42,12 @@ export function PlayerGame() {
     "idle" | "submitting" | "success" | "error"
   >("idle");
   const [roundPoints, setRoundPoints] = useState<number | null>(null);
-  const [timeLeft, setTimeLeft] = useState(0);
+  const [timeLeft, setTimeLeft] = useState<number>(() => {
+    if (room?.round_end_time) {
+      return Math.max(0, Math.floor((room.round_end_time - Date.now()) / 1000));
+    }
+    return room?.timer_setting || 60;
+  });
   const [localRoundEndTime, setLocalRoundEndTime] = useState<number | null>(null);
   const [jokerCategory, setJokerCategory] = useState<string | null>(null);
 
@@ -69,48 +74,47 @@ export function PlayerGame() {
 
   // Handle Local States on Room Update
   useEffect(() => {
-    let isMounted = true;
     if (gameState === "playing") {
+      const endTime = room?.round_end_time || (Date.now() + (room?.timer_setting || 60) * 1000);
+      const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+      
       setTimeout(() => {
-        if (isMounted) {
-          setAnswers((prev) => (Object.keys(prev).length > 0 ? {} : prev));
-          setIsLocked(false);
-          hasSubmitted.current = false;
-          setSubmitStatus("idle");
-          setRoundPoints(null);
-          setJokerCategory(null);
-          setLocalRoundEndTime(Date.now() + (room?.timer_setting || 60) * 1000);
-        }
+        setAnswers({});
+        setIsLocked(false);
+        hasSubmitted.current = false;
+        setSubmitStatus("idle");
+        setRoundPoints(null);
+        setJokerCategory(null);
+        setTimeLeft(remaining);
+        setLocalRoundEndTime(endTime);
       }, 0);
     } else if (gameState === "review" || gameState === "standings" || gameState === "finished") {
-      setTimeout(() => {
-        if (isMounted) setIsLocked(true);
-      }, 0);
+      setTimeout(() => setIsLocked(true), 0);
     }
-    return () => {
-      isMounted = false;
-    };
-  }, [gameState, room?.timer_setting]);
+  }, [gameState, room?.round_end_time, room?.timer_setting]);
 
-  // Timer Logic (Optimistic UI)
+  // Timer Logic (Optimistic UI & Synced with round_end_time)
   useEffect(() => {
     if (gameState === "playing" && localRoundEndTime) {
-      setTimeout(() => {
-        const remaining = Math.max(
-          0,
-          Math.floor((localRoundEndTime - Date.now()) / 1000),
-        );
-        setTimeLeft(remaining);
-      }, 0);
-
-      const interval = setInterval(() => {
+      const updateTimer = () => {
         const now = Date.now();
         const remaining = Math.max(
           0,
           Math.floor((localRoundEndTime - now) / 1000),
         );
         setTimeLeft(remaining);
-        if (remaining === 0) clearInterval(interval);
+        return remaining;
+      };
+
+      // Run once immediately
+      updateTimer();
+
+      const interval = setInterval(() => {
+        const remaining = updateTimer();
+        if (remaining === 0) {
+          clearInterval(interval);
+          setIsLocked(true);
+        }
       }, 500);
 
       return () => clearInterval(interval);
@@ -136,6 +140,7 @@ export function PlayerGame() {
           room_id: roomId,
           player_id: playerId,
           round_letter: activeLetter,
+          round_index: currentRound,
           data: finalData,
           created_at: new Date().toISOString()
         });
@@ -154,34 +159,20 @@ export function PlayerGame() {
         SoundManager.getInstance().playSFX(sounds.SUCCESS);
       }
     },
-    [roomId, playerId, activeLetter, answers, jokerCategory, showToast, t],
+    [roomId, playerId, activeLetter, currentRound, answers, jokerCategory, showToast, t],
   );
 
-  // Auto-submit when local timer hits 0
+  // Auto-submit only when locked AND game is playing or review
   useEffect(() => {
-    if (timeLeft === 0 && gameState === "playing" && !isLocked && !hasSubmitted.current) {
-      setIsLocked(true);
-    }
-  }, [timeLeft, gameState, isLocked]);
-
-  // Auto-submit when time is up or room moves to review
-  useEffect(() => {
-    let isMounted = true;
-    if (isLocked && !hasSubmitted.current) {
-      // Don't set hasSubmitted.current here, let submitAnswers do it
+    if (isLocked && !hasSubmitted.current && (gameState === "playing" || gameState === "review")) {
       setTimeout(() => {
-        if (isMounted) {
-          submitAnswers(false).then();
-          if (typeof window !== "undefined" && window.navigator.vibrate) {
-            window.navigator.vibrate(200);
-          }
-        }
+        submitAnswers(false).then();
       }, 0);
+      if (typeof window !== "undefined" && window.navigator.vibrate) {
+        try { window.navigator.vibrate(200); } catch { /* titreşim desteklenmiyor */ }
+      }
     }
-    return () => {
-      isMounted = false;
-    };
-  }, [isLocked, submitAnswers]);
+  }, [isLocked, gameState, submitAnswers]);
 
   // Route to Quiz Controller if game_type is quiz
   if (room?.game_type === "quiz" && player) {
@@ -207,7 +198,7 @@ export function PlayerGame() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex flex-col text-white relative overflow-hidden font-inter">
+    <div className="min-h-[100dvh] bg-black flex flex-col text-white relative overflow-hidden font-inter">
       <PlayerHeader
         playerName={player?.nickname || t("game.player")}
         totalScore={player?.total_score || 0}
@@ -220,9 +211,49 @@ export function PlayerGame() {
         roundPoints={roundPoints}
       />
 
-      <main className="flex-1 overflow-y-auto p-6 pb-40 relative z-10">
+      <main className="flex-1 overflow-y-auto touch-auto p-4 md:p-6 pb-[calc(9rem+env(safe-area-inset-bottom))] relative z-10">
         <AnimatePresence mode="wait">
-          {gameState === "lobby" && <PlayerLobby />}
+          {gameState === "lobby" && <PlayerLobby room={room} roomId={roomId} />}
+
+          {(gameState === "intro" || gameState === "gameIntro" || gameState === "countdown") && (
+            <motion.div
+              key="preparing"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.05 }}
+              className="flex flex-col items-center justify-center text-center p-8 min-h-[60vh] relative z-10"
+            >
+              <div className="relative w-28 h-28 flex items-center justify-center mb-8">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 rounded-full border-2 border-dashed border-alaz-orange/50"
+                />
+                <motion.div
+                  animate={{ rotate: -360 }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-3 rounded-full border-2 border-dotted border-cyber-yellow/60"
+                />
+                <motion.div
+                  animate={{ scale: [1, 1.3, 1], opacity: [0.7, 1, 0.7] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  className="w-14 h-14 rounded-full bg-alaz-orange/20 border border-alaz-orange flex items-center justify-center shadow-[0_0_25px_rgba(255,77,0,0.5)]"
+                >
+                  <span className="text-2xl animate-pulse">⚡</span>
+                </motion.div>
+              </div>
+
+              <h2 className="text-2xl md:text-3xl font-black text-white tracking-[0.2em] mb-3 uppercase font-mono">
+                {gameState === "countdown" ? "HARF BELİRLENİYOR..." : "OYUN BAŞLIYOR!"}
+              </h2>
+              <p className="text-alaz-orange text-sm md:text-base font-bold tracking-widest uppercase animate-pulse mb-6">
+                Lütfen Ana Ekrana Bakın...
+              </p>
+              <div className="bg-black/60 border border-white/10 p-4 max-w-xs text-xs text-gray-400 font-mono rounded-sm">
+                Tur {currentRound || 1} / {room?.total_rounds || 3} • Hızlı yazan ekstra bonus puan kazanır!
+              </div>
+            </motion.div>
+          )}
 
           {gameState === "playing" && (
             <PlayerPlaying
@@ -250,8 +281,6 @@ export function PlayerGame() {
         </AnimatePresence>
       </main>
 
-
-
       {(gameState === "review" || gameState === "standings" || gameState === "finished") && (
         <EmojiToolbar onEmojiClick={sendReaction} />
       )}
@@ -260,3 +289,4 @@ export function PlayerGame() {
     </div>
   );
 }
+

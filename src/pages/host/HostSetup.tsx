@@ -9,6 +9,7 @@ import { ParticleBackground } from "../../components/ParticleBackground";
 import { getCategoryPresets } from "../../lib/categoryPresets";
 import { useLocale } from "../../hooks/useLocale";
 import { useToast } from "../../contexts/ToastContextCore";
+import { errorMessage } from "../../lib/errors";
 
 // Premium Glass Panel with Looping Neon Animation
 function GlassPanel({ 
@@ -113,9 +114,9 @@ export function HostSetup() {
         });
         
         navigate(`/host/display?roomId=${docRef.id}`);
-      } catch (err: any) {
+      } catch (err) {
         console.error("Error creating room:", err);
-        showToast(t("setup.errorCreate") + err.message, "error");
+        showToast(t("setup.errorCreate") + errorMessage(err), "error");
         setIsCreating(false);
         return;
       }
