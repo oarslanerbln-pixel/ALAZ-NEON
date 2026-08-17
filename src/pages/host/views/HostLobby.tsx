@@ -21,6 +21,7 @@ interface HostLobbyProps {
     total_rounds: number;
     game_mode: "individual" | "team";
     categories: string[];
+    game_type?: string;
   } | null;
   players: Player[];
   onStartGame: () => void;
@@ -50,6 +51,8 @@ export function HostLobby({
   };
 
   const currentCategories = room?.categories || [];
+  const isQuiz = room?.game_type === "quiz";
+  const canStart = players.length >= 1 && (isQuiz || currentCategories.length >= 1);
 
   // Countdown State
   const [countdownEnd, setCountdownEnd] = useState<number | null>(null);
@@ -345,9 +348,9 @@ export function HostLobby({
         <div className="mt-10 pt-10 border-t border-white/5 relative z-10">
           <button
             onClick={onStartGame}
-            disabled={players.length < 1 || currentCategories.length < 1}
+            disabled={!canStart}
             className={`w-full py-5 rounded-[1.5rem] font-black text-lg transition-all relative overflow-hidden group/start ${
-              players.length < 1 || currentCategories.length < 1
+              !canStart
                 ? "bg-gray-900/50 text-gray-700 cursor-not-allowed border border-white/5"
                 : "bg-white text-black hover:bg-alaz-orange hover:text-white shadow-[0_15px_40px_rgba(0,0,0,0.4)] hover:shadow-[0_20px_50px_rgba(255,77,0,0.4)] hover:-translate-y-1"
             }`}
@@ -359,21 +362,21 @@ export function HostLobby({
           <div className="mt-4 flex gap-2 w-full justify-center">
              <button
                 onClick={() => startCountdown(5)}
-                disabled={players.length < 1 || currentCategories.length < 1}
+                disabled={!canStart}
                 className="flex-1 py-3 bg-black/50 border border-white/10 text-white/80 hover:bg-white/10 rounded-xl text-xs font-black uppercase tracking-widest disabled:opacity-50 transition-all backdrop-blur-md"
              >
                 5 Dk Bekle
              </button>
              <button
                 onClick={() => startCountdown(10)}
-                disabled={players.length < 1 || currentCategories.length < 1}
+                disabled={!canStart}
                 className="flex-1 py-3 bg-black/50 border border-white/10 text-white/80 hover:bg-white/10 rounded-xl text-xs font-black uppercase tracking-widest disabled:opacity-50 transition-all backdrop-blur-md"
              >
                 10 Dk Bekle
              </button>
           </div>
 
-          {players.length > 0 && currentCategories.length === 0 && (
+          {players.length > 0 && currentCategories.length === 0 && !isQuiz && (
             <p className="text-[10px] text-red-500 mt-4 font-black animate-pulse tracking-widest uppercase">
               {t("lobby.noCategory")}
             </p>

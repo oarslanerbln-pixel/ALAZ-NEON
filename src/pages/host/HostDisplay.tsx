@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import { collection, query, where, getDocs, doc, writeBatch } from "firebase/firestore";
@@ -25,6 +25,7 @@ import { HostStandings } from "./views/HostStandings";
 import { HostPodium } from "./views/HostPodium";
 import { HostQuizDisplay } from "./quiz/HostQuizDisplay";
 import { DatabaseStatus } from "../../components/DatabaseStatus";
+import { RoomStatusScreen } from "../../components/RoomStatusScreen";
 import { EmojiRain } from "../../components/EmojiRain";
 import { LetterSpinner } from "../../components/LetterSpinner";
 import {
@@ -37,13 +38,44 @@ import {
 export function HostDisplay() {
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get("roomId");
+  // TEK abonelik: eskiden bu bileşen + alt bileşen ayrı ayrı useHostRoom
+  // çağırıyordu, yani her oda için 6 Firestore listener açılıyordu.
+  const hostRoom = useHostRoom(roomId);
+  const { room, loading, notFound, error } = hostRoom;
+
+  if (error) return <RoomStatusScreen kind="error" roomId={roomId} detail={error.message} />;
+  if (loading) return <RoomStatusScreen kind="loading" roomId={roomId} />;
+  if (notFound || room === null) return <RoomStatusScreen kind="notfound" roomId={roomId} />;
+
+  if (room.game_type === "quiz") {
+    return (
+      <HostQuizDisplay
+        room={room}
+        players={hostRoom.players}
+        updateRoomStatus={hostRoom.updateRoomStatus}
+        updatePlayerScore={hostRoom.updatePlayerScore}
+      />
+    );
+  }
+  return <HostDisplayCore roomId={roomId} hostRoom={hostRoom} />;
+}
+
+type HostRoomState = ReturnType<typeof useHostRoom>;
+
+function HostDisplayCore({
+  roomId,
+  hostRoom,
+}: {
+  roomId: string | null;
+  hostRoom: HostRoomState;
+}) {
   const {
     room,
     players,
     submittedPlayerIds,
     updateRoomStatus,
     updatePlayerScore,
-  } = useHostRoom(roomId);
+  } = hostRoom;
 
   // Local UI States
   const [gameState, setGameState] = useState<
@@ -80,11 +112,6 @@ export function HostDisplay() {
     >
   >({});
 
-  // Route to Quiz Display if game_type is quiz
-  if (room?.game_type === "quiz") {
-    return <HostQuizDisplay />;
-  }
-
   // Orchestrate Intro and Music
   useEffect(() => {
     const sound = SoundManager.getInstance();
@@ -120,20 +147,28 @@ export function HostDisplay() {
     }
   }, [gameState, roomId]);
 
-  // Sync Game State with Room Status
+  // Use a ref to always have the current gameState inside effects (avoids stale closure)
+  const gameStateRef = useRef(gameState);
   useEffect(() => {
-    if (room) {
-      if (gameState !== "intro" && gameState !== "gameIntro" && gameState !== "countdown") {
-        const newStatus = room.status as typeof gameState;
-        if (gameState !== newStatus) {
-          setTimeout(() => setGameState(newStatus), 0);
-        }
-      }
-      if (room.active_letter && room.active_letter !== currentLetter) {
-        setTimeout(() => setCurrentLetter(room.active_letter || "?"), 0);
-      }
+    gameStateRef.current = gameState;
+  });
+
+  // Sync Game State with Room Status — ref ensures we never read stale gameState
+  useEffect(() => {
+    if (!room) return;
+
+    const CINEMATIC = ["intro", "gameIntro", "countdown"];
+    if (CINEMATIC.includes(gameStateRef.current)) return; // Never override local animations
+
+    const roomStatus = room.status as typeof gameState;
+    if (gameStateRef.current !== roomStatus) {
+      setGameState(roomStatus);
     }
-  }, [room, gameState, currentLetter]);
+    if (room.active_letter && room.active_letter !== currentLetter) {
+      setCurrentLetter(room.active_letter || "?");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room]);
 
   const endRound = useCallback(async () => {
     if (!roomId || !room) return;
@@ -147,11 +182,12 @@ export function HostDisplay() {
     await new Promise((resolve) => setTimeout(resolve, 2500));
 
     const letterToQuery = room.active_letter || currentLetter;
+    const currentRoundIndex = room.current_round || 1;
 
     const q = query(
       collection(db, "answers"),
       where("room_id", "==", roomId),
-      where("round_letter", "==", letterToQuery)
+      where("round_index", "==", currentRoundIndex)
     );
     const querySnapshot = await getDocs(q);
     const rawAnswers: Answer[] = [];
@@ -268,38 +304,66 @@ export function HostDisplay() {
     setNextLetter(randomLetter);
     
     if (room.current_round === 0) {
+      // Persist to Firestore so the state survives re-renders/refreshes
+      await updateRoomStatus("gameIntro", { next_letter: randomLetter });
       setGameState("gameIntro");
     } else {
+      await updateRoomStatus("countdown", { next_letter: randomLetter });
       setGameState("countdown");
     }
   };
 
-  const handleGameIntroComplete = () => {
+  const handleGameIntroComplete = useCallback(async () => {
+    // Restore next_letter from Firestore in case of re-render
+    const letter = roomRef.current?.next_letter || nextLetterRef.current || "A";
+    setNextLetter(letter);
+    await updateRoomStatus("countdown", { next_letter: letter });
     setGameState("countdown");
-  };
+  }, [updateRoomStatus]);
 
-  const handleSpinnerComplete = async () => {
-    if (!roomId || !room) return;
+  // Refs for values used inside stable callbacks — avoids re-creating callbacks on Firestore updates
+  const roomRef = useRef(room);
+  const nextLetterRef = useRef(nextLetter);
+  useEffect(() => { roomRef.current = room; }, [room]);
+  useEffect(() => { nextLetterRef.current = nextLetter; }, [nextLetter]);
 
-    const nextRound = (room.current_round || 0) + 1;
-    const usedLetters = room.used_letters || [];
+  const handleSpinnerComplete = useCallback(async () => {
+    const currentRoom = roomRef.current;
+    if (!roomId || !currentRoom) return;
+
+    const letters = "ABCDEFGHIJKLMNOPRSTUVYZ".split("");
+    const usedLetters = currentRoom.used_letters || [];
+    let availableLetters = letters.filter(l => !usedLetters.includes(l));
+    if (availableLetters.length === 0) availableLetters = letters;
+
+    const letter =
+      nextLetterRef.current ||
+      currentRoom.next_letter ||
+      availableLetters[Math.floor(Math.random() * availableLetters.length)] ||
+      "A";
+
+    const nextRound = (currentRoom.current_round || 0) + 1;
+    const timerSetting = currentRoom.timer_setting || 60;
+    const endTime = Date.now() + timerSetting * 1000;
     
     await updateRoomStatus("playing", {
-      active_letter: nextLetter,
+      active_letter: letter,
       current_round: nextRound,
-      time_left: room.timer_setting,
-      used_letters: [...usedLetters, nextLetter]
+      time_left: timerSetting,
+      round_end_time: endTime,
+      used_letters: [...usedLetters, letter]
     });
 
-    setCurrentLetter(nextLetter);
-    setTimeLeft(room.timer_setting);
-    setRoundEndTime(Date.now() + room.timer_setting * 1000);
+    setCurrentLetter(letter);
+    setTimeLeft(timerSetting);
+    setRoundEndTime(endTime);
 
     // Notify Sentinel that the round timer has officially started
     Sentinel.radar.startRoundTime();
 
     setGameState("playing");
-  };
+  }, [roomId, updateRoomStatus]);
+
 
   const toggleAnswerValidity = (playerId: string, category: string) => {
     SoundManager.getInstance().playSFX(sounds.CLICK);
@@ -381,16 +445,19 @@ export function HostDisplay() {
     }
   };
 
-  // Timer Logic (Optimistic UI)
+  // Timer Logic (Optimistic UI & Synced with round_end_time)
   useEffect(() => {
     if (gameState === "playing") {
-      const interval = setInterval(() => {
-        if (!roundEndTime) return;
+      const activeEndTime = roundEndTime || room?.round_end_time || (Date.now() + (room?.timer_setting || 60) * 1000);
+      if (!roundEndTime && room?.round_end_time) {
+        setRoundEndTime(room.round_end_time);
+      }
 
+      const interval = setInterval(() => {
         const now = Date.now();
         const remaining = Math.max(
           0,
-          Math.floor((roundEndTime - now) / 1000),
+          Math.floor((activeEndTime - now) / 1000),
         );
 
         setTimeLeft(remaining);
@@ -403,7 +470,7 @@ export function HostDisplay() {
 
       return () => clearInterval(interval);
     }
-  }, [gameState, roundEndTime, endRound]);
+  }, [gameState, roundEndTime, room?.round_end_time, room?.timer_setting, endRound]);
 
   // Calculate Aesthetic Tension
   const tensionRatio =

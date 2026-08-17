@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SoundManager, sounds } from "../../../../lib/audio";
 
@@ -8,33 +8,43 @@ interface HostQuizIntroProps {
 
 // Minimal Matrix Rain Component
 function MatrixRain() {
-  const [columns, setColumns] = useState<number>(0);
+  const [particles, setParticles] = useState<{ id: number; duration: number; delay: number; chars: string }[]>([]);
 
   useEffect(() => {
-    setColumns(Math.floor(window.innerWidth / 30));
-    const handleResize = () => setColumns(Math.floor(window.innerWidth / 30));
+    const handleResize = () => {
+      const cols = Math.floor(window.innerWidth / 30);
+      setParticles(
+        Array.from({ length: cols }).map((_, i) => ({
+          id: i,
+          duration: Math.random() * 2 + 2,
+          delay: Math.random() * 2,
+          chars: Array.from({ length: 20 })
+            .map(() => String.fromCharCode(0x30a0 + Math.random() * 96))
+            .join(""),
+        }))
+      );
+    };
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return (
     <div className="absolute inset-0 overflow-hidden flex justify-between opacity-30 pointer-events-none z-0 mix-blend-screen">
-      {Array.from({ length: columns }).map((_, i) => (
+      {particles.map((p) => (
         <motion.div
-          key={i}
+          key={p.id}
           initial={{ y: "-100%" }}
           animate={{ y: "100vh" }}
           transition={{
-            duration: Math.random() * 2 + 2,
+            duration: p.duration,
             repeat: Infinity,
             ease: "linear",
-            delay: Math.random() * 2,
+            delay: p.delay,
           }}
           className="text-[#00ff00] text-xl font-mono whitespace-nowrap [writing-mode:vertical-rl]"
         >
-          {Array.from({ length: 20 })
-            .map(() => String.fromCharCode(0x30a0 + Math.random() * 96))
-            .join("")}
+          {p.chars}
         </motion.div>
       ))}
     </div>
@@ -44,29 +54,31 @@ function MatrixRain() {
 // Hacker Terminal Component
 function HackerTerminal() {
   const [lines, setLines] = useState<string[]>([]);
-  const allLines = [
-    "[root@alaz-core] ~$ init_override -f",
-    "BYPASSING KERNEL FIREWALL... [SUCCESS]",
-    "DECRYPTING ADMIN CREDENTIALS... 0x8F9A2B",
-    "ACCESS GRANTED. ESCALATING PRIVILEGES.",
-    "WARN: UNAUTHORIZED ACCESS DETECTED",
-    "DISABLING ALARMS... [OK]",
-    "INJECTING PAYLOAD AT MEMORY 0x00F83C",
-    "DOWNLOADING TRIVIA DATA...",
-    "[||||||              ] 30% [WARN: PACKET LOSS]",
-    "[||||||||||||        ] 60%",
-    "[||||||||||||||||||||] 100% [DATA SECURED]",
-    "OVERRIDING MAIN PROTOCOL...",
-    "SYSTEM COMPROMISED.",
-    "CONNECTING TO ALAZ QUIZ MAINFRAME...",
-    "ESTABLISHED. WAKING UP THE MATRIX.",
-  ];
+  const [ipStr] = useState(() => Math.floor(Math.random() * 255));
 
   useEffect(() => {
+    const allLines = [
+      "[root@alaz-core] ~$ init_override -f",
+      "BYPASSING KERNEL FIREWALL... [SUCCESS]",
+      "DECRYPTING ADMIN CREDENTIALS... 0x8F9A2B",
+      "ACCESS GRANTED. ESCALATING PRIVILEGES.",
+      "WARN: UNAUTHORIZED ACCESS DETECTED",
+      "DISABLING ALARMS... [OK]",
+      "INJECTING PAYLOAD AT MEMORY 0x00F83C",
+      "DOWNLOADING TRIVIA DATA...",
+      "[||||||              ] 30% [WARN: PACKET LOSS]",
+      "[||||||||||||        ] 60%",
+      "[||||||||||||||||||||] 100% [DATA SECURED]",
+      "OVERRIDING MAIN PROTOCOL...",
+      "SYSTEM COMPROMISED.",
+      "CONNECTING TO ALAZ QUIZ MAINFRAME...",
+      "ESTABLISHED. WAKING UP THE MATRIX.",
+    ];
     let curr = 0;
     const interval = setInterval(() => {
       if (curr < allLines.length) {
-        setLines(prev => [...prev, allLines[curr]]);
+        const nextLine = allLines[curr];
+        setLines(prev => [...prev, nextLine]);
         curr++;
       } else {
         setLines(prev => [...prev, `[root@alaz-core] ~$ ${Math.random().toString(36).substring(2)}`]);
@@ -81,12 +93,13 @@ function HackerTerminal() {
         <span>⚠️</span> CRITICAL SYSTEM FAILURE
       </div>
       <div className="absolute top-10 right-10 text-red-500 font-mono text-xl text-right animate-pulse">
-        REMOTE IP: 192.168.1.{Math.floor(Math.random() * 255)}<br/>
+        REMOTE IP: 192.168.1.{ipStr}<br/>
         PORT: 8080<br/>
         STATUS: BREACHED
       </div>
       {lines.slice(-15).map((line, i) => {
-        const isWarn = line.includes("WARN") || line.includes("FAILURE") || line.includes("COMPROMISED");
+        const safeLine = line ?? "";
+        const isWarn = safeLine.includes("WARN") || safeLine.includes("FAILURE") || safeLine.includes("COMPROMISED");
         return (
           <div key={i} className={`text-2xl md:text-4xl font-mono tracking-widest drop-shadow-[0_0_5px_currentColor] mb-1 ${
             isWarn ? "text-red-500 font-black animate-pulse" : "text-[#00ff00]"
@@ -102,6 +115,11 @@ function HackerTerminal() {
 export function HostQuizIntro({ onComplete }: HostQuizIntroProps) {
   const [phase, setPhase] = useState<"boot" | "matrix" | "countdown" | "wow">("boot");
   const [countdown, setCountdown] = useState(3);
+
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   useEffect(() => {
     // 1. Boot Phase
@@ -133,7 +151,7 @@ export function HostQuizIntro({ onComplete }: HostQuizIntroProps) {
         }, 1000);
         return () => clearTimeout(t4);
       } else {
-        setPhase("wow");
+        setTimeout(() => setPhase("wow"), 0);
       }
     }
   }, [phase, countdown]);
@@ -145,14 +163,22 @@ export function HostQuizIntro({ onComplete }: HostQuizIntroProps) {
       SoundManager.getInstance().playSFX(sounds.SIREN, 0.5);
       
       const t5 = setTimeout(() => {
-        onComplete();
+        onCompleteRef.current();
       }, 4500);
       return () => clearTimeout(t5);
     }
-  }, [phase, onComplete]);
+  }, [phase]);
 
   return (
     <div className="w-full h-full flex items-center justify-center bg-black fixed inset-0 z-[100] overflow-hidden noise-suppression font-mono">
+      {/* Skip Button */}
+      <button
+        onClick={() => onCompleteRef.current()}
+        className="absolute top-6 right-6 z-50 px-4 py-2 bg-black/60 hover:bg-white/10 border border-white/20 hover:border-blue-500 text-gray-400 hover:text-white text-xs tracking-widest uppercase rounded-sm transition-all flex items-center gap-2 cursor-pointer backdrop-blur-md"
+      >
+        <span>GEÇ</span>
+        <span>&gt;&gt;</span>
+      </button>
       
       {/* Glitch Overlay for all phases after boot */}
       {(phase !== "boot") && (

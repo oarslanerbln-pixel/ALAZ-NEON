@@ -9,6 +9,20 @@ interface LetterSpinnerProps {
 
 const letters = "ABCDEFGHIJKLMNOPRSTUVYZ".split("");
 
+const generateExplosionParticles = () => {
+  return Array.from({ length: 80 }).map(() => ({
+    x: (Math.random() - 0.5) * (typeof window !== "undefined" ? window.innerWidth : 1000) * 2,
+    y: (Math.random() - 0.5) * (typeof window !== "undefined" ? window.innerHeight : 800) * 2,
+    rotation: (Math.random() - 0.5) * 1080,
+    scale: Math.random() * 4 + 0.5,
+    delay: Math.random() * 0.15,
+    color: Math.random() > 0.5 ? "#fcee0a" : "#ff4d00",
+    duration: 1.5 + Math.random() * 0.8,
+  }));
+};
+
+const getRandomLetter = () => letters[Math.floor(Math.random() * letters.length)];
+
 export function LetterSpinner({
   targetLetter,
   onComplete,
@@ -18,17 +32,16 @@ export function LetterSpinner({
   const [explosionActive, setExplosionActive] = useState(false);
   const onCompleteRef = useRef(onComplete);
 
+  const [fallbackLetter] = useState(getRandomLetter);
+
+  const effectiveLetter = useMemo(() => {
+    return targetLetter && targetLetter.trim().length > 0
+      ? targetLetter
+      : fallbackLetter;
+  }, [targetLetter, fallbackLetter]);
+
   // Generate random particles for explosion
-  const explosionParticles = useMemo(() => {
-    return Array.from({ length: 80 }).map(() => ({
-      x: (Math.random() - 0.5) * (typeof window !== "undefined" ? window.innerWidth : 1000) * 2,
-      y: (Math.random() - 0.5) * (typeof window !== "undefined" ? window.innerHeight : 800) * 2,
-      rotation: (Math.random() - 0.5) * 1080,
-      scale: Math.random() * 4 + 0.5,
-      delay: Math.random() * 0.15,
-      color: Math.random() > 0.5 ? "#fcee0a" : "#ff4d00", // Mix of yellow and orange
-    }));
-  }, []);
+  const [explosionParticles] = useState(generateExplosionParticles);
 
   useEffect(() => {
     onCompleteRef.current = onComplete;
@@ -36,7 +49,7 @@ export function LetterSpinner({
 
   useEffect(() => {
     const startTime = Date.now();
-    const duration = 3000; // 3 seconds spin for dramatic effect
+    const duration = 2800; // 2.8 seconds spin for dramatic effect
     let animationFrameId: number;
     let timeoutId: ReturnType<typeof setTimeout>;
 
@@ -65,7 +78,7 @@ export function LetterSpinner({
           setExplosionActive(true);
           SoundManager.getInstance().playSFX(sounds.BURN); // Dramatic effect
           timeoutId = setTimeout(() => onCompleteRef.current(), 1800); // Wait for explosion to finish
-        }, 1200);
+        }, 1000);
       }
     };
 
@@ -131,10 +144,10 @@ export function LetterSpinner({
               }}
               transition={{ duration: 0.8, type: "spring", bounce: 0.5 }}
               className="text-9xl md:text-[12rem] lg:text-[16rem] font-black font-inter text-transparent bg-clip-text bg-gradient-to-br from-cyber-yellow via-white to-alaz-orange h-full flex items-center justify-center w-full"
-              data-text={targetLetter}
+              data-text={effectiveLetter}
               style={{ filter: 'drop-shadow(0 0 40px rgba(252,238,10,0.8))' }}
             >
-              {targetLetter}
+              {effectiveLetter}
             </motion.div>
           )}
         </AnimatePresence>
@@ -164,7 +177,7 @@ export function LetterSpinner({
                 rotate: particle.rotation
               }}
               transition={{ 
-                duration: 1.5 + Math.random() * 0.8, 
+                duration: particle.duration, 
                 ease: "easeOut",
                 delay: particle.delay
               }}

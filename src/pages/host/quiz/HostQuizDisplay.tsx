@@ -7,49 +7,57 @@ import { ParticleBackground } from "../../../components/ParticleBackground";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { getQuizQuestions } from "../../../lib/quizQuestions";
 
-// Hooks
-import { useHostRoom } from "../../../hooks/useHostRoom";
-
-// Types
-import type { QuizQuestion, Answer } from "../../../types/database";
+import type { Answer } from "../../../types/database";
 
 import { HostQuizIntro } from "./views/HostQuizIntro";
 import { HostHeader } from "../components/HostHeader";
 import { HostLobby } from "../views/HostLobby";
 
-export function HostQuizDisplay() {
+import type { Room, Player } from "../../../types/database";
+
+export function HostQuizDisplay({
+  room,
+  players,
+  updateRoomStatus,
+  updatePlayerScore,
+}: {
+  room: Room;
+  players: Player[];
+  updateRoomStatus: (status: Room["status"], extra?: Partial<Room>) => Promise<void>;
+  updatePlayerScore: (playerId: string, score: number) => Promise<void>;
+}) {
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get("roomId");
-  const {
-    room,
-    players,
-    updateRoomStatus,
-    updatePlayerScore,
-  } = useHostRoom(roomId);
 
-  const [gameState, setGameState] = useState(room?.status || "quiz_lobby");
-  const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
   const [timeLeft, setTimeLeft] = useState(room?.timer_setting || 30);
   const [roundEndTime, setRoundEndTime] = useState<number | null>(null);
 
-  // Sync game state
-  useEffect(() => {
-    if (room && room.status !== gameState) {
-      if (room.status.startsWith("quiz_") || room.status.startsWith("question_") || room.status === "finished") {
-        setGameState(room.status);
-      } else if (room.status === "lobby") {
-        setGameState("quiz_lobby"); // Sync lobby to quiz_lobby to prevent mismatch
-      }
-      
-      if (room.quiz_questions && room.current_question_index !== undefined) {
-        setCurrentQuestion(room.quiz_questions[room.current_question_index]);
-      }
-    }
-  }, [room, gameState]);
+  // Derive game state directly from room.status — single source of truth, no sync bugs
+  const rawStatus = room?.status || "quiz_lobby";
+  const gameState =
+    rawStatus === "lobby" ? "quiz_lobby" :
+    rawStatus.startsWith("quiz_") || rawStatus.startsWith("question_") || rawStatus === "finished"
+      ? rawStatus
+      : "quiz_lobby";
+
+  const currentQuestion = room?.quiz_questions?.[room?.current_question_index ?? 0] ?? null;
 
   const startGame = async () => {
     if (!roomId || !room) return;
     
+    // Temiz bir başlangıç için eski cevapları temizle
+    try {
+      const q = query(collection(db, "answers"), where("room_id", "==", roomId));
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        const batch = writeBatch(db);
+        snapshot.forEach(docSnap => batch.delete(docSnap.ref));
+        await batch.commit();
+      }
+    } catch (e) {
+      console.warn("Could not delete old answers (possibly missing permissions):", e);
+    }
+
     // Generate questions for this session
     const questions = getQuizQuestions(room.locale, room.total_rounds);
     
@@ -60,9 +68,9 @@ export function HostQuizDisplay() {
     });
   };
 
-  const onIntroComplete = async () => {
+  const onIntroComplete = useCallback(async () => {
     await updateRoomStatus("question_intro");
-  };
+  }, [updateRoomStatus]);
 
   const startQuestionTimer = async () => {
     if (!roomId || !room) return;
@@ -112,17 +120,27 @@ export function HostQuizDisplay() {
     // Sort answers by time to give speed bonus
     answers.sort((a, b) => (a.created_at || "").localeCompare(b.created_at || ""));
     
+    let speedBonusIndex = 0;
+    const processedPlayers = new Set<string>();
+
     for (let i = 0; i < answers.length; i++) {
       const ans = answers[i];
+      
+      // Prevent double scoring if a player sent multiple answers somehow
+      if (processedPlayers.has(ans.player_id)) continue;
+      processedPlayers.add(ans.player_id);
+
       const playerSelected = ans.data.selectedOption;
       
       if (playerSelected === correctOption) {
         // Correct!
         // 1000 points base + speed bonus (500 for first, 300 for second, etc)
         let pts = 1000;
-        if (i === 0) pts += 500;
-        else if (i === 1) pts += 300;
-        else if (i === 2) pts += 100;
+        if (speedBonusIndex === 0) pts += 500;
+        else if (speedBonusIndex === 1) pts += 300;
+        else if (speedBonusIndex === 2) pts += 100;
+        
+        speedBonusIndex++; // Only increment for correct answers!
         
         const playerInfo = players.find(p => p.id === ans.player_id);
         if (playerInfo) {
@@ -175,11 +193,18 @@ export function HostQuizDisplay() {
       const pRef = doc(db, "players", p.id);
       batch.update(pRef, { total_score: 0 });
     });
+
+    // Delete all previous answers for this room
+    const q = query(collection(db, "answers"), where("room_id", "==", roomId));
+    const snapshot = await getDocs(q);
+    snapshot.forEach(docSnap => {
+      batch.delete(docSnap.ref);
+    });
+
     await batch.commit();
     await updateRoomStatus("quiz_lobby", { current_round: 0, current_question_index: 0 });
   };
 
-  if (!room) return <div className="text-white">Loading...</div>;
 
   return (
     <div className="flex-1 flex flex-col p-8 h-screen overflow-hidden">
@@ -194,7 +219,8 @@ export function HostQuizDisplay() {
       <div className="flex-1 flex items-center justify-center relative w-full z-10 mt-10">
         <AnimatePresence mode="wait">
           
-          {(gameState === "lobby" || gameState === "quiz_lobby") && (
+          {/* "lobby" yukarıda zaten "quiz_lobby"ye çevriliyor, ayrıca kontrol gereksiz */}
+          {gameState === "quiz_lobby" && (
             <motion.div
               key="quiz_lobby"
               initial={{ opacity: 0, scale: 0.9 }}
@@ -220,7 +246,7 @@ export function HostQuizDisplay() {
             <HostQuizIntro onComplete={onIntroComplete} />
           )}
 
-          {gameState === "question_intro" && currentQuestion && (
+          {gameState === "question_intro" && (
             <motion.div
               key="intro"
               initial={{ opacity: 0, y: 50 }}
@@ -231,19 +257,26 @@ export function HostQuizDisplay() {
               <h2 className="text-2xl text-blue-400 font-black tracking-[0.3em] uppercase mb-10">
                 SORU {room.current_round} / {room.total_rounds}
               </h2>
-              <div className="bg-black/60 border border-blue-500/30 p-16 w-full shadow-[0_0_50px_rgba(59,130,246,0.2)]">
-                <h1 className="text-4xl md:text-5xl font-black text-white leading-tight">
-                  {currentQuestion.text}
-                </h1>
-              </div>
-              <button
-                onClick={startQuestionTimer}
-                className="mt-16 px-16 py-6 bg-blue-600 hover:bg-blue-500 text-white font-black text-2xl uppercase tracking-widest shadow-[0_0_30px_rgba(59,130,246,0.6)]"
-              >
-                SÜREYİ BAŞLAT
-              </button>
+              {!currentQuestion ? (
+                <div className="text-white/50 text-2xl animate-pulse">Yükleniyor...</div>
+              ) : (
+                <>
+                  <div className="bg-black/60 border border-blue-500/30 p-16 w-full shadow-[0_0_50px_rgba(59,130,246,0.2)]">
+                    <h1 className="text-4xl md:text-5xl font-black text-white leading-tight">
+                      {currentQuestion.text}
+                    </h1>
+                  </div>
+                  <button
+                    onClick={startQuestionTimer}
+                    className="mt-16 px-16 py-6 bg-blue-600 hover:bg-blue-500 text-white font-black text-2xl uppercase tracking-widest shadow-[0_0_30px_rgba(59,130,246,0.6)]"
+                  >
+                    SÜREYİ BAŞLAT
+                  </button>
+                </>
+              )}
             </motion.div>
           )}
+
 
           {gameState === "question_active" && currentQuestion && (
             <motion.div

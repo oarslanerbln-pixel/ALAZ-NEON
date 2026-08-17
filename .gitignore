@@ -24,3 +24,13 @@ dist-ssr
 *.sw?
 
 .vercel
+
+# TypeScript incremental build cache
+*.tsbuildinfo
+
+# Geçici build/debug çıktıları
+build.txt
+build_output.txt
+errors.txt
+_dbg_*
+_arsiv/

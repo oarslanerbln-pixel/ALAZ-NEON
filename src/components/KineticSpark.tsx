@@ -86,7 +86,7 @@ export function KineticSpark({
               <stop offset="100%" stopColor="#FFD700" stopOpacity="0" />
             </radialGradient>
 
-            <filter id="hyperGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <filter id="hyperGlow" x="-50%" y="-50%" width="200%" height="200%" colorInterpolationFilters="sRGB">
               <feGaussianBlur stdDeviation="30" result="blur" />
               <feComponentTransfer in="blur" result="glow">
                 <feFuncA type="linear" slope="2.5" />
@@ -97,7 +97,7 @@ export function KineticSpark({
               </feMerge>
             </filter>
 
-            <filter id="whiteNeonGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <filter id="whiteNeonGlow" x="-50%" y="-50%" width="200%" height="200%" colorInterpolationFilters="sRGB">
               <feGaussianBlur stdDeviation="8" result="blur" />
               <feMerge>
                 <feMergeNode in="blur" />
@@ -105,12 +105,49 @@ export function KineticSpark({
               </feMerge>
             </filter>
             
-            <filter id="goldGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <filter id="goldGlow" x="-50%" y="-50%" width="200%" height="200%" colorInterpolationFilters="sRGB">
               <feGaussianBlur stdDeviation="12" result="blur" />
               <feMerge>
                 <feMergeNode in="blur" />
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
+            </filter>
+
+            {/* Lava Cracks Effect — animated fractal noise creating molten fissure veins */}
+            <filter id="lavaCracks" x="-20%" y="-20%" width="140%" height="140%" colorInterpolationFilters="sRGB">
+              {/* Fractal noise base — creates organic crack-like veins */}
+              <feTurbulence
+                type="fractalNoise"
+                baseFrequency="0.04 0.06"
+                numOctaves="5"
+                seed="8"
+                result="noise"
+              >
+                {/* Animate the seed shift to make cracks pulse and shift */}
+                <animate attributeName="baseFrequency" values="0.04 0.06;0.05 0.07;0.035 0.055;0.04 0.06" dur="4s" repeatCount="indefinite" />
+              </feTurbulence>
+
+              {/* Sharpen the noise into distinct crack lines */}
+              <feComponentTransfer in="noise" result="sharpCracks">
+                <feFuncR type="discrete" tableValues="0 0 0 0.2 0.6 1 1" />
+                <feFuncG type="discrete" tableValues="0 0 0 0.1 0.3 0.5 0.6" />
+                <feFuncB type="discrete" tableValues="0 0 0 0 0 0.1 0.15" />
+                <feFuncA type="linear" slope="1.8" intercept="-0.3" />
+              </feComponentTransfer>
+
+              {/* Add a pulsing glow via blur */}
+              <feGaussianBlur in="sharpCracks" stdDeviation="1.5" result="glowCracks">
+                <animate attributeName="stdDeviation" values="1;2.5;1" dur="2s" repeatCount="indefinite" />
+              </feGaussianBlur>
+
+              {/* Combine: sharp cracks + soft glow aura */}
+              <feMerge result="lavaMerged">
+                <feMergeNode in="glowCracks" />
+                <feMergeNode in="sharpCracks" />
+              </feMerge>
+
+              {/* Composite onto the source text shape only */}
+              <feComposite in="lavaMerged" in2="SourceGraphic" operator="in" />
             </filter>
           </defs>
 
@@ -196,7 +233,7 @@ export function KineticSpark({
             style={{ filter: "blur(6px)", transformOrigin: "center" }}
           />
 
-          {/* MAIN TEXT - SOLID FILL, CONTINUOUS GRADIENT */}
+          {/* MAIN TEXT - BASE (Animated Colors) */}
           <motion.text
             x="50%"
             y="50%"
@@ -219,8 +256,34 @@ export function KineticSpark({
               fill: { delay: delay + 0.6, duration: 3, repeat: Infinity, ease: "linear" },
             }}
             style={{
-              filter: "url(#goldGlow)",
+              filter: "drop-shadow(0 0 20px rgba(255,215,0,0.8)) drop-shadow(0 0 40px rgba(255,77,0,0.6))",
             }}
+          >
+            ALAZ
+          </motion.text>
+
+          {/* MAIN TEXT - LAVA CRACKS OVERLAY */}
+          <motion.text
+            x="50%"
+            y="50%"
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className="text-8xl md:text-[14rem] lg:text-[18rem] font-sans font-black tracking-tighter italic uppercase pointer-events-none"
+            initial={{ scale: 5, opacity: 0, y: -50, letterSpacing: "-0.1em" }}
+            animate={{
+              scale: [5, 0.8, 1.1, 0.95, 1.02, 1],
+              opacity: [0, 0.85, 0.85, 0.85, 0.85, 0.85],
+              y: [-50, 0, 0, 0, 0, 0],
+              letterSpacing: ["-0.1em", "0.02em", "0.02em", "0.02em", "0.02em", "0.02em"],
+            }}
+            transition={{
+              scale: { delay: delay + 0.6, duration: 0.6, ease: "circOut" },
+              opacity: { delay: delay + 0.6, duration: 0.6, ease: "circOut" },
+              y: { delay: delay + 0.6, duration: 0.6, ease: "circOut" },
+              letterSpacing: { delay: delay + 0.6, duration: 0.6, ease: "circOut" },
+            }}
+            fill="#ff4d00"
+            style={{ filter: "url(#lavaCracks)", mixBlendMode: "screen" }}
           >
             ALAZ
           </motion.text>

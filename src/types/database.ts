@@ -1,9 +1,12 @@
+import type { Locale } from "../lib/i18n";
+
 export type RoomStatus =
   | "lobby"
   | "playing"
   | "review"
   | "standings"
   | "countdown"
+  | "gameIntro"
   | "finished"
   | "closed"
   | "intro"
@@ -39,9 +42,10 @@ export interface Room {
   round_end_time?: number;
   game_mode: GameMode;
   used_letters?: string[];
-  locale?: string;
+  locale?: Locale;
   quiz_questions?: QuizQuestion[];
   current_question_index?: number;
+  next_letter?: string;
 }
 
 export interface Player {
@@ -57,6 +61,7 @@ export interface Answer {
   room_id: string;
   player_id: string;
   round_letter: string;
+  round_index?: number;
   data: Record<string, string>;
   created_at?: string;
 }
@@ -180,6 +185,7 @@ export interface Database {
           room_id: string;
           player_id: string;
           round_letter: string;
+          round_index?: number;
           data: Record<string, string>;
           created_at?: string;
         };
@@ -188,6 +194,7 @@ export interface Database {
           room_id?: string;
           player_id?: string;
           round_letter?: string;
+          round_index?: number;
           data?: Record<string, string>;
           created_at?: string;
         };

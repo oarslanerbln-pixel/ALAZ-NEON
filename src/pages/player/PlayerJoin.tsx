@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { useLocale } from "../../hooks/useLocale";
+import { errorMessage } from "../../lib/errors";
+import type { Room } from "../../types/database";
 
 export function PlayerJoin() {
   const navigate = useNavigate();
@@ -50,7 +52,7 @@ export function PlayerJoin() {
       }
       
       const roomDoc = querySnapshot.docs[0];
-      const room = { id: roomDoc.id, ...roomDoc.data() } as any;
+      const room = { id: roomDoc.id, ...roomDoc.data() } as Room;
 
       if (room.status !== "lobby") {
         setErrorMsg(t("join.errorStarted"));
@@ -76,8 +78,8 @@ export function PlayerJoin() {
         localStorage.setItem("cafe_game_playerName", nickname.trim());
         localStorage.setItem("cafe_game_teamName", room.game_mode === "team" ? teamName.trim() : "");
         navigate("/play");
-      } catch (playerError: any) {
-        setErrorMsg(t("join.errorPlayer") + playerError.message);
+      } catch (playerError) {
+        setErrorMsg(t("join.errorPlayer") + errorMessage(playerError));
         setIsLoading(false);
         return;
       }
@@ -89,7 +91,7 @@ export function PlayerJoin() {
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-4 min-h-[100dvh] bg-black relative overflow-hidden font-mono selection:bg-alaz-orange selection:text-black">
+    <div className="flex-1 flex flex-col items-center justify-start pt-8 pb-safe p-4 min-h-[100dvh] bg-black relative overflow-y-auto font-mono selection:bg-alaz-orange selection:text-black">
       {/* CRT Scanline Overlay */}
       <div className="absolute inset-0 pointer-events-none z-50 opacity-[0.03] bg-[linear-gradient(rgba(255,255,255,0)_50%,rgba(0,0,0,1)_50%)] bg-[length:100%_4px]" />
       
@@ -162,6 +164,8 @@ export function PlayerJoin() {
                       type="text"
                       required
                       maxLength={4}
+                      inputMode="text"
+                      autoCapitalize="characters"
                       value={roomCode}
                       onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
                       placeholder="****"
@@ -184,6 +188,7 @@ export function PlayerJoin() {
                     type="text"
                     required
                     autoFocus={!!urlCode}
+                    autoCapitalize="characters"
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
                     placeholder={t("join.nicknamePlaceholderShort")}

@@ -25,10 +25,13 @@ export function HoldButton({
   const startHold = () => {
     if (disabled) return;
     setIsHolding(true);
-    startTimeRef.current = performance.now();
+    // Başlangıç zamanını performance.now() ile değil, requestAnimationFrame'in
+    // verdiği timestamp ile alıyoruz — render saflığı kuralını ihlal etmiyor
+    // ve elapsed hesabı aynı zaman kaynağından geldiği için daha tutarlı.
+    startTimeRef.current = 0;
 
     const animate = (time: number) => {
-      if (!startTimeRef.current) return;
+      if (startTimeRef.current === 0) startTimeRef.current = time;
       const elapsed = time - startTimeRef.current;
       const currentProgress = Math.min((elapsed / holdDuration) * 100, 100);
       setProgress(currentProgress);
@@ -46,6 +49,7 @@ export function HoldButton({
   const resetHold = () => {
     setIsHolding(false);
     setProgress(0);
+    startTimeRef.current = 0;
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }

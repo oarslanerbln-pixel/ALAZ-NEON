@@ -541,3 +541,35 @@
   font-family: "Inter", system-ui, sans-serif;
 }
 
+/* ── Safe Area Utilities (iPhone notch / home bar) ──────────────────────── */
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom);
+}
+
+/* Bottom nav/toolbar floating above home bar */
+.bottom-safe {
+  bottom: env(safe-area-inset-bottom);
+}
+
+/* ── Minimum touch target (44px WCAG / Apple HIG) ───────────────────────── */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Keyboard-aware scroll padding ──────────────────────────────────────── */
+.scroll-pb-keyboard {
+  scroll-padding-bottom: 320px; /* approximate keyboard height */
+}
+

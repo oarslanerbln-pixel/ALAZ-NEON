@@ -14,21 +14,16 @@ interface PlayerQuizControllerProps {
 export function PlayerQuizController({ room, player }: PlayerQuizControllerProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
-  const [gameState, setGameState] = useState(room.status);
+  const [prevQuestionIndex, setPrevQuestionIndex] = useState(room.current_question_index);
 
-  // Sync game state
-  useEffect(() => {
-    if (room.status !== gameState) {
-      // Reset selections on new question
-      if (room.status === "question_intro" || room.status === "question_active") {
-        if (gameState !== "question_active" && gameState !== "question_intro") {
-          setSelectedOption(null);
-          setHasSubmitted(false);
-        }
-      }
-      setGameState(room.status);
-    }
-  }, [room.status, gameState]);
+  // Reset selections when question index changes
+  if (room.current_question_index !== prevQuestionIndex) {
+    setPrevQuestionIndex(room.current_question_index);
+    setSelectedOption(null);
+    setHasSubmitted(false);
+  }
+
+  const gameState = room.status;
 
   // Check if player already submitted for this question
   useEffect(() => {
@@ -52,12 +47,6 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
     checkSubmission();
   }, [room.status, room.id, player.id, room.current_question_index, hasSubmitted]);
 
-  // Auto-submit on time up
-  useEffect(() => {
-    if (room.status === "question_reveal" && !hasSubmitted && selectedOption) {
-      handleSubmit(selectedOption);
-    }
-  }, [room.status, hasSubmitted, selectedOption]);
 
   const handleSubmit = async (option: string) => {
     if (hasSubmitted) return;
@@ -122,6 +111,23 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
                   Lütfen ana ekrana bakarak oyunun başlamasını bekleyin.
                 </p>
               </div>
+            </motion.div>
+          )}
+
+          {gameState === "quiz_intro" && (
+            <motion.div
+              key="quiz_intro"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-center"
+            >
+              <h2 className="text-3xl font-black text-white uppercase tracking-widest mb-4 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">
+                OYUN BAŞLIYOR
+              </h2>
+              <p className="text-blue-400 font-bold">
+                Lütfen ana ekrana bakın...
+              </p>
             </motion.div>
           )}
 

@@ -26,6 +26,20 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  build: {
+    // Satıcı kütüphanelerini ayır: uygulama kodu değişince
+    // tarayıcı react/firebase/motion chunk'larını yeniden indirmez.
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          "vendor-firebase": ["firebase/app", "firebase/firestore"],
+          "vendor-motion": ["framer-motion"],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 600,
+  },
   test: {
     globals: true,
     environment: 'jsdom',

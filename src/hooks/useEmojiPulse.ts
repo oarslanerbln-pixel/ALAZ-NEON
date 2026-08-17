@@ -6,10 +6,15 @@ export function useEmojiPulse(
   roomId: string | null,
   onReaction?: (emoji: string) => void,
 ) {
-  const lastProcessedTime = useRef<number>(Date.now());
+  // Render sırasında Date.now() çağırmak saf değil (aynı render iki kez
+  // çalışırsa farklı sonuç verir). Başlangıç zamanı abonelik kurulurken atanıyor.
+  const lastProcessedTime = useRef<number>(0);
 
   useEffect(() => {
     if (!roomId) return;
+
+    // Odaya girmeden önce gönderilmiş eski reaksiyonlar tekrar oynatılmasın
+    lastProcessedTime.current = Date.now();
 
     const docRef = doc(db, "rooms", roomId, "transient", "emojiPulse");
 

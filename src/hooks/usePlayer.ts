@@ -5,13 +5,19 @@ import type { Player } from "../types/database";
 
 export function usePlayer(playerId: string | null) {
   const [player, setPlayer] = useState<Player | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(playerId));
+  const [trackedPlayerId, setTrackedPlayerId] = useState(playerId);
+
+  // playerId değişince state'i RENDER sırasında sıfırla; effect içinde
+  // setState yapmak zincirleme render'a yol açıyordu.
+  if (playerId !== trackedPlayerId) {
+    setTrackedPlayerId(playerId);
+    setPlayer(null);
+    setLoading(Boolean(playerId));
+  }
 
   useEffect(() => {
-    if (!playerId) {
-      setLoading(false);
-      return;
-    }
+    if (!playerId) return;
 
     const docRef = doc(db, "players", playerId);
     

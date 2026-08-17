@@ -8,28 +8,66 @@ export function useHostRoom(roomId: string | null) {
   const [room, setRoom] = useState<Room | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [submittedPlayerIds, setSubmittedPlayerIds] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(roomId));
+  const [notFound, setNotFound] = useState(!roomId);
+  const [error, setError] = useState<Error | null>(null);
+  const [trackedRoomId, setTrackedRoomId] = useState(roomId);
+
+  // roomId değişince state'i RENDER sırasında sıfırla — React'in
+  // "prop değişince state'i ayarla" deseni. Effect içinde setState
+  // yapmak fazladan bir render turu doğuruyordu.
+  if (roomId !== trackedRoomId) {
+    setTrackedRoomId(roomId);
+    setRoom(null);
+    setPlayers([]);
+    setSubmittedPlayerIds([]);
+    setError(null);
+    setLoading(Boolean(roomId));
+    setNotFound(!roomId);
+  }
 
   useEffect(() => {
     if (!roomId) return;
 
     // 1. Room Subscription
-    const roomUnsub = onSnapshot(doc(db, "rooms", roomId), (docSnap) => {
-      if (docSnap.exists()) {
-        setRoom({ id: docSnap.id, ...docSnap.data() } as Room);
+    const roomUnsub = onSnapshot(
+      doc(db, "rooms", roomId),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          setRoom({ id: docSnap.id, ...docSnap.data() } as Room);
+          setNotFound(false);
+        } else {
+          // Oda silinmiş ya da hiç yok — sessizce null'da kalma, bildir
+          console.error("[useHostRoom] Oda bulunamadı:", roomId);
+          setRoom(null);
+          setNotFound(true);
+        }
+        setLoading(false);
+      },
+      (err) => {
+        // Firestore kural reddi / offline / kota — eskiden sessizce yutuluyordu
+        console.error("[useHostRoom] Oda dinlenemedi:", err);
+        setError(err);
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    );
 
     // 2. Player Subscription
     const qPlayers = query(collection(db, "players"), where("room_id", "==", roomId));
-    const playersUnsub = onSnapshot(qPlayers, (snapshot) => {
-      const pList: Player[] = [];
-      snapshot.forEach(d => {
-        pList.push({ id: d.id, ...d.data() } as Player);
-      });
-      setPlayers(pList);
-    });
+    const playersUnsub = onSnapshot(
+      qPlayers,
+      (snapshot) => {
+        const pList: Player[] = [];
+        snapshot.forEach(d => {
+          pList.push({ id: d.id, ...d.data() } as Player);
+        });
+        setPlayers(pList);
+      },
+      (err) => {
+        console.error("[useHostRoom] Oyuncular dinlenemedi:", err);
+        setError(err);
+      }
+    );
 
     // 3. Answer Tracking Subscription
     const qAnswers = query(collection(db, "answers"), where("room_id", "==", roomId));
@@ -53,6 +91,9 @@ export function useHostRoom(roomId: string | null) {
           ]);
         }
       });
+    }, (err) => {
+      console.error("[useHostRoom] Cevaplar dinlenemedi:", err);
+      setError(err);
     });
 
     return () => {
@@ -80,11 +121,22 @@ export function useHostRoom(roomId: string | null) {
     
     // Optimistic UI Update
     setRoom((prev) => (prev ? { ...prev, status, ...extra } : prev));
-    await updateDoc(doc(db, "rooms", roomId), { status, ...extra });
+    // Yazma hatası çağıranı patlatmasın: eskiden reject olunca
+    // startGame/handleSpinnerComplete yarıda kalıp oyun donuyordu.
+    try {
+      await updateDoc(doc(db, "rooms", roomId), { status, ...extra });
+    } catch (err) {
+      console.error("[useHostRoom] Oda güncellenemedi:", status, err);
+      setError(err as Error);
+    }
   };
 
   const updatePlayerScore = async (playerId: string, totalScore: number) => {
-    await updateDoc(doc(db, "players", playerId), { total_score: totalScore });
+    try {
+      await updateDoc(doc(db, "players", playerId), { total_score: totalScore });
+    } catch (err) {
+      console.error("[useHostRoom] Skor güncellenemedi:", playerId, err);
+    }
   };
 
   return {
@@ -92,6 +144,8 @@ export function useHostRoom(roomId: string | null) {
     players,
     submittedPlayerIds,
     loading,
+    notFound,
+    error,
     updateRoomStatus,
     updatePlayerScore,
     setSubmittedPlayerIds,
