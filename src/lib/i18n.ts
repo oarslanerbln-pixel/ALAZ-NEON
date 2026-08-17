@@ -153,6 +153,7 @@ const translations = {
     de: "Keine Kategorien gewählt...",
   },
   "lobby.newCategory": { tr: "Yeni Kategori...", de: "Neue Kategorie..." },
+  "lobby.deleteCategory": { tr: (c: string) => `Kategoriyi sil: ${c}`, de: (c: string) => `Kategorie löschen: ${c}` },
   "lobby.teamReady": { tr: "Takım Kayıtlı", de: "Teams Bereit" },
   "lobby.playerReady": { tr: "Savaşçı Hazır", de: "Krieger Bereit" },
   "lobby.startGame": { tr: "OYUNU BAŞLAT →", de: "SPIEL STARTEN →" },

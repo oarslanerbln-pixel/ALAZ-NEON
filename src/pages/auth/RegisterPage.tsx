@@ -48,10 +48,11 @@ export function RegisterPage() {
 
         <form onSubmit={handleRegister} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">
+            <label htmlFor="nickname" className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">
               NICKNAME
             </label>
             <input
+              id="nickname"
               type="text"
               required
               value={nickname}
@@ -62,10 +63,11 @@ export function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">
+            <label htmlFor="email" className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">
               {t("auth.email")}
             </label>
             <input
+              id="email"
               type="email"
               required
               value={email}
@@ -76,10 +78,11 @@ export function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">
+            <label htmlFor="password" className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">
               {t("auth.password")}
             </label>
             <input
+              id="password"
               type="password"
               required
               value={password}
