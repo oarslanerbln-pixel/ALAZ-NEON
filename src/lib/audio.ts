@@ -2,6 +2,11 @@ export class SoundManager {
   private static instance: SoundManager;
   private sounds: Map<string, HTMLAudioElement> = new Map();
   private isMuted: boolean = false;
+  /** Yüklenemeyen dosyalar (404/403/desteklenmeyen) — bir daha denenmez, synth'e düşülür */
+  private missing: Set<string> = new Set();
+  /** Dosya yerine synth pad çalınan müzik yolu */
+  private padFor: string | null = null;
+  private pad: { ctx: AudioContext; stop: () => void } | null = null;
 
   private constructor() {
     if (typeof window !== "undefined") {
@@ -22,6 +27,11 @@ export class SoundManager {
   private getSound(path: string): HTMLAudioElement {
     if (!this.sounds.has(path)) {
       const audio = new Audio(path);
+      // Dosya hiç yüklenemezse işaretle: bir sonraki çalma synth'e düşer
+      audio.addEventListener("error", () => {
+        console.warn("[audio] Kaynak yüklenemedi:", path);
+        this.missing.add(path);
+      });
       this.sounds.set(path, audio);
     }
     return this.sounds.get(path)!;
@@ -40,10 +50,28 @@ export class SoundManager {
       return;
     }
 
+    // Dosya daha önce yüklenemediyse doğrudan synth karşılığını çal
+    if (this.missing.has(path)) {
+      const fb = SYNTH_FALLBACK[path];
+      if (fb) this.playSynthSFX(fb, volume);
+      return;
+    }
+
     const sound = this.getSound(path);
     sound.volume = volume;
     sound.currentTime = 0;
-    sound.play().catch((e) => console.warn("Audio play failed:", e));
+    sound.play().catch((e: DOMException) => {
+      if (e?.name === "NotSupportedError" || e?.name === "NotFoundError") {
+        // Dosya yok / bozuk → kalıcı olarak synth'e geç
+        console.warn("[audio] Dosya yüklenemedi, synth'e düşülüyor:", path);
+        this.missing.add(path);
+        const fb = SYNTH_FALLBACK[path];
+        if (fb) this.playSynthSFX(fb, volume);
+      } else {
+        // NotAllowedError = tarayıcı autoplay politikası, dosya sorunu değil
+        console.warn("Audio play failed:", path, e?.name);
+      }
+    });
   }
 
   /**
@@ -159,6 +187,79 @@ export class SoundManager {
           setTimeout(() => ctx.close(), 2500);
           break;
         }
+        case "synth:boom": {
+          // Sinematik patlama: alçalan sinüs + gürültü kuyruğu
+          const osc = ctx.createOscillator();
+          const g = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(180, now);
+          osc.frequency.exponentialRampToValueAtTime(28, now + 1.2);
+          g.gain.setValueAtTime(0.6, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+          osc.connect(g);
+          g.connect(master);
+          osc.start(now);
+          osc.stop(now + 1.7);
+
+          const buf = ctx.createBuffer(1, ctx.sampleRate * 1.2, ctx.sampleRate);
+          const d = buf.getChannelData(0);
+          for (let i = 0; i < d.length; i++) {
+            d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+          }
+          const noise = ctx.createBufferSource();
+          noise.buffer = buf;
+          const nf = ctx.createBiquadFilter();
+          nf.type = "lowpass";
+          nf.frequency.setValueAtTime(1800, now);
+          nf.frequency.exponentialRampToValueAtTime(160, now + 1.2);
+          const ng = ctx.createGain();
+          ng.gain.setValueAtTime(0.35, now);
+          ng.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+          noise.connect(nf);
+          nf.connect(ng);
+          ng.connect(master);
+          noise.start(now);
+          noise.stop(now + 1.3);
+          setTimeout(() => ctx.close(), 2000);
+          break;
+        }
+        case "synth:glitch": {
+          // Dijital bozulma: kare dalga sıçramaları + kısa gürültü patlamaları
+          for (let i = 0; i < 7; i++) {
+            const t = now + i * 0.055;
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.type = "square";
+            osc.frequency.setValueAtTime(180 + Math.random() * 2600, t);
+            g.gain.setValueAtTime(0, t);
+            g.gain.linearRampToValueAtTime(0.18, t + 0.005);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.045);
+            osc.connect(g);
+            g.connect(master);
+            osc.start(t);
+            osc.stop(t + 0.05);
+          }
+          const buf = ctx.createBuffer(1, ctx.sampleRate * 0.4, ctx.sampleRate);
+          const d = buf.getChannelData(0);
+          for (let i = 0; i < d.length; i++) {
+            d[i] = Math.random() > 0.75 ? Math.random() * 2 - 1 : 0;
+          }
+          const noise = ctx.createBufferSource();
+          noise.buffer = buf;
+          const nf = ctx.createBiquadFilter();
+          nf.type = "highpass";
+          nf.frequency.value = 1400;
+          const ng = ctx.createGain();
+          ng.gain.setValueAtTime(0.22, now);
+          ng.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+          noise.connect(nf);
+          nf.connect(ng);
+          ng.connect(master);
+          noise.start(now);
+          noise.stop(now + 0.4);
+          setTimeout(() => ctx.close(), 700);
+          break;
+        }
         default:
           ctx.close();
       }
@@ -173,13 +274,94 @@ export class SoundManager {
   public playMusic(path: string, volume: number = 0.3) {
     if (this.isMuted) return;
 
+    // Dosya yoksa sürekli çalan synth pad'e düş
+    if (this.missing.has(path)) {
+      this.startPad(path, volume);
+      return;
+    }
+
     const music = this.getSound(path);
     music.volume = volume;
     music.loop = true;
-    music.play().catch((e) => console.warn("Music play failed:", e));
+    music.play().catch((e: DOMException) => {
+      if (e?.name === "NotSupportedError" || e?.name === "NotFoundError") {
+        console.warn("[audio] Müzik dosyası yüklenemedi, pad'e düşülüyor:", path);
+        this.missing.add(path);
+        this.startPad(path, volume);
+      } else {
+        console.warn("Music play failed:", path, e?.name);
+      }
+    });
+  }
+
+  /** Dosya bulunamadığında çalan, sürekli döngüdeki ambiyans pad'i */
+  private startPad(path: string, volume: number) {
+    if (this.pad && this.padFor === path) return; // zaten çalıyor
+    this.stopPad();
+    if (typeof window === "undefined") return;
+    try {
+      const AudioCtx =
+        window.AudioContext ||
+        (window as Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      const ctx = new AudioCtx();
+      const master = ctx.createGain();
+      master.gain.value = volume * 0.25;
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.value = 900;
+      filter.connect(master);
+      master.connect(ctx.destination);
+
+      // Hafif detune'lu üçlü akor + yavaş LFO = lounge ambiyans
+      const oscs = [110, 164.81, 220].map((f, i) => {
+        const o = ctx.createOscillator();
+        o.type = i === 2 ? "triangle" : "sawtooth";
+        o.frequency.value = f;
+        o.detune.value = (i - 1) * 6;
+        const g = ctx.createGain();
+        g.gain.value = 0.12;
+        o.connect(g);
+        g.connect(filter);
+        o.start();
+        return o;
+      });
+
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      lfo.frequency.value = 0.08;
+      lfoGain.gain.value = 300;
+      lfo.connect(lfoGain);
+      lfoGain.connect(filter.frequency);
+      lfo.start();
+
+      this.pad = {
+        ctx,
+        stop: () => {
+          try {
+            oscs.forEach((o) => o.stop());
+            lfo.stop();
+            ctx.close();
+          } catch {
+            /* zaten kapalı */
+          }
+        },
+      };
+      this.padFor = path;
+    } catch (e) {
+      console.warn("[audio] Pad başlatılamadı:", e);
+    }
+  }
+
+  private stopPad() {
+    if (this.pad) {
+      this.pad.stop();
+      this.pad = null;
+      this.padFor = null;
+    }
   }
 
   public stopSound(path: string) {
+    if (this.padFor === path) this.stopPad();
     const sound = this.sounds.get(path);
     if (sound) {
       sound.pause();
@@ -193,6 +375,7 @@ export class SoundManager {
 
     if (this.isMuted) {
       this.sounds.forEach((sound) => sound.pause());
+      this.stopPad();
     }
   }
 
@@ -212,12 +395,23 @@ export class SoundManager {
     this.stopSound(sounds.LOBBY_AMBIENT);
   }
 }
+/**
+ * TÜM sesler artık yerel (public/audio). CDN hotlink'i 403 veriyordu ve
+ * hiçbir ses çalmıyordu. Dosya yoksa aşağıdaki synth karşılığına düşülür,
+ * yani ses sistemi hiçbir koşulda sessiz kalmaz.
+ *
+ * Kendi mp3'ünü eklemek için: dosyayı public/audio/<isim>.mp3 olarak koy —
+ * kod otomatik olarak dosyayı tercih eder, synth yedeği devre dışı kalır.
+ */
 export const sounds = {
-  // Premium Music Tracks (URL-based, longer loops)
-  LOBBY_AMBIENT:
-    "https://cdn.pixabay.com/audio/2022/01/21/audio_31743c58bc.mp3", // Upbeat Pop
-  GAME_PULSE: "https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf7eb.mp3", // Relaxing Lofi Study
-  // Synthesized SFX (no external URL needed — immune to 403 errors)
+  // Müzik (yerel dosya, döngü)
+  LOBBY_AMBIENT: "/audio/lobby-ambient.mp3",
+  GAME_PULSE: "/audio/game-pulse.mp3",
+  // Uzun/atmosferik efektler (yerel dosya)
+  SIREN: "/audio/siren.mp3",
+  CINEMATIC_BOOM: "/audio/cinematic-boom.mp3",
+  CYBER_GLITCH: "/audio/cyber-glitch.mp3",
+  // Kısa SFX — zaten kod içinde üretiliyor, dosya gerekmiyor
   START_JAZZ: "synth:burn",
   SUCCESS: "synth:success",
   FAILURE: "synth:failure",
@@ -225,7 +419,13 @@ export const sounds = {
   VOTE_TICK: "synth:click",
   BURN: "synth:burn",
   START: "synth:burn",
-  SIREN: "https://cdn.pixabay.com/audio/2021/08/09/audio_d0d4baecfc.mp3",
-  CINEMATIC_BOOM: "https://cdn.pixabay.com/audio/2022/03/15/audio_7cf6be6126.mp3",
-  CYBER_GLITCH: "https://cdn.pixabay.com/audio/2022/11/20/audio_b723528859.mp3",
+};
+
+/** Dosya yüklenemezse devreye giren synth karşılıkları */
+const SYNTH_FALLBACK: Record<string, string> = {
+  [sounds.LOBBY_AMBIENT]: "synth:pad",
+  [sounds.GAME_PULSE]: "synth:pad",
+  [sounds.SIREN]: "synth:siren",
+  [sounds.CINEMATIC_BOOM]: "synth:boom",
+  [sounds.CYBER_GLITCH]: "synth:glitch",
 };
