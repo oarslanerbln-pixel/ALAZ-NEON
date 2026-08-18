@@ -1,5 +1,6 @@
-import Anthropic from '@anthropic-ai/sdk';
+import AnthropicModule from '@anthropic-ai/sdk';
 
+const Anthropic = (AnthropicModule as any).default || AnthropicModule;
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // Haiku 4.5: short input/output, high volume, cost-sensitive plain-language
@@ -35,7 +36,7 @@ export async function summarizeReport(originalText: string): Promise<string> {
     messages: [{ role: 'user', content: originalText }],
   });
 
-  const textBlock = message.content.find((block) => block.type === 'text');
+  const textBlock = message.content.find((block: any) => block.type === 'text');
   if (!textBlock || textBlock.type !== 'text') {
     throw new Error('Beklenmeyen yanıt formatı: metin bloğu bulunamadı.');
   }
