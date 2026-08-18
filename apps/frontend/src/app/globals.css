@@ -1,6 +1,45 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-space-grotesk);
   --font-mono: var(--font-geist-mono);
+
+  --animate-glow-pulse: glow-pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  
+  @keyframes glow-pulse {
+    0%, 100% {
+      opacity: 1;
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.4), inset 0 0 10px rgba(59, 130, 246, 0.2);
+    }
+    50% {
+      opacity: .9;
+      box-shadow: 0 0 35px rgba(59, 130, 246, 0.8), inset 0 0 20px rgba(59, 130, 246, 0.4);
+    }
+  }
+
+  --animate-glow-pulse-green: glow-pulse-green 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  
+  @keyframes glow-pulse-green {
+    0%, 100% {
+      opacity: 1;
+      box-shadow: 0 0 15px rgba(22, 163, 74, 0.4), inset 0 0 10px rgba(22, 163, 74, 0.2);
+    }
+    50% {
+      opacity: .9;
+      box-shadow: 0 0 35px rgba(22, 163, 74, 0.8), inset 0 0 20px rgba(22, 163, 74, 0.4);
+    }
+  }
+
+  --animate-glow-pulse-dark: glow-pulse-dark 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  
+  @keyframes glow-pulse-dark {
+    0%, 100% {
+      opacity: 1;
+      box-shadow: 0 0 10px rgba(75, 85, 99, 0.3);
+    }
+    50% {
+      opacity: .95;
+      box-shadow: 0 0 20px rgba(107, 114, 128, 0.6);
+    }
+  }
 }

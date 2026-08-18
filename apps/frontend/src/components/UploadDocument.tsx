@@ -147,21 +147,21 @@ export default function UploadDocument() {
           type="button"
           onClick={() => cameraInputRef.current?.click()}
           disabled={isScanning}
-          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 disabled:opacity-50 transition-colors"
+          className="flex flex-col items-center justify-center p-6 bg-[#0a0a0a] rounded-none border-2 border-dashed border-blue-500/50 hover:bg-[#111] hover:border-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 disabled:opacity-50 transition-all animate-glow-pulse-dark"
           aria-label="Kamera ile çek"
         >
-          <Camera size={32} className="mb-2" />
-          <span className="font-bold">Fotoğraf Çek</span>
+          <Camera size={32} className="mb-2 text-blue-400" />
+          <span className="font-bold text-gray-200">Fotoğraf Çek</span>
         </button>
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isScanning}
-          className="flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl border-2 border-dashed border-gray-600 hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 disabled:opacity-50 transition-colors"
+          className="flex flex-col items-center justify-center p-6 bg-[#0a0a0a] rounded-none border-2 border-dashed border-green-500/50 hover:bg-[#111] hover:border-green-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 disabled:opacity-50 transition-all animate-glow-pulse-dark"
           aria-label="Dosya yükle"
         >
-          <Upload size={32} className="mb-2" />
-          <span className="font-bold">Dosya Seç</span>
+          <Upload size={32} className="mb-2 text-green-400" />
+          <span className="font-bold text-gray-200">Dosya Seç</span>
         </button>
       </div>
 
@@ -173,18 +173,17 @@ export default function UploadDocument() {
 
       {previewUrl && (
         <div className="relative w-full">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={previewUrl}
             alt="Seçilen rapor önizlemesi"
-            className="w-full max-h-80 object-contain rounded-xl bg-gray-800"
+            className="w-full max-h-80 object-contain rounded-none bg-[#0a0a0a] border border-gray-800"
           />
           <button
             type="button"
             onClick={handleReset}
             disabled={isScanning}
             aria-label="Görseli kaldır"
-            className="absolute top-2 right-2 p-2 bg-gray-900/80 rounded-full hover:bg-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 disabled:opacity-50"
+            className="absolute top-2 right-2 p-2 bg-[#0a0a0a]/80 rounded-none border border-red-500/50 hover:bg-[#111] hover:border-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-50 text-red-400 transition-colors"
           >
             <X size={20} />
           </button>
@@ -197,12 +196,12 @@ export default function UploadDocument() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="flex flex-col items-center gap-4 p-8 bg-blue-900 rounded-xl w-full"
+            className="flex flex-col items-center gap-4 p-8 bg-[#0a0a0a] border border-blue-500/30 rounded-none w-full animate-glow-pulse-dark"
             role="status"
             aria-live="polite"
           >
-            <Loader2 size={48} className="animate-spin text-blue-300" />
-            <p className="text-xl font-bold text-center">Görsel taranıyor... %{progress}</p>
+            <Loader2 size={48} className="animate-spin text-blue-400" />
+            <p className="text-xl font-bold text-center text-blue-100">Görsel taranıyor... %{progress}</p>
           </motion.div>
         )}
         {isSummarizing && (
@@ -210,12 +209,12 @@ export default function UploadDocument() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="flex flex-col items-center gap-4 p-8 bg-blue-900 rounded-xl w-full"
+            className="flex flex-col items-center gap-4 p-8 bg-[#0a0a0a] border border-blue-500/30 rounded-none w-full animate-glow-pulse-dark"
             role="status"
             aria-live="polite"
           >
-            <Loader2 size={48} className="animate-spin text-blue-300" />
-            <p className="text-xl font-bold text-center">Rapor sadeleştiriliyor...</p>
+            <Loader2 size={48} className="animate-spin text-blue-400" />
+            <p className="text-xl font-bold text-center text-blue-100">Rapor sadeleştiriliyor...</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -228,8 +227,8 @@ export default function UploadDocument() {
       )}
 
       {summary && (
-        <div className="w-full bg-gray-800 p-6 rounded-xl mt-4">
-          <h2 className="text-2xl font-bold mb-2 text-yellow-400">Sadeleştirilmiş Özet</h2>
+        <div className="w-full bg-[#0a0a0a] border border-gray-800 p-6 rounded-none mt-4">
+          <h2 className="text-2xl font-bold mb-2 text-blue-400">Sadeleştirilmiş Özet</h2>
           <p className="whitespace-pre-line">{summary}</p>
           {rawText && (
             <details className="mt-4">
@@ -243,7 +242,7 @@ export default function UploadDocument() {
       )}
 
       {!summary && rawText && (
-        <div className="w-full bg-gray-800 p-6 rounded-xl mt-4">
+        <div className="w-full bg-[#0a0a0a] border border-gray-800 p-6 rounded-none mt-4">
           <h2 className="text-2xl font-bold mb-2 text-yellow-400">Okunan Metin</h2>
           {summarizeError ? (
             <p role="alert" aria-live="assertive" className="text-sm text-red-400 mb-4">

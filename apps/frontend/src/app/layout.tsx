@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Space_Grotesk, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
   subsets: ["latin"],
 });
 
@@ -35,7 +35,7 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-white text-lg`}
+        className={`${spaceGrotesk.variable} ${geistMono.variable} font-sans antialiased bg-[#050505] text-gray-100 text-lg selection:bg-blue-600/30`}
       >
         <ServiceWorkerRegister />
         <AuthProvider>

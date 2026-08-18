@@ -93,42 +93,42 @@ export default function MedicationsPage() {
         <h1 className="text-2xl font-bold">İlaçlarım</h1>
       </div>
 
-      <form onSubmit={handleAdd} className="flex flex-col gap-3 bg-gray-900 p-4 rounded-xl border-2 border-gray-700">
-        <h2 className="font-bold text-lg">Yeni İlaç Ekle</h2>
+      <form onSubmit={handleAdd} className="flex flex-col gap-3 bg-[#0a0a0a] p-4 rounded-none border border-gray-800">
+        <h2 className="font-bold text-lg text-blue-400">Yeni İlaç Ekle</h2>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="İlaç adı (örn: Parol 500mg)"
           aria-label="İlaç adı"
-          className="p-3 rounded-lg bg-gray-800 border-2 border-gray-600 focus-visible:outline-none focus-visible:border-blue-500"
+          className="p-3 rounded-none bg-[#111] border-2 border-gray-800 focus-visible:outline-none focus-visible:border-blue-500 transition-colors"
         />
         <input
           value={dosage}
           onChange={(e) => setDosage(e.target.value)}
           placeholder="Doz (örn: 1 tablet)"
           aria-label="Doz"
-          className="p-3 rounded-lg bg-gray-800 border-2 border-gray-600 focus-visible:outline-none focus-visible:border-blue-500"
+          className="p-3 rounded-none bg-[#111] border-2 border-gray-800 focus-visible:outline-none focus-visible:border-blue-500 transition-colors"
         />
         <input
           value={timeOfDay}
           onChange={(e) => setTimeOfDay(e.target.value)}
           placeholder="Zaman (örn: Sabah)"
           aria-label="Zaman"
-          className="p-3 rounded-lg bg-gray-800 border-2 border-gray-600 focus-visible:outline-none focus-visible:border-blue-500"
+          className="p-3 rounded-none bg-[#111] border-2 border-gray-800 focus-visible:outline-none focus-visible:border-blue-500 transition-colors"
         />
         <button
           type="submit"
           disabled={isAdding}
-          className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white p-3 rounded-lg font-bold transition-colors"
+          className="bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white p-3 rounded-none font-bold transition-all animate-glow-pulse-green border border-green-400/20"
         >
           {isAdding ? 'Ekleniyor...' : 'Ekle'}
         </button>
       </form>
 
       {error && (
-        <p role="alert" aria-live="assertive" className="text-red-400 font-bold">
+        <div className="bg-red-900/50 border border-red-500 text-red-200 p-4 rounded-none">
           {error}
-        </p>
+        </div>
       )}
 
       <div className="flex flex-col gap-4">
@@ -138,13 +138,13 @@ export default function MedicationsPage() {
         {meds.map((med) => (
           <div
             key={med.id}
-            className={`flex items-center justify-between p-6 rounded-xl border-2 ${
-              med.taken ? 'bg-green-900 border-green-600' : 'bg-gray-800 border-gray-600'
-            }`}
+            className={`flex items-center justify-between p-6 rounded-none border ${
+              med.taken ? 'bg-[#051105] border-green-500/50' : 'bg-[#0a0a0a] border-gray-800'
+            } transition-colors`}
           >
             <button
               onClick={() => handleToggle(med)}
-              className="flex items-center gap-4 text-left flex-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-lg"
+              className="flex items-center gap-4 text-left flex-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-none"
               aria-pressed={med.taken}
               aria-label={`${med.name}, ${med.taken ? 'alındı, değiştirmek için dokun' : 'alınmadı, işaretlemek için dokun'}`}
             >

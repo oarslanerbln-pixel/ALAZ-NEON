@@ -38,7 +38,7 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <label htmlFor="email" className="font-bold">E-posta</label>
+          <label htmlFor="email" className="font-bold text-gray-300">E-posta</label>
           <input
             id="email"
             type="email"
@@ -46,12 +46,12 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
-            className="p-4 rounded-xl bg-gray-800 border-2 border-gray-600 focus-visible:outline-none focus-visible:border-blue-500"
+            className="p-4 rounded-none bg-[#0a0a0a] border-2 border-gray-800 focus-visible:outline-none focus-visible:border-blue-500 transition-colors"
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="password" className="font-bold">Şifre</label>
+          <label htmlFor="password" className="font-bold text-gray-300">Şifre</label>
           <input
             id="password"
             type="password"
@@ -59,20 +59,20 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
-            className="p-4 rounded-xl bg-gray-800 border-2 border-gray-600 focus-visible:outline-none focus-visible:border-blue-500"
+            className="p-4 rounded-none bg-[#0a0a0a] border-2 border-gray-800 focus-visible:outline-none focus-visible:border-blue-500 transition-colors"
           />
         </div>
 
         {error && (
-          <p role="alert" aria-live="assertive" className="text-red-400 font-bold">
+          <div className="bg-red-900/50 border border-red-500 text-red-200 p-4 rounded-none">
             {error}
-          </p>
+          </div>
         )}
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white p-4 rounded-xl text-xl font-bold transition-colors"
+          className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white p-4 rounded-none text-xl font-bold transition-all animate-glow-pulse border border-blue-400/20"
         >
           {isSubmitting ? 'Giriş yapılıyor...' : 'Giriş Yap'}
         </button>
