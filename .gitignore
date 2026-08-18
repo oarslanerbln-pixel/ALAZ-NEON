@@ -13,3 +13,5 @@ apps/frontend/public/tesseract/
 apps/frontend/public/tesseract-core/
 apps/frontend/public/tesseract-lang/
 
+.vercel
+.env*

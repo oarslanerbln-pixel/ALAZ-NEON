@@ -1,8 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
+import helmetModule from 'helmet';
+import { rateLimit } from 'express-rate-limit';
 import dotenv from 'dotenv';
 import authRouter from './routes/auth.js';
 import medicationsRouter from './routes/medications.js';
@@ -20,6 +20,7 @@ const allowedOrigins = (process.env.FRONTEND_URL ?? 'http://localhost:3000')
   .split(',')
   .map((origin) => origin.trim());
 
+const helmet = (helmetModule as any).default || helmetModule;
 app.use(helmet());
 // credentials: true is required so the browser sends/accepts the httpOnly auth
 // cookie cross-origin (frontend and backend run on different ports/origins in
