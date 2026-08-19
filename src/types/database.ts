@@ -106,6 +106,13 @@ export interface AnswerBreakdown {
   points: number;
   isValid: boolean;
   isJoker?: boolean;
+  /**
+   * Otomatik moderasyon/doğrulama işaretleri. Bunlar cevabı geçersiz sayar ama
+   * SON SÖZ HOST'TA: inceleme ekranından tek tıkla geri onaylanabilir.
+   */
+  isProfane?: boolean;
+  isGibberish?: boolean;
+  gibberishReason?: string;
 }
 
 export interface BusinessReport {

@@ -1,6 +1,8 @@
 import { normalizeTL } from "./stringUtils";
 import { getSimilarity } from "./fuzzyMatch";
 import { toMillis } from "./timestamps";
+import { containsProfanity } from "./profanity";
+import { analyzeGibberish } from "./wordValidation";
 import type {
   Room,
   RoundResultInfo,
@@ -46,8 +48,13 @@ export function calculateRoundScores(
   rawAnswers.forEach((answer) => {
     const ansData = answer.data as Record<string, string>;
     room.categories.forEach((cat) => {
-      const val = normalizeTL(ansData[cat] || "", locale);
-      if (val && val.startsWith(normalizedLetter)) {
+      const valRaw = ansData[cat] || "";
+      const val = normalizeTL(valRaw, locale);
+      // Geçersiz cevaplar sayıma girmemeli: aksi hâlde küfür ya da anlamsız
+      // bir giriş, aynı kategoriye gerçek cevap yazan oyuncunun benzersizlik
+      // bonusunu çalabiliyor.
+      const isRejected = containsProfanity(valRaw) || analyzeGibberish(valRaw).isGibberish;
+      if (val && val.startsWith(normalizedLetter) && !isRejected) {
         // Fuzzy grouping: Check if a similar word already exists in counts
         let foundKey = val;
         for (const existingVal of Object.keys(categoryCounts[cat])) {
@@ -91,7 +98,13 @@ export function calculateRoundScores(
         let pts = 0;
         let isValid = false;
 
-        if (val && val.startsWith(normalizedLetter)) {
+        // Otomatik moderasyon: doğru harfle başlamak tek başına yeterli
+        // değildi, "Kkkk" tam puan alıyordu. Bunlar cevabı geçersiz sayar
+        // ama host inceleme ekranından geri onaylayabilir.
+        const isProfane = containsProfanity(valRaw);
+        const gibberish = analyzeGibberish(valRaw);
+
+        if (val && val.startsWith(normalizedLetter) && !isProfane && !gibberish.isGibberish) {
           isValid = true;
           validCount++;
 
@@ -131,6 +144,9 @@ export function calculateRoundScores(
           points: pts,
           isValid,
           isJoker,
+          isProfane,
+          isGibberish: gibberish.isGibberish,
+          gibberishReason: gibberish.reason,
         };
       });
 

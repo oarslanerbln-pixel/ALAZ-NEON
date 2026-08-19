@@ -5,6 +5,7 @@ import { collection, query, where, getDocs, writeBatch } from "firebase/firestor
 import { db } from "../../../lib/firebase";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { getRandomSensorImage, SENSOR_IMAGES, type SensorImage } from "../../../data/sensorImages";
+import { safeForDisplay } from "../../../lib/profanity";
 
 import { HostHeader } from "../components/HostHeader";
 import { HostLobby } from "../views/HostLobby";
@@ -223,7 +224,7 @@ export function HostSensorDisplay({
                 {room.sensor_player_answer ? (
                    <div className="mb-8">
                      <p className="text-gray-400 text-sm mb-2 uppercase">Cevabı:</p>
-                     <p className="text-4xl font-black text-white">"{room.sensor_player_answer}"</p>
+                     <p className="text-4xl font-black text-white">"{safeForDisplay(room.sensor_player_answer)}"</p>
                    </div>
                 ) : (
                   <div className="mb-8 flex items-center justify-center gap-3 text-alaz-orange">
