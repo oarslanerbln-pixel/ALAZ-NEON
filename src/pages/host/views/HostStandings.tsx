@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { motion, animate, useMotionValue, useTransform } from "framer-motion";
 import { useLocale } from "../../../hooks/useLocale";
+import { upperTL } from "../../../lib/stringUtils";
 import type { Player, RoundResultInfo, Room } from "../../../types/database";
 
 interface HostStandingsProps {
@@ -134,7 +135,7 @@ export function HostStandings({
               {/* Avatar/Badge */}
               <div className="w-20 h-full flex items-center justify-center border-r border-white/10">
                 <div className={`w-10 h-10 flex items-center justify-center font-bold tracking-widest ${badgeBg}`}>
-                  {item.name.substring(0, 3).toUpperCase()}
+                  {upperTL(item.name.substring(0, 3))}
                 </div>
               </div>
 

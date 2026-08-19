@@ -2,11 +2,12 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
 import { useLocale } from "../../hooks/useLocale";
+import { upperTL } from "../../lib/stringUtils";
 import { NeonIcon } from "../../components/NeonIcon";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -153,7 +154,7 @@ export function LoginPage() {
               className="w-full mt-4 py-5 bg-gradient-to-r from-alaz-orange to-[#ff003c] text-white font-black text-xl rounded-2xl shadow-[0_10px_40px_rgba(255,77,0,0.4)] hover:shadow-[0_10px_60px_rgba(255,77,0,0.6)] transition-all disabled:opacity-50 border border-white/20 relative overflow-hidden group/btn"
             >
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300 ease-out" />
-              <span className="relative z-10 tracking-[0.2em]">{loading ? "..." : t("auth.login").toUpperCase()}</span>
+              <span className="relative z-10 tracking-[0.2em]">{loading ? "..." : upperTL(t("auth.login"), locale)}</span>
             </motion.button>
           </div>
         </form>

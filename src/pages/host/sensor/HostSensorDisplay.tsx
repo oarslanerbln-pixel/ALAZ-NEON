@@ -138,23 +138,21 @@ export function HostSensorDisplay({
     return (
       <div className="min-h-screen bg-black text-white overflow-hidden flex flex-col font-mono relative">
         <HostHeader room={room} onEndGameEarly={() => updateRoomStatus("finished")} />
+        {/*
+          Burada ikinci bir "başlat" butonu vardı: HostLobby zaten kendi
+          başlatma butonunu gösteriyor, bu ise onun üzerine sabitlenmiş
+          ikinci bir buton olarak duruyordu. İki farklı buton aynı işi
+          yapınca host hangisinin geçerli olduğunu bilemiyor; üstelik
+          bunun HostLobby'nin "en az bir oyuncu olmalı" koşulu yoktu,
+          yani oyunu boş odada başlatabiliyordu.
+        */}
         <div className="flex-1 relative z-10">
-          <HostLobby 
-            room={room} 
-            players={players} 
-            onStartGame={startGame} 
-            onUpdateCategories={async () => {}} 
+          <HostLobby
+            room={room}
+            players={players}
+            onStartGame={startGame}
+            onUpdateCategories={async () => {}}
           />
-        </div>
-        <div className="absolute bottom-12 left-0 right-0 flex justify-center z-20">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={startGame}
-            className="px-16 py-6 bg-purple-600 text-white text-2xl font-black uppercase tracking-widest shadow-[0_0_40px_rgba(168,85,247,0.6)] rounded-none"
-          >
-            SENSÖRÜ BAŞLAT
-          </motion.button>
         </div>
       </div>
     );

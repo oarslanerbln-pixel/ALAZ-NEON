@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { NeonIcon } from "../../../components/NeonIcon";
 import { useLocale } from "../../../hooks/useLocale";
+import { upperTL } from "../../../lib/stringUtils";
 import type { Player, Room } from "../../../types/database";
 
 const CAFE_IMAGES = [
@@ -404,7 +405,7 @@ export function HostLobby({
               >
                 <div className="w-8 h-8 bg-white flex items-center justify-center shrink-0">
                   <span className="text-xs font-black text-black">
-                    {p.nickname.substring(0, 2).toUpperCase()}
+                    {upperTL(p.nickname.substring(0, 2))}
                   </span>
                 </div>
                 <div className="flex flex-col items-start pr-4">

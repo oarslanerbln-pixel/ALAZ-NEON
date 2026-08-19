@@ -416,6 +416,12 @@ let currentLocale: Locale =
     ? (localStorage.getItem("alaz_neon_locale") as Locale) || "tr"
     : "tr";
 
+// index.html varsayılan olarak lang="tr" ile geliyor; kullanıcı daha önce
+// başka bir dil seçtiyse açılışta onu yansıt (bkz. setLocale'deki not).
+if (typeof window !== "undefined") {
+  document.documentElement.lang = currentLocale;
+}
+
 export function getLocale(): Locale {
   return currentLocale;
 }
@@ -424,6 +430,10 @@ export function setLocale(locale: Locale): void {
   currentLocale = locale;
   if (typeof window !== "undefined") {
     localStorage.setItem("alaz_neon_locale", locale);
+    // <html lang> arayüz için kozmetik değil: CSS `text-transform: uppercase`
+    // dile göre çalışıyor ve arayüz büyük harf ağırlıklı. Yanlış dilde
+    // "Giriş" → "GIRIŞ" (noktasız I) çıkıyor, Türkçede doğrusu "GİRİŞ".
+    document.documentElement.lang = locale;
   }
 }
 
