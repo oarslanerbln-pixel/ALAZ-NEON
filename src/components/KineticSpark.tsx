@@ -11,6 +11,19 @@ interface KineticSparkProps {
   playAudio?: boolean;
 }
 
+/**
+ * Başlık boyutu tek kaynaktan: 3B katmanların hepsi birebir aynı ölçüde
+ * olmak zorunda, iki ayrı yerde tutmak kaymaya davetiye çıkarıyordu.
+ *
+ * Sabit `text-[10rem]` mobilde 160px demekti ve "KAMUS" 375px'lik bir ekranda
+ * 557px yer kaplayıp iki yanından kırpılıyordu. clamp() ile telefondan TV'ye
+ * kadar akışkan ölçekleniyor.
+ */
+const TITLE_FONT_SIZE = "clamp(3.25rem, 17vw, 18rem)";
+
+/** Ekstrüzyon derinliği em cinsinden — böylece yazıyla orantılı kalıyor. */
+const LAYER_DEPTH_EM = 0.025;
+
 export function KineticSpark({
   className = "",
   delay = 0,
@@ -67,9 +80,10 @@ export function KineticSpark({
           {[...Array(8)].map((_, i) => (
             <div
               key={i}
-              className="absolute top-0 left-0 text-[10rem] md:text-[14rem] lg:text-[18rem] font-black uppercase tracking-tighter"
+              className="absolute top-0 left-0 font-black uppercase tracking-tighter"
               style={{
-                transform: `translateZ(-${(i + 1) * 4}px)`,
+                fontSize: TITLE_FONT_SIZE,
+                transform: `translateZ(-${(i + 1) * LAYER_DEPTH_EM}em)`,
                 color: "rgba(0,0,0,0.8)",
                 WebkitTextStroke: "2px rgba(100, 100, 255, 0.2)",
                 opacity: 1 - i * 0.1,
@@ -81,10 +95,11 @@ export function KineticSpark({
 
           {/* Front Face with Color Animation */}
           <motion.div
-            className="relative text-[10rem] md:text-[14rem] lg:text-[18rem] font-black uppercase tracking-tighter bg-clip-text text-transparent"
+            className="relative font-black uppercase tracking-tighter bg-clip-text text-transparent"
             animate={{ backgroundPosition: ["0% center", "-200% center"] }}
             transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
             style={{
+              fontSize: TITLE_FONT_SIZE,
               backgroundImage: "linear-gradient(to right, #FFD700 0%, #FFF8DC 25%, #FFD700 50%, #FFF8DC 75%, #FFD700 100%)",
               backgroundSize: "200% auto",
               textShadow: "0 0 20px rgba(255,215,0,0.5), 0 0 40px rgba(255,215,0,0.3)",
@@ -112,7 +127,9 @@ export function KineticSpark({
             className="h-[2px] w-[200px] bg-gradient-to-r from-transparent via-blue-400 to-transparent shadow-[0_0_10px_rgba(0,229,255,0.8)]"
           />
           <p
-            className="text-xs md:text-sm lg:text-base tracking-[1.5em] md:tracking-[2em] uppercase font-bold text-center pl-[2em] bg-clip-text text-transparent bg-gradient-to-r from-gray-300 via-white to-gray-300 drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]"
+            // Harf aralığı mobilde 1.5em iken "KAMUS ARENA" ekran genişliğini
+            // zorluyordu; küçük ekranda daha dar başlayıp yukarı doğru açılıyor.
+            className="text-[10px] sm:text-xs md:text-sm lg:text-base tracking-[0.5em] sm:tracking-[1em] md:tracking-[2em] uppercase font-bold text-center pl-[0.5em] sm:pl-[1em] md:pl-[2em] bg-clip-text text-transparent bg-gradient-to-r from-gray-300 via-white to-gray-300 drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] max-w-full"
           >
             {tagline}
           </p>

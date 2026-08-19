@@ -56,11 +56,16 @@ export function PlayerProfileCard() {
           style={{ backgroundColor: color }}
         />
 
-        <div className="flex justify-between items-start z-10">
-          <div>
+        {/*
+          `min-w-0` olmadan sol blok içeriğinin altına inemiyor ve uzun takma
+          adlar ("PLAYER_AV3W") lig rozetinin üstüne binip kesiliyordu.
+          Rozet ise `shrink-0` ile tam boyutunu koruyor.
+        */}
+        <div className="flex justify-between items-start gap-3 z-10">
+          <div className="min-w-0 flex-1">
             <p className="text-[10px] text-white/50 tracking-[0.3em] uppercase mb-1">KAMUS ID CARD</p>
-            <h2 
-              className="text-2xl font-bold tracking-widest uppercase drop-shadow-md"
+            <h2
+              className="text-xl sm:text-2xl font-bold tracking-wide uppercase drop-shadow-md truncate"
               style={{ color: "#fff", textShadow: `0 0 10px ${color}` }}
             >
               {profile.nickname}
@@ -71,7 +76,7 @@ export function PlayerProfileCard() {
           </div>
 
           {/* Tier Badge */}
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center shrink-0">
             <div 
               className="w-12 h-12 flex items-center justify-center font-bold text-xl rounded shadow-lg border relative overflow-hidden group"
               style={{ 
@@ -89,8 +94,8 @@ export function PlayerProfileCard() {
               />
               {profile.current_league.charAt(0)}
             </div>
-            <span 
-              className="text-[9px] font-bold tracking-[0.2em] mt-2 text-center"
+            <span
+              className="text-[9px] font-bold tracking-[0.1em] mt-2 text-center whitespace-nowrap"
               style={{ color }}
             >
               {TIER_NAMES[profile.current_league]}

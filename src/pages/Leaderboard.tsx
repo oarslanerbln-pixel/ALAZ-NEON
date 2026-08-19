@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useLocale } from "../hooks/useLocale";
+import { upperTL } from "../lib/stringUtils";
 
 export function Leaderboard() {
   const navigate = useNavigate();
@@ -112,7 +113,7 @@ export function Leaderboard() {
                 </div>
                 <div className="col-span-7 flex items-center gap-5">
                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-black shadow-lg ${avatarBg}`}>
-                    {player.name[0].toUpperCase()}
+                    {upperTL(player.name[0])}
                   </div>
                   <div>
                     <div className="text-2xl font-black text-white tracking-wide group-hover:text-alaz-orange transition-colors">

@@ -118,33 +118,39 @@ export function LandingPage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="fixed top-0 left-0 right-0 z-50 w-full max-w-7xl mx-auto px-6 pt-6 flex justify-between items-center"
+            // Sabit konumlu olduğu için sayfa altından kayarak geçiyor ve
+            // arkasında perde olmayınca içeriğin üstüne binip okunmaz hâle
+            // getiriyordu. Aşağı doğru sönen degrade, butonları içerikten
+            // ayırıyor ve geçişi kasıtlı gösteriyor.
+            className="fixed top-0 left-0 right-0 z-50 w-full px-4 sm:px-6 pt-4 sm:pt-6 pb-8 flex justify-between items-center gap-3 bg-gradient-to-b from-black via-black/70 to-transparent pointer-events-none [&>*]:pointer-events-auto"
           >
-            <div className="flex items-center gap-6">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                onClick={() => navigate("/leaderboard")}
-                className="flex items-center gap-2 px-6 py-3 bg-black/40 border border-white/20 hover:bg-white hover:text-black hover:border-white transition-all group backdrop-blur-md"
-                style={{ clipPath: "polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px)" }}
-              >
-                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white group-hover:text-black transition-colors">
-                  {t("leaderboard.title")}
-                </span>
-              </motion.button>
-            </div>
+            {/*
+              Telefonda bu iki buton yan yana sığmıyordu: 11px yazı + 0.2em harf
+              aralığı + px-6/px-8 dolgu, 375px'lik ekranda satır kırıp taşıyordu.
+              Küçük ekranda ölçüler daralıyor, `whitespace-nowrap` de sözcüklerin
+              alt satıra düşmesini engelliyor.
+            */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              onClick={() => navigate("/leaderboard")}
+              className="flex items-center gap-2 px-3 py-2 sm:px-6 sm:py-3 bg-black/40 border border-white/20 hover:bg-white hover:text-black hover:border-white transition-all group backdrop-blur-md min-w-0"
+              style={{ clipPath: "polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px)" }}
+            >
+              <span className="text-[9px] sm:text-[11px] font-black uppercase tracking-[0.08em] sm:tracking-[0.2em] text-white group-hover:text-black transition-colors whitespace-nowrap truncate">
+                {t("leaderboard.title")}
+              </span>
+            </motion.button>
 
-            <div className="flex items-center gap-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                onClick={() => navigate("/login")}
-                className="px-8 py-3 bg-black/40 border border-white/20 hover:bg-white hover:text-black hover:border-white transition-all group backdrop-blur-md"
-                style={{ clipPath: "polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px)" }}
-              >
-                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white group-hover:text-black transition-colors">
-                  {t("auth.login")}
-                </span>
-              </motion.button>
-            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              onClick={() => navigate("/login")}
+              className="px-3 py-2 sm:px-8 sm:py-3 bg-black/40 border border-white/20 hover:bg-white hover:text-black hover:border-white transition-all group backdrop-blur-md shrink-0"
+              style={{ clipPath: "polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px)" }}
+            >
+              <span className="text-[9px] sm:text-[11px] font-black uppercase tracking-[0.08em] sm:tracking-[0.2em] text-white group-hover:text-black transition-colors whitespace-nowrap">
+                {t("auth.login")}
+              </span>
+            </motion.button>
           </motion.div>
         )}
       </AnimatePresence>
