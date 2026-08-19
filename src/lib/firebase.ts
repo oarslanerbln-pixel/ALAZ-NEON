@@ -1,5 +1,10 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import {
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
@@ -29,6 +34,37 @@ if (!isFirebaseConfigured) {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
+/**
+ * Firestore, kalıcı yerel önbellekle başlatılıyor.
+ *
+ * Oyun kafede oynanıyor ve kafe wifi'si güvenilir değil. Kalıcı önbellek iki
+ * şey kazandırıyor: bağlantı koptuğunda okumalar önbellekten karşılanıyor
+ * (ekran boşalmıyor) ve yazımlar kuyruğa girip bağlantı gelince kendiliğinden
+ * gönderiliyor — cevabını gönderirken wifi titreyen oyuncu turu kaybetmiyor.
+ *
+ * `persistentMultipleTabManager`, host'un aynı odayı birden fazla sekmede
+ * açması durumunda önbelleğin bozulmasını engelliyor.
+ *
+ * Kalıcı önbellek her ortamda kurulamıyor (gizli sekme, IndexedDB kapalı,
+ * eski tarayıcı). Böyle bir durumda oyunu tamamen çökertmek yerine sade
+ * yapılandırmaya düşüyoruz.
+ */
+function createFirestore() {
+  try {
+    return initializeFirestore(app, {
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager(),
+      }),
+    });
+  } catch (err) {
+    console.warn(
+      "[firebase] Kalıcı önbellek kurulamadı, çevrimiçi moda düşülüyor:",
+      err,
+    );
+    return getFirestore(app);
+  }
+}
+
 // Initialize Cloud Firestore and get a reference to the service
-export const db = getFirestore(app);
+export const db = createFirestore();
 export const auth = getAuth(app);

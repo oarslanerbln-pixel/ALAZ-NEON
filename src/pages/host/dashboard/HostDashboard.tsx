@@ -18,7 +18,14 @@ interface HostDashboardProps {
 export function HostDashboard({ room, players, updateRoomStatus }: HostDashboardProps) {
   const handleStartGame = async (game: GameType) => {
     SoundManager.getInstance().playSFX(sounds.START);
-    let initialStatus: Room["status"] = "intro";
+    // Scattegories "lobby" ile başlar. Buraya kalıcı olarak "intro" yazmak
+    // oyunu tamamen kilitliyordu: "intro" host'un YEREL sinematik animasyonu,
+    // odaya ait bir durum değil. Yerel animasyon bitip gameState "lobby"ye
+    // geçince senkron efekti odadan hâlâ "intro" okuyup geri çeviriyor, bu da
+    // sonsuz döngü kurup lobiye hiç ulaşılamamasına yol açıyordu.
+    // Quiz/bomba/sensör kendi intro DURUMLARINI ekranlarında yönettiği için
+    // onlarda böyle bir sorun yok.
+    let initialStatus: Room["status"] = "lobby";
     let extraUpdates: Partial<Room> = { active_game: game };
 
     if (game === "quiz") initialStatus = "quiz_intro";

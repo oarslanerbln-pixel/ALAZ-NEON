@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import { collection, query, where, getDocs, doc, writeBatch } from "firebase/firestore";
@@ -132,7 +132,12 @@ function HostDisplayGame({
   const [timeLeft, setTimeLeft] = useState(60);
   const [currentLetter, setCurrentLetter] = useState("?");
   const [nextLetter, setNextLetter] = useState("");
-  const [roundEndTime, setRoundEndTime] = useState<number | null>(null);
+
+  // Turun bitiş anı yerel state DEĞİL, odadan türetiliyor. Host sayfayı
+  // yenilediğinde ya da başka bir cihazdan devraldığında zamanlayıcı böylece
+  // kaldığı yerden devam ediyor; yerel state olsaydı null'a düşüp tur sonsuza
+  // kadar askıda kalırdı.
+  const roundEndTime = room?.round_end_time ?? null;
   const [roundResults, setRoundResults] = useState<RoundResultInfo[]>([]);
   const [gameHistory, setGameHistory] = useState<RoundResultInfo[]>([]);
   const [awards, setAwards] = useState<{ creative: JulesAward | null; funny: JulesAward | null } | undefined>();
@@ -198,6 +203,17 @@ function HostDisplayGame({
       }
     }
   }, [room, gameState, currentLetter]);
+
+  // "intro" host'un YEREL sinematiği; odaya ait kalıcı bir durum değil. Odada
+  // "intro" olarak kalırsa yukarıdaki senkron efekti, animasyon bitip yerel
+  // durum "lobby"ye geçtiği anda onu tekrar "intro"ya çeviriyor ve oyun lobiye
+  // hiç ulaşamıyor. Yerel sinematik bittiğinde odayı da lobiye alarak döngüyü
+  // kırıyoruz — bu, o durumda takılı kalmış mevcut odaları da kurtarıyor.
+  useEffect(() => {
+    if (gameState === "lobby" && room?.status === "intro") {
+      updateRoomStatus("lobby");
+    }
+  }, [gameState, room?.status, updateRoomStatus]);
 
   const endRound = useCallback(async () => {
     if (!roomId || !room) return;
@@ -315,6 +331,18 @@ function HostDisplayGame({
     updatePlayerScore,
   ]);
 
+  // Bir tur yalnızca BİR KEZ kapatılabilir. endRound puanları oyuncunun mevcut
+  // toplamına EKLEDİĞİ için ikinci bir çağrı puanları iki kez yazardı; zamanlayıcı
+  // efekti ise bağımlılıkları (room/players) her değiştiğinde yeniden kuruluyor
+  // ve süresi dolmuş bir turda tekrar tetiklenebiliyor.
+  const endedRoundRef = useRef<number | null>(null);
+  const endRoundOnce = useCallback(() => {
+    const thisRound = room?.current_round ?? null;
+    if (endedRoundRef.current === thisRound) return;
+    endedRoundRef.current = thisRound;
+    endRound();
+  }, [endRound, room?.current_round]);
+
   const startGame = async () => {
     if (!roomId || !room) return;
     SoundManager.getInstance().playSFX(sounds.BURN);
@@ -361,17 +389,24 @@ function HostDisplayGame({
 
     const nextRound = (room.current_round || 0) + 1;
     const usedLetters = room.used_letters || [];
-    
+
+    // Turun bitiş anı Firestore'a YAZILIYOR. Eskiden yalnızca host'un yerel
+    // state'inde duruyordu ve bunun iki sonucu vardı: host sayfayı yenilerse
+    // zamanlayıcı ölü kalıp tur hiç bitmiyordu, ayrıca her oyuncu kendi
+    // yükleme anından saydığı için aralarında kayma oluşuyordu. Tek bir mutlak
+    // zaman damgası ikisini de çözüyor.
+    const endTime = Date.now() + room.timer_setting * 1000;
+
     await updateRoomStatus("playing", {
       active_letter: nextLetter,
       current_round: nextRound,
       time_left: room.timer_setting,
+      round_end_time: endTime,
       used_letters: [...usedLetters, nextLetter]
     });
 
     setCurrentLetter(nextLetter);
     setTimeLeft(room.timer_setting);
-    setRoundEndTime(Date.now() + room.timer_setting * 1000);
 
     // Notify Sentinel that the round timer has officially started
     Sentinel.radar.startRoundTime();
@@ -461,27 +496,36 @@ function HostDisplayGame({
 
   // Timer Logic (Optimistic UI)
   useEffect(() => {
-    if (gameState === "playing") {
-      const interval = setInterval(() => {
-        if (!roundEndTime) return;
+    if (gameState !== "playing" || !roundEndTime) return;
 
-        const now = Date.now();
-        const remaining = Math.max(
-          0,
-          Math.floor((roundEndTime - now) / 1000),
-        );
+    const tick = () => {
+      const remaining = Math.max(
+        0,
+        Math.floor((roundEndTime - Date.now()) / 1000),
+      );
+      setTimeLeft(remaining);
+      return remaining;
+    };
 
-        setTimeLeft(remaining);
-
-        if (remaining === 0) {
-          clearInterval(interval);
-          endRound();
-        }
-      }, 500); // Check twice a second for precision
-
-      return () => clearInterval(interval);
+    // Hemen bir kez çalıştır: yenileme sonrası ekranın 500ms boyunca eski
+    // süreyi göstermesini engelliyor ve süresi çoktan dolmuş bir turu
+    // (host bir süre kapalı kalmışsa) anında kapatıyor. Kapatma bir tik
+    // sonraya alınıyor; efekt gövdesinde senkron setState zincirleme render
+    // doğuruyor (dosyadaki diğer geçişler de aynı deseni kullanıyor).
+    if (tick() === 0) {
+      const t = setTimeout(endRoundOnce, 0);
+      return () => clearTimeout(t);
     }
-  }, [gameState, roundEndTime, endRound]);
+
+    const interval = setInterval(() => {
+      if (tick() === 0) {
+        clearInterval(interval);
+        endRoundOnce();
+      }
+    }, 500); // Check twice a second for precision
+
+    return () => clearInterval(interval);
+  }, [gameState, roundEndTime, endRoundOnce]);
 
   // Calculate Aesthetic Tension
   const tensionRatio =
