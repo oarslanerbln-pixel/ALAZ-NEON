@@ -126,7 +126,7 @@ export default function MedicationsPage() {
       </form>
 
       {error && (
-        <div className="bg-red-900/50 border border-red-500 text-red-200 p-4 rounded-none">
+        <div role="alert" aria-live="assertive" className="bg-red-900/50 border border-red-500 text-red-200 p-4 rounded-none">
           {error}
         </div>
       )}

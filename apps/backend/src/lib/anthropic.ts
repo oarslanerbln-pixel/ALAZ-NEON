@@ -1,5 +1,8 @@
 import AnthropicModule from '@anthropic-ai/sdk';
 
+// Same Vercel-build-only CJS/ESM interop gap as helmet's in app.ts — see the
+// comment there. Not reproducible with local tsc.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Anthropic = (AnthropicModule as any).default || AnthropicModule;
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -36,6 +39,7 @@ export async function summarizeReport(originalText: string): Promise<string> {
     messages: [{ role: 'user', content: originalText }],
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see Anthropic interop note above
   const textBlock = message.content.find((block: any) => block.type === 'text');
   if (!textBlock || textBlock.type !== 'text') {
     throw new Error('Beklenmeyen yanıt formatı: metin bloğu bulunamadı.');

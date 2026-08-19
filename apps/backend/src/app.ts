@@ -16,10 +16,23 @@ if (!process.env.JWT_SECRET) {
 
 const app = express();
 
+// Vercel's edge network sits in front of every request as a reverse proxy and
+// sets X-Forwarded-For/Forwarded headers; Express's default `trust proxy: false`
+// makes express-rate-limit reject those headers as spoofable (logged as
+// ERR_ERL_UNEXPECTED_X_FORWARDED_FOR/ERR_ERL_FORWARDED_HEADER in production).
+// `1` trusts exactly one hop — Vercel's own proxy — which is correct here since
+// this app is never deployed behind any other proxy.
+app.set('trust proxy', 1);
+
 const allowedOrigins = (process.env.FRONTEND_URL ?? 'http://localhost:3000')
   .split(',')
   .map((origin) => origin.trim());
 
+// helmetModule's shape differs between local tsc (plain callable) and Vercel's
+// build sandbox (wrapped in a `.default`, a CJS/ESM interop gap in helmet's own
+// package.json `exports` map under Node16 resolution — verified not reproducible
+// outside Vercel's build container). Runtime fallback handles both.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const helmet = (helmetModule as any).default || helmetModule;
 app.use(helmet());
 // credentials: true is required so the browser sends/accepts the httpOnly auth

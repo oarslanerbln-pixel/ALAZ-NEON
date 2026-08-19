@@ -173,6 +173,7 @@ export default function UploadDocument() {
 
       {previewUrl && (
         <div className="relative w-full">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={previewUrl}
             alt="Seçilen rapor önizlemesi"

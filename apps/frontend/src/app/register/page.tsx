@@ -62,6 +62,7 @@ export default function RegisterPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="new-password"
+            aria-describedby="password-hint"
             disabled={isSubmitting}
             className="p-4 rounded-none bg-[#0a0a0a] border-2 border-gray-800 focus-visible:outline-none focus-visible:border-blue-500 transition-colors"
           />
@@ -69,7 +70,7 @@ export default function RegisterPage() {
         </div>
 
         {error && (
-          <div className="bg-red-900/50 border border-red-500 text-red-200 p-4 rounded-none">
+          <div role="alert" aria-live="assertive" className="bg-red-900/50 border border-red-500 text-red-200 p-4 rounded-none">
             {error}
           </div>
         )}
