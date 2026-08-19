@@ -31,6 +31,20 @@ dist-ssr
 # TypeScript incremental build cache
 *.tsbuildinfo
 
+# Yanlış yapılandırılmış bir composite proje `tsc -b` ile src/ içine .d.ts ve
+# .js çıktısı kusabiliyor (bir kez 88 dosya olarak yaşandı). Kaynak ağacı
+# yalnızca .ts/.tsx içerir; derleme çıktısı dist/ altına gider.
+src/**/*.js
+src/**/*.js.map
+src/**/*.d.ts
+src/**/*.d.ts.map
+test/**/*.js
+test/**/*.js.map
+test/**/*.d.ts
+test/**/*.d.ts.map
+vitest.rules.config.js
+vitest.rules.config.d.ts
+
 # Geçici build/debug çıktıları
 build.txt
 build_output.txt

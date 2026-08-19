@@ -3,6 +3,8 @@
     "composite": true,
     "forceConsistentCasingInFileNames": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    // Bkz. tsconfig.app.json: outDir olmadan .d.ts çıktısı repo köküne düşüyor.
+    "outDir": "./node_modules/.tmp/types/node",
     "target": "ES2022",
     "lib": ["ES2022"],
     "module": "ESNext",
