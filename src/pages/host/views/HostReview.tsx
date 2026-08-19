@@ -2,7 +2,31 @@ import { motion, LayoutGroup } from "framer-motion";
 import { NeonIcon } from "../../../components/NeonIcon";
 import { Badge } from "../../../components/Badge";
 import { useLocale } from "../../../hooks/useLocale";
-import type { Player, RoundResultInfo } from "../../../types/database";
+import { safeForDisplay } from "../../../lib/profanity";
+import type { AnswerBreakdown, Player, RoundResultInfo } from "../../../types/database";
+
+/** Otomatik reddin sebebini host'a tek bakışta anlatan kısa etiket. */
+function autoRejectLabel(ans: AnswerBreakdown | undefined): string | null {
+  if (!ans) return null;
+  if (ans.isProfane) return "UYGUNSUZ İÇERİK";
+  if (!ans.isGibberish) return null;
+  switch (ans.gibberishReason) {
+    case "tooShort":
+      return "ÇOK KISA";
+    case "repeatedLetters":
+      return "TEKRARLANAN HARF";
+    case "keyboardMash":
+      return "KLAVYE EZMESİ";
+    case "repeatedPattern":
+      return "TEKRARLANAN KALIP";
+    case "noVowel":
+      return "ÜNLÜ HARF YOK";
+    case "consonantRun":
+      return "ÜNSÜZ YIĞILMASI";
+    default:
+      return "ŞÜPHELİ CEVAP";
+  }
+}
 
 function CognitiveAnalytics({ results }: { results: RoundResultInfo[] }) {
   const { t } = useLocale();
@@ -353,7 +377,11 @@ export function HostReview({
                               : "text-white"
                           }`}
                         >
-                          {ans?.value || (
+                          {ans?.value ? (
+                            // Oyuncu metni kafede dev ekranda görünüyor —
+                            // gösterimden önce mutlaka maskeden geçmeli.
+                            safeForDisplay(ans.value)
+                          ) : (
                             <span className="text-red-500/50 text-sm italic">
                               {t("review.empty")}
                             </span>
@@ -389,7 +417,10 @@ export function HostReview({
                                   -10 PUAN CEZASI
                                 </span>
                               ) : (
-                                ans?.value &&
+                                // Otomatik red varsa gerekçesini göster;
+                                // host tıklayarak yine de onaylayabilir.
+                                autoRejectLabel(ans) ??
+                                (ans?.value &&
                                 ans.value
                                   .toLowerCase()
                                   .startsWith(
@@ -398,7 +429,7 @@ export function HostReview({
                                     ).toLowerCase(),
                                   )
                                   ? t("review.hostRejected")
-                                  : t("review.invalidLetter")
+                                  : t("review.invalidLetter"))
                               )}
                             </>
                           )}

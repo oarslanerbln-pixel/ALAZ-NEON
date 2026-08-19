@@ -369,6 +369,10 @@ const translations = {
     tr: "Beklenmeyen bir hata oluştu.",
     de: "Ein unerwarteter Fehler ist aufgetreten.",
   },
+  "join.errorNickname": {
+    tr: "Bu takma ad kullanılamaz. Lütfen başka bir ad seçin.",
+    de: "Dieser Spitzname ist nicht zulässig. Bitte einen anderen wählen.",
+  },
 
   // ═══════════════════════════════════════════
   // PLAYER GAME

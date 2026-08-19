@@ -11,6 +11,7 @@ import { PhoneAuth } from "../../components/PhoneAuth";
 import { PlayerProfileCard } from "./components/PlayerProfileCard";
 import { PlayerRewards } from "./components/PlayerRewards";
 import { useUserProfile } from "../../hooks/useUserProfile";
+import { containsProfanity } from "../../lib/profanity";
 import type { Room } from "../../types/database";
 
 export function PlayerJoin() {
@@ -83,6 +84,15 @@ export function PlayerJoin() {
 
       if (room.status !== "lobby") {
         setErrorMsg(t("join.errorStarted"));
+        setIsLoading(false);
+        return;
+      }
+
+      // Takma ad tek bir cevaptan çok daha kalıcı: lobide, skor tablosunda ve
+      // podyumda bütün gece dev ekranda duruyor. Bu yüzden burada maskelemek
+      // değil, baştan reddetmek doğru.
+      if (containsProfanity(nickname)) {
+        setErrorMsg(t("join.errorNickname", "Bu takma ad kullanılamaz."));
         setIsLoading(false);
         return;
       }

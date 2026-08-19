@@ -5,6 +5,8 @@ import { db } from "../../../lib/firebase";
 import { doc, updateDoc, collection, getDocs, query, where, arrayUnion } from "firebase/firestore";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useToast } from "../../../contexts/ToastContextCore";
+import { containsProfanity } from "../../../lib/profanity";
+import { looksLikeGibberish } from "../../../lib/wordValidation";
 
 interface Props {
   room: Room;
@@ -37,6 +39,22 @@ export function PlayerBombController({ room, player }: Props) {
     // Check if word is already used
     if (room.used_words?.some(w => w.toLowerCase() === normalizedWord)) {
       showToast("Bu kelime zaten kullanıldı!", "error");
+      SoundManager.getInstance().playSFX(sounds.FAILURE);
+      if (navigator.vibrate) navigator.vibrate(200);
+      return;
+    }
+
+    // Bombada geri bildirim anında olmalı — host'un elle reddetmesini beklersek
+    // sıradaki oyuncuya çoktan paslanmış oluyor. Kelime dev ekrana da düşüyor.
+    if (containsProfanity(word)) {
+      showToast("Uygunsuz kelime kabul edilmiyor!", "error");
+      SoundManager.getInstance().playSFX(sounds.FAILURE);
+      if (navigator.vibrate) navigator.vibrate(200);
+      return;
+    }
+
+    if (looksLikeGibberish(word)) {
+      showToast("Gerçek bir kelime yaz!", "error");
       SoundManager.getInstance().playSFX(sounds.FAILURE);
       if (navigator.vibrate) navigator.vibrate(200);
       return;
