@@ -147,26 +147,30 @@ export default function UploadDocument() {
           type="button"
           onClick={() => cameraInputRef.current?.click()}
           disabled={isScanning}
-          className="flex flex-col items-center justify-center p-6 bg-[#0a0a0a] rounded-none border-2 border-dashed border-blue-500/50 hover:bg-[#111] hover:border-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 disabled:opacity-50 transition-all animate-glow-pulse-dark"
+          className="flex flex-col items-center justify-center gap-3 p-6 bg-navy-800 rounded-2xl border border-white/10 hover:border-gold-500/40 hover:bg-navy-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 disabled:opacity-50 transition-all duration-200"
           aria-label="Kamera ile çek"
         >
-          <Camera size={32} className="mb-2 text-blue-400" />
-          <span className="font-bold text-gray-200">Fotoğraf Çek</span>
+          <span className="grid place-items-center size-12 rounded-xl bg-gold-500/15 text-gold-400">
+            <Camera size={26} />
+          </span>
+          <span className="font-semibold text-ink-100">Fotoğraf Çek</span>
         </button>
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isScanning}
-          className="flex flex-col items-center justify-center p-6 bg-[#0a0a0a] rounded-none border-2 border-dashed border-green-500/50 hover:bg-[#111] hover:border-green-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 disabled:opacity-50 transition-all animate-glow-pulse-dark"
+          className="flex flex-col items-center justify-center gap-3 p-6 bg-navy-800 rounded-2xl border border-white/10 hover:border-sage-500/40 hover:bg-navy-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-500 disabled:opacity-50 transition-all duration-200"
           aria-label="Dosya yükle"
         >
-          <Upload size={32} className="mb-2 text-green-400" />
-          <span className="font-bold text-gray-200">Dosya Seç</span>
+          <span className="grid place-items-center size-12 rounded-xl bg-sage-500/15 text-sage-400">
+            <Upload size={26} />
+          </span>
+          <span className="font-semibold text-ink-100">Dosya Seç</span>
         </button>
       </div>
 
       {error && (
-        <p role="alert" aria-live="assertive" className="w-full text-center font-bold text-red-400">
+        <p role="alert" aria-live="assertive" className="w-full text-center font-semibold text-coral-400">
           {error}
         </p>
       )}
@@ -177,14 +181,14 @@ export default function UploadDocument() {
           <img
             src={previewUrl}
             alt="Seçilen rapor önizlemesi"
-            className="w-full max-h-80 object-contain rounded-none bg-[#0a0a0a] border border-gray-800"
+            className="w-full max-h-80 object-contain rounded-2xl bg-navy-800 border border-white/10"
           />
           <button
             type="button"
             onClick={handleReset}
             disabled={isScanning}
             aria-label="Görseli kaldır"
-            className="absolute top-2 right-2 p-2 bg-[#0a0a0a]/80 rounded-none border border-red-500/50 hover:bg-[#111] hover:border-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-50 text-red-400 transition-colors"
+            className="absolute top-2 right-2 p-2 bg-navy-900/80 rounded-xl border border-coral-500/40 hover:bg-navy-900 hover:border-coral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-400 disabled:opacity-50 text-coral-400 transition-colors"
           >
             <X size={20} />
           </button>
@@ -197,12 +201,12 @@ export default function UploadDocument() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="flex flex-col items-center gap-4 p-8 bg-[#0a0a0a] border border-blue-500/30 rounded-none w-full animate-glow-pulse-dark"
+            className="flex flex-col items-center gap-4 p-8 bg-navy-800 border border-white/10 rounded-2xl w-full"
             role="status"
             aria-live="polite"
           >
-            <Loader2 size={48} className="animate-spin text-blue-400" />
-            <p className="text-xl font-bold text-center text-blue-100">Görsel taranıyor... %{progress}</p>
+            <Loader2 size={44} className="animate-spin text-gold-400" />
+            <p className="text-xl font-semibold text-center text-ink-100">Görsel taranıyor... %{progress}</p>
           </motion.div>
         )}
         {isSummarizing && (
@@ -210,55 +214,55 @@ export default function UploadDocument() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="flex flex-col items-center gap-4 p-8 bg-[#0a0a0a] border border-blue-500/30 rounded-none w-full animate-glow-pulse-dark"
+            className="flex flex-col items-center gap-4 p-8 bg-navy-800 border border-white/10 rounded-2xl w-full"
             role="status"
             aria-live="polite"
           >
-            <Loader2 size={48} className="animate-spin text-blue-400" />
-            <p className="text-xl font-bold text-center text-blue-100">Rapor sadeleştiriliyor...</p>
+            <Loader2 size={44} className="animate-spin text-gold-400" />
+            <p className="text-xl font-semibold text-center text-ink-100">Rapor sadeleştiriliyor...</p>
           </motion.div>
         )}
       </AnimatePresence>
 
       {noTextFound && (
-        <p className="w-full text-center text-gray-400">
+        <p className="w-full text-center text-ink-500">
           Görselden okunabilir bir metin bulunamadı. Lütfen daha net ve iyi aydınlatılmış bir
           fotoğrafla tekrar deneyin.
         </p>
       )}
 
       {summary && (
-        <div className="w-full bg-[#0a0a0a] border border-gray-800 p-6 rounded-none mt-4">
-          <h2 className="text-2xl font-bold mb-2 text-blue-400">Sadeleştirilmiş Özet</h2>
-          <p className="whitespace-pre-line">{summary}</p>
+        <div className="w-full bg-navy-800 border border-white/10 p-6 rounded-2xl mt-4 shadow-lg shadow-black/30">
+          <h2 className="text-2xl font-bold mb-2 text-gold-400">Sadeleştirilmiş Özet</h2>
+          <p className="whitespace-pre-line text-ink-100">{summary}</p>
           {rawText && (
             <details className="mt-4">
-              <summary className="cursor-pointer text-sm text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded">
+              <summary className="cursor-pointer text-sm text-ink-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 rounded">
                 Taranan ham metni göster
               </summary>
-              <p className="whitespace-pre-line text-sm text-gray-400 mt-2">{rawText}</p>
+              <p className="whitespace-pre-line text-sm text-ink-500 mt-2">{rawText}</p>
             </details>
           )}
         </div>
       )}
 
       {!summary && rawText && (
-        <div className="w-full bg-[#0a0a0a] border border-gray-800 p-6 rounded-none mt-4">
-          <h2 className="text-2xl font-bold mb-2 text-yellow-400">Okunan Metin</h2>
+        <div className="w-full bg-navy-800 border border-white/10 p-6 rounded-2xl mt-4 shadow-lg shadow-black/30">
+          <h2 className="text-2xl font-bold mb-2 text-amber-400">Okunan Metin</h2>
           {summarizeError ? (
-            <p role="alert" aria-live="assertive" className="text-sm text-red-400 mb-4">
+            <p role="alert" aria-live="assertive" className="text-sm text-coral-400 mb-4">
               {summarizeError}
             </p>
           ) : !user ? (
-            <p className="text-sm text-gray-400 mb-4">
+            <p className="text-sm text-ink-500 mb-4">
               Bu metni yapay zekayla sadeleştirmek ve kaydetmek için{' '}
-              <Link href="/login" className="text-blue-400 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded">
+              <Link href="/login" className="text-gold-400 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 rounded">
                 giriş yapın
               </Link>
               .
             </p>
           ) : null}
-          <p className="whitespace-pre-line">{rawText}</p>
+          <p className="whitespace-pre-line text-ink-100">{rawText}</p>
         </div>
       )}
     </div>

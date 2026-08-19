@@ -3,6 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { register, ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 
@@ -30,15 +31,21 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-4 mb-4">
-        <Link href="/" className="px-4 py-2 bg-gray-800 rounded-lg font-bold">Geri</Link>
-        <h1 className="text-2xl font-bold">Kayıt Ol</h1>
+    <div className="flex flex-col gap-6 animate-fade-up">
+      <div className="flex items-center gap-3 mb-2">
+        <Link
+          href="/"
+          aria-label="Geri"
+          className="grid place-items-center size-11 rounded-xl bg-navy-800 border border-white/10 hover:bg-navy-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
+        >
+          <ArrowLeft size={20} />
+        </Link>
+        <h1 className="text-2xl font-bold tracking-tight">Kayıt Ol</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <label htmlFor="email" className="font-bold">E-posta</label>
+          <label htmlFor="email" className="font-semibold text-ink-300">E-posta</label>
           <input
             id="email"
             type="email"
@@ -46,12 +53,12 @@ export default function RegisterPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
-            className="p-4 rounded-none bg-[#0a0a0a] border-2 border-gray-800 focus-visible:outline-none focus-visible:border-blue-500 transition-colors"
+            className="p-4 rounded-xl bg-navy-800 border border-white/10 text-ink-100 focus-visible:outline-none focus-visible:border-gold-500 focus-visible:ring-2 focus-visible:ring-gold-500/40 transition-colors"
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="password" className="font-bold text-gray-300">
+          <label htmlFor="password" className="font-semibold text-ink-300">
             Şifre
           </label>
           <input
@@ -64,13 +71,13 @@ export default function RegisterPage() {
             autoComplete="new-password"
             aria-describedby="password-hint"
             disabled={isSubmitting}
-            className="p-4 rounded-none bg-[#0a0a0a] border-2 border-gray-800 focus-visible:outline-none focus-visible:border-blue-500 transition-colors"
+            className="p-4 rounded-xl bg-navy-800 border border-white/10 text-ink-100 focus-visible:outline-none focus-visible:border-gold-500 focus-visible:ring-2 focus-visible:ring-gold-500/40 transition-colors disabled:opacity-50"
           />
-          <p id="password-hint" className="text-gray-400 text-sm">En az 8 karakter olmalı.</p>
+          <p id="password-hint" className="text-ink-500 text-sm">En az 8 karakter olmalı.</p>
         </div>
 
         {error && (
-          <div role="alert" aria-live="assertive" className="bg-red-900/50 border border-red-500 text-red-200 p-4 rounded-none">
+          <div role="alert" aria-live="assertive" className="bg-coral-500/10 border border-coral-500/40 text-coral-400 p-4 rounded-xl font-medium">
             {error}
           </div>
         )}
@@ -78,15 +85,15 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white p-4 rounded-none text-xl font-bold transition-all animate-glow-pulse-green border border-green-400/20"
+          className="bg-gold-500 hover:bg-gold-400 disabled:opacity-50 text-navy-950 p-4 rounded-xl text-xl font-bold transition-colors duration-200 mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 focus-visible:ring-offset-2 focus-visible:ring-offset-navy-950"
         >
           {isSubmitting ? 'Kayıt oluşturuluyor...' : 'Kayıt Ol'}
         </button>
       </form>
 
-      <p className="text-center text-gray-300">
+      <p className="text-center text-ink-500">
         Zaten hesabınız var mı?{' '}
-        <Link href="/login" className="text-blue-400 font-bold">
+        <Link href="/login" className="text-gold-400 font-semibold hover:text-gold-300">
           Giriş Yap
         </Link>
       </p>

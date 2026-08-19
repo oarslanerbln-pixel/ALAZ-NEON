@@ -8,37 +8,54 @@ export default function Home() {
   const { user, isLoading, signOut } = useAuth();
 
   return (
-    <div className="flex flex-col gap-6 items-center justify-center min-h-[70vh]">
-      <h1 className="text-3xl font-bold mb-2 text-center">Netçe&apos;ye Hoşgeldiniz</h1>
+    <div className="flex flex-col gap-6 items-center justify-center min-h-[70vh] animate-fade-up">
+      <div className="text-center mb-2">
+        <h1 className="text-3xl font-bold tracking-tight">Netçe&apos;ye Hoşgeldiniz</h1>
+        {!isLoading && user && (
+          <p className="text-ink-500 mt-2">{user.email} olarak giriş yaptınız</p>
+        )}
+      </div>
 
-      {!isLoading && user && (
-        <p className="text-gray-300 text-center">{user.email} olarak giriş yaptınız</p>
-      )}
-
-      <Link href="/scan" className="w-full flex items-center justify-center gap-4 bg-blue-600 hover:bg-blue-500 text-white p-8 rounded-none text-2xl font-bold transition-all animate-glow-pulse hover:scale-[1.02] border border-blue-400/20">
-        <Camera size={48} />
-        Rapor Tara
+      <Link
+        href="/scan"
+        className="group w-full flex items-center gap-5 bg-navy-800 hover:bg-navy-700 p-6 rounded-2xl text-xl font-semibold transition-all duration-200 border border-white/10 hover:border-gold-500/40 shadow-lg shadow-black/30 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
+      >
+        <span className="shrink-0 grid place-items-center size-14 rounded-xl bg-gold-500/15 text-gold-400 group-hover:bg-gold-500/25 transition-colors">
+          <Camera size={28} />
+        </span>
+        <span className="flex flex-col items-start gap-0.5">
+          Rapor Tara
+          <span className="text-sm font-normal text-ink-500">Raporunuzu tarayın, sade dilde okuyun</span>
+        </span>
       </Link>
 
-      <Link href="/medications" className="w-full flex items-center justify-center gap-4 bg-green-600 hover:bg-green-500 text-white p-8 rounded-none text-2xl font-bold transition-all animate-glow-pulse-green hover:scale-[1.02] border border-green-400/20">
-        <Pill size={48} />
-        İlaçlarım
+      <Link
+        href="/medications"
+        className="group w-full flex items-center gap-5 bg-navy-800 hover:bg-navy-700 p-6 rounded-2xl text-xl font-semibold transition-all duration-200 border border-white/10 hover:border-gold-500/40 shadow-lg shadow-black/30 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
+      >
+        <span className="shrink-0 grid place-items-center size-14 rounded-xl bg-sage-500/15 text-sage-400 group-hover:bg-sage-500/25 transition-colors">
+          <Pill size={28} />
+        </span>
+        <span className="flex flex-col items-start gap-0.5">
+          İlaçlarım
+          <span className="text-sm font-normal text-ink-500">Dozlarınızı takip edin</span>
+        </span>
       </Link>
 
       {!isLoading && !user && (
-        <div className="w-full flex flex-col gap-4 mt-2">
+        <div className="w-full flex flex-col gap-3 mt-2">
           <Link
             href="/login"
-            className="w-full flex items-center justify-center gap-3 bg-gray-800 hover:bg-gray-700 text-white p-4 rounded-none text-lg font-bold transition-all animate-glow-pulse-dark hover:scale-[1.02] border border-gray-600/30"
+            className="w-full flex items-center justify-center gap-3 bg-transparent hover:bg-navy-800 text-ink-100 p-4 rounded-xl text-lg font-semibold transition-colors duration-200 border border-white/15 hover:border-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
           >
-            <LogIn size={24} />
+            <LogIn size={22} />
             Giriş Yap
           </Link>
           <Link
             href="/register"
-            className="w-full flex items-center justify-center gap-3 bg-gray-800 hover:bg-gray-700 text-white p-4 rounded-none text-lg font-bold transition-all animate-glow-pulse-dark hover:scale-[1.02] border border-gray-600/30"
+            className="w-full flex items-center justify-center gap-3 bg-gold-500 hover:bg-gold-400 text-navy-950 p-4 rounded-xl text-lg font-bold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 focus-visible:ring-offset-2 focus-visible:ring-offset-navy-950"
           >
-            <UserPlus size={24} />
+            <UserPlus size={22} />
             Kayıt Ol
           </Link>
         </div>
@@ -47,9 +64,9 @@ export default function Home() {
       {!isLoading && user && (
         <button
           onClick={signOut}
-          className="w-full flex items-center justify-center gap-3 bg-gray-900 hover:bg-gray-800 text-white p-4 rounded-none text-lg font-bold transition-all border border-red-900/30 hover:border-red-500/50 hover:text-red-400 mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+          className="w-full flex items-center justify-center gap-3 bg-transparent hover:bg-coral-500/10 text-ink-300 hover:text-coral-400 p-4 rounded-xl text-lg font-semibold transition-colors duration-200 border border-white/10 hover:border-coral-500/30 mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-400"
         >
-          <LogOut size={24} />
+          <LogOut size={22} />
           Çıkış Yap
         </button>
       )}

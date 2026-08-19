@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: "#000000",
+  themeColor: "#0a1f44",
 };
 
 export default function RootLayout({
@@ -35,13 +35,13 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <body
-        className={`${spaceGrotesk.variable} ${geistMono.variable} font-sans antialiased bg-[#050505] text-gray-100 text-lg selection:bg-blue-600/30`}
+        className={`${spaceGrotesk.variable} ${geistMono.variable} font-sans antialiased bg-navy-950 text-ink-100 text-lg selection:bg-gold-500/30`}
       >
         <ServiceWorkerRegister />
         <AuthProvider>
           <div className="flex flex-col min-h-screen max-w-md mx-auto w-full">
             <main className="flex-grow p-4">{children}</main>
-            <footer className="p-4 bg-gray-900 text-center text-sm border-t border-gray-800 text-yellow-400 font-bold">
+            <footer className="p-4 bg-navy-900 text-center text-sm border-t border-white/10 text-amber-400 font-semibold">
               Bu bir tıbbi tavsiye değildir, yalnızca dil sadeleştirme aracıdır. Lütfen doktorunuza danışın.
             </footer>
           </div>
