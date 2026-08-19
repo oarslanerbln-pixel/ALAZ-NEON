@@ -6,7 +6,18 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // src/ yalnızca .ts/.tsx içerir. Oradaki her .js/.d.ts yanlışlıkla üretilmiş
+  // derleme çıktısıdır (yanlış yapılandırılmış bir composite tsconfig bunu bir
+  // kez yaptı ve lint'i anlamsız hatalarla doldurdu) — lint'e sokma.
+  globalIgnores([
+    'dist',
+    'src/**/*.js',
+    'src/**/*.d.ts',
+    'src/**/*.js.map',
+    'src/**/*.d.ts.map',
+    'test/**/*.js',
+    'test/**/*.d.ts',
+  ]),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

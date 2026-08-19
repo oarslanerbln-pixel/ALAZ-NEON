@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import type { Player } from "../types/database";
 
@@ -42,11 +42,9 @@ export function usePlayer(playerId: string | null) {
     };
   }, [playerId]);
 
-  const updateScore = async (newScore: number) => {
-    if (!playerId) return;
-    const docRef = doc(db, "players", playerId);
-    await updateDoc(docRef, { total_score: newScore });
-  };
-
-  return { player, loading, updateScore, totalScore: player?.total_score || 0 };
+  // Skoru oyuncu cihazından yazan bir yol bilerek yok: puanlama host'ta
+  // yapılıyor ve Firestore kuralları da oyuncu dokümanına yazmayı yalnızca
+  // host'a açıyor. Buraya bir updateScore eklenirse sessizce permission-denied
+  // alır — skor değişikliği useHostRoom.updatePlayerScore üzerinden gitmeli.
+  return { player, loading, totalScore: player?.total_score || 0 };
 }

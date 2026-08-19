@@ -4,6 +4,11 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
+  // Bu bir "solution" tsconfig'i: kendisi hiçbir dosya derlemez, yalnızca alt
+  // projelere yönlendirir. `files: []` olmadan TypeScript varsayılan `**/*`
+  // kalıbını uyguluyor ve tüm projeyi jsx ayarı olmadan programa dahil ederek
+  // `tsc -b`'yi patlatıyordu.
+  "files": [],
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }

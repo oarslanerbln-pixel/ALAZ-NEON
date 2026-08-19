@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck, lint, test, build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm run test:run
+
+      - name: Build
+        run: npm run build
+
+      # Kaynak ağacına derleme çıktısı sızmasın: yanlış yapılandırılmış bir
+      # composite tsconfig bir kez src/ içine 88 adet .d.ts/.js kusmuştu.
+      - name: Kaynak ağacı temiz mi
+        run: |
+          artifacts=$(find src test -type f \
+            \( -name '*.js' -o -name '*.d.ts' -o -name '*.js.map' -o -name '*.d.ts.map' \) 2>/dev/null)
+          if [ -n "$artifacts" ]; then
+            echo "Kaynak ağacına derleme çıktısı sızmış:"
+            echo "$artifacts"
+            exit 1
+          fi
+          echo "Kaynak ağacı temiz."
+
+  rules:
+    name: Firestore güvenlik kuralları
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # Firestore emulator JVM üzerinde çalışıyor.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Kural testleri (emulator)
+        run: npm run test:rules
+        env:
+          # Emulator'ün gerçek bir projeye bağlanmasına gerek yok.
+          GCLOUD_PROJECT: alaz-neon-rules-test

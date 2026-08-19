@@ -6,11 +6,13 @@
   "scripts": {
     "dev": "vite --host",
     "build": "tsc -p tsconfig.app.json --noEmit && vite build",
-    "typecheck": "tsc -b",
+    "typecheck": "tsc -b && tsc -p tsconfig.test.json --noEmit",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
-    "test:ui": "vitest --ui"
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui",
+    "test:rules": "firebase emulators:exec --only firestore --project alaz-neon-rules-test \"vitest run --config vitest.rules.config.ts\""
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",
@@ -25,6 +27,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@firebase/rules-unit-testing": "^5.0.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
@@ -35,6 +38,7 @@
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
+    "firebase-tools": "^15.27.0",
     "globals": "^16.5.0",
     "jsdom": "^28.1.0",
     "typescript": "~5.9.3",
