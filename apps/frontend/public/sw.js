@@ -1,11 +1,11 @@
-// MediSade app-shell service worker.
+// Netçe app-shell service worker.
 //
 // Scope: basic installability + "the last page I looked at still opens offline".
 // Deliberately NOT a full Workbox/Serwist-style runtime-caching setup — this project
 // builds with Turbopack, which neither next-pwa nor Serwist currently integrate with
 // cleanly, so this is a small hand-written cache-first-with-network-fallback worker
 // instead. Bump CACHE_NAME whenever APP_SHELL changes so old caches get cleaned up.
-const CACHE_NAME = 'medisade-shell-v1';
+const CACHE_NAME = 'netce-shell-v1';
 
 const APP_SHELL = [
   '/',

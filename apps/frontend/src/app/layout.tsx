@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MediSade",
+  title: "Netçe",
   description: "Tıbbi raporlarınızı ve ilaçlarınızı kolayca takip edin.",
   manifest: "/manifest.webmanifest",
   icons: {

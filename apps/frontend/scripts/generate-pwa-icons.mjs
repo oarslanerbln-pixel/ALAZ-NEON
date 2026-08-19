@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Generates MediSade's PWA icon set as raw PNG files, using only Node's built-in
+ * Generates Netçe's PWA icon set as raw PNG files, using only Node's built-in
  * `zlib` module (no image library / native binary dependency — none was available in
  * the environment this was first written in: no ImageMagick, no `sharp`, no rsvg-convert).
  *

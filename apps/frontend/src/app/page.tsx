@@ -9,7 +9,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col gap-6 items-center justify-center min-h-[70vh]">
-      <h1 className="text-3xl font-bold mb-2 text-center">MediSade&apos;ye Hoşgeldiniz</h1>
+      <h1 className="text-3xl font-bold mb-2 text-center">Netçe&apos;ye Hoşgeldiniz</h1>
 
       {!isLoading && user && (
         <p className="text-gray-300 text-center">{user.email} olarak giriş yaptınız</p>

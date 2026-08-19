@@ -62,7 +62,7 @@ const documentsLimiter = rateLimit({
 });
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'MediSade API is running' });
+  res.json({ status: 'ok', message: 'Netçe API is running' });
 });
 
 app.use('/auth', authLimiter, authRouter);

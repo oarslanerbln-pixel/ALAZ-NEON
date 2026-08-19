@@ -1,4 +1,4 @@
-# MediSade
+# Netçe
 
 Türkçe, mobil öncelikli bir sağlık PWA'sı. İki temel işi var:
 
@@ -52,7 +52,7 @@ git'e commit'lenmez; sürüm değiştirirseniz `pnpm --filter frontend vendor:oc
 Backend (`apps/backend/.env.example` → `.env`):
 
 ```bash
-DATABASE_URL="postgresql://user:password@localhost:5432/medisade"
+DATABASE_URL="postgresql://user:password@localhost:5432/netce"
 JWT_SECRET="replace-with-a-long-random-string"
 PORT=3001
 NODE_ENV=development       # production'da auth cookie'sini Secure yapar

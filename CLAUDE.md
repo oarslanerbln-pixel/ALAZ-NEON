@@ -4,7 +4,7 @@ Guidance for AI assistants (Claude Code and others) working in this repository.
 
 ## What this is
 
-**MediSade** — a Turkish-language health PWA with two core jobs:
+**Netçe** (formerly MediSade) — a Turkish-language health PWA with two core jobs:
 
 1. **Rapor Tara ("Scan Report")** — OCR/scan a medical report and produce a plain-language
    summary so patients can understand what their doctor's report actually says.
@@ -24,7 +24,7 @@ This is a **pnpm workspace monorepo** (`pnpm-workspace.yaml` → `apps/*`, `pack
 
 ```
 .
-├── package.json            # Root: name "medisade-monorepo", workspace scripts
+├── package.json            # Root: name "netce-monorepo", workspace scripts
 ├── pnpm-workspace.yaml     # Workspaces: apps/*, packages/*
 ├── apps/
 │   ├── frontend/           # Next.js 16 + React 19 PWA (the active app)

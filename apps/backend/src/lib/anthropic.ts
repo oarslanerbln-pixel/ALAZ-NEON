@@ -10,7 +10,7 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 // simplification — the right tier for this job (see roadmap notes).
 const MODEL = 'claude-haiku-4-5';
 
-const SYSTEM_PROMPT = `Sen MediSade uygulamasının bir parçasısın. Kullanıcılar OCR ile taranmış
+const SYSTEM_PROMPT = `Sen Netçe uygulamasının bir parçasısın. Kullanıcılar OCR ile taranmış
 tıbbi rapor metinlerini sana gönderiyor. Görevin, bu metni Türkçe ve sade bir dille açıklamak —
 tıbbi terimleri günlük dile çevirmek, raporun ne söylediğini anlaşılır kılmak.
 

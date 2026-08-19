@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'MediSade',
-    short_name: 'MediSade',
+    name: 'Netçe',
+    short_name: 'Netçe',
     description: 'Tıbbi raporlarınızı ve ilaçlarınızı kolayca takip edin.',
     start_url: '/',
     display: 'standalone',
