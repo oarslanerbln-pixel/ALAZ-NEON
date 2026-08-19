@@ -5,8 +5,10 @@ import { KineticSpark } from "../KineticSpark";
 describe("KineticSpark Component", () => {
   it("renders without crashing", () => {
     render(<KineticSpark />);
-    // Since it's a visual component, we check for core text content
-    expect(screen.getAllByText("ALAZ")[0]).toBeInTheDocument();
+    // Since it's a visual component, we check for core text content.
+    // The brand mark text was renamed from "ALAZ" to "KAMUS" as part of the
+    // quiz rebrand; this test was left asserting the old copy and always failed.
+    expect(screen.getAllByText("KAMUS")[0]).toBeInTheDocument();
   });
 
   it("renders custom tagline when showTagline is true", () => {

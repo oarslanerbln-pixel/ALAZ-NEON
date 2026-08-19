@@ -24,6 +24,10 @@ import { HostReview } from "./views/HostReview";
 import { HostStandings } from "./views/HostStandings";
 import { HostPodium } from "./views/HostPodium";
 import { HostQuizDisplay } from "./quiz/HostQuizDisplay";
+import { HostBombDisplay } from "./bomb/HostBombDisplay";
+import { HostSensorDisplay } from "./sensor/HostSensorDisplay";
+import { HostDashboard } from "./dashboard/HostDashboard";
+import { HostTutorial } from "./components/HostTutorial";
 import { DatabaseStatus } from "../../components/DatabaseStatus";
 import { RoomStatusScreen } from "../../components/RoomStatusScreen";
 import { EmojiRain } from "../../components/EmojiRain";
@@ -48,16 +52,49 @@ export function HostDisplay() {
   if (loading) return <RoomStatusScreen kind="loading" roomId={roomId} />;
   if (notFound || room === null) return <RoomStatusScreen kind="notfound" roomId={roomId} />;
 
-  // Route to Quiz Display if game_type is quiz. This must happen before any
+  // Route to Quiz Display if active_game is quiz. This must happen before any
   // of the classic-game-only hooks below are declared, so the quiz view
   // never runs those hooks at all (keeps hook order stable either way).
-  if (room.game_type === "quiz") {
+  if (room.active_game === "quiz" || room.game_type === "quiz") {
     return (
       <HostQuizDisplay
         room={room}
         players={hostRoom.players}
         updateRoomStatus={hostRoom.updateRoomStatus}
         updatePlayerScore={hostRoom.updatePlayerScore}
+      />
+    );
+  }
+
+  // Route to Bomb Display if active_game is bomb. 
+  if (room.active_game === "bomb" || room.game_type === "bomb") {
+    return (
+      <HostBombDisplay 
+        room={room} 
+        players={hostRoom.players} 
+        updateRoomStatus={hostRoom.updateRoomStatus} 
+        updatePlayerScore={hostRoom.updatePlayerScore}
+      />
+    );
+  }
+
+  if (room.active_game === "sensor" || room.game_type === "sensor") {
+    return (
+      <HostSensorDisplay
+        room={room}
+        players={hostRoom.players}
+        updateRoomStatus={hostRoom.updateRoomStatus}
+        updatePlayerScore={hostRoom.updatePlayerScore}
+      />
+    );
+  }
+
+  if (room.status === "night_lobby" || room.active_game === "none") {
+    return (
+      <HostDashboard
+        room={room}
+        players={hostRoom.players}
+        updateRoomStatus={hostRoom.updateRoomStatus}
       />
     );
   }
@@ -77,6 +114,7 @@ function HostDisplayGame({
   const [gameState, setGameState] = useState<
     | "intro"
     | "lobby"
+    | "tutorial"
     | "gameIntro"
     | "countdown"
     | "playing"
@@ -122,6 +160,9 @@ function HostDisplayGame({
     } else if (gameState === "lobby") {
       sound.playMusic(sounds.LOBBY_AMBIENT, 0.4);
       sound.startAmbientDrone();
+    } else if (gameState === "tutorial") {
+      sound.stopSound(sounds.LOBBY_AMBIENT);
+      sound.playMusic(sounds.GAME_PULSE, 0.2);
     } else if (gameState === "gameIntro") {
       sound.stopSound(sounds.LOBBY_AMBIENT);
       sound.playMusic(sounds.GAME_PULSE, 0.5); // high energy
@@ -146,7 +187,7 @@ function HostDisplayGame({
   // Sync Game State with Room Status
   useEffect(() => {
     if (room) {
-      if (gameState !== "intro" && gameState !== "gameIntro" && gameState !== "countdown") {
+      if (gameState !== "intro" && gameState !== "gameIntro" && gameState !== "countdown" && gameState !== "tutorial") {
         const newStatus = room.status as typeof gameState;
         if (gameState !== newStatus) {
           setTimeout(() => setGameState(newStatus), 0);
@@ -281,25 +322,39 @@ function HostDisplayGame({
     const letters = "ABCDEFGHIJKLMNOPRSTUVYZ".split("");
     const usedLetters = room.used_letters || [];
     let availableLetters = letters.filter(l => !usedLetters.includes(l));
+    let newUsedLetters = usedLetters;
     
     // If all letters used, reset pool
     if (availableLetters.length === 0) {
       availableLetters = letters;
+      newUsedLetters = [];
     }
     
     const randomLetter = availableLetters[Math.floor(Math.random() * availableLetters.length)];
     setNextLetter(randomLetter);
     
+    // Save the newUsedLetters locally or wait to save it in handleSpinnerComplete?
+    // It's safer to just set an internal ref or we can pass it via state to handleSpinnerComplete.
+    // Instead, let's just update room status right away.
+    setNextLetter(randomLetter);
+    
     if (room.current_round === 0) {
-      setGameState("gameIntro");
+      await updateRoomStatus("tutorial", { tutorial_step: 0, used_letters: newUsedLetters });
+      setGameState("tutorial");
     } else {
+      await updateRoomStatus("countdown", { used_letters: newUsedLetters });
       setGameState("countdown");
     }
   };
 
-  const handleGameIntroComplete = () => {
+  const handleTutorialComplete = useCallback(async () => {
+    if (!roomId || !room) return;
+    setGameState("gameIntro");
+  }, [roomId, room]);
+
+  const handleGameIntroComplete = useCallback(() => {
     setGameState("countdown");
-  };
+  }, []);
 
   const handleSpinnerComplete = async () => {
     if (!roomId || !room) return;
@@ -389,7 +444,7 @@ function HostDisplayGame({
     setGameHistory([]);
     setAwards(undefined);
     Sentinel.radar.clearRadar(); // Clear bans on reset
-    await updateRoomStatus("lobby", { current_round: 0, active_letter: "?" });
+    await updateRoomStatus("lobby", { current_round: 0, active_letter: "?", used_letters: [] });
     setGameState("lobby");
   };
 
@@ -494,6 +549,10 @@ function HostDisplayGame({
                 updateRoomStatus("lobby", { categories: cats })
               }
             />
+          )}
+
+          {gameState === "tutorial" && (
+            <HostTutorial room={room!} onComplete={handleTutorialComplete} />
           )}
 
           {gameState === "gameIntro" && (

@@ -1,17 +1,19 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
-import { collection, query, where, getDocs, doc, writeBatch } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, writeBatch, onSnapshot } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { ParticleBackground } from "../../../components/ParticleBackground";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { getQuizQuestions } from "../../../lib/quizQuestions";
+import { toMillis } from "../../../lib/timestamps";
 
 import type { Answer } from "../../../types/database";
 
 import { HostQuizIntro } from "./views/HostQuizIntro";
 import { HostHeader } from "../components/HostHeader";
 import { HostLobby } from "../views/HostLobby";
+import { HostTutorial } from "../components/HostTutorial";
 
 import type { Room, Player } from "../../../types/database";
 
@@ -32,10 +34,17 @@ export function HostQuizDisplay({
   const [timeLeft, setTimeLeft] = useState(room?.timer_setting || 30);
   const [roundEndTime, setRoundEndTime] = useState<number | null>(null);
 
+  // Soru bitişi iki bağımsız tetikleyiciden gelebiliyor: sürenin dolması VE
+  // "herkes cevapladı" dinleyicisi. İkisi aynı anda tetiklenirse endQuestion
+  // iki kez çalışıp aynı soru için puanı iki kez dağıtabiliyordu. Bu ref
+  // aynı soru için ikinci çağrıyı engelliyor; yeni soru başlarken sıfırlanır.
+  const endingQuestionRef = useRef(false);
+
   // Derive game state directly from room.status — single source of truth, no sync bugs
   const rawStatus = room?.status || "quiz_lobby";
   const gameState =
     rawStatus === "lobby" ? "quiz_lobby" :
+    rawStatus === "tutorial" ? "tutorial" :
     rawStatus.startsWith("quiz_") || rawStatus.startsWith("question_") || rawStatus === "finished"
       ? rawStatus
       : "quiz_lobby";
@@ -58,14 +67,25 @@ export function HostQuizDisplay({
       console.warn("Could not delete old answers (possibly missing permissions):", e);
     }
 
-    // Generate questions for this session
     const questions = getQuizQuestions(room.locale, room.total_rounds);
-    
-    await updateRoomStatus("quiz_intro", {
-      quiz_questions: questions,
-      current_question_index: 0,
-      current_round: 1
-    });
+
+    if (room.current_round === 0) {
+      await updateRoomStatus("tutorial", {
+        tutorial_step: 0,
+        current_question_index: 0,
+        quiz_questions: questions,
+      });
+    } else {
+      await updateRoomStatus("quiz_intro", {
+        current_question_index: 0,
+        quiz_questions: questions,
+      });
+    }
+  };
+
+  const handleTutorialComplete = async () => {
+    if (!roomId) return;
+    await updateRoomStatus("quiz_intro");
   };
 
   const onIntroComplete = useCallback(async () => {
@@ -81,13 +101,21 @@ export function HostQuizDisplay({
     await updateRoomStatus("question_active", {
       time_left: timeToAnswer
     });
-    
+
+    endingQuestionRef.current = false;
     setTimeLeft(timeToAnswer);
     setRoundEndTime(Date.now() + timeToAnswer * 1000);
   };
 
   const endQuestion = useCallback(async () => {
     if (!roomId || !room) return;
+    // Reentrancy guard: timer expiry and the "everyone answered" listener can
+    // both fire within the same tick. Without this, both branches would
+    // fetch the same answers and award the same points twice.
+    if (endingQuestionRef.current) return;
+    if (room.status !== "question_active") return;
+    endingQuestionRef.current = true;
+
     SoundManager.getInstance().stopSound(sounds.GAME_PULSE);
     SoundManager.getInstance().playSFX(sounds.SIREN);
 
@@ -118,7 +146,7 @@ export function HostQuizDisplay({
     const correctOption = currentQ.correctOption;
     
     // Sort answers by time to give speed bonus
-    answers.sort((a, b) => (a.created_at || "").localeCompare(b.created_at || ""));
+    answers.sort((a, b) => toMillis(a.created_at) - toMillis(b.created_at));
     
     let speedBonusIndex = 0;
     const processedPlayers = new Set<string>();
@@ -167,6 +195,28 @@ export function HostQuizDisplay({
       return () => clearInterval(interval);
     }
   }, [gameState, roundEndTime, endQuestion]);
+
+  // Listen for all players answering to end question early
+  useEffect(() => {
+    if (gameState === "question_active" && roomId && players.length > 0) {
+      let hasEnded = false;
+      const questionIndexStr = room.current_question_index?.toString() || "0";
+      const q = query(
+        collection(db, "answers"),
+        where("room_id", "==", roomId),
+        where("round_letter", "==", questionIndexStr)
+      );
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        if (!hasEnded && snapshot.size >= players.length) {
+          hasEnded = true;
+          endQuestion();
+        }
+      });
+      
+      return () => unsubscribe();
+    }
+  }, [gameState, roomId, room.current_question_index, players.length, endQuestion]);
 
   const showLeaderboard = async () => {
     await updateRoomStatus("quiz_leaderboard");
@@ -219,7 +269,6 @@ export function HostQuizDisplay({
       <div className="flex-1 flex items-center justify-center relative w-full z-10 mt-10">
         <AnimatePresence mode="wait">
           
-          {/* "lobby" yukarıda zaten "quiz_lobby"ye çevriliyor, ayrıca kontrol gereksiz */}
           {gameState === "quiz_lobby" && (
             <motion.div
               key="quiz_lobby"
@@ -229,7 +278,7 @@ export function HostQuizDisplay({
               className="w-full flex flex-col items-center"
             >
               <h1 className="text-6xl font-black text-blue-500 tracking-widest uppercase mb-10 drop-shadow-[0_0_30px_rgba(59,130,246,0.8)]">
-                ALAZ QUIZ
+                KAMUS QUIZ
               </h1>
               <div className="w-full h-full relative">
                 <HostLobby
@@ -240,6 +289,10 @@ export function HostQuizDisplay({
                 />
               </div>
             </motion.div>
+          )}
+
+          {gameState === "tutorial" && (
+            <HostTutorial room={room} onComplete={handleTutorialComplete} />
           )}
 
           {gameState === "quiz_intro" && (
@@ -308,6 +361,17 @@ export function HostQuizDisplay({
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* Manual End Button */}
+              <div className="mt-12">
+                <button
+                  onClick={endQuestion}
+                  className="px-8 py-3 bg-red-950/80 hover:bg-red-900 border border-red-500/50 hover:border-red-500 text-red-500 font-bold uppercase tracking-widest text-sm transition-all duration-300 rounded-full flex items-center gap-3 group"
+                >
+                  <span className="w-2 h-2 rounded-full bg-red-500 group-hover:animate-ping" />
+                  SÜREYİ BİTİR / CEVAPLARA GEÇ
+                </button>
               </div>
             </motion.div>
           )}

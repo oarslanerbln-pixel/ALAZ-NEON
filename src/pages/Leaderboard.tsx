@@ -70,61 +70,65 @@ export function Leaderboard() {
           </div>
 
           {/* Rows */}
-          {leaderboardData.map((player, index) => (
-            <motion.div
-              key={player.rank}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className={`grid grid-cols-12 items-center px-8 py-6 rounded-2xl border transition-all duration-300 group ${
-                player.rank === 1
-                  ? "bg-alaz-orange/10 border-alaz-orange/30 shadow-[0_10px_40px_rgba(255,77,0,0.1)]"
-                  : "bg-white/5 border-white/5 hover:border-white/20"
-              }`}
-            >
-              <div
-                className={`col-span-1 text-2xl font-black ${
-                  player.rank === 1
-                    ? "text-alaz-orange"
-                    : player.rank === 2
-                      ? "text-gray-300"
-                      : player.rank === 3
-                        ? "text-orange-900"
-                        : "text-gray-700"
-                }`}
+          {leaderboardData.map((player, index) => {
+            const isFirst = player.rank === 1;
+            const isSecond = player.rank === 2;
+            const isThird = player.rank === 3;
+            
+            let rowBg = "bg-white/5 border-white/5 hover:border-white/20";
+            let rankColor = "text-gray-500";
+            let avatarBg = "bg-white/10 text-white";
+            let scoreColor = "text-gray-400";
+            let shadowClass = "";
+
+            if (isFirst) {
+              rowBg = "bg-alaz-orange/10 border-alaz-orange/40 backdrop-blur-md";
+              rankColor = "text-alaz-orange drop-shadow-[0_0_10px_rgba(255,85,0,0.8)]";
+              avatarBg = "bg-gradient-to-br from-alaz-orange to-yellow-500 text-black";
+              scoreColor = "text-transparent bg-clip-text bg-gradient-to-r from-alaz-orange to-yellow-500 drop-shadow-[0_0_10px_rgba(255,85,0,0.5)]";
+              shadowClass = "shadow-[0_0_30px_rgba(255,85,0,0.2)]";
+            } else if (isSecond) {
+              rowBg = "bg-gray-400/10 border-gray-400/30 backdrop-blur-sm";
+              rankColor = "text-gray-300 drop-shadow-[0_0_5px_rgba(209,213,219,0.5)]";
+              avatarBg = "bg-gradient-to-br from-gray-300 to-gray-500 text-black";
+              scoreColor = "text-gray-200";
+            } else if (isThird) {
+              rowBg = "bg-orange-900/20 border-orange-700/30 backdrop-blur-sm";
+              rankColor = "text-orange-500 drop-shadow-[0_0_5px_rgba(249,115,22,0.5)]";
+              avatarBg = "bg-gradient-to-br from-orange-400 to-orange-700 text-white";
+              scoreColor = "text-orange-300";
+            }
+
+            return (
+              <motion.div
+                key={player.rank}
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1, type: "spring", stiffness: 100 }}
+                className={`grid grid-cols-12 items-center px-8 py-6 rounded-2xl border transition-all duration-300 group hover:scale-[1.01] ${rowBg} ${shadowClass}`}
               >
-                #{player.rank}
-              </div>
-              <div className="col-span-7 flex items-center gap-4">
-                <div
-                  className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-lg ${
-                    player.rank === 1
-                      ? "bg-alaz-orange text-black"
-                      : "bg-white/10 text-white"
-                  }`}
-                >
-                  {player.name[0].toUpperCase()}
+                <div className={`col-span-1 text-3xl font-black italic ${rankColor}`}>
+                  #{player.rank}
                 </div>
-                <div>
-                  <div className="text-xl font-black text-white group-hover:text-alaz-orange transition-colors">
-                    {player.name}
+                <div className="col-span-7 flex items-center gap-5">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-black shadow-lg ${avatarBg}`}>
+                    {player.name[0].toUpperCase()}
                   </div>
-                  <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">
-                    {player.persona}
+                  <div>
+                    <div className="text-2xl font-black text-white tracking-wide group-hover:text-alaz-orange transition-colors">
+                      {player.name}
+                    </div>
+                    <div className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em] mt-1 group-hover:text-gray-400 transition-colors">
+                      {player.persona}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div
-                className={`col-span-4 text-right text-3xl font-black ${
-                  player.rank === 1
-                    ? "text-glow-alaz text-white"
-                    : "text-gray-400"
-                }`}
-              >
-                {player.score.toLocaleString()}
-              </div>
-            </motion.div>
-          ))}
+                <div className={`col-span-4 text-right text-4xl font-black tracking-tighter ${scoreColor}`}>
+                  {player.score.toLocaleString()}
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </div>

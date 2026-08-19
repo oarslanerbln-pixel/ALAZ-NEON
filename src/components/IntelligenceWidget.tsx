@@ -29,12 +29,20 @@ export function IntelligenceWidget({
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="absolute right-8 top-32 w-72 glass-panel-neon-blue p-6 border-neon-blue/20 overflow-hidden"
+      className="absolute right-8 top-32 w-80 relative p-[3px] rounded-2xl group shadow-[0_0_30px_rgba(0,243,255,0.15)] hover:shadow-[0_0_50px_rgba(0,243,255,0.3)] transition-all duration-500"
     >
+      {/* Animated Conic Gradient Border */}
+      <div className="absolute inset-0 bg-[conic-gradient(from_0deg,transparent_0_180deg,rgba(0,243,255,0.8)_360deg)] animate-[spin_5s_linear_infinite] rounded-2xl" />
+      <div className="absolute inset-0 bg-[conic-gradient(from_180deg,transparent_0_180deg,rgba(255,77,0,0.8)_360deg)] animate-[spin_5s_linear_infinite] rounded-2xl" />
+      
+      {/* Inner Panel */}
+      <div className="absolute inset-[3px] bg-black/90 backdrop-blur-2xl rounded-[14px] z-10 border border-neon-blue/20" />
+      
       {/* Background Glow Effect */}
-      <div className="absolute inset-0 bg-neon-blue/5 blur-3xl -z-10" />
+      <div className="absolute inset-[3px] bg-neon-blue/5 blur-3xl z-10 rounded-[14px]" />
 
-      <div className="flex items-center gap-2 mb-6 border-b border-neon-blue/10 pb-3">
+      <div className="relative z-20 p-6 overflow-hidden">
+        <div className="flex items-center gap-2 mb-6 border-b border-neon-blue/10 pb-3">
         <NeonIcon
           type="dashboard"
           color="blue"
@@ -112,6 +120,7 @@ export function IntelligenceWidget({
         transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
         className="absolute left-0 right-0 h-px bg-neon-blue/20 -z-10"
       />
+      </div>
     </motion.div>
   );
 }

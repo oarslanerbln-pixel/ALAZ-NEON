@@ -255,41 +255,43 @@
 
   /* Cyberpunk Panels */
   .cyber-panel {
-    background: rgba(5, 5, 8, 0.85);
-    border: 1px solid rgba(0, 255, 65, 0.3);
+    background: rgba(10, 10, 15, 0.7);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 
-      inset 0 0 20px rgba(0, 255, 65, 0.1),
-      0 0 15px rgba(0, 255, 65, 0.2);
+      inset 0 0 40px rgba(0, 0, 0, 0.8),
+      0 10px 30px rgba(0, 0, 0, 0.5);
     position: relative;
     overflow: hidden;
-    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
+    border-radius: 16px;
   }
 
   .cyber-panel::before {
     content: "";
     position: absolute;
     top: 0; left: 0; right: 0;
-    height: 2px;
-    background: var(--color-hacker-green);
-    box-shadow: 0 0 10px var(--color-hacker-green);
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
   }
 
   .cyber-panel-yellow {
-    background: rgba(10, 10, 5, 0.85);
-    border: 1px solid rgba(252, 238, 10, 0.3);
+    background: rgba(20, 15, 5, 0.7);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 215, 0, 0.2);
     box-shadow: 
-      inset 0 0 20px rgba(252, 238, 10, 0.1),
-      0 0 15px rgba(252, 238, 10, 0.2);
-    clip-path: polygon(20px 0, 100% 0, 100% 100%, 0 100%, 0 20px);
+      inset 0 0 30px rgba(255, 215, 0, 0.05),
+      0 10px 30px rgba(0, 0, 0, 0.5);
+    border-radius: 16px;
   }
 
   .cyber-panel-yellow::after {
     content: "";
     position: absolute;
-    bottom: 0; right: 0;
-    width: 30px; height: 30px;
-    background: var(--color-cyber-yellow);
-    clip-path: polygon(100% 0, 100% 100%, 0 100%);
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,215,0,0.5), transparent);
   }
 
   /* Typography Glows (Optimized) */
@@ -425,6 +427,36 @@
   0% { transform: translateY(-100%); }
   100% { transform: translateY(100vh); }
 }
+
+@keyframes bg-pan {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.btn-magic-gradient {
+  background: linear-gradient(
+    90deg, 
+    var(--color-alaz-orange),
+    var(--color-neon-pink),
+    var(--color-neon-blue),
+    var(--color-alaz-orange)
+  );
+  background-size: 300% auto;
+  animation: bg-pan 6s linear infinite;
+  color: white;
+  border: none !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+  transition: all 0.3s ease;
+}
+
+.btn-magic-gradient:hover {
+  box-shadow: 0 0 40px rgba(0, 229, 255, 0.6), inset 0 2px 5px rgba(255, 255, 255, 0.6);
+  transform: scale(1.02);
+  filter: brightness(1.1);
+}
+
 
 @keyframes flicker {
   0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% {

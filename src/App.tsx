@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ToastProvider } from "./contexts/ToastContext";
 import { LandingPage } from "./pages/LandingPage";
+import { useAuth } from "./hooks/useAuth";
 
 /**
  * Rota bazlı kod bölme.
@@ -43,6 +44,8 @@ function RouteFallback() {
 }
 
 function App() {
+  useAuth(); // Initialize anonymous auth
+
   return (
     <BrowserRouter>
       <ToastProvider>

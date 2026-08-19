@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { collection, addDoc, query, where, getDocs, limit } from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs, limit, serverTimestamp } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { AnimatePresence, motion } from "framer-motion";
 import { ParticleBackground } from "../../../components/ParticleBackground";
@@ -69,7 +69,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
         data: {
           selectedOption: option
         },
-        created_at: new Date().toISOString() // for speed bonus sorting
+        created_at: serverTimestamp() // For accurate speed bonus calculation on the host
       });
     } catch (err) {
       console.error("Failed to submit quiz answer", err);
@@ -120,7 +120,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
             >
               <div className="bg-black/80 border border-blue-500/50 p-8 rounded-xl shadow-[0_0_30px_rgba(59,130,246,0.3)]">
                 <h2 className="text-2xl font-black text-blue-400 uppercase tracking-widest mb-4">
-                  ALAZ QUIZ
+                  KAMUS QUIZ
                 </h2>
                 <p className="text-gray-400 font-medium">
                   Lütfen ana ekrana bakarak oyunun başlamasını bekleyin.

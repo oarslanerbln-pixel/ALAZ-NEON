@@ -1,5 +1,5 @@
 /**
- * ALAZ NEON — Internationalization (i18n) System
+ * KAMUS ARENA — Internationalization (i18n) System
  * Supports: Turkish (tr), German (de)
  */
 
@@ -285,6 +285,8 @@ const translations = {
   "podium.newGame": { tr: "Yeni Oyun Başlat", de: "Neues Spiel starten" },
 
   // ═══════════════════════════════════════════
+  "standings.pointsThisRound": { tr: "Bu Tur", de: "Diese Runde" },
+
   // STANDINGS (Mid-game Leaderboard)
   // ═══════════════════════════════════════════
   "standings.title": { tr: "GÜNCEL PUAN DURUMU", de: "AKTUELLE PLATZIERUNG" },
@@ -344,8 +346,8 @@ const translations = {
     de: "Tisch 5 / Blaues Team",
   },
   "join.teamPlaceholderShort": { tr: "TAKIM ADI", de: "TEAMNAME" },
-  "join.terminalHeader": { tr: "ALAZ_SYS // TERMİNAL_v2.1", de: "ALAZ_SYS // TERMINAL_v2.1" },
-  "join.terminalFooter": { tr: "ALAZ NEON // NO SYSTEM IS SAFE", de: "ALAZ NEON // KEIN SYSTEM IST SICHER" },
+  "join.terminalHeader": { tr: "KAMUS_SYS // TERMİNAL_v2.1", de: "KAMUS_SYS // TERMINAL_v2.1" },
+  "join.terminalFooter": { tr: "KAMUS ARENA // NO SYSTEM IS SAFE", de: "KAMUS ARENA // KEIN SYSTEM IST SICHER" },
   "join.connecting": {
     tr: "BAĞLANILIYOR...",
     de: "VERBINDUNG WIRD HERGESTELLT...",

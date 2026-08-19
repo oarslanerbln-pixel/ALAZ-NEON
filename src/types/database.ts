@@ -1,4 +1,5 @@
 import type { Locale } from "../lib/i18n";
+import type { FieldValue, Timestamp } from "firebase/firestore";
 
 export type RoomStatus =
   | "lobby"
@@ -15,10 +16,19 @@ export type RoomStatus =
   | "question_intro"
   | "question_active"
   | "question_reveal"
-  | "quiz_leaderboard";
+  | "quiz_leaderboard"
+  | "bomb_intro"
+  | "bomb_active"
+  | "bomb_explosion"
+  | "bomb_standings"
+  | "tutorial"
+  | "sensor_intro"
+  | "sensor_active"
+  | "sensor_buzzed"
+  | "sensor_reveal";
 
 export type GameMode = "individual" | "team";
-export type GameType = "scattegories" | "quiz";
+export type GameType = "scattegories" | "quiz" | "bomb" | "sensor";
 
 export interface QuizQuestion {
   id: string;
@@ -31,8 +41,10 @@ export interface QuizQuestion {
 export interface Room {
   id: string;
   code: string;
-  status: RoomStatus;
-  game_type?: GameType;
+  status: RoomStatus | "night_lobby";
+  active_game?: GameType | "none";
+  game_type?: GameType; // Legacy
+  host_uid?: string;
   categories: string[];
   timer_setting: number;
   total_rounds: number;
@@ -42,18 +54,37 @@ export interface Room {
   round_end_time?: number;
   game_mode: GameMode;
   used_letters?: string[];
+  used_sensor_images?: string[];
+  used_bomb_categories?: string[];
   locale?: Locale;
   quiz_questions?: QuizQuestion[];
   current_question_index?: number;
   next_letter?: string;
+  // Bomb Game Fields
+  bomb_target_player?: string;
+  previous_bomb_target_player?: string | null;
+  used_words?: string[];
+  bomb_speed_multiplier?: number;
+  // Tutorial Fields
+  tutorial_step?: number;
+  // Sensor Game Fields
+  sensor_current_media?: string;
+  sensor_media_answer?: string;
+  sensor_buzzer_player_id?: string | null;
+  sensor_buzzer_timestamp?: number | null;
+  sensor_player_answer?: string | null;
 }
 
 export interface Player {
   id: string;
+  room_id: string;
   nickname: string;
+  uid?: string;
   team_name: string | null;
   total_score: number;
-  room_id: string;
+  night_score?: number;
+  created_at: number;
+  lives?: number;
 }
 
 export interface Answer {
@@ -63,7 +94,10 @@ export interface Answer {
   round_letter: string;
   round_index?: number;
   data: Record<string, string>;
-  created_at?: string;
+  // ISO string (scattegories) at write-time, a resolved Firestore Timestamp
+  // once read back, or a pending FieldValue while serverTimestamp() (quiz)
+  // hasn't committed yet.
+  created_at?: string | Timestamp | FieldValue;
 }
 
 export interface AnswerBreakdown {
@@ -111,4 +145,28 @@ export interface RoundLog {
   actual_avg_score: number;
   prediction_error: number;
   created_at?: string;
+}
+
+export type LeagueTier = "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "NEON" | "LEGEND";
+
+export interface UserProfile {
+  uid: string;
+  phone_number: string;
+  nickname: string;
+  total_lifetime_score: number;
+  current_league: LeagueTier;
+  created_at: number;
+  last_active: number;
+}
+
+export interface Reward {
+  id?: string;
+  uid: string;
+  type: "drink" | "discount" | "special";
+  title: string;
+  description: string;
+  status: "available" | "claimed";
+  code: string;
+  earned_at: number;
+  claimed_at?: number;
 }

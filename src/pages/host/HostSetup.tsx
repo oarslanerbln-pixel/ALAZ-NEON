@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { collection, addDoc } from "firebase/firestore";
-import { db } from "../../lib/firebase";
+import { db, auth } from "../../lib/firebase";
 import { motion } from "framer-motion";
 import { NeonIcon } from "../../components/NeonIcon";
 import { KineticSpark } from "../../components/KineticSpark";
@@ -64,9 +64,6 @@ export function HostSetup() {
   const [isCreating, setIsCreating] = useState(false);
   const [activePreset, setActivePreset] = useState<string | null>(null);
 
-  const location = useLocation();
-  const gameType = location.state?.gameType || "scattegories";
-
   const presets = getCategoryPresets(locale);
 
   const applyPreset = (name: string) => {
@@ -81,14 +78,12 @@ export function HostSetup() {
     localStorage.setItem("cafe_game_mode", gameMode);
 
     try {
-      const parsedCategories = gameType === "quiz" 
-        ? [] 
-        : categories
+      const parsedCategories = categories
             .split(",")
             .map((c) => c.trim())
             .filter(Boolean);
             
-      if (gameType === "scattegories" && parsedCategories.length === 0) {
+      if (parsedCategories.length === 0) {
         showToast(
           t("setup.errorNoCategory"),
           "warning",
@@ -101,16 +96,17 @@ export function HostSetup() {
       try {
         const docRef = await addDoc(collection(db, "rooms"), {
           code: roomCode,
-          status: "lobby",
+          status: "night_lobby",
+          active_game: "none",
           categories: parsedCategories,
           timer_setting: parseInt(timerValue, 10),
           total_rounds: parseInt(totalRounds, 10),
           current_round: 0,
           time_left: 0,
           game_mode: gameMode,
-          game_type: gameType,
           locale: locale,
-          created_at: Date.now()
+          created_at: Date.now(),
+          host_uid: auth.currentUser?.uid || "anonymous"
         });
         
         navigate(`/host/display?roomId=${docRef.id}`);
@@ -164,12 +160,12 @@ export function HostSetup() {
             {/* Main Settings Panel */}
             <GlassPanel className="md:col-span-2 md:row-span-2" neonColor="rgba(255,215,0,0.8)">
               <div className="p-10 flex flex-col h-full relative">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-alaz-orange/5 blur-[100px] -mr-32 -mt-32 pointer-events-none" />
+                <div className="absolute top-0 right-0 w-64 h-64 bg-neon-blue/10 blur-[100px] -mr-32 -mt-32 pointer-events-none" />
 
               <div className="flex justify-between items-start mb-10 relative z-10">
                 <div>
-                  <h2 className="text-3xl font-sans font-black text-white tracking-tighter uppercase">
-                    {gameType === "quiz" ? "ALAZ QUIZ AYARLARI" : t("setup.title")}
+                  <h2 className="text-3xl font-sans font-black text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-alaz-orange tracking-tighter uppercase">
+                    KAFE GECESİ OTURUMU
                   </h2>
                   <p className="text-gray-400 font-bold text-xs mt-1 uppercase tracking-widest">{t("setup.subtitle")}</p>
                 </div>
@@ -316,17 +312,8 @@ export function HostSetup() {
                 </div>
 
                 {/* Categories Column */}
-                {gameType === "quiz" ? (
-                  <div className="flex flex-col gap-4 bg-blue-500/10 border border-blue-500/20 p-8 justify-center items-center text-center">
-                    <NeonIcon type="rocket" color="blue" className="w-16 h-16 mb-4 opacity-50" />
-                    <h3 className="text-xl font-black text-blue-400 uppercase tracking-widest mb-2">OTOMATİK SORU HAVUZU</h3>
-                    <p className="text-gray-400 text-sm font-medium">
-                      ALAZ QUIZ modunda kategorilere ihtiyacınız yoktur. Sorular yapay zeka tarafından seçilen global soru havuzundan Türkçe veya Almanca (dil seçiminize göre) otomatik olarak çekilecektir.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-4">
-                    {/* Preset Buttons */}
+                <div className="flex flex-col gap-4">
+                  {/* Preset Buttons */}
                     <div>
                       <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
                         {t("setup.presetLabel")}
@@ -368,7 +355,6 @@ export function HostSetup() {
                       </p>
                     </div>
                   </div>
-                )}
               </div>
 
               <motion.button
@@ -379,7 +365,7 @@ export function HostSetup() {
                 className={`w-full py-6 mt-10 font-sans font-black text-xl uppercase tracking-[0.2em] transition-all duration-500 relative z-50 cursor-pointer rounded-none border-[0.5px] border-white/20 shadow-[0_0_30px_rgba(255,77,0,0.3)] hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] ${
                   isCreating
                     ? "bg-black/80 text-gray-500 cursor-not-allowed"
-                    : "bg-alaz-orange text-black hover:bg-white hover:text-black"
+                    : "btn-magic-gradient hover:text-white"
                 }`}
               >
                 {isCreating
@@ -441,15 +427,15 @@ export function HostSetup() {
             <GlassPanel className="md:col-span-1" neonColor="rgba(255,0,60,0.8)" delay="-3s">
               <div className="p-6 flex items-center justify-between h-full opacity-60 hover:opacity-100 transition-opacity">
                 <div className="flex items-center gap-5">
-                <div>
-                  <h3 className="text-xs font-sans font-semibold text-gray-500 uppercase tracking-widest mb-1">
-                    {t("setup.historyTitle")}
-                  </h3>
-                  <p className="text-[10px] text-gray-600">
-                    {t("setup.historyEmpty")}
-                  </p>
+                  <div>
+                    <h3 className="text-xs font-sans font-semibold text-gray-500 uppercase tracking-widest mb-1">
+                      {t("setup.historyTitle")}
+                    </h3>
+                    <p className="text-[10px] text-gray-600">
+                      {t("setup.historyEmpty")}
+                    </p>
+                  </div>
                 </div>
-              </div>
               </div>
             </GlassPanel>
           </div>

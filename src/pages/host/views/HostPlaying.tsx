@@ -50,28 +50,28 @@ export function HostPlaying({
             className="relative"
           >
             {/* Ambient Glow */}
-            <div className="absolute inset-0 bg-hacker-green/20 blur-[120px] rounded-full" />
+            <div className="absolute inset-0 bg-hacker-green/30 blur-[150px] rounded-full" />
 
-            {/* Spinning Orbital Rings */}
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-              className="absolute inset-[-35%] border border-hacker-green/20 rounded-full border-dashed"
-            />
+            {/* Glowing Spin Ring (Like Timer) */}
             <motion.div
               animate={{ rotate: -360 }}
-              transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-              className="absolute inset-[-50%] border-2 border-cyber-yellow/10 rounded-full"
+              transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+              className="absolute inset-[-15px] rounded-[2.5rem] border-[4px] border-hacker-green shadow-[0_0_30px_rgba(0,255,65,0.8)] border-l-transparent border-r-transparent opacity-90 z-0"
+            />
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+              className="absolute inset-[-25px] rounded-[3rem] border-[2px] border-teal-500 shadow-[0_0_20px_rgba(20,184,166,0.6)] border-t-transparent border-b-transparent opacity-60 z-0"
             />
 
-            <div className="w-72 h-72 rounded-[1rem] cyber-panel border border-hacker-green/40 flex items-center justify-center shadow-[0_0_150px_rgba(0,255,65,0.3)] bg-black/80 backdrop-blur-2xl relative overflow-hidden group">
+            <div className="w-72 h-72 rounded-[2rem] cyber-panel border-2 border-hacker-green flex items-center justify-center shadow-[inset_0_0_80px_rgba(0,255,65,0.2)] bg-black/90 backdrop-blur-2xl relative overflow-hidden group z-10">
               <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.03)_50%,transparent_75%)] bg-[length:250%_250%] animate-shine pointer-events-none" />
               <motion.div
                 key={currentLetter}
                 initial={{ scale: 0.5, opacity: 0, filter: "blur(20px)" }}
                 animate={{ scale: 1, opacity: 1, filter: "blur(0px)" }}
                 transition={{ type: "spring", damping: 20 }}
-                className="text-[7rem] md:text-[10rem] lg:text-[14rem] font-black font-mono text-transparent bg-clip-text bg-gradient-to-br from-white via-hacker-green to-teal-500 leading-none filter drop-shadow-[0_0_40px_rgba(0,255,65,0.6)] animate-flicker"
+                className="text-[7rem] md:text-[10rem] lg:text-[14rem] font-black font-mono text-transparent bg-clip-text bg-gradient-to-br from-white via-hacker-green to-teal-500 leading-none filter drop-shadow-[0_0_40px_rgba(0,255,65,0.8)] animate-pulse"
               >
                 {currentLetter}
               </motion.div>
@@ -162,18 +162,23 @@ export function HostPlaying({
                 stiffness: 150,
                 damping: 20,
               }}
-              className="cyber-panel p-8 text-center border-t border-hacker-green/50 relative overflow-hidden group hover:border-hacker-green/80 transition-all duration-500 hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(0,255,65,0.2)]"
+              className="relative p-[3px] rounded-xl overflow-hidden group hover:scale-[1.05] transition-transform duration-500 shadow-[0_0_20px_rgba(0,255,65,0.1)] hover:shadow-[0_0_40px_rgba(0,255,65,0.4)]"
             >
-              <div className="absolute inset-0 bg-gradient-to-b from-hacker-green/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-hacker-green to-transparent transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
-              <span className="text-[13px] text-hacker-green/70 font-mono uppercase tracking-[0.25em] mb-4 block flex items-center justify-center gap-3">
-                <span className="w-4 h-[1px] bg-hacker-green/40" />
-                {String(idx + 1).padStart(2, "0")} // {t("playing.category")}
-                <span className="w-4 h-[1px] bg-hacker-green/40" />
-              </span>
-              <p className="text-3xl font-black font-mono text-white/90 group-hover:text-cyber-yellow transition-colors drop-shadow-lg">
-                {cat}
-              </p>
+              {/* Conic Gradient Animated Borders */}
+              <div className="absolute inset-0 bg-[conic-gradient(from_0deg,transparent_0_180deg,rgba(0,255,65,1)_360deg)] animate-[spin_4s_linear_infinite]" />
+              <div className="absolute inset-0 bg-[conic-gradient(from_180deg,transparent_0_180deg,rgba(252,238,10,0.8)_360deg)] animate-[spin_4s_linear_infinite]" />
+              
+              <div className="relative h-full w-full bg-black/90 backdrop-blur-2xl p-6 text-center rounded-[10px] z-10 flex flex-col items-center justify-center border border-hacker-green/30 group-hover:bg-black/70 transition-colors">
+                <div className="absolute inset-0 bg-gradient-to-b from-hacker-green/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <span className="text-[12px] text-hacker-green/80 font-mono uppercase tracking-[0.25em] mb-3 flex items-center justify-center gap-3">
+                  <span className="w-3 h-[1px] bg-hacker-green/60" />
+                  {String(idx + 1).padStart(2, "0")} // {t("playing.category")}
+                  <span className="w-3 h-[1px] bg-hacker-green/60" />
+                </span>
+                <p className="text-2xl lg:text-3xl font-black font-mono text-white/90 group-hover:text-cyber-yellow transition-colors drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]">
+                  {cat}
+                </p>
+              </div>
             </motion.div>
           ))}
         </div>
