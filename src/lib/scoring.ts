@@ -1,5 +1,6 @@
 import { normalizeTL } from "./stringUtils";
 import { getSimilarity } from "./fuzzyMatch";
+import { toMillis } from "./timestamps";
 import type {
   Room,
   RoundResultInfo,
@@ -15,11 +16,26 @@ import type {
 export function calculateRoundScores(
   room: Room,
   players: Player[],
-  rawAnswers: Answer[],
+  allAnswers: Answer[],
   activeLetter: string,
 ): RoundResultInfo[] {
   const locale = room.locale || "tr";
   const normalizedLetter = normalizeTL(activeLetter, locale);
+
+  // Defensive de-dup: this function produces one result PER ANSWER DOCUMENT,
+  // so if a player somehow ended up with two answer docs for the same round
+  // (a double-submit race, a retry after a flaky write, etc.) they'd be
+  // scored twice and would also pollute categoryCounts, wrongly costing
+  // OTHER players their uniqueness bonus. Keep only each player's earliest
+  // submission, mirroring the same guard already used for quiz scoring.
+  const seenPlayers = new Set<string>();
+  const rawAnswers = [...allAnswers]
+    .sort((a, b) => toMillis(a.created_at) - toMillis(b.created_at))
+    .filter((answer) => {
+      if (seenPlayers.has(answer.player_id)) return false;
+      seenPlayers.add(answer.player_id);
+      return true;
+    });
 
   // Count occurrences of each answer per category with FUZZY LOGIC (0.85 threshold)
   const categoryCounts: Record<string, Record<string, number>> = {};
@@ -46,15 +62,10 @@ export function calculateRoundScores(
     });
   });
 
-  // Identify the player who submitted early
+  // Identify the player who submitted early.
+  // rawAnswers is already sorted oldest-first from the de-dup step above.
   let earliestPlayerId: string | null = null;
-  const sortedAnswers = [...rawAnswers].sort(
-    (a, b) =>
-      new Date(a.created_at || 0).getTime() -
-      new Date(b.created_at || 0).getTime(),
-  );
-
-  for (const answer of sortedAnswers) {
+  for (const answer of rawAnswers) {
     if (answer.data["_earlySubmit"] === "true") {
       earliestPlayerId = answer.player_id;
       break;

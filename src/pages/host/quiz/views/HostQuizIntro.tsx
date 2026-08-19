@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SoundManager, sounds } from "../../../../lib/audio";
 import { MatrixRain, HackerTerminal } from "../../../../components/HackerBoot";
@@ -48,6 +48,11 @@ export function HostQuizIntro({ onComplete }: HostQuizIntroProps) {
     }
   }, [phase, countdown]);
 
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
   useEffect(() => {
     // 4. WOW Cinematic Phase
     if (phase === "wow") {
@@ -55,11 +60,11 @@ export function HostQuizIntro({ onComplete }: HostQuizIntroProps) {
       SoundManager.getInstance().playSFX(sounds.SIREN, 0.5);
       
       const t5 = setTimeout(() => {
-        onComplete();
+        onCompleteRef.current();
       }, 4500);
       return () => clearTimeout(t5);
     }
-  }, [phase, onComplete]);
+  }, [phase]);
 
   return (
     <div className="w-full h-full flex items-center justify-center bg-black fixed inset-0 z-[100] overflow-hidden noise-suppression font-mono">
@@ -102,7 +107,7 @@ export function HostQuizIntro({ onComplete }: HostQuizIntroProps) {
           >
             <HackerTerminal
               downloadingLabel="DOWNLOADING TRIVIA DATA..."
-              mainframeLabel="CONNECTING TO ALAZ QUIZ MAINFRAME..."
+              mainframeLabel="CONNECTING TO KAMUS QUIZ MAINFRAME..."
             />
             <motion.div
               animate={{ opacity: [1, 0, 1, 0.5, 1], scale: [1, 1.05, 1] }}
@@ -186,7 +191,7 @@ export function HostQuizIntro({ onComplete }: HostQuizIntroProps) {
                 className="text-[100px] md:text-[150px] font-black text-white tracking-tighter uppercase mb-4 text-center leading-none z-10"
                 style={{ textShadow: "0 0 100px rgba(59,130,246,1), 0 0 40px rgba(255,255,255,0.8)" }}
               >
-                ALAZ QUIZ
+                KAMUS QUIZ
               </motion.h1>
 
               <motion.h2

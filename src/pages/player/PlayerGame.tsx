@@ -22,6 +22,10 @@ import { PlayerPlaying } from "./views/PlayerPlaying";
 import { PlayerReview } from "./views/PlayerReview";
 import { PlayerStandings } from "./views/PlayerStandings";
 import { PlayerQuizController } from "./quiz/PlayerQuizController";
+import { PlayerBombController } from "./bomb/PlayerBombController";
+import { PlayerSensorController } from "./sensor/PlayerSensorController";
+import { BackgroundSlider } from "../../components/BackgroundSlider";
+import { PlayerTutorial } from "./components/PlayerTutorial";
 
 export function PlayerGame() {
   const [searchParams] = useSearchParams();
@@ -123,7 +127,12 @@ export function PlayerGame() {
 
   const submitAnswers = useCallback(
     async (isEarly: boolean = false) => {
-      if (!roomId || !playerId || (hasSubmitted.current && !isEarly)) return;
+      // isEarly bir istisna değil, sadece "elle mi otomatik mi gönderildi" bilgisi.
+      // Eskiden `!isEarly` koşulu buraya eklenmişti ve isEarly=true olan HER
+      // çağrı hasSubmitted kontrolünü tamamen atlıyordu — hızlı iki dokunuşla
+      // (veya erken gönderim + zaman aşımı çakışmasıyla) aynı tur için iki
+      // "answers" dokümanı oluşup puanlamayı bozabiliyordu.
+      if (!roomId || !playerId || hasSubmitted.current) return;
       setSubmitStatus("submitting");
       setIsLocked(true);
       hasSubmitted.current = true;
@@ -174,9 +183,23 @@ export function PlayerGame() {
     }
   }, [isLocked, gameState, submitAnswers]);
 
-  // Route to Quiz Controller if game_type is quiz
-  if (room?.game_type === "quiz" && player) {
+  // Route to Quiz Controller if active_game is quiz
+  if ((room?.active_game === "quiz" || room?.game_type === "quiz") && player && room.status !== "tutorial") {
     return <PlayerQuizController room={room} player={player} />;
+  }
+
+  // Route to Bomb Controller if active_game is bomb (except during tutorial)
+  if ((room?.active_game === "bomb" || room?.game_type === "bomb") && player && room.status !== "tutorial") {
+    return <PlayerBombController room={room} player={player} />;
+  }
+
+  if ((room?.active_game === "sensor" || room?.game_type === "sensor") && player && room.status !== "tutorial") {
+    return <PlayerSensorController room={room} player={player} />;
+  }
+
+  // Render tutorial for all game modes if status is tutorial
+  if (room?.status === "tutorial") {
+    return <PlayerTutorial room={room} />;
   }
 
   if (gameState === "closed") {
@@ -198,7 +221,8 @@ export function PlayerGame() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-black flex flex-col text-white relative overflow-hidden font-inter">
+    <div className="min-h-[100dvh] bg-black/60 flex flex-col text-white relative overflow-hidden font-inter">
+      <BackgroundSlider className="fixed inset-0 z-0 opacity-40 pointer-events-none overflow-hidden" />
       <PlayerHeader
         playerName={player?.nickname || t("game.player")}
         totalScore={player?.total_score || 0}
@@ -213,7 +237,7 @@ export function PlayerGame() {
 
       <main className="flex-1 overflow-y-auto touch-auto p-4 md:p-6 pb-[calc(9rem+env(safe-area-inset-bottom))] relative z-10">
         <AnimatePresence mode="wait">
-          {gameState === "lobby" && <PlayerLobby room={room} roomId={roomId} />}
+          {(gameState === "lobby" || gameState === "night_lobby") && <PlayerLobby room={room} roomId={roomId} />}
 
           {(gameState === "intro" || gameState === "gameIntro" || gameState === "countdown") && (
             <motion.div

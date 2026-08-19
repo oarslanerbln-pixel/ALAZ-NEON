@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { MatrixRain, HackerTerminal } from "../../../components/HackerBoot";
@@ -68,6 +68,11 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
     }
   }, [phase, countdown]);
 
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
   useEffect(() => {
     // 5. WOW Cinematic Phase
     if (phase === "wow") {
@@ -75,11 +80,11 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
       SoundManager.getInstance().playSFX(sounds.SIREN, 0.5); // Add siren for urgency
       
       const t5 = setTimeout(() => {
-        onComplete();
+        onCompleteRef.current();
       }, 4500); // 4.5 seconds of pure WOW factor
       return () => clearTimeout(t5);
     }
-  }, [phase, onComplete]);
+  }, [phase]);
 
   return (
     <div className="w-full h-full flex items-center justify-center bg-black fixed inset-0 z-[100] overflow-hidden noise-suppression font-mono">
@@ -122,7 +127,7 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
           >
             <HackerTerminal
               downloadingLabel="DOWNLOADING PLAYER NEURAL DATA..."
-              mainframeLabel="CONNECTING TO ALAZ NEON MAINFRAME..."
+              mainframeLabel="CONNECTING TO KAMUS ARENA MAINFRAME..."
             />
             <motion.div
               animate={{ opacity: [1, 0, 1, 0.5, 1], scale: [1, 1.05, 1] }}
@@ -216,7 +221,7 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
                 className="absolute w-40 h-40 bg-alaz-orange rounded-full pointer-events-none mix-blend-screen"
               />
 
-              {/* Main Title ALAZ NEON */}
+              {/* Main Title ALAZ ARENA */}
               <motion.h1 
                 initial={{ y: 50, opacity: 0, scale: 0.8 }}
                 animate={{ y: 0, opacity: 1, scale: 1 }}
@@ -224,7 +229,7 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
                 className="text-[120px] md:text-[180px] font-black text-white tracking-tighter uppercase mb-4 text-center leading-none"
                 style={{ textShadow: "0 0 100px rgba(255,77,0,1), 0 0 40px rgba(255,255,255,0.8)" }}
               >
-                ALAZ NEON
+                KAMUS ARENA
               </motion.h1>
 
               <motion.h2

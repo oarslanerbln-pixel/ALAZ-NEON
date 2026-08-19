@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { doc, collection, query, where, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { Sentinel } from "../lib/sentinel";
@@ -113,7 +113,7 @@ export function useHostRoom(roomId: string | null) {
     }
   }, [room?.active_letter]);
 
-  const updateRoomStatus = async (
+  const updateRoomStatus = useCallback(async (
     status: Room["status"],
     extra: Partial<Room> = {},
   ) => {
@@ -129,15 +129,15 @@ export function useHostRoom(roomId: string | null) {
       console.error("[useHostRoom] Oda güncellenemedi:", status, err);
       setError(err as Error);
     }
-  };
+  }, [roomId]);
 
-  const updatePlayerScore = async (playerId: string, totalScore: number) => {
+  const updatePlayerScore = useCallback(async (playerId: string, totalScore: number) => {
     try {
       await updateDoc(doc(db, "players", playerId), { total_score: totalScore });
     } catch (err) {
       console.error("[useHostRoom] Skor güncellenemedi:", playerId, err);
     }
-  };
+  }, []);
 
   return {
     room,

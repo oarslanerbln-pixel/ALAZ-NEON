@@ -11,6 +11,8 @@ import { KineticSpark } from "../components/KineticSpark";
 import { SoundManager, sounds } from "../lib/audio";
 import { useLocale } from "../hooks/useLocale";
 import { AttractMode } from "../components/AttractMode";
+import { BackgroundSlider } from "../components/BackgroundSlider";
+import { NeonIcon } from "../components/NeonIcon";
 
 function TiltCard({
   children,
@@ -69,30 +71,12 @@ function TiltCard({
   );
 }
 
-const HERO_IMAGES = [
-  "/hero-1.png",
-  "/hero-2.png",
-  "/hero-3.png",
-  "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?q=80&w=2000&auto=format&fit=crop", // Istanbul 1
-  "https://images.unsplash.com/photo-1527838832700-5059252407fa?q=80&w=2000&auto=format&fit=crop", // Istanbul 2
-];
 
 export function LandingPage() {
   const navigate = useNavigate();
   const [showIntro, setShowIntro] = useState(true);
   const { t } = useLocale();
-  const [bgIndex, setBgIndex] = useState(0);
   const [isIdle, setIsIdle] = useState(false);
-  const [showGameSelection, setShowGameSelection] = useState(false);
-
-  // Background slider logic
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setBgIndex((prev) => (prev + 1) % HERO_IMAGES.length);
-    }, 6000); // 6 seconds per image
-    return () => clearInterval(interval);
-  }, []);
-
   // Idle Timer logic
   useEffect(() => {
     let idleTimeout: number;
@@ -127,29 +111,7 @@ export function LandingPage() {
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-6 text-center min-h-screen relative overflow-hidden bg-black">
       {/* Background Slider - ALWAYS VISIBLE */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={bgIndex}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 1.5, ease: "easeInOut" }}
-          className="absolute inset-0 z-0 overflow-hidden"
-        >
-          <motion.img
-            initial={{ scale: 1.0 }}
-            animate={{ scale: 1.15 }}
-            transition={{ duration: 10, ease: "linear" }}
-            src={HERO_IMAGES[bgIndex]}
-            alt="Hero Background"
-            className="w-full h-full object-cover object-center opacity-90"
-          />
-          {/* Cinematic Gradient Overlays - Reduced for visibility */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.5)_100%)] pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80 pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/60 pointer-events-none" />
-        </motion.div>
-      </AnimatePresence>
+      <BackgroundSlider />
 
       <AnimatePresence>
         {!showIntro && (
@@ -200,7 +162,7 @@ export function LandingPage() {
             <div className="relative w-full max-w-7xl flex flex-col items-center justify-center flex-1">
               <KineticSpark
                 delay={0}
-                showTagline
+                showTagline={false}
                 tagline={t("landing.tagline")}
                 playAudio={false}
               />
@@ -217,13 +179,13 @@ export function LandingPage() {
                   SoundManager.getInstance().playSFX(sounds.CLICK);
                   setShowIntro(false);
                 }}
-                className="px-10 py-4 border border-white/20 bg-black/40 hover:bg-white hover:text-black hover:border-white transition-all text-sm font-sans font-black uppercase tracking-widest backdrop-blur-md group"
+                className="px-10 py-4 border border-white/40 bg-gradient-to-r from-red-900 to-white/90 hover:from-red-800 hover:to-white transition-all text-sm font-sans font-black uppercase tracking-widest backdrop-blur-md group shadow-[0_0_30px_rgba(153,27,27,0.5)] text-black"
                 style={{ clipPath: "polygon(15px 0, calc(100% - 15px) 0, 100% 15px, 100% calc(100% - 15px), calc(100% - 15px) 100%, 15px 100%, 0 calc(100% - 15px), 0 15px)" }}
               >
                 <span className="flex items-center gap-3">
-                  <span className="w-2 h-2 bg-alaz-orange animate-pulse"></span>
+                  <span className="w-2 h-2 bg-black animate-pulse"></span>
                   SİSTEME GİRİŞ YAP
-                  <span className="w-2 h-2 bg-[#ff003c] animate-pulse"></span>
+                  <span className="w-2 h-2 bg-black animate-pulse"></span>
                 </span>
               </button>
             </motion.div>
@@ -242,15 +204,13 @@ export function LandingPage() {
                 <KineticSpark showTagline delay={-1} />
               </div>
             </div>
-
             {/* Role Selection Buttons */}
-            {!showGameSelection ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10 w-full max-w-4xl mx-auto pb-20">
-                <TiltCard
-                  onClick={() => {
-                    SoundManager.getInstance().playSFX(sounds.CLICK);
-                    setShowGameSelection(true);
-                  }}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 w-full max-w-4xl mx-auto pb-20">
+              <TiltCard
+                onClick={() => {
+                  SoundManager.getInstance().playSFX(sounds.CLICK);
+                  navigate("/host/setup");
+                }}
                 className="group relative overflow-hidden p-10 transition-all bg-black/40 backdrop-blur-xl border border-alaz-orange/30 hover:border-alaz-orange cursor-pointer"
                 style={{ clipPath: "polygon(25px 0, calc(100% - 25px) 0, 100% 25px, 100% calc(100% - 25px), calc(100% - 25px) 100%, 25px 100%, 0 calc(100% - 25px), 0 25px)" }}
               >
@@ -263,13 +223,13 @@ export function LandingPage() {
                 <div className="relative z-20 text-center flex flex-col items-center justify-center min-h-[160px]">
                   <span className="text-white/60 text-[10px] uppercase tracking-[0.4em] font-black mb-4 group-hover:text-alaz-orange transition-colors flex items-center justify-center gap-3">
                     <span className="w-1.5 h-1.5 bg-alaz-orange rounded-none animate-pulse"></span>
-                    {t("landing.hostLabel")}
+                    GECE OTURUMU (HOST)
                   </span>
                   <h2 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight uppercase">
-                    {t("landing.hostTitle")}
+                    YÖNETİCİ
                   </h2>
                   <p className="text-gray-400 text-sm leading-relaxed font-medium">
-                    {t("landing.hostDesc")}
+                    Kafe gecesini başlat ve oyuncuları davet et.
                   </p>
                 </div>
                 <div className="absolute inset-0 bg-alaz-orange/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20 mix-blend-screen" />
@@ -305,56 +265,94 @@ export function LandingPage() {
                 <div className="absolute inset-0 bg-[#ff003c]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20 mix-blend-screen" />
               </TiltCard>
             </div>
-            ) : (
-              <div className="w-full max-w-4xl mx-auto pb-20 flex flex-col items-center">
-                <h2 className="text-3xl font-black text-white mb-10 tracking-widest uppercase">
-                  Oyun Seçimi
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 w-full">
-                  <TiltCard
-                    onClick={() => {
-                      SoundManager.getInstance().playSFX(sounds.START);
-                      navigate("/host/setup", { state: { gameType: "scattegories" } });
-                    }}
-                    className="group relative overflow-hidden p-10 transition-all bg-black/40 backdrop-blur-xl border border-alaz-orange/30 hover:border-alaz-orange cursor-pointer"
-                    style={{ clipPath: "polygon(25px 0, calc(100% - 25px) 0, 100% 25px, 100% calc(100% - 25px), calc(100% - 25px) 100%, 25px 100%, 0 calc(100% - 25px), 0 25px)" }}
-                  >
-                    <div className="relative z-20 text-center flex flex-col items-center justify-center min-h-[160px]">
-                      <h2 className="text-3xl md:text-5xl font-black text-alaz-orange mb-4 tracking-tight uppercase">
-                        ALAZ NEON
-                      </h2>
-                      <p className="text-gray-400 text-sm leading-relaxed font-medium">
-                        Kelime yeteneğini test et. Klasik İsim Şehir oyununun hiper-modern versiyonu.
-                      </p>
-                    </div>
-                  </TiltCard>
 
-                  <TiltCard
-                    onClick={() => {
-                      SoundManager.getInstance().playSFX(sounds.START);
-                      navigate("/host/setup", { state: { gameType: "quiz" } });
-                    }}
-                    className="group relative overflow-hidden p-10 transition-all bg-black/40 backdrop-blur-xl border border-blue-500/30 hover:border-blue-500 cursor-pointer"
-                    style={{ clipPath: "polygon(25px 0, calc(100% - 25px) 0, 100% 25px, 100% calc(100% - 25px), calc(100% - 25px) 100%, 25px 100%, 0 calc(100% - 25px), 0 25px)" }}
-                  >
-                    <div className="relative z-20 text-center flex flex-col items-center justify-center min-h-[160px]">
-                      <h2 className="text-3xl md:text-5xl font-black text-blue-500 mb-4 tracking-tight uppercase">
-                        ALAZ QUIZ
-                      </h2>
-                      <p className="text-gray-400 text-sm leading-relaxed font-medium">
-                        Genel kültürünü kanıtla. Kim Milyoner Olmak İster tarzı zeka ve hız savaşı.
-                      </p>
-                    </div>
-                  </TiltCard>
-                </div>
+            {/* Game Modes Showcase Section */}
+            <div className="w-full max-w-6xl mx-auto pb-24 px-6 flex flex-col items-center">
+              <h3 className="text-white/50 text-sm font-black uppercase tracking-[0.5em] mb-12">Oyun Modları</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
+                
+                {/* ALAZ ARENA Card */}
                 <button
-                  onClick={() => setShowGameSelection(false)}
-                  className="mt-12 px-8 py-3 text-sm font-bold text-gray-400 hover:text-white transition-colors"
+                  onClick={() => {
+                    SoundManager.getInstance().playSFX(sounds.CLICK);
+                    navigate("/host/setup");
+                  }}
+                  className="relative group overflow-hidden bg-black/40 backdrop-blur-xl border border-white/10 hover:border-alaz-orange/50 p-8 rounded-3xl text-left transition-all duration-500 hover:scale-[1.03] shadow-[0_0_20px_rgba(0,0,0,0.5)] hover:shadow-[0_0_40px_rgba(255,85,0,0.3)]"
                 >
-                  &larr; GERİ DÖN
+                  <div className="absolute -right-20 -top-20 w-48 h-48 bg-alaz-orange/20 rounded-full blur-[80px] group-hover:bg-alaz-orange/40 transition-colors duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+                  
+                  <div className="relative z-10 flex flex-col h-full">
+                    <div className="w-14 h-14 bg-alaz-orange/10 border border-alaz-orange/30 rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform duration-500">
+                      <NeonIcon type="flame" color="orange" className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-2xl font-black text-white mb-2 tracking-widest group-hover:text-alaz-orange transition-colors">KAMUS <span className="text-transparent bg-clip-text bg-gradient-to-r from-alaz-orange to-yellow-500">ARENA</span></h3>
+                    <p className="text-gray-400 text-xs leading-relaxed mt-2 flex-1">Klasik kelime oyununun hiper-modern versiyonu.</p>
+                  </div>
                 </button>
+
+                {/* ALAZ QUIZ Card */}
+                <button
+                  onClick={() => {
+                    SoundManager.getInstance().playSFX(sounds.CLICK);
+                    navigate("/host/setup");
+                  }}
+                  className="relative group overflow-hidden bg-black/40 backdrop-blur-xl border border-white/10 hover:border-neon-blue/50 p-8 rounded-3xl text-left transition-all duration-500 hover:scale-[1.03] shadow-[0_0_20px_rgba(0,0,0,0.5)] hover:shadow-[0_0_40px_rgba(0,229,255,0.3)]"
+                >
+                  <div className="absolute -right-20 -top-20 w-48 h-48 bg-neon-blue/20 rounded-full blur-[80px] group-hover:bg-neon-blue/40 transition-colors duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+                  
+                  <div className="relative z-10 flex flex-col h-full">
+                    <div className="w-14 h-14 bg-neon-blue/10 border border-neon-blue/30 rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform duration-500">
+                      <NeonIcon type="lightbulb" color="blue" className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-2xl font-black text-white mb-2 tracking-widest group-hover:text-neon-blue transition-colors">KAMUS <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-blue-400">QUIZ</span></h3>
+                    <p className="text-gray-400 text-xs leading-relaxed mt-2 flex-1">Zeka, hız ve bilginin çarpıştığı arena.</p>
+                  </div>
+                </button>
+
+                {/* ALAZ BOMB Card */}
+                <button
+                  onClick={() => {
+                    SoundManager.getInstance().playSFX(sounds.CLICK);
+                    navigate("/host/setup");
+                  }}
+                  className="relative group overflow-hidden bg-black/40 backdrop-blur-xl border border-white/10 hover:border-red-500/50 p-8 rounded-3xl text-left transition-all duration-500 hover:scale-[1.03] shadow-[0_0_20px_rgba(0,0,0,0.5)] hover:shadow-[0_0_40px_rgba(255,0,0,0.3)]"
+                >
+                  <div className="absolute -right-20 -top-20 w-48 h-48 bg-red-500/20 rounded-full blur-[80px] group-hover:bg-red-500/40 transition-colors duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+                  
+                  <div className="relative z-10 flex flex-col h-full">
+                    <div className="w-14 h-14 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform duration-500">
+                      <NeonIcon type="rocket" color="red" className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-2xl font-black text-white mb-2 tracking-widest group-hover:text-red-500 transition-colors">KAMUS <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">BOMB</span></h3>
+                    <p className="text-gray-400 text-xs leading-relaxed mt-2 flex-1">Bomba elinde patlamadan kelimeyi bul!</p>
+                  </div>
+                </button>
+
+                {/* ALAZ SENSÖR Card */}
+                <button
+                  onClick={() => {
+                    SoundManager.getInstance().playSFX(sounds.CLICK);
+                    navigate("/host/setup");
+                  }}
+                  className="relative group overflow-hidden bg-black/40 backdrop-blur-xl border border-white/10 hover:border-neon-pink/50 p-8 rounded-3xl text-left transition-all duration-500 hover:scale-[1.03] shadow-[0_0_20px_rgba(0,0,0,0.5)] hover:shadow-[0_0_40px_rgba(255,0,255,0.3)]"
+                >
+                  <div className="absolute -right-20 -top-20 w-48 h-48 bg-neon-pink/20 rounded-full blur-[80px] group-hover:bg-neon-pink/40 transition-colors duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+                  
+                  <div className="relative z-10 flex flex-col h-full">
+                    <div className="w-14 h-14 bg-neon-pink/10 border border-neon-pink/30 rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform duration-500">
+                      <NeonIcon type="dashboard" color="pink" className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-2xl font-black text-white mb-2 tracking-widest group-hover:text-neon-pink transition-colors">KAMUS <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-pink to-purple-500">SENSÖR</span></h3>
+                    <p className="text-gray-400 text-xs leading-relaxed mt-2 flex-1">Gizemli görseli ilk sen bil, devasa butonla yarış.</p>
+                  </div>
+                </button>
+
               </div>
-            )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -1,0 +1,89 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Function to check if the user is authenticated
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    match /rooms/{roomId} {
+      // Anyone can read the room data
+      allow read: if true;
+      
+      // Only authenticated users can create a room. The creator must set themselves as the host.
+      allow create: if isAuth() && request.resource.data.host_uid == request.auth.uid;
+      
+      // Only the host can update the room settings and change games.
+      allow update: if isAuth() && resource.data.host_uid == request.auth.uid;
+      
+      // Only the host can delete the room.
+      allow delete: if isAuth() && resource.data.host_uid == request.auth.uid;
+    }
+
+    match /players/{playerId} {
+      // Anyone can see the players
+      allow read: if true;
+      
+      // Authenticated users can join a room (create their player profile)
+      allow create: if isAuth() && request.resource.data.uid == request.auth.uid;
+      
+      // Players can only update their own scores/answers. Host can also update anyone's score.
+      allow update: if isAuth() && (
+        resource.data.uid == request.auth.uid || 
+        get(/databases/$(database)/documents/rooms/$(resource.data.room_id)).data.host_uid == request.auth.uid
+      );
+      
+      // Only host or the player themselves can delete the player profile
+      allow delete: if isAuth() && (
+        resource.data.uid == request.auth.uid || 
+        get(/databases/$(database)/documents/rooms/$(resource.data.room_id)).data.host_uid == request.auth.uid
+      );
+    }
+
+    // ALAZ League Rules
+    match /users/{userId} {
+      // Anyone can read profiles for the leaderboard
+      allow read: if true;
+      
+      // Users can only create or update their own profile
+      allow create, update: if isAuth() && request.auth.uid == userId;
+      
+      // Do not allow deletion of profiles directly
+      allow delete: if false;
+    }
+
+    match /answers/{answerId} {
+      // Anyone can read answers (host needs to tally scores; players see their own review).
+      allow read: if true;
+
+      // A player may only submit an answer under their own player_id, and that
+      // player document must actually belong to them (uid match). This was
+      // previously unmatched by any rule, which meant Firestore's default-deny
+      // silently rejected every answer submission in every game mode.
+      allow create: if isAuth() &&
+        request.resource.data.player_id is string &&
+        get(/databases/$(database)/documents/players/$(request.resource.data.player_id)).data.uid == request.auth.uid;
+
+      // Answers are never edited after submission, only cleared out by the host
+      // between rounds/games.
+      allow update: if false;
+      allow delete: if isAuth() &&
+        get(/databases/$(database)/documents/rooms/$(resource.data.room_id)).data.host_uid == request.auth.uid;
+    }
+
+    match /seasons/{seasonId} {
+      // Seasons are readable by everyone
+      allow read: if true;
+      // Writing seasons should only be done via admin/Cloud Functions (or manually by Host for now, so we can allow it for authenticated users during dev)
+      allow write: if isAuth();
+    }
+
+    match /rewards/{rewardId} {
+      // Authenticated users can read, create, and update rewards (to mark them as used)
+      // In production, reward creation should probably be handled by a Cloud Function, but for this dev phase, client-side creation is allowed.
+      allow read, create, update: if isAuth();
+      allow delete: if false;
+    }
+  }
+}

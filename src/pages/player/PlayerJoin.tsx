@@ -2,9 +2,15 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
-import { db } from "../../lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import type { User } from "firebase/auth";
+import { db, auth } from "../../lib/firebase";
 import { useLocale } from "../../hooks/useLocale";
 import { errorMessage } from "../../lib/errors";
+import { PhoneAuth } from "../../components/PhoneAuth";
+import { PlayerProfileCard } from "./components/PlayerProfileCard";
+import { PlayerRewards } from "./components/PlayerRewards";
+import { useUserProfile } from "../../hooks/useUserProfile";
 import type { Room } from "../../types/database";
 
 export function PlayerJoin() {
@@ -17,7 +23,28 @@ export function PlayerJoin() {
   const [errorMsg, setErrorMsg] = useState("");
   const [teamName, setTeamName] = useState("");
   const [gameMode, setGameMode] = useState<"individual" | "team">("individual");
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [authChecking, setAuthChecking] = useState(true);
+  const { profile, updateNickname } = useUserProfile();
   const { t, switchLocale } = useLocale();
+  const [nicknamePrefilledFrom, setNicknamePrefilledFrom] = useState<string | null>(null);
+
+  // Profile'dan gelen nickname'i RENDER sırasında senkronla (bkz. useRoom.ts
+  // vb. aynı desen) — effect içinde yapmak fazladan bir render turu
+  // doğuruyordu. nicknamePrefilledFrom, kullanıcı alanı sonradan elle
+  // değiştirse bile aynı profile için tekrar üzerine yazmamayı sağlıyor.
+  if (profile?.nickname && nicknamePrefilledFrom !== profile.nickname && !nickname) {
+    setNickname(profile.nickname);
+    setNicknamePrefilledFrom(profile.nickname);
+  }
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setAuthChecking(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Check room mode when code changes
   useEffect(() => {
@@ -65,11 +92,17 @@ export function PlayerJoin() {
       }
 
       try {
+        if (profile?.nickname !== nickname.trim()) {
+           await updateNickname(nickname.trim());
+        }
+
         const playerRef = await addDoc(collection(db, "players"), {
             room_id: room.id,
             nickname: nickname.trim(),
             team_name: room.game_mode === "team" ? teamName.trim() : null,
             total_score: 0,
+            night_score: 0,
+            uid: currentUser?.uid || "anonymous",
             created_at: Date.now()
         });
 
@@ -145,8 +178,24 @@ export function PlayerJoin() {
               )}
             </AnimatePresence>
 
-            <div className="space-y-6">
-              {/* Room Code */}
+            {authChecking ? (
+              <div className="flex justify-center items-center py-10">
+                <span className="text-alaz-orange font-bold uppercase tracking-widest animate-pulse">CONNECTING...</span>
+              </div>
+            ) : !currentUser ? (
+              <PhoneAuth onSuccess={() => {}} />
+            ) : (
+              <>
+                <div className="mb-4">
+                  <PlayerProfileCard />
+                </div>
+                
+                <div className="mb-8">
+                  <PlayerRewards />
+                </div>
+                
+                <div className="space-y-6">
+                  {/* Room Code */}
               <div className="group">
                 <label className="flex items-center gap-2 text-alaz-orange/70 text-xs font-bold uppercase tracking-widest mb-2">
                   <span className="text-[#ff003c]">[1]</span> {t("join.roomCode")}
@@ -253,6 +302,8 @@ export function PlayerJoin() {
                 </span>
               )}
             </motion.button>
+              </>
+            )}
           </form>
 
           {/* Decorative Corner Accents */}
