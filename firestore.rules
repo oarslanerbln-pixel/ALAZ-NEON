@@ -129,9 +129,36 @@ service cloud.firestore {
     }
 
     match /rewards/{rewardId} {
-      // Authenticated users can read, create, and update rewards (to mark them as used)
-      // In production, reward creation should probably be handled by a Cloud Function, but for this dev phase, client-side creation is allowed.
-      allow read, create, update: if isAuth();
+      // Önceden herhangi bir giriş yapmış oturum (anonim oyuncular DAHİL)
+      // her ödülü okuyup "claimed" olarak işaretleyebiliyordu — bir oyuncu
+      // tarayıcı konsolundan başka bir oyuncunun ödülünü kullanılmış
+      // gösterebilir ya da tüm ödül koleksiyonunu listeleyip kodları
+      // toplayabilirdi. Artık okuma sadece kendi ödülüne (PlayerRewards
+      // ekranı) ya da işletme hesabına (RewardVerify doğrulama ekranı,
+      // kodla arama yapıyor — resource.data.uid personelin kendi uid'i
+      // değil) açık.
+      allow read: if isAuth() &&
+        (resource.data.uid == request.auth.uid ||
+         request.auth.token.firebase.sign_in_provider == 'password');
+
+      // Ödül üretimi host tarafında (kazanan OYUNCULAR adına) oluyor —
+      // host'un kendi kimliği kazananınkinden farklı, bu yüzden "sadece
+      // kendi uid'in için yaz" kısıtı burada uygulanamıyor. Üretimde bu
+      // Cloud Function'a taşınmalı (bkz. app_config'teki benzer not);
+      // MVP için en azından bir client'ın doğrudan "claimed" (kullanılmış)
+      // bir ödül YARATMASI engelleniyor.
+      allow create: if isAuth() &&
+        request.resource.data.status == 'available' &&
+        !('claimed_at' in request.resource.data);
+
+      // Asıl güvenlik sınırı burada: "kullanıldı" işaretlemek yalnızca
+      // işletme hesabına (barda doğrulama yapan personel) açık, ve yalnızca
+      // status/claimed_at alanlarına dokunabiliyor — başka bir alanı
+      // (uid, code, title...) değiştiremiyor.
+      allow update: if isAuth() &&
+        request.auth.token.firebase.sign_in_provider == 'password' &&
+        touchesOnly(['status', 'claimed_at']);
+
       allow delete: if false;
     }
   }

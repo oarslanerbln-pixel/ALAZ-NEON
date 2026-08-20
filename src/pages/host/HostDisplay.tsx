@@ -8,6 +8,8 @@ import { KineticSpark } from "../../components/KineticSpark";
 import { sounds, SoundManager } from "../../lib/audio";
 import { calculateRoundScores } from "../../lib/scoring";
 import { Sentinel } from "../../lib/sentinel";
+import { grantGameRewards } from "../../lib/rewards";
+import { useVenue } from "../../contexts/VenueContextCore";
 
 // Hooks
 import { useHostRoom } from "../../hooks/useHostRoom";
@@ -110,6 +112,7 @@ function HostDisplayGame({
   updateRoomStatus,
   updatePlayerScore,
 }: { roomId: string | null } & ReturnType<typeof useHostRoom>) {
+  const { venue } = useVenue();
   // Local UI States
   const [gameState, setGameState] = useState<
     | "intro"
@@ -459,6 +462,12 @@ function HostDisplayGame({
       const finalAwards = evaluateBestOfNight(gameHistory);
       setAwards(finalAwards);
 
+      // Ödül dağıtımı Firestore yazma hatasında bile oyunun bitişini
+      // engellememeli — hata varsa sadece konsola düşer.
+      grantGameRewards(room.game_mode, players, venue).catch((err) =>
+        console.error("[HostDisplay] Ödül dağıtımı başarısız:", err),
+      );
+
       await updateRoomStatus("finished");
       setGameState("finished");
     } else {
@@ -489,6 +498,9 @@ function HostDisplayGame({
     if (confirmEnd) {
       const finalAwards = evaluateBestOfNight(gameHistory);
       setAwards(finalAwards);
+      grantGameRewards(room.game_mode, players, venue).catch((err) =>
+        console.error("[HostDisplay] Ödül dağıtımı başarısız:", err),
+      );
       await updateRoomStatus("finished");
       setGameState("finished");
     }

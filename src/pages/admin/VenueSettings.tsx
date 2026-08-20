@@ -5,8 +5,14 @@ import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../../lib/firebase";
 import { useVenue } from "../../contexts/VenueContextCore";
-import { DEFAULT_VENUE_CONFIG } from "../../types/database";
+import { DEFAULT_VENUE_CONFIG, type Reward } from "../../types/database";
 import { errorMessage } from "../../lib/errors";
+
+const REWARD_TYPE_OPTIONS: { value: Reward["type"]; label: string }[] = [
+  { value: "drink", label: "İçecek" },
+  { value: "discount", label: "İndirim" },
+  { value: "special", label: "Özel" },
+];
 
 /**
  * Aktif mekan markasını düzenleme ekranı — yalnızca satıcı/işletme sahibi
@@ -26,6 +32,9 @@ export function VenueSettings() {
   const [logoUrl, setLogoUrl] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#ff5500");
   const [rewardsEnabled, setRewardsEnabled] = useState(true);
+  const [rewardTitle, setRewardTitle] = useState("");
+  const [rewardDescription, setRewardDescription] = useState("");
+  const [rewardType, setRewardType] = useState<Reward["type"]>("drink");
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -41,6 +50,9 @@ export function VenueSettings() {
     setLogoUrl(venue.logo_url || "");
     setPrimaryColor(venue.primary_color || DEFAULT_VENUE_CONFIG.primary_color!);
     setRewardsEnabled(venue.rewards_enabled);
+    setRewardTitle(venue.reward_title || "");
+    setRewardDescription(venue.reward_description || "");
+    setRewardType(venue.reward_type || "drink");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -58,6 +70,9 @@ export function VenueSettings() {
         logo_url: logoUrl.trim() || null,
         primary_color: primaryColor,
         rewards_enabled: rewardsEnabled,
+        reward_title: rewardTitle.trim(),
+        reward_description: rewardDescription.trim(),
+        reward_type: rewardType,
         updated_at: Date.now(),
       });
       setSavedAt(Date.now());
@@ -196,6 +211,78 @@ export function VenueSettings() {
               />
             </button>
           </div>
+
+          {/*
+            Ödül şablonu: her mekan kendi ödülünü kod yazmadan tanımlıyor.
+            Başlık boşsa oyun sonunda hiç ödül üretilmiyor (bkz. lib/
+            rewards.ts) — toggle açık ama şablon boşken sahte ödül
+            dağıtılmasın diye.
+          */}
+          {rewardsEnabled && (
+            <div className="space-y-6 bg-white/5 border border-white/10 rounded-2xl px-6 py-6">
+              <div className="space-y-3">
+                <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
+                  Ödül Başlığı
+                </label>
+                <input
+                  type="text"
+                  value={rewardTitle}
+                  onChange={(e) => setRewardTitle(e.target.value)}
+                  placeholder="Örn: Ücretsiz Espresso"
+                  className="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-alaz-orange transition-all"
+                />
+                <p className="text-white/30 text-[11px]">
+                  Boş bırakılırsa oyun bittiğinde hiç ödül dağıtılmaz — sistemi kapatmadan geçici olarak durdurmanın yolu.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
+                  Ödül Açıklaması (opsiyonel)
+                </label>
+                <input
+                  type="text"
+                  value={rewardDescription}
+                  onChange={(e) => setRewardDescription(e.target.value)}
+                  placeholder="Örn: Barda kod ile geçerli, 1 kişi/gece"
+                  className="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-alaz-orange transition-all"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
+                  Ödül Tipi
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  {REWARD_TYPE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setRewardType(opt.value)}
+                      className={`py-3 text-xs font-black uppercase tracking-widest rounded-xl border transition-all ${
+                        rewardType === opt.value
+                          ? "bg-alaz-orange border-alaz-orange text-black"
+                          : "bg-black/40 border-white/10 text-white/50 hover:border-white/30"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <p className="text-white/30 text-[11px]">
+                Kazanan: bireysel modda en yüksek puanlı oyuncu (veya beraberlikte hepsi); takım modunda kazanan takımın tüm üyeleri; bomba modunda son ayakta kalan oyuncu. Oyun bittiği an otomatik dağıtılır.
+              </p>
+
+              <Link
+                to="/admin/rewards"
+                className="block text-center text-[10px] uppercase tracking-widest text-alaz-orange hover:text-white border border-alaz-orange/30 hover:border-white/30 rounded-xl py-3 transition-colors"
+              >
+                Ödül Doğrulama Ekranına Git →
+              </Link>
+            </div>
+          )}
 
           <motion.button
             whileHover={{ scale: 1.02 }}

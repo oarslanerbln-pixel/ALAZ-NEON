@@ -324,3 +324,105 @@ describe("app_config — mekan markası", () => {
     );
   });
 });
+
+describe("rewards koleksiyonu", () => {
+  const REWARD_ID = "reward-1";
+
+  /** PLAYER_UID'e ait, "available" durumunda tek bir ödül dokümanı kurar. */
+  async function seedReward(overrides: Record<string, unknown> = {}) {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "rewards", REWARD_ID), {
+        uid: PLAYER_UID,
+        nickname: "OYUNCU",
+        type: "drink",
+        title: "Ücretsiz Espresso",
+        description: "",
+        status: "available",
+        code: "A1B2C3",
+        earned_at: Date.now(),
+        ...overrides,
+      });
+    });
+  }
+
+  it("oyuncu kendi ödülünü okuyabilir", async () => {
+    await seedReward();
+    await assertSucceeds(getDoc(doc(asPlayer(), "rewards", REWARD_ID)));
+  });
+
+  it("başka bir oyuncu bu ödülü okuyamaz — önceki kural herhangi bir girişe tüm koleksiyonu açıyordu", async () => {
+    await seedReward();
+    await assertFails(getDoc(doc(asHost(), "rewards", REWARD_ID)));
+  });
+
+  it("işletme hesabı (doğrulama ekranı) başkasının ödülünü kod ile okuyabilir", async () => {
+    await seedReward();
+    await assertSucceeds(getDoc(doc(asVenueOwner(), "rewards", REWARD_ID)));
+  });
+
+  it("host, kazanan oyuncu adına 'available' bir ödül oluşturabilir", async () => {
+    await assertSucceeds(
+      setDoc(doc(asHost(), "rewards", "reward-new"), {
+        uid: PLAYER_UID,
+        nickname: "OYUNCU",
+        type: "drink",
+        title: "Ücretsiz Espresso",
+        description: "",
+        status: "available",
+        code: "X9Y8Z7",
+        earned_at: Date.now(),
+      })
+    );
+  });
+
+  it("doğrudan 'claimed' durumunda bir ödül oluşturulamaz", async () => {
+    await assertFails(
+      setDoc(doc(asHost(), "rewards", "reward-fake-claimed"), {
+        uid: PLAYER_UID,
+        nickname: "OYUNCU",
+        type: "drink",
+        title: "Sahte",
+        description: "",
+        status: "claimed",
+        claimed_at: Date.now(),
+        code: "FAKE01",
+        earned_at: Date.now(),
+      })
+    );
+  });
+
+  it("oyuncu KENDİ ödülünü 'claimed' işaretleyemez — asıl güvenlik açığı buydu", async () => {
+    await seedReward();
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rewards", REWARD_ID), {
+        status: "claimed",
+        claimed_at: Date.now(),
+      })
+    );
+  });
+
+  it("işletme hesabı (barda doğrulama) ödülü 'claimed' işaretleyebilir", async () => {
+    await seedReward();
+    await assertSucceeds(
+      updateDoc(doc(asVenueOwner(), "rewards", REWARD_ID), {
+        status: "claimed",
+        claimed_at: Date.now(),
+      })
+    );
+  });
+
+  it("işletme hesabı bile status/claimed_at dışındaki alanları değiştiremez", async () => {
+    await seedReward();
+    await assertFails(
+      updateDoc(doc(asVenueOwner(), "rewards", REWARD_ID), {
+        status: "claimed",
+        code: "ELE-GECIRILDI",
+      })
+    );
+  });
+
+  it("ödül dokümanı hiçbir zaman silinemez", async () => {
+    await seedReward();
+    await assertFails(deleteDoc(doc(asVenueOwner(), "rewards", REWARD_ID)));
+  });
+});

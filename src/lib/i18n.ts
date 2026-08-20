@@ -555,6 +555,13 @@ const translations = {
   },
   "rewards.active": { tr: "AKTİF ÖDÜLLER", de: "AKTIVE PRÄMIEN", en: "ACTIVE REWARDS" },
   "rewards.use": { tr: "KULLAN", de: "EINLÖSEN", en: "USE" },
+  "rewards.close": { tr: "Kapat", de: "Schließen", en: "Close" },
+  "rewards.codeLabel": { tr: "Ödül Kodu", de: "Prämiencode", en: "Reward Code" },
+  "rewards.showAtCounter": {
+    tr: "Barda bu ekranı göster",
+    de: "Zeig diesen Bildschirm an der Bar",
+    en: "Show this screen at the counter",
+  },
 
   // ═══════════════════════════════════════════
   // REVIEW — otomatik ret sebepleri (host'a kısa etiket)
