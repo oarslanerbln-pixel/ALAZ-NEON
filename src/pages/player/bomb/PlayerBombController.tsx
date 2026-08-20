@@ -25,6 +25,11 @@ export function PlayerBombController({ room, player }: Props) {
 
   useEffect(() => {
     if (isMyTurn && room.status === "bomb_active") {
+      // Süre dolup patladığında (kelime GÖNDERİLMEDEN) `word` state'i hiç
+      // temizlenmiyordu — sadece başarılı gönderimde temizleniyordu (aşağıda).
+      // Bomba sonraki bir turda yine bu oyuncuya gelirse, önceki yarım/yazılmış
+      // kelime input'ta duruyor gibi görünüyordu. Her yeni sıra başında sıfırlıyoruz.
+      setWord("");
       // Vibrate mobile device if supported when turn starts
       if (navigator.vibrate) {
         navigator.vibrate([200, 100, 200]);
