@@ -115,7 +115,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                   <div className="w-14 h-14 bg-alaz-orange/10 border border-alaz-orange/30 rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform duration-500">
                     <NeonIcon type="flame" color="orange" className="w-8 h-8" />
                   </div>
-                  <h3 className="text-3xl font-black text-white mb-2 tracking-widest group-hover:text-alaz-orange transition-colors">KAMUS <span className="text-transparent bg-clip-text bg-gradient-to-r from-alaz-orange to-yellow-500">ARENA</span></h3>
+                  <h3 className="text-3xl font-black text-white mb-2 tracking-widest group-hover:text-alaz-orange transition-colors">HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-alaz-orange to-yellow-500">ARENA</span></h3>
                   <p className="text-gray-400 text-sm leading-relaxed mt-2 flex-1">Klasik kelime oyununun hiper-modern versiyonu. Kelime yeteneğini test et.</p>
                   
                   <div className="mt-6 flex items-center gap-2 text-alaz-orange text-xs font-bold tracking-[0.2em] uppercase opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">
@@ -136,7 +136,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                   <div className="w-14 h-14 bg-neon-blue/10 border border-neon-blue/30 rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform duration-500">
                     <NeonIcon type="lightbulb" color="blue" className="w-8 h-8" />
                   </div>
-                  <h3 className="text-3xl font-black text-white mb-2 tracking-widest group-hover:text-neon-blue transition-colors">KAMUS <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-blue-400">QUIZ</span></h3>
+                  <h3 className="text-3xl font-black text-white mb-2 tracking-widest group-hover:text-neon-blue transition-colors">HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-blue-400">QUIZ</span></h3>
                   <p className="text-gray-400 text-sm leading-relaxed mt-2 flex-1">Genel kültürünü kanıtla. Zeka, hız ve bilginin çarpıştığı arena.</p>
                   
                   <div className="mt-6 flex items-center gap-2 text-neon-blue text-xs font-bold tracking-[0.2em] uppercase opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">
@@ -157,7 +157,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                   <div className="w-14 h-14 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform duration-500">
                     <NeonIcon type="rocket" color="red" className="w-8 h-8" />
                   </div>
-                  <h3 className="text-3xl font-black text-white mb-2 tracking-widest group-hover:text-red-500 transition-colors">KAMUS <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">BOMB</span></h3>
+                  <h3 className="text-3xl font-black text-white mb-2 tracking-widest group-hover:text-red-500 transition-colors">HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">BOMB</span></h3>
                   <p className="text-gray-400 text-sm leading-relaxed mt-2 flex-1">Bomba elinde patlamadan kelimeyi bul! Adrenalin dolu bomb party modu.</p>
                   
                   <div className="mt-6 flex items-center gap-2 text-red-500 text-xs font-bold tracking-[0.2em] uppercase opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">
@@ -178,7 +178,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                   <div className="w-14 h-14 bg-neon-pink/10 border border-neon-pink/30 rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform duration-500">
                     <NeonIcon type="dashboard" color="pink" className="w-8 h-8" />
                   </div>
-                  <h3 className="text-3xl font-black text-white mb-2 tracking-widest group-hover:text-neon-pink transition-colors">KAMUS <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-pink to-purple-500">SENSÖR</span></h3>
+                  <h3 className="text-3xl font-black text-white mb-2 tracking-widest group-hover:text-neon-pink transition-colors">HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-pink to-purple-500">SENSÖR</span></h3>
                   <p className="text-gray-400 text-sm leading-relaxed mt-2 flex-1">Hızlı olan kazanır! Gizemli görseli ilk sen bil, devasa neon butonla yarış.</p>
                   
                   <div className="mt-6 flex items-center gap-2 text-neon-pink text-xs font-bold tracking-[0.2em] uppercase opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">

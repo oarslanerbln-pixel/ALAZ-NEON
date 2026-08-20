@@ -63,7 +63,7 @@ export function PlayerProfileCard() {
         */}
         <div className="flex justify-between items-start gap-3 z-10">
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] text-white/50 tracking-[0.3em] uppercase mb-1">KAMUS ID CARD</p>
+            <p className="text-[10px] text-white/50 tracking-[0.3em] uppercase mb-1">HENGAME ID CARD</p>
             <h2
               className="text-xl sm:text-2xl font-bold tracking-wide uppercase drop-shadow-md truncate"
               style={{ color: "#fff", textShadow: `0 0 10px ${color}` }}

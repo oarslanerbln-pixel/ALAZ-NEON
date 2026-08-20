@@ -1,26 +1,44 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { auth } from "../../lib/firebase";
 import { useLocale } from "../../hooks/useLocale";
 import { upperTL } from "../../lib/stringUtils";
+import { errorMessage } from "../../lib/errors";
 import { NeonIcon } from "../../components/NeonIcon";
+import { useVenue } from "../../contexts/VenueContextCore";
 
 export function RegisterPage() {
   const navigate = useNavigate();
   const { t, locale } = useLocale();
+  const { venue } = useVenue();
   const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
+  // Bu form daha önce hiçbir yere bağlı değildi: submit'te sahte bir
+  // gecikme atıp "başarılı" gibi /login'e yönlendiriyordu. Gerçek bir
+  // hesap hiç oluşmuyordu. Şimdi gerçek Firebase Auth kaydı yapıyor —
+  // bu hesap aynı zamanda /admin/venue (mekan markası ayarları) erişim
+  // kapısı: o rota, e-posta/şifre ile giriş yapılmış olmasını arıyor.
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg("");
     setLoading(true);
-    // Auth logic will be added here
-    setTimeout(() => {
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      if (nickname.trim()) {
+        await updateProfile(cred.user, { displayName: nickname.trim() });
+      }
+      navigate("/admin/venue");
+    } catch (err) {
+      setErrorMsg(errorMessage(err));
+    } finally {
       setLoading(false);
-      navigate("/login");
-    }, 1500);
+    }
   };
 
   return (
@@ -85,7 +103,7 @@ export function RegisterPage() {
             </motion.div>
             
             <motion.h1 
-              className="text-6xl md:text-7xl font-black italic tracking-tighter mb-2 uppercase relative"
+              className="text-4xl sm:text-5xl md:text-7xl font-black italic tracking-tighter mb-2 uppercase relative break-words"
               animate={{
                 backgroundImage: [
                   "linear-gradient(45deg, #ff4d00, #ff003c)",
@@ -103,7 +121,7 @@ export function RegisterPage() {
                 filter: "drop-shadow(0px 10px 20px rgba(255,77,0,0.4))",
               }}
             >
-              KAMUS
+              {venue.name}
             </motion.h1>
             <p className="text-gray-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-4 flex items-center justify-center gap-2">
               <span className="w-4 h-[1px] bg-alaz-orange/50"></span>
@@ -113,6 +131,18 @@ export function RegisterPage() {
           </div>
 
         <form onSubmit={handleRegister} className="space-y-6">
+          <AnimatePresence>
+            {errorMsg && (
+              <motion.p
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="text-[#ff003c] text-xs font-bold bg-[#ff003c]/10 border border-[#ff003c]/30 rounded-xl px-4 py-3 text-center"
+              >
+                {errorMsg}
+              </motion.p>
+            )}
+          </AnimatePresence>
           <div className="space-y-8 relative z-20" style={{ transform: "translateZ(30px)" }}>
             <div className="space-y-3 relative group">
               <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest ml-2 group-focus-within:text-alaz-orange transition-colors">

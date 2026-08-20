@@ -120,7 +120,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
             >
               <div className="bg-black/80 border border-blue-500/50 p-8 rounded-xl shadow-[0_0_30px_rgba(59,130,246,0.3)]">
                 <h2 className="text-2xl font-black text-blue-400 uppercase tracking-widest mb-4">
-                  KAMUS QUIZ
+                  HENGAME QUIZ
                 </h2>
                 <p className="text-gray-400 font-medium">
                   Lütfen ana ekrana bakarak oyunun başlamasını bekleyin.

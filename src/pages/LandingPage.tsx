@@ -10,6 +10,7 @@ import {
 import { KineticSpark } from "../components/KineticSpark";
 import { SoundManager, sounds } from "../lib/audio";
 import { useLocale } from "../hooks/useLocale";
+import { useVenue } from "../contexts/VenueContextCore";
 import { AttractMode } from "../components/AttractMode";
 import { BackgroundSlider } from "../components/BackgroundSlider";
 import { NeonIcon } from "../components/NeonIcon";
@@ -76,6 +77,7 @@ export function LandingPage() {
   const navigate = useNavigate();
   const [showIntro, setShowIntro] = useState(true);
   const { t } = useLocale();
+  const { venue } = useVenue();
   const [isIdle, setIsIdle] = useState(false);
   // Idle Timer logic
   useEffect(() => {
@@ -171,6 +173,7 @@ export function LandingPage() {
                 showTagline={false}
                 tagline={t("landing.tagline")}
                 playAudio={false}
+                text={venue.name}
               />
             </div>
             
@@ -207,7 +210,7 @@ export function LandingPage() {
             {/* HERO SECTION - MASSIVE WIDE TEXT */}
             <div className="flex-1 flex flex-col items-center justify-center w-full mt-24 mb-16">
               <div className="w-full max-w-[1400px] h-[35vh] min-h-[300px] relative pointer-events-none drop-shadow-[0_0_50px_rgba(255,215,0,0.2)]">
-                <KineticSpark showTagline delay={-1} />
+                <KineticSpark showTagline delay={-1} text={venue.name} />
               </div>
             </div>
             {/* Role Selection Buttons */}
@@ -292,7 +295,7 @@ export function LandingPage() {
                     <div className="w-14 h-14 bg-alaz-orange/10 border border-alaz-orange/30 rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform duration-500">
                       <NeonIcon type="flame" color="orange" className="w-8 h-8" />
                     </div>
-                    <h3 className="text-2xl font-black text-white mb-2 tracking-widest group-hover:text-alaz-orange transition-colors">KAMUS <span className="text-transparent bg-clip-text bg-gradient-to-r from-alaz-orange to-yellow-500">ARENA</span></h3>
+                    <h3 className="text-2xl font-black text-white mb-2 tracking-widest group-hover:text-alaz-orange transition-colors">HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-alaz-orange to-yellow-500">ARENA</span></h3>
                     <p className="text-gray-400 text-xs leading-relaxed mt-2 flex-1">Klasik kelime oyununun hiper-modern versiyonu.</p>
                   </div>
                 </button>
@@ -312,7 +315,7 @@ export function LandingPage() {
                     <div className="w-14 h-14 bg-neon-blue/10 border border-neon-blue/30 rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform duration-500">
                       <NeonIcon type="lightbulb" color="blue" className="w-8 h-8" />
                     </div>
-                    <h3 className="text-2xl font-black text-white mb-2 tracking-widest group-hover:text-neon-blue transition-colors">KAMUS <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-blue-400">QUIZ</span></h3>
+                    <h3 className="text-2xl font-black text-white mb-2 tracking-widest group-hover:text-neon-blue transition-colors">HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-blue-400">QUIZ</span></h3>
                     <p className="text-gray-400 text-xs leading-relaxed mt-2 flex-1">Zeka, hız ve bilginin çarpıştığı arena.</p>
                   </div>
                 </button>
@@ -332,7 +335,7 @@ export function LandingPage() {
                     <div className="w-14 h-14 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform duration-500">
                       <NeonIcon type="rocket" color="red" className="w-8 h-8" />
                     </div>
-                    <h3 className="text-2xl font-black text-white mb-2 tracking-widest group-hover:text-red-500 transition-colors">KAMUS <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">BOMB</span></h3>
+                    <h3 className="text-2xl font-black text-white mb-2 tracking-widest group-hover:text-red-500 transition-colors">HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">BOMB</span></h3>
                     <p className="text-gray-400 text-xs leading-relaxed mt-2 flex-1">Bomba elinde patlamadan kelimeyi bul!</p>
                   </div>
                 </button>
@@ -352,7 +355,7 @@ export function LandingPage() {
                     <div className="w-14 h-14 bg-neon-pink/10 border border-neon-pink/30 rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform duration-500">
                       <NeonIcon type="dashboard" color="pink" className="w-8 h-8" />
                     </div>
-                    <h3 className="text-2xl font-black text-white mb-2 tracking-widest group-hover:text-neon-pink transition-colors">KAMUS <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-pink to-purple-500">SENSÖR</span></h3>
+                    <h3 className="text-2xl font-black text-white mb-2 tracking-widest group-hover:text-neon-pink transition-colors">HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-pink to-purple-500">SENSÖR</span></h3>
                     <p className="text-gray-400 text-xs leading-relaxed mt-2 flex-1">Gizemli görseli ilk sen bil, devasa butonla yarış.</p>
                   </div>
                 </button>

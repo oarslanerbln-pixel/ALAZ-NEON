@@ -2,6 +2,7 @@ import { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ToastProvider } from "./contexts/ToastContext";
+import { VenueProvider } from "./contexts/VenueContext";
 import { LandingPage } from "./pages/LandingPage";
 import { useAuth } from "./hooks/useAuth";
 
@@ -32,6 +33,9 @@ const LoginPage = lazy(() =>
 const RegisterPage = lazy(() =>
   import("./pages/auth/RegisterPage").then((m) => ({ default: m.RegisterPage }))
 );
+const VenueSettings = lazy(() =>
+  import("./pages/admin/VenueSettings").then((m) => ({ default: m.VenueSettings }))
+);
 
 function RouteFallback() {
   return (
@@ -48,28 +52,32 @@ function App() {
 
   return (
     <BrowserRouter>
-      <ToastProvider>
-        <Suspense fallback={<RouteFallback />}>
-          <Routes>
-            {/* Core Layout Wraps Everything */}
-            <Route element={<Layout />}>
-              {/* New Landing Page as Root */}
-              <Route path="/" element={<LandingPage />} />
-              {/* Player Routes (Mobile) */}
-              <Route path="/join" element={<PlayerJoin />} />
-              {/* Player Game Container (Shared) */}
-              <Route path="/play" element={<PlayerGame />} />
-              {/* Host Routes (TV/iPad) */}
-              <Route path="/host/setup" element={<HostSetup />} />
-              <Route path="/host/display" element={<HostDisplay />} />
-              {/* New Feature Routes */}
-              <Route path="/leaderboard" element={<Leaderboard />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-            </Route>
-          </Routes>
-        </Suspense>
-      </ToastProvider>
+      <VenueProvider>
+        <ToastProvider>
+          <Suspense fallback={<RouteFallback />}>
+            <Routes>
+              {/* Core Layout Wraps Everything */}
+              <Route element={<Layout />}>
+                {/* New Landing Page as Root */}
+                <Route path="/" element={<LandingPage />} />
+                {/* Player Routes (Mobile) */}
+                <Route path="/join" element={<PlayerJoin />} />
+                {/* Player Game Container (Shared) */}
+                <Route path="/play" element={<PlayerGame />} />
+                {/* Host Routes (TV/iPad) */}
+                <Route path="/host/setup" element={<HostSetup />} />
+                <Route path="/host/display" element={<HostDisplay />} />
+                {/* New Feature Routes */}
+                <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                {/* Satıcı/işletme: aktif mekan markasını değiştirme ekranı */}
+                <Route path="/admin/venue" element={<VenueSettings />} />
+              </Route>
+            </Routes>
+          </Suspense>
+        </ToastProvider>
+      </VenueProvider>
     </BrowserRouter>
   );
 }

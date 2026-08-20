@@ -4,6 +4,7 @@ import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { useLocale } from "../../../hooks/useLocale";
 import { PlayerBackground } from "../../../components/PlayerBackground";
+import { LanguageSwitcher } from "../../../components/LanguageSwitcher";
 import type { Room } from "../../../types/database";
 
 interface PlayerLobbyProps {
@@ -53,6 +54,8 @@ export function PlayerLobby({ room, roomId }: PlayerLobbyProps) {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,black_100%)] z-0 pointer-events-none opacity-50" />
 
       <div className="relative z-10 flex flex-col items-center w-full max-w-sm">
+
+        <LanguageSwitcher className="mb-6" />
 
         {/* Animated waiting icon */}
         <div className="relative w-20 h-20 flex items-center justify-center mb-8">
