@@ -380,12 +380,22 @@ function HostDisplayGame({
 
   const handleTutorialComplete = useCallback(async () => {
     if (!roomId || !room) return;
+    // Yerel gösteri (~13sn'lik HostIntro sinematiği) başlarken oda durumu
+    // Firestore'da hâlâ "tutorial" kalıyordu — bu yüzden o süre boyunca
+    // oyuncunun telefonu son tutorial slaytında donmuş gibi görünüyordu,
+    // TV'deki gösteriden habersiz kalıyordu. Firestore'u da güncelleyerek
+    // oyuncu tarafının "Ana Ekrana Bakın" bekleme ekranına geçmesini sağlıyoruz
+    // (bkz. PlayerGame.tsx — gameState "gameIntro" için zaten bu ekranı gösteriyordu,
+    // sadece hiç tetiklenmiyordu).
+    await updateRoomStatus("gameIntro");
     setGameState("gameIntro");
-  }, [roomId, room]);
+  }, [roomId, room, updateRoomStatus]);
 
   const handleGameIntroComplete = useCallback(() => {
+    // Aynı sebep: harf çarkı dönerken de oda durumu hâlâ senkronsuzdu.
+    updateRoomStatus("countdown");
     setGameState("countdown");
-  }, []);
+  }, [updateRoomStatus]);
 
   const handleSpinnerComplete = async () => {
     if (!roomId || !room) return;
