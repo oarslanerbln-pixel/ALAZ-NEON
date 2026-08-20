@@ -183,18 +183,27 @@ export function LandingPage() {
               transition={{ delay: 1, duration: 1 }}
               className="mb-24"
             >
+              {/*
+                Eski hâli `koyu kırmızı → beyaz` degradesi üzerine siyah
+                yazıydı: solda yazı zemine gömülüyor, sağda ise beyaz üstünde
+                sertleşiyordu — tek bir buton içinde iki farklı okunabilirlik.
+                Artık tek aileden bir kor degradesi (kehribar → alaz-orange),
+                üstünde neredeyse siyah yazı; her iki uçta da kontrast yüksek
+                ve renk hero başlığıyla aynı sıcak paletten geliyor.
+              */}
               <button
                 onClick={() => {
                   SoundManager.getInstance().playSFX(sounds.CLICK);
                   setShowIntro(false);
                 }}
-                className="px-10 py-4 border border-white/40 bg-gradient-to-r from-red-900 to-white/90 hover:from-red-800 hover:to-white transition-all text-sm font-sans font-black uppercase tracking-widest backdrop-blur-md group shadow-[0_0_30px_rgba(153,27,27,0.5)] text-black"
-                style={{ clipPath: "polygon(15px 0, calc(100% - 15px) 0, 100% 15px, 100% calc(100% - 15px), calc(100% - 15px) 100%, 15px 100%, 0 calc(100% - 15px), 0 15px)" }}
+                className="relative px-8 py-4 sm:px-14 sm:py-6 bg-gradient-to-r from-[#FFC15E] via-[#FF8A2E] to-[#FF5500] hover:from-[#FFD98A] hover:via-[#FFA04D] hover:to-[#FF6B1A] transition-all text-base sm:text-xl font-sans font-black uppercase tracking-[0.18em] group shadow-[0_0_40px_rgba(255,85,0,0.45)] hover:shadow-[0_0_60px_rgba(255,140,40,0.6)] text-[#1a0a00] hover:scale-[1.03] active:scale-[0.99]"
+                // Köşe kesimi 15px → 22px: daha belirgin sekizgen siluet.
+                style={{ clipPath: "polygon(22px 0, calc(100% - 22px) 0, 100% 22px, 100% calc(100% - 22px), calc(100% - 22px) 100%, 22px 100%, 0 calc(100% - 22px), 0 22px)" }}
               >
-                <span className="flex items-center gap-3">
-                  <span className="w-2 h-2 bg-black animate-pulse"></span>
+                <span className="flex items-center gap-3 sm:gap-4 whitespace-nowrap">
+                  <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-[#1a0a00] animate-pulse shrink-0"></span>
                   {t("landing.loginCta")}
-                  <span className="w-2 h-2 bg-black animate-pulse"></span>
+                  <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-[#1a0a00] animate-pulse shrink-0"></span>
                 </span>
               </button>
             </motion.div>
