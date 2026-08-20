@@ -182,7 +182,7 @@ export function HostStandings({
         whileTap={{ scale: 0.98 }}
         className="mt-6 w-full max-w-sm py-4 bg-white text-black hover:bg-alaz-orange hover:text-white font-black uppercase tracking-[0.3em] text-xl transition-all border-b-4 border-black active:border-b-0 active:translate-y-1"
       >
-        {room?.current_round === room?.total_rounds ? "FINISH GAME" : "NEXT ROUND"}
+        {room?.current_round === room?.total_rounds ? t("standings.finishGame") : t("standings.nextRound")}
       </motion.button>
     </motion.div>
   );

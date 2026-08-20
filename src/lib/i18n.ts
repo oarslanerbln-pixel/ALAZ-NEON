@@ -290,6 +290,8 @@ const translations = {
   // STANDINGS (Mid-game Leaderboard)
   // ═══════════════════════════════════════════
   "standings.title": { tr: "GÜNCEL PUAN DURUMU", de: "AKTUELLE PLATZIERUNG" },
+  "standings.nextRound": { tr: "SONRAKİ TUR", de: "NÄCHSTE RUNDE" },
+  "standings.finishGame": { tr: "OYUNU BİTİR", de: "SPIEL BEENDEN" },
   "standings.playerTitle": { tr: "PUAN DURUMU EKRANDA", de: "PUNKTESTAND AUF DEM BILDSCHIRM" },
   "standings.playerDesc": { 
     tr: "Liderlik tablosu için ana ekrana (TV) bak. Sonraki raunt birazdan başlayacak.", 
