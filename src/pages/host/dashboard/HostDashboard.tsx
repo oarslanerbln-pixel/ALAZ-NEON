@@ -8,6 +8,7 @@ import { HostHeader } from "../components/HostHeader";
 import type { Room, Player, GameType } from "../../../types/database";
 
 import { getRandomSensorImage } from "../../../data/sensorImages";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface HostDashboardProps {
   room: Room;
@@ -16,6 +17,8 @@ interface HostDashboardProps {
 }
 
 export function HostDashboard({ room, players, updateRoomStatus }: HostDashboardProps) {
+  const { t } = useLocale();
+
   const handleStartGame = async (game: GameType) => {
     SoundManager.getInstance().playSFX(sounds.START);
     // Scattegories "lobby" ile başlar. Buraya kalıcı olarak "intro" yazmak
@@ -65,7 +68,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
           <div className="flex flex-col gap-6">
             <div className="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20 flex flex-col items-center shadow-[0_0_30px_rgba(255,215,0,0.1)]">
               <h3 className="text-white font-black text-xl mb-6 uppercase tracking-widest text-center">
-                Geceye Katıl
+                {t("dashboard.joinNight")}
               </h3>
               <div className="bg-white p-4 rounded-xl">
                 <QRCodeSVG value={joinUrl} size={180} bgColor="#ffffff" fgColor="#000000" level="H" />
@@ -75,11 +78,11 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
 
             <div className="flex-1 bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 p-6 flex flex-col overflow-hidden max-h-[400px]">
               <h3 className="text-white/60 font-black text-sm uppercase tracking-widest mb-4">
-                Oyuncular ({players.length})
+                {t("dashboard.playersCount", players.length)}
               </h3>
               <div className="flex-1 overflow-y-auto pr-2 space-y-2">
                 {players.length === 0 ? (
-                  <div className="text-gray-500 text-sm text-center mt-10">Bekleniyor...</div>
+                  <div className="text-gray-500 text-sm text-center mt-10">{t("dashboard.waiting")}</div>
                 ) : (
                   players.map((p) => (
                     <motion.div
@@ -89,7 +92,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                       className="bg-white/5 border border-white/10 p-3 rounded-xl flex justify-between items-center"
                     >
                       <span className="font-bold text-white">{p.nickname}</span>
-                      <span className="text-alaz-orange font-mono text-sm">{p.night_score || 0} Puan</span>
+                      <span className="text-alaz-orange font-mono text-sm">{t("dashboard.pointsSuffix", p.night_score || 0)}</span>
                     </motion.div>
                   ))
                 )}
@@ -99,7 +102,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
 
           {/* Game Selection Column */}
           <div className="lg:col-span-2 flex flex-col gap-6">
-            <h2 className="text-3xl font-black text-white uppercase tracking-tight">Oyun Başlat</h2>
+            <h2 className="text-3xl font-black text-white uppercase tracking-tight">{t("dashboard.startGame")}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
               {/* ALAZ ARENA Card */}
@@ -116,10 +119,10 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                     <NeonIcon type="flame" color="orange" className="w-8 h-8" />
                   </div>
                   <h3 className="text-3xl font-black text-white mb-2 tracking-widest group-hover:text-alaz-orange transition-colors">HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-alaz-orange to-yellow-500">ARENA</span></h3>
-                  <p className="text-gray-400 text-sm leading-relaxed mt-2 flex-1">Klasik kelime oyununun hiper-modern versiyonu. Kelime yeteneğini test et.</p>
+                  <p className="text-gray-400 text-sm leading-relaxed mt-2 flex-1">{t("dashboard.modeArenaDesc")}</p>
                   
                   <div className="mt-6 flex items-center gap-2 text-alaz-orange text-xs font-bold tracking-[0.2em] uppercase opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">
-                    Oturumu Başlat <span className="text-lg leading-none">→</span>
+                    {t("dashboard.startSession")} <span className="text-lg leading-none">→</span>
                   </div>
                 </div>
               </button>
@@ -137,7 +140,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                     <NeonIcon type="lightbulb" color="blue" className="w-8 h-8" />
                   </div>
                   <h3 className="text-3xl font-black text-white mb-2 tracking-widest group-hover:text-neon-blue transition-colors">HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-blue-400">QUIZ</span></h3>
-                  <p className="text-gray-400 text-sm leading-relaxed mt-2 flex-1">Genel kültürünü kanıtla. Zeka, hız ve bilginin çarpıştığı arena.</p>
+                  <p className="text-gray-400 text-sm leading-relaxed mt-2 flex-1">{t("dashboard.modeQuizDesc")}</p>
                   
                   <div className="mt-6 flex items-center gap-2 text-neon-blue text-xs font-bold tracking-[0.2em] uppercase opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">
                     Oturumu Başlat <span className="text-lg leading-none">→</span>
@@ -158,7 +161,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                     <NeonIcon type="rocket" color="red" className="w-8 h-8" />
                   </div>
                   <h3 className="text-3xl font-black text-white mb-2 tracking-widest group-hover:text-red-500 transition-colors">HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">BOMB</span></h3>
-                  <p className="text-gray-400 text-sm leading-relaxed mt-2 flex-1">Bomba elinde patlamadan kelimeyi bul! Adrenalin dolu bomb party modu.</p>
+                  <p className="text-gray-400 text-sm leading-relaxed mt-2 flex-1">{t("dashboard.modeBombDesc")}</p>
                   
                   <div className="mt-6 flex items-center gap-2 text-red-500 text-xs font-bold tracking-[0.2em] uppercase opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">
                     Oturumu Başlat <span className="text-lg leading-none">→</span>
@@ -179,7 +182,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                     <NeonIcon type="dashboard" color="pink" className="w-8 h-8" />
                   </div>
                   <h3 className="text-3xl font-black text-white mb-2 tracking-widest group-hover:text-neon-pink transition-colors">HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-pink to-purple-500">SENSÖR</span></h3>
-                  <p className="text-gray-400 text-sm leading-relaxed mt-2 flex-1">Hızlı olan kazanır! Gizemli görseli ilk sen bil, devasa neon butonla yarış.</p>
+                  <p className="text-gray-400 text-sm leading-relaxed mt-2 flex-1">{t("dashboard.modeSensorDesc")}</p>
                   
                   <div className="mt-6 flex items-center gap-2 text-neon-pink text-xs font-bold tracking-[0.2em] uppercase opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">
                     Oturumu Başlat <span className="text-lg leading-none">→</span>

@@ -4,6 +4,7 @@ import type { Room, Player } from "../../../types/database";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface Props {
   room: Room;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function HostBombActive({ room, players, onExplode }: Props) {
+  const { t } = useLocale();
   const targetPlayer = players.find((p) => p.id === room.bomb_target_player);
   const [timeLeft, setTimeLeft] = useState(15);
   const onExplodeRef = useRef(onExplode);
@@ -140,7 +142,7 @@ export function HostBombActive({ room, players, onExplode }: Props) {
       
       {/* Top Header */}
       <div className="absolute top-10 w-full flex flex-col items-center justify-center z-20">
-        <h2 className="text-2xl font-bold text-gray-500 uppercase tracking-[0.5em] mb-2">KATEGORİ</h2>
+        <h2 className="text-2xl font-bold text-gray-500 uppercase tracking-[0.5em] mb-2">{t("bomb.category")}</h2>
         <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]">
           {room.active_letter}
         </h1>
@@ -201,7 +203,7 @@ export function HostBombActive({ room, players, onExplode }: Props) {
           <div className="absolute -bottom-2 -left-2 w-4 h-4 border-b-2 border-l-2 border-[#ff003c]" />
           <div className="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-[#ff003c]" />
 
-          <p className="text-sm font-bold text-[#ff4d00] uppercase tracking-[0.4em] mb-4">Sıra Kimde?</p>
+          <p className="text-sm font-bold text-[#ff4d00] uppercase tracking-[0.4em] mb-4">{t("bomb.whoseTurn")}</p>
           <motion.h2 
             key={targetPlayer.id}
             initial={{ scale: 0.5, opacity: 0, y: 20 }}
@@ -253,7 +255,7 @@ export function HostBombActive({ room, players, onExplode }: Props) {
                 <line x1="15" y1="9" x2="9" y2="15"/>
                 <line x1="9" y1="9" x2="15" y2="15"/>
               </svg>
-              <span className="text-red-500 font-black tracking-widest">KELİMEYİ REDDET & CEZALANDIR</span>
+              <span className="text-red-500 font-black tracking-widest">{t("bomb.rejectWord")}</span>
             </button>
           </motion.div>
         )}

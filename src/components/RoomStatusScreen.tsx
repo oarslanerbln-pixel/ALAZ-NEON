@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useLocale } from "../hooks/useLocale";
 
 type Kind = "loading" | "notfound" | "error";
 
@@ -16,22 +17,23 @@ interface Props {
  */
 export function RoomStatusScreen({ kind, roomId, detail }: Props) {
   const navigate = useNavigate();
+  const { t } = useLocale();
 
   const config = {
     loading: {
       color: "#00ff41",
-      title: "ODA YÜKLENİYOR",
-      body: "Firestore bağlantısı kuruluyor...",
+      title: t("roomStatus.loadingTitle"),
+      body: t("roomStatus.loadingBody"),
     },
     notfound: {
       color: "#fcee0a",
-      title: "ODA BULUNAMADI",
-      body: "Bu oda silinmiş olabilir ya da adres hatalı. Yeni bir oda açman gerekiyor.",
+      title: t("roomStatus.notfoundTitle"),
+      body: t("roomStatus.notfoundBody"),
     },
     error: {
       color: "#ff4d00",
-      title: "BAĞLANTI HATASI",
-      body: "Firestore'a erişilemedi. Güvenlik kuralları, internet bağlantısı veya kota sınırını kontrol et.",
+      title: t("roomStatus.errorTitle"),
+      body: t("roomStatus.errorBody"),
     },
   }[kind];
 
@@ -70,13 +72,13 @@ export function RoomStatusScreen({ kind, roomId, detail }: Props) {
             onClick={() => navigate("/host/setup")}
             className="px-6 py-3 bg-white text-black rounded-xl font-black uppercase text-xs tracking-widest hover:bg-alaz-orange hover:text-white transition-all"
           >
-            Yeni Oda Aç
+            {t("roomStatus.newRoom")}
           </button>
           <button
             onClick={() => window.location.reload()}
             className="px-6 py-3 bg-black border border-white/20 text-white/80 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-white/10 transition-all"
           >
-            Tekrar Dene
+            {t("roomStatus.retry")}
           </button>
         </div>
       )}

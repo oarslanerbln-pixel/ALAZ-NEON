@@ -5,6 +5,7 @@ import { db } from "../../../lib/firebase";
 import { doc, updateDoc, runTransaction } from "firebase/firestore";
 import { useToast } from "../../../contexts/ToastContextCore";
 import { NeonIcon } from "../../../components/NeonIcon";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface Props {
   room: Room;
@@ -15,6 +16,7 @@ export function PlayerSensorController({ room, player }: Props) {
   const [answer, setAnswer] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { showToast } = useToast();
+  const { t } = useLocale();
 
   const handleBuzz = async () => {
     if (room.status !== "sensor_active" || isSubmitting) return;
@@ -49,7 +51,7 @@ export function PlayerSensorController({ room, player }: Props) {
     } catch (err) {
       console.error(err);
       if (err instanceof Error && err.message !== "Geç kaldın!") {
-        showToast("Bir hata oluştu!", "error");
+        showToast(t("sensor.toastError"), "error");
       }
     } finally {
       // Small cooldown before allowing another click if transaction failed
@@ -70,7 +72,7 @@ export function PlayerSensorController({ room, player }: Props) {
       setAnswer("");
     } catch (err) {
       console.error(err);
-      showToast("Cevap gönderilemedi!", "error");
+      showToast(t("sensor.toastSubmitFailed"), "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -81,10 +83,10 @@ export function PlayerSensorController({ room, player }: Props) {
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center z-10 relative">
         <NeonIcon type="rocket" color="pink" className="w-20 h-20 mb-6 animate-pulse" />
         <h2 className="text-3xl font-black text-white mb-2 uppercase tracking-widest">
-          HAZIR OL
+          {t("sensor.getReady")}
         </h2>
         <p className="text-gray-400 font-medium">
-          Görsel açıldığında butona ilk basan sen ol!
+          {t("sensor.beFirst")}
         </p>
       </div>
     );
@@ -100,11 +102,11 @@ export function PlayerSensorController({ room, player }: Props) {
           className="w-64 h-64 rounded-full bg-red-600 border-8 border-red-800 shadow-[0_0_100px_rgba(220,38,38,0.8)] flex items-center justify-center"
         >
           <span className="text-4xl font-black text-white uppercase tracking-widest drop-shadow-md">
-            BUZZ!
+            {t("sensor.buzz")}
           </span>
         </motion.button>
         <p className="mt-12 text-gray-400 font-bold uppercase tracking-widest animate-pulse">
-          Cevabı biliyorsan bas!
+          {t("sensor.pressIfYouKnow")}
         </p>
       </div>
     );
@@ -117,10 +119,10 @@ export function PlayerSensorController({ room, player }: Props) {
       return (
         <div className="flex-1 flex flex-col items-center justify-center p-6 z-10 relative">
           <h2 className="text-3xl font-black text-green-500 mb-2 uppercase tracking-widest">
-            Sende!
+            {t("sensor.yourTurn")}
           </h2>
           <p className="text-gray-400 font-medium mb-8">
-            Hemen cevabını yaz ve gönder.
+            {t("sensor.writeAndSend")}
           </p>
           
           <form onSubmit={handleSubmitAnswer} className="w-full max-w-sm flex flex-col gap-4">
@@ -128,7 +130,7 @@ export function PlayerSensorController({ room, player }: Props) {
               type="text"
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
-              placeholder="Cevabın nedir?"
+              placeholder={t("sensor.answerPlaceholder")}
               className="w-full bg-black/60 border-2 border-green-500/50 p-6 text-2xl text-center text-white focus:border-green-500 focus:outline-none rounded-xl"
               autoFocus
             />
@@ -137,7 +139,7 @@ export function PlayerSensorController({ room, player }: Props) {
               disabled={isSubmitting || !answer.trim()}
               className="w-full py-4 bg-green-600 text-white font-black uppercase tracking-widest rounded-xl hover:bg-green-500 disabled:opacity-50"
             >
-              Gönder
+              {t("sensor.send")}
             </button>
           </form>
         </div>
@@ -148,10 +150,10 @@ export function PlayerSensorController({ room, player }: Props) {
       <div className="flex-1 flex flex-col items-center justify-center p-6 z-10 relative text-center">
         <NeonIcon type="settings" color="pink" className="w-20 h-20 mb-6 opacity-50" />
         <h2 className="text-3xl font-black text-red-500 mb-2 uppercase tracking-widest">
-          KİLİTLİ
+          {t("sensor.locked")}
         </h2>
         <p className="text-gray-400 font-medium">
-          Başka bir oyuncu butona bastı. Cevap vermesi bekleniyor...
+          {t("sensor.someoneElseBuzzed")}
         </p>
       </div>
     );
@@ -165,19 +167,19 @@ export function PlayerSensorController({ room, player }: Props) {
           <>
             <NeonIcon type="crown" color="gold" className="w-20 h-20 mb-6" />
             <h2 className="text-4xl font-black text-yellow-500 mb-2 uppercase tracking-widest">
-              TEBRİKLER!
+              {t("sensor.congrats")}
             </h2>
             <p className="text-gray-400 font-medium">
-              Doğru bildin ve +100 puan kazandın!
+              {t("sensor.correctWonPoints")}
             </p>
           </>
         ) : (
           <>
             <h2 className="text-3xl font-black text-white mb-2 uppercase tracking-widest">
-              Görsel Açıldı
+              {t("sensor.imageRevealed")}
             </h2>
             <p className="text-gray-400 font-medium">
-              Doğru cevap ekranda. Sıradaki tura hazırlan!
+              {t("sensor.getReadyNextRound")}
             </p>
           </>
         )}

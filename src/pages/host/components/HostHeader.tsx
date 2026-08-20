@@ -1,5 +1,6 @@
 import { NeonIcon } from "../../../components/NeonIcon";
 import { LanguageSwitcher } from "../../../components/LanguageSwitcher";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface HostHeaderProps {
   room: {
@@ -13,6 +14,10 @@ interface HostHeaderProps {
 }
 
 export function HostHeader({ room, onEndGameEarly }: HostHeaderProps) {
+  // Hook, erken `return null`'dan ÖNCE çağrılmak zorunda — koşullu hook
+  // çağrısı React'in hook sırası kuralını bozardı.
+  const { t } = useLocale();
+
   if (!room) return null;
 
   return (
@@ -31,7 +36,7 @@ export function HostHeader({ room, onEndGameEarly }: HostHeaderProps) {
             className="w-5 h-5 animate-spin-slow"
           />
           <span className="text-alaz-orange font-black text-lg tracking-widest">
-            TUR {room.current_round} / {room.total_rounds}
+            {t("hostHeader.roundLabel", room.current_round, room.total_rounds)}
           </span>
         </div>
       )}
@@ -42,11 +47,11 @@ export function HostHeader({ room, onEndGameEarly }: HostHeaderProps) {
             onClick={onEndGameEarly}
             className="text-[10px] text-red-500 hover:text-white border border-red-500/30 hover:bg-red-500/20 px-3 py-1.5 rounded-lg uppercase tracking-widest font-black transition-colors"
           >
-            ERKEN BİTİR
+            {t("hostHeader.endEarly")}
           </button>
         )}
         <span className="text-[10px] text-gray-500 uppercase tracking-widest font-black">
-          Oda Kodu
+          {t("hostHeader.roomCode")}
         </span>
         <span className="text-2xl font-mono font-black text-white bg-white/10 px-4 py-1.5 rounded-lg border border-white/20">
           {room.code || "..."}

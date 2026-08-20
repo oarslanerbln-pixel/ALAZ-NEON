@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ExperienceBar } from "../../../components/ExperienceBar";
 import { SoundManager, sounds } from "../../../lib/audio";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface PlayerHeaderProps {
   playerName: string;
@@ -26,6 +27,7 @@ export function PlayerHeader({
   gameState,
   roundPoints,
 }: PlayerHeaderProps) {
+  const { t } = useLocale();
   const timeProgress = (timeLeft / (maxTime || 60)) * 100;
   const isPlaying = gameState === "playing";
   const isCritical = isPlaying && timeLeft <= 10 && timeLeft > 0;
@@ -79,7 +81,7 @@ export function PlayerHeader({
             </span>
             {isPlaying && (
               <span className={`shrink-0 text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 ${isCritical ? "text-red-400 bg-red-500/10" : "text-alaz-orange bg-alaz-orange/10"}`}>
-                {isCritical ? "⚡ KRİTİK" : "◉ AKTİF"}
+                {isCritical ? t("playerHeader.critical") : t("playerHeader.active")}
               </span>
             )}
           </div>
@@ -95,7 +97,7 @@ export function PlayerHeader({
         {/* Score — right */}
         <div className="shrink-0 flex flex-col items-end">
           <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest leading-none mb-0.5">
-            PUAN
+            {t("playerHeader.points")}
           </span>
           <div className="flex items-baseline gap-1">
             <motion.span
@@ -137,7 +139,7 @@ export function PlayerHeader({
             <div className="px-4 pb-2 flex items-center justify-center gap-2 text-alaz-orange">
               <div className="w-1 h-1 rounded-full bg-current animate-ping" />
               <span className="text-xs font-black uppercase tracking-[0.2em]">
-                Cevaplar Gönderiliyor...
+                {t("playerHeader.submittingAnswers")}
               </span>
             </div>
           </motion.div>

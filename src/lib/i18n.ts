@@ -471,6 +471,640 @@ const translations = {
     de: "Stadt, Land, Name, Gegenstand, Tier",
     en: "City, Country, Name, Object, Animal",
   },
+
+  // ═══════════════════════════════════════════
+  // COMMON / SHELL
+  // ═══════════════════════════════════════════
+  "common.loading": { tr: "YÜKLENİYOR...", de: "WIRD GELADEN...", en: "LOADING..." },
+
+  // ═══════════════════════════════════════════
+  // ROOM STATUS (siyah ekran yerine oda yükleme/hata durumları)
+  // ═══════════════════════════════════════════
+  "roomStatus.loadingTitle": { tr: "ODA YÜKLENİYOR", de: "RAUM WIRD GELADEN", en: "LOADING ROOM" },
+  "roomStatus.loadingBody": {
+    tr: "Firestore bağlantısı kuruluyor...",
+    de: "Firestore-Verbindung wird aufgebaut...",
+    en: "Establishing Firestore connection...",
+  },
+  "roomStatus.notfoundTitle": { tr: "ODA BULUNAMADI", de: "RAUM NICHT GEFUNDEN", en: "ROOM NOT FOUND" },
+  "roomStatus.notfoundBody": {
+    tr: "Bu oda silinmiş olabilir ya da adres hatalı. Yeni bir oda açman gerekiyor.",
+    de: "Dieser Raum wurde eventuell gelöscht oder die Adresse ist falsch. Erstelle einen neuen Raum.",
+    en: "This room may have been deleted, or the link is wrong. You'll need to open a new room.",
+  },
+  "roomStatus.errorTitle": { tr: "BAĞLANTI HATASI", de: "VERBINDUNGSFEHLER", en: "CONNECTION ERROR" },
+  "roomStatus.errorBody": {
+    tr: "Firestore'a erişilemedi. Güvenlik kuralları, internet bağlantısı veya kota sınırını kontrol et.",
+    de: "Firestore konnte nicht erreicht werden. Prüfe Sicherheitsregeln, Internetverbindung oder Kontingent.",
+    en: "Couldn't reach Firestore. Check the security rules, your internet connection, or the quota limit.",
+  },
+  "roomStatus.newRoom": { tr: "Yeni Oda Aç", de: "Neuen Raum erstellen", en: "Open New Room" },
+  "roomStatus.retry": { tr: "Tekrar Dene", de: "Erneut versuchen", en: "Retry" },
+
+  // ═══════════════════════════════════════════
+  // MISC CHROME (XP bar, emoji toolbar, hold button, player header)
+  // ═══════════════════════════════════════════
+  "xpBar.roundProgress": { tr: "TUR İLERLEMESİ", de: "RUNDENFORTSCHRITT", en: "ROUND PROGRESS" },
+  "emoji.sendReaction": { tr: "TEPKİ GÖNDER", de: "REAKTION SENDEN", en: "SEND REACTION" },
+  "playerHeader.critical": { tr: "⚡ KRİTİK", de: "⚡ KRITISCH", en: "⚡ CRITICAL" },
+  "playerHeader.active": { tr: "◉ AKTİF", de: "◉ AKTIV", en: "◉ ACTIVE" },
+  "playerHeader.points": { tr: "PUAN", de: "PUNKTE", en: "POINTS" },
+  "playerHeader.submittingAnswers": {
+    tr: "Cevaplar Gönderiliyor...",
+    de: "Antworten werden gesendet...",
+    en: "Sending answers...",
+  },
+
+  // ═══════════════════════════════════════════
+  // INTELLIGENCE WIDGET (AI stratejik analiz paneli)
+  // ═══════════════════════════════════════════
+  "intelligence.title": { tr: "STRATEJİK ANALİZ (AI)", de: "STRATEGISCHE ANALYSE (KI)", en: "STRATEGIC ANALYSIS (AI)" },
+  "intelligence.roundDifficulty": { tr: "Tur Zorluğu", de: "Rundenschwierigkeit", en: "Round Difficulty" },
+  "intelligence.expectedAvg": { tr: "Tahminî Ort.", de: "Erwart. Ø", en: "Expected Avg." },
+  "intelligence.pointsPerPlayer": { tr: "Puan / Oyuncu", de: "Punkte / Spieler", en: "Points / Player" },
+  "intelligence.marketStatus": { tr: "Piyasa Durumu", de: "Marktlage", en: "Market Status" },
+  "intelligence.operationalTip": { tr: "Operasyonel İpucu", de: "Praxistipp", en: "Operational Tip" },
+
+  // ═══════════════════════════════════════════
+  // SHAREABLE RECAP CARD (paylaşılabilir gece özeti)
+  // ═══════════════════════════════════════════
+  "recap.title": { tr: "GECENİN ENLERİ", de: "HIGHLIGHTS DES ABENDS", en: "BEST OF THE NIGHT" },
+  "recap.aiVerdict": { tr: "Jules AI Kararı", de: "Jules-KI-Urteil", en: "Jules AI Verdict" },
+  "recap.joinCta": { tr: "Sen de katıl!", de: "Mach auch mit!", en: "Join in too!" },
+
+  // ═══════════════════════════════════════════
+  // PLAYER PROFILE CARD
+  // ═══════════════════════════════════════════
+  "profile.idCard": { tr: "HENGAME ID CARD", de: "HENGAME AUSWEIS", en: "HENGAME ID CARD" },
+  "profile.totalScore": { tr: "Toplam Puan", de: "Gesamtpunktzahl", en: "Total Score" },
+  "profile.logout": { tr: "ÇIKIŞ YAP", de: "ABMELDEN", en: "LOG OUT" },
+  "profile.tier.BRONZE": { tr: "BRONZ LİG", de: "BRONZE-LIGA", en: "BRONZE LEAGUE" },
+  "profile.tier.SILVER": { tr: "GÜMÜŞ LİG", de: "SILBER-LIGA", en: "SILVER LEAGUE" },
+  "profile.tier.GOLD": { tr: "ALTIN LİG", de: "GOLD-LIGA", en: "GOLD LEAGUE" },
+  "profile.tier.PLATINUM": { tr: "PLATİN LİG", de: "PLATIN-LIGA", en: "PLATINUM LEAGUE" },
+  "profile.tier.NEON": { tr: "NEON LİG", de: "NEON-LIGA", en: "NEON LEAGUE" },
+  "profile.tier.LEGEND": { tr: "EFSANE LİG", de: "LEGENDEN-LIGA", en: "LEGEND LEAGUE" },
+
+  // ═══════════════════════════════════════════
+  // REWARDS
+  // ═══════════════════════════════════════════
+  "rewards.none": {
+    tr: "KULLANILABİLİR ÖDÜL BULUNMUYOR",
+    de: "KEINE VERFÜGBAREN PRÄMIEN",
+    en: "NO REWARDS AVAILABLE",
+  },
+  "rewards.active": { tr: "AKTİF ÖDÜLLER", de: "AKTIVE PRÄMIEN", en: "ACTIVE REWARDS" },
+  "rewards.use": { tr: "KULLAN", de: "EINLÖSEN", en: "USE" },
+
+  // ═══════════════════════════════════════════
+  // REVIEW — otomatik ret sebepleri (host'a kısa etiket)
+  // ═══════════════════════════════════════════
+  "review.autoRejectProfane": { tr: "UYGUNSUZ İÇERİK", de: "UNANGEMESSENER INHALT", en: "INAPPROPRIATE CONTENT" },
+  "review.autoRejectTooShort": { tr: "ÇOK KISA", de: "ZU KURZ", en: "TOO SHORT" },
+  "review.autoRejectRepeatedLetters": { tr: "TEKRARLANAN HARF", de: "WIEDERHOLTER BUCHSTABE", en: "REPEATED LETTER" },
+  "review.autoRejectKeyboardMash": { tr: "KLAVYE EZMESİ", de: "TASTATUR-WIRRWARR", en: "KEYBOARD MASH" },
+  "review.autoRejectRepeatedPattern": { tr: "TEKRARLANAN KALIP", de: "WIEDERHOLTES MUSTER", en: "REPEATED PATTERN" },
+  "review.autoRejectNoVowel": { tr: "ÜNLÜ HARF YOK", de: "KEIN VOKAL", en: "NO VOWEL" },
+  "review.autoRejectConsonantRun": { tr: "ÜNSÜZ YIĞILMASI", de: "KONSONANTENHÄUFUNG", en: "CONSONANT PILEUP" },
+  "review.autoRejectSuspicious": { tr: "ŞÜPHELİ CEVAP", de: "VERDÄCHTIGE ANTWORT", en: "SUSPICIOUS ANSWER" },
+  "review.jokerPenalty": { tr: "-10 PUAN CEZASI", de: "-10 PUNKTE STRAFE", en: "-10 POINT PENALTY" },
+
+  // ═══════════════════════════════════════════
+  // HOST HEADER / LOBBY EXTRAS
+  // ═══════════════════════════════════════════
+  "hostHeader.endEarly": { tr: "ERKEN BİTİR", de: "VORZEITIG BEENDEN", en: "END EARLY" },
+  "hostHeader.roundLabel": {
+    tr: (r: number, total: number) => `TUR ${r} / ${total}`,
+    de: (r: number, total: number) => `RUNDE ${r} / ${total}`,
+    en: (r: number, total: number) => `ROUND ${r} / ${total}`,
+  },
+  "hostHeader.roomCode": { tr: "Oda Kodu", de: "Raum-Code", en: "Room Code" },
+  "hostLobby.cancelCountdown": {
+    tr: "Geri Sayımı İptal Et",
+    de: "Countdown abbrechen",
+    en: "Cancel Countdown",
+  },
+
+  // ═══════════════════════════════════════════
+  // LANDING PAGE — rol seçimi ve mod vitrin kartları
+  // ═══════════════════════════════════════════
+  "landing.loginCta": { tr: "SİSTEME GİRİŞ YAP", de: "IM SYSTEM ANMELDEN", en: "LOG INTO THE SYSTEM" },
+  "landing.hostSectionLabel": { tr: "GECE OTURUMU (HOST)", de: "ABENDSESSION (HOST)", en: "NIGHT SESSION (HOST)" },
+  "landing.hostSectionTitle": { tr: "YÖNETİCİ", de: "MODERATOR", en: "HOST" },
+  "landing.hostSectionDesc": {
+    tr: "Kafe gecesini başlat ve oyuncuları davet et.",
+    de: "Starte den Café-Abend und lade Spieler ein.",
+    en: "Start the café night and invite players.",
+  },
+  "landing.modeArenaDesc": {
+    tr: "Klasik kelime oyununun hiper-modern versiyonu.",
+    de: "Die hypermoderne Version des klassischen Wortspiels.",
+    en: "The hyper-modern take on the classic word game.",
+  },
+  "landing.modeQuizDesc": {
+    tr: "Zeka, hız ve bilginin çarpıştığı arena.",
+    de: "Die Arena, in der Köpfchen, Tempo und Wissen aufeinandertreffen.",
+    en: "The arena where wits, speed, and knowledge collide.",
+  },
+  "landing.modeBombDesc": {
+    tr: "Bomba elinde patlamadan kelimeyi bul!",
+    de: "Finde das Wort, bevor dir die Bombe in der Hand hochgeht!",
+    en: "Find the word before the bomb goes off in your hand!",
+  },
+  "landing.modeSensorDesc": {
+    tr: "Gizemli görseli ilk sen bil, devasa butonla yarış.",
+    de: "Errate das mysteriöse Bild als Erster, hau auf den riesigen Buzzer.",
+    en: "Be the first to guess the mystery image, race for the giant buzzer.",
+  },
+
+  // ═══════════════════════════════════════════
+  // HOST DASHBOARD — mod seçim kartları (Landing'den biraz daha uzun metin)
+  // ═══════════════════════════════════════════
+  "dashboard.modeArenaDesc": {
+    tr: "Klasik kelime oyununun hiper-modern versiyonu. Kelime yeteneğini test et.",
+    de: "Die hypermoderne Version des klassischen Wortspiels. Teste dein Wortgeschick.",
+    en: "The hyper-modern take on the classic word game. Test your wordplay skills.",
+  },
+  "dashboard.modeQuizDesc": {
+    tr: "Genel kültürünü kanıtla. Zeka, hız ve bilginin çarpıştığı arena.",
+    de: "Beweise dein Allgemeinwissen. Die Arena, in der Köpfchen, Tempo und Wissen aufeinandertreffen.",
+    en: "Prove your general knowledge. The arena where wits, speed, and knowledge collide.",
+  },
+  "dashboard.modeBombDesc": {
+    tr: "Bomba elinde patlamadan kelimeyi bul! Adrenalin dolu bomb party modu.",
+    de: "Finde das Wort, bevor dir die Bombe hochgeht! Der adrenalingeladene Bomb-Party-Modus.",
+    en: "Find the word before the bomb goes off! The adrenaline-packed bomb party mode.",
+  },
+  "dashboard.joinNight": { tr: "Geceye Katıl", de: "Am Abend teilnehmen", en: "Join the Night" },
+  "dashboard.playersCount": {
+    tr: (n: number) => `Oyuncular (${n})`,
+    de: (n: number) => `Spieler (${n})`,
+    en: (n: number) => `Players (${n})`,
+  },
+  "dashboard.waiting": { tr: "Bekleniyor...", de: "Warten...", en: "Waiting..." },
+  "dashboard.pointsSuffix": {
+    tr: (p: number) => `${p} Puan`,
+    de: (p: number) => `${p} Punkte`,
+    en: (p: number) => `${p} Points`,
+  },
+  "dashboard.startGame": { tr: "Oyun Başlat", de: "Spiel starten", en: "Start Game" },
+  "dashboard.startSession": { tr: "Oturumu Başlat", de: "Session starten", en: "Start Session" },
+  "dashboard.modeSensorDesc": {
+    tr: "Hızlı olan kazanır! Gizemli görseli ilk sen bil, devasa neon butonla yarış.",
+    de: "Wer schnell ist, gewinnt! Errate das mysteriöse Bild als Erster, hau auf den riesigen Neon-Buzzer.",
+    en: "Fast wins! Be the first to guess the mystery image, race for the giant neon buzzer.",
+  },
+
+  // ═══════════════════════════════════════════
+  // AUTH — sayfa başlıkları
+  // ═══════════════════════════════════════════
+  "auth.loginHeading": { tr: "SİSTEME GİRİŞ", de: "SYSTEM-ANMELDUNG", en: "SYSTEM LOGIN" },
+  "auth.registerHeading": { tr: "YENİ KAYIT", de: "NEUE REGISTRIERUNG", en: "NEW REGISTRATION" },
+
+  // ═══════════════════════════════════════════
+  // PLAYER GAME — harf/tur geçiş ekranı
+  // ═══════════════════════════════════════════
+  "game.determiningLetter": { tr: "HARF BELİRLENİYOR...", de: "BUCHSTABE WIRD BESTIMMT...", en: "DETERMINING LETTER..." },
+  "game.starting": { tr: "OYUN BAŞLIYOR!", de: "DAS SPIEL BEGINNT!", en: "GAME STARTING!" },
+  "game.watchMainScreen": {
+    tr: "Lütfen Ana Ekrana Bakın...",
+    de: "Bitte auf den Hauptbildschirm schauen...",
+    en: "Please watch the main screen...",
+  },
+  "game.roundHint": {
+    tr: (round: number, total: number) =>
+      `Tur ${round} / ${total} • Hızlı yazan ekstra bonus puan kazanır!`,
+    de: (round: number, total: number) =>
+      `Runde ${round} / ${total} • Wer schnell tippt, bekommt einen Extra-Bonus!`,
+    en: (round: number, total: number) =>
+      `Round ${round} / ${total} • Type fast for an extra bonus!`,
+  },
+
+  // ═══════════════════════════════════════════
+  // WAITING ROOM (PlayerLobby — katılım sonrası bekleme ekranı)
+  // ═══════════════════════════════════════════
+  "waitingRoom.categoriesTitle": {
+    tr: "BU TURDAKİ KATEGORİLER",
+    de: "KATEGORIEN DIESER RUNDE",
+    en: "THIS ROUND'S CATEGORIES",
+  },
+  "waitingRoom.playersConnected": {
+    tr: (n: number) => `${n} oyuncu bağlandı`,
+    de: (n: number) => `${n} Spieler verbunden`,
+    en: (n: number) => `${n} players connected`,
+  },
+  "waitingRoom.timerLabel": {
+    tr: (s: string) => `⏱ ${s}sn`,
+    de: (s: string) => `⏱ ${s}s`,
+    en: (s: string) => `⏱ ${s}s`,
+  },
+  "waitingRoom.roundsLabel": {
+    tr: (n: string) => `🏁 ${n} tur`,
+    de: (n: string) => `🏁 ${n} Runden`,
+    en: (n: string) => `🏁 ${n} rounds`,
+  },
+  "tips.early": {
+    tr: "Erken gönder → Erken bonus puan kazan!",
+    de: "Früh abschicken → Frühbonus kassieren!",
+    en: "Submit early → Earn an early bonus!",
+  },
+  "tips.uniqueBonus": {
+    tr: "Benzersiz cevap → 20 puan. Ortak cevap → 10 puan.",
+    de: "Einzigartige Antwort → 20 Punkte. Geteilte Antwort → 10 Punkte.",
+    en: "Unique answer → 20 points. Shared answer → 10 points.",
+  },
+  "tips.joker": {
+    tr: "JOKER ile bir kategoride puanını 2 katına çıkar.",
+    de: "Verdopple mit dem JOKER deine Punkte in einer Kategorie.",
+    en: "Use the JOKER to double your points in one category.",
+  },
+  "tips.ranking": {
+    tr: "Her turda sıralama değişir. Son tura kadar mücadele et!",
+    de: "Die Rangliste ändert sich jede Runde. Kämpfe bis zur letzten Runde!",
+    en: "Rankings shift every round. Fight until the final round!",
+  },
+  "tips.validLetter": {
+    tr: "Harfle başlayan her geçerli cevap sayılır.",
+    de: "Jede gültige Antwort mit dem richtigen Buchstaben zählt.",
+    en: "Every valid answer starting with the letter counts.",
+  },
+
+  // ═══════════════════════════════════════════
+  // TUTORIAL — HOST (TV ekranı, oyun başlamadan önce)
+  // ═══════════════════════════════════════════
+  "tutorial.howToPlay": { tr: "Nasıl Oynanır?", de: "Spielanleitung", en: "How to Play?" },
+  "tutorial.startGame": { tr: "OYUNU BAŞLAT", de: "SPIEL STARTEN", en: "START GAME" },
+  "tutorial.next": { tr: "SONRAKİ", de: "WEITER", en: "NEXT" },
+  "tutorial.host.scattegories.1.title": {
+    tr: "HARFİ GÖR, KELİMELERİ BUL",
+    de: "BUCHSTABE SEHEN, WÖRTER FINDEN",
+    en: "SEE THE LETTER, FIND THE WORDS",
+  },
+  "tutorial.host.scattegories.1.desc": {
+    tr: "Her turun başında rastgele bir harf seçilir. Amacın, o harfle başlayan ve kategorilere uygun kelimeleri en hızlı şekilde bulmak.",
+    de: "Zu Beginn jeder Runde wird ein zufälliger Buchstabe gezogen. Finde so schnell wie möglich Wörter, die mit ihm beginnen und zu den Kategorien passen.",
+    en: "A random letter is drawn at the start of each round. Your goal: find words starting with it that fit the categories, as fast as you can.",
+  },
+  "tutorial.host.scattegories.2.title": {
+    tr: "KOPYA YOK, YARATICILIK ŞART",
+    de: "NICHT ABSCHREIBEN, KREATIV SEIN",
+    en: "NO COPYING, CREATIVITY REQUIRED",
+  },
+  "tutorial.host.scattegories.2.desc": {
+    tr: "Başkasıyla aynı kelimeyi yazarsan az puan alırsın. Sadece sana özel, benzersiz kelimeler ekstra puan kazandırır!",
+    de: "Schreibst du dasselbe Wort wie jemand anderes, gibt es weniger Punkte. Nur einzigartige Wörter bringen den Extra-Bonus!",
+    en: "Writing the same word as someone else scores less. Only unique words earn the bonus!",
+  },
+  "tutorial.host.quiz.1.title": { tr: "BİLGİNİ KANITLA", de: "BEWEISE DEIN WISSEN", en: "PROVE YOUR KNOWLEDGE" },
+  "tutorial.host.quiz.1.desc": {
+    tr: "Ekranda beliren soruları oku ve en hızlı şekilde doğru şıkkı seç. Zaman daralıyor!",
+    de: "Lies die Fragen auf dem Bildschirm und wähle so schnell wie möglich die richtige Antwort. Die Zeit läuft!",
+    en: "Read the questions on screen and pick the right answer as fast as you can. Time is running out!",
+  },
+  "tutorial.host.quiz.2.title": { tr: "HIZ VE DİKKAT", de: "TEMPO UND AUFMERKSAMKEIT", en: "SPEED AND FOCUS" },
+  "tutorial.host.quiz.2.desc": {
+    tr: "Soru zorlaştıkça ve sen ne kadar hızlı cevaplarsan o kadar yüksek puan alırsın. Yanlış cevapta puan yok!",
+    de: "Je schwerer die Frage und je schneller du antwortest, desto mehr Punkte. Für falsche Antworten gibt es nichts!",
+    en: "The harder the question and the faster you answer, the more points you get. Wrong answers score nothing!",
+  },
+  "tutorial.host.bomb.1.title": { tr: "BOMBAYI ELİNDEN AT!", de: "WIRF DIE BOMBE WEITER!", en: "PASS THE BOMB!" },
+  "tutorial.host.bomb.1.desc": {
+    tr: "Bomba sana geldiğinde telefonun titrer ve ekran kızarır. Hemen kategoriye uygun bir kelime yaz ve gönder!",
+    de: "Wenn die Bombe bei dir landet, vibriert dein Handy und der Bildschirm wird rot. Tippe sofort ein passendes Wort und schick es ab!",
+    en: "When the bomb reaches you, your phone vibrates and the screen turns red. Type a matching word and send it, fast!",
+  },
+  "tutorial.host.bomb.2.title": {
+    tr: "KULLANILMIŞ KELİME YASAK",
+    de: "BEREITS GENUTZTE WÖRTER VERBOTEN",
+    en: "NO REUSING WORDS",
+  },
+  "tutorial.host.bomb.2.desc": {
+    tr: "Daha önce yazılan bir kelimeyi yazamazsın! Süre dolduğunda bomba kimin elindeyse bir canı gider.",
+    de: "Ein bereits genanntes Wort zählt nicht! Wer die Bombe beim Ablauf der Zeit hält, verliert ein Leben.",
+    en: "A word already used doesn't count! Whoever holds the bomb when time runs out loses a life.",
+  },
+  "tutorial.host.sensor.1.title": {
+    tr: "GÖRSELİ/SESİ İLK BULAN KAZANIR",
+    de: "WER BILD/TON ZUERST ERRÄT, GEWINNT",
+    en: "FIRST TO NAME THE IMAGE/SOUND WINS",
+  },
+  "tutorial.host.sensor.1.desc": {
+    tr: "Ekranda beliren nesneyi, sesi veya logoyu ilk kim bilirse dev butona o bassın!",
+    de: "Wer das Objekt, den Ton oder das Logo auf dem Bildschirm zuerst erkennt, haut auf den Riesen-Buzzer!",
+    en: "Whoever recognizes the object, sound, or logo on screen first hits the giant buzzer!",
+  },
+  "tutorial.host.sensor.2.title": { tr: "HOST ONAYI ŞART", de: "HOST MUSS BESTÄTIGEN", en: "HOST APPROVAL REQUIRED" },
+  "tutorial.host.sensor.2.desc": {
+    tr: "Butona ilk basan oyuncunun cevabı doğruysa Host 'Doğru' der, yanlışsa oyun devam eder.",
+    de: "Ist die Antwort des Buzzer-Ersten richtig, bestätigt der Host mit 'Richtig'; sonst geht das Spiel weiter.",
+    en: "If the first buzzer's answer is right, the host marks it 'Correct'; otherwise play continues.",
+  },
+
+  // ═══════════════════════════════════════════
+  // TUTORIAL — PLAYER (telefon ekranı)
+  // ═══════════════════════════════════════════
+  "tutorial.watchBigScreen": { tr: "Dev ekrana da bakın", de: "Schaut auch auf den großen Bildschirm", en: "Watch the big screen too" },
+  "tutorial.waitingHost": {
+    tr: "Oyun Yöneticisi Bekleniyor...",
+    de: "Warte auf den Spielleiter...",
+    en: "Waiting for the host...",
+  },
+  "tutorial.player.scattegories.1.title": {
+    tr: "KLAVYE HIZINI HAZIRLA!",
+    de: "MACH DEINE TIPPFINGER BEREIT!",
+    en: "GET YOUR TYPING FINGERS READY!",
+  },
+  "tutorial.player.scattegories.1.desc": {
+    tr: "Ana ekranda harf belirdiğinde, telefonun senin oyun kumandan olacak. Panik yapma, odaklan.",
+    de: "Sobald der Buchstabe auf dem Hauptbildschirm erscheint, wird dein Handy zum Controller. Keine Panik, konzentrier dich.",
+    en: "When the letter appears on the main screen, your phone becomes your controller. Don't panic, focus.",
+  },
+  "tutorial.player.scattegories.2.title": { tr: "KUTUCUKLARI DOLDUR", de: "FÜLL DIE FELDER AUS", en: "FILL IN THE BOXES" },
+  "tutorial.player.scattegories.2.desc": {
+    tr: "Kategorilere uygun en ilginç kelimeleri yaz ve süre bitmeden 'GÖNDER' butonuna bas!",
+    de: "Tippe die originellsten passenden Wörter und drück vor Ablauf der Zeit auf 'SENDEN'!",
+    en: "Type the most interesting matching words and hit 'SEND' before time runs out!",
+  },
+  "tutorial.player.quiz.1.title": {
+    tr: "SORU EKRANDA, CEVAP BURADA",
+    de: "FRAGE AUF DEM BILDSCHIRM, ANTWORT HIER",
+    en: "QUESTION ON SCREEN, ANSWER HERE",
+  },
+  "tutorial.player.quiz.1.desc": {
+    tr: "Sorular ana ekranda (TV) görünecek. Sen telefonundan A, B, C veya D şıklarından birini seçeceksin.",
+    de: "Die Fragen erscheinen auf dem Hauptbildschirm (TV). Du wählst auf deinem Handy A, B, C oder D.",
+    en: "Questions appear on the main screen (TV). You pick A, B, C, or D on your phone.",
+  },
+  "tutorial.player.quiz.2.title": { tr: "EN HIZLI SEN TIKLA!", de: "SEI DER SCHNELLSTE!", en: "TAP FASTEST!" },
+  "tutorial.player.quiz.2.desc": {
+    tr: "Doğru cevabı ne kadar hızlı seçersen o kadar çok puan alırsın. Hızlı ol!",
+    de: "Je schneller du die richtige Antwort wählst, desto mehr Punkte. Sei schnell!",
+    en: "The faster you pick the right answer, the more points you get. Be quick!",
+  },
+  "tutorial.player.bomb.1.title": { tr: "BOMBA SANA GELİRSE...", de: "WENN DIE BOMBE BEI DIR LANDET...", en: "IF THE BOMB REACHES YOU..." },
+  "tutorial.player.bomb.1.desc": {
+    tr: "Ekranın aniden KIRMIZI olacak ve telefonun titreyecek. Panik yapma, sakin kal!",
+    de: "Dein Bildschirm wird plötzlich ROT und dein Handy vibriert. Keine Panik, bleib ruhig!",
+    en: "Your screen suddenly turns RED and your phone vibrates. Don't panic, stay calm!",
+  },
+  "tutorial.player.bomb.2.title": { tr: "HEMEN YAZ VE AT!", de: "SOFORT TIPPEN UND WEITERGEBEN!", en: "TYPE AND PASS IT ON!" },
+  "tutorial.player.bomb.2.desc": {
+    tr: "Kategoriye uygun, DAHA ÖNCE YAZILMAMIŞ bir kelime yaz ve BOMBAYI AT butonuna basarak kurtul!",
+    de: "Tippe ein passendes, NOCH NICHT GENANNTES Wort und drück auf BOMBE WEITERGEBEN, um dich zu retten!",
+    en: "Type a matching word that hasn't been used yet, then hit PASS THE BOMB to save yourself!",
+  },
+  "tutorial.player.sensor.1.title": { tr: "REFLEKSLERİNİ TEST ET", de: "TESTE DEINE REFLEXE", en: "TEST YOUR REFLEXES" },
+  "tutorial.player.sensor.1.desc": {
+    tr: "Ekranda beliren görseli/sesi herkesten önce bulmalısın. Telefonundaki devasa DEV BUTON'a ilk basan cevap hakkı kazanır!",
+    de: "Erkenne Bild oder Ton vor allen anderen. Wer den RIESEN-BUZZER auf dem Handy zuerst drückt, darf antworten!",
+    en: "Recognize the image or sound before anyone else. First to hit the GIANT BUZZER on their phone gets to answer!",
+  },
+  "tutorial.player.sensor.2.title": { tr: "HIZLI OLAN KAZANIR", de: "WER SCHNELL IST, GEWINNT", en: "FAST WINS" },
+  "tutorial.player.sensor.2.desc": {
+    tr: "Butona bastıktan sonra kelimeyi TV ekranında veya Host'a söyle, puanı kap!",
+    de: "Nach dem Buzzern sagst du die Antwort laut in Richtung TV bzw. dem Host — und kassierst die Punkte!",
+    en: "After buzzing, say the answer out loud to the TV or the host, and grab the points!",
+  },
+
+  // ═══════════════════════════════════════════
+  // BOMB PARTY
+  // ═══════════════════════════════════════════
+  "bomb.category": { tr: "KATEGORİ", de: "KATEGORIE", en: "CATEGORY" },
+  "bomb.activating": { tr: "BOMBA AKTİFLEŞİYOR...", de: "BOMBE WIRD SCHARF GEMACHT...", en: "ARMING BOMB..." },
+  "bomb.exploded": { tr: "BOMBA PATLADI!", de: "BOMBE EXPLODIERT!", en: "BOMB EXPLODED!" },
+  "bomb.livesLost": { tr: "CAN KAYBEDEN", de: "LEBEN VERLOREN", en: "LOST A LIFE" },
+  "bomb.eliminated": { tr: "ELENDİ", de: "AUSGESCHIEDEN", en: "ELIMINATED" },
+  "bomb.whoseTurn": { tr: "Sıra Kimde?", de: "Wer ist dran?", en: "Whose Turn?" },
+  "bomb.rejectWord": {
+    tr: "KELİMEYİ REDDET & CEZALANDIR",
+    de: "WORT ABLEHNEN & BESTRAFEN",
+    en: "REJECT WORD & PENALIZE",
+  },
+  "bomb.eliminatedYou": { tr: "ELENDİN", de: "DU BIST AUSGESCHIEDEN", en: "YOU'RE ELIMINATED" },
+  "bomb.watchOthers": {
+    tr: "Diğer oyuncuların patlamasını izle!",
+    de: "Schau zu, wie die anderen hochgehen!",
+    en: "Watch the others blow up!",
+  },
+  "bomb.preparing": { tr: "BOMBA HAZIRLANIYOR", de: "BOMBE WIRD VORBEREITET", en: "PREPARING BOMB" },
+  "bomb.explodedShort": { tr: "PATLADI!", de: "EXPLODIERT!", en: "EXPLODED!" },
+  "bomb.watchMainScreen": {
+    tr: "Lütfen dev ekrana bakınız.",
+    de: "Bitte auf den großen Bildschirm schauen.",
+    en: "Please watch the big screen.",
+  },
+  "bomb.gameOver": { tr: "OYUN BİTTİ", de: "SPIEL VORBEI", en: "GAME OVER" },
+  "bomb.resultsOnScreen": { tr: "Sonuçlar ekranda!", de: "Ergebnisse auf dem Bildschirm!", en: "Results are on screen!" },
+  "bomb.categoryLabel": {
+    tr: (letter: string) => `Kategori: ${letter}`,
+    de: (letter: string) => `Kategorie: ${letter}`,
+    en: (letter: string) => `Category: ${letter}`,
+  },
+  "bomb.yourTurn": { tr: "BOMBA SENDE!", de: "DU HAST DIE BOMBE!", en: "YOU HAVE THE BOMB!" },
+  "bomb.wordPlaceholder": { tr: "KELİME YAZ", de: "WORT EINGEBEN", en: "TYPE A WORD" },
+  "bomb.throwing": { tr: "ATIYOR...", de: "WIRD GEWORFEN...", en: "THROWING..." },
+  "bomb.throwBomb": { tr: "BOMBAYI AT!", de: "BOMBE WERFEN!", en: "THROW THE BOMB!" },
+  "bomb.elsewhereLabel": { tr: "BOMBA", de: "BOMBE", en: "BOMB" },
+  "bomb.elsewhere": { tr: "BAŞKASINDA", de: "BEI JEMAND ANDEREM", en: "WITH SOMEONE ELSE" },
+  "bomb.waitYourTurn": {
+    tr: "Sıranın sana gelmesini bekle...",
+    de: "Warte, bis du dran bist...",
+    en: "Wait for your turn...",
+  },
+  "bomb.toastWordUsed": {
+    tr: "Bu kelime zaten kullanıldı!",
+    de: "Dieses Wort wurde bereits verwendet!",
+    en: "This word has already been used!",
+  },
+  "bomb.toastProfane": {
+    tr: "Uygunsuz kelime kabul edilmiyor!",
+    de: "Unangemessene Wörter werden nicht akzeptiert!",
+    en: "Inappropriate words aren't accepted!",
+  },
+  "bomb.toastGibberish": {
+    tr: "Gerçek bir kelime yaz!",
+    de: "Schreib ein echtes Wort!",
+    en: "Write a real word!",
+  },
+  "bomb.toastError": { tr: "Bir hata oluştu!", de: "Ein Fehler ist aufgetreten!", en: "An error occurred!" },
+
+  // ═══════════════════════════════════════════
+  // INTRO CINEMATICS (HostIntro + HostQuizIntro ortak "hacker" açılışı)
+  // ═══════════════════════════════════════════
+  "intro.systemCrash": { tr: "SİSTEM ÇÖKÜŞÜ", de: "SYSTEMABSTURZ", en: "SYSTEM CRASH" },
+  "intro.securityBreach": {
+    tr: "GÜVENLİK PROTOKOLÜ İHLAL EDİLDİ...",
+    de: "SICHERHEITSPROTOKOLL VERLETZT...",
+    en: "SECURITY PROTOCOL BREACHED...",
+  },
+  "intro.systemHacked": { tr: "SİSTEM HACKLENDİ", de: "SYSTEM GEHACKT", en: "SYSTEM HACKED" },
+  "intro.arena.downloadLabel": {
+    tr: "OYUNCU VERİSİ İNDİRİLİYOR...",
+    de: "SPIELERDATEN WERDEN GELADEN...",
+    en: "DOWNLOADING PLAYER NEURAL DATA...",
+  },
+  "intro.arena.mainframeLabel": {
+    tr: "HENGAME ARENA ANA SİSTEMİNE BAĞLANILIYOR...",
+    de: "VERBINDUNG ZUM HENGAME-ARENA-MAINFRAME...",
+    en: "CONNECTING TO HENGAME ARENA MAINFRAME...",
+  },
+  "intro.arena.connecting": {
+    tr: "ZİHİN AĞA BAĞLANIYOR...",
+    de: "GEIST WIRD MIT NETZWERK VERBUNDEN...",
+    en: "CONNECTING MIND TO NETWORK...",
+  },
+  "intro.arena.title": { tr: "HENGAME ARENA", de: "HENGAME ARENA", en: "HENGAME ARENA" },
+  "intro.arena.subtitle": { tr: "ATEŞ SERBEST", de: "FEUER FREI", en: "FIRE AT WILL" },
+  "intro.quiz.downloadLabel": {
+    tr: "BİLGİ YARIŞMASI VERİSİ İNDİRİLİYOR...",
+    de: "QUIZDATEN WERDEN GELADEN...",
+    en: "DOWNLOADING TRIVIA DATA...",
+  },
+  "intro.quiz.mainframeLabel": {
+    tr: "HENGAME QUIZ ANA SİSTEMİNE BAĞLANILIYOR...",
+    de: "VERBINDUNG ZUM HENGAME-QUIZ-MAINFRAME...",
+    en: "CONNECTING TO HENGAME QUIZ MAINFRAME...",
+  },
+  "intro.quiz.title": { tr: "HENGAME QUIZ", de: "HENGAME QUIZ", en: "HENGAME QUIZ" },
+  "intro.quiz.subtitle": { tr: "ZİHİNLER ÇARPIŞIYOR", de: "KÖPFE PRALLEN AUFEINANDER", en: "MINDS COLLIDE" },
+
+  // ═══════════════════════════════════════════
+  // QUIZ (HostQuizDisplay + PlayerQuizController)
+  // ═══════════════════════════════════════════
+  "quiz.title": { tr: "HENGAME QUIZ", de: "HENGAME QUIZ", en: "HENGAME QUIZ" },
+  "quiz.questionCounter": {
+    tr: (r: number, total: number) => `SORU ${r} / ${total}`,
+    de: (r: number, total: number) => `FRAGE ${r} / ${total}`,
+    en: (r: number, total: number) => `QUESTION ${r} / ${total}`,
+  },
+  "quiz.loading": { tr: "Yükleniyor...", de: "Wird geladen...", en: "Loading..." },
+  "quiz.startTimer": { tr: "SÜREYİ BAŞLAT", de: "ZEIT STARTEN", en: "START TIMER" },
+  "quiz.endTimer": {
+    tr: "SÜREYİ BİTİR / CEVAPLARA GEÇ",
+    de: "ZEIT BEENDEN / ZU ANTWORTEN",
+    en: "END TIMER / SHOW ANSWERS",
+  },
+  "quiz.correctAnswer": { tr: "DOĞRU CEVAP", de: "RICHTIGE ANTWORT", en: "CORRECT ANSWER" },
+  "quiz.seeRanking": { tr: "SIRALAMAYI GÖR", de: "RANGLISTE ANSEHEN", en: "SEE RANKING" },
+  "quiz.currentRanking": { tr: "GÜNCEL SIRALAMA", de: "AKTUELLE RANGLISTE", en: "CURRENT RANKING" },
+  "quiz.finishGame": { tr: "OYUNU BİTİR", de: "SPIEL BEENDEN", en: "FINISH GAME" },
+  "quiz.nextQuestion": { tr: "SONRAKİ SORU", de: "NÄCHSTE FRAGE", en: "NEXT QUESTION" },
+  "quiz.champion": { tr: "ŞAMPİYON", de: "CHAMPION", en: "CHAMPION" },
+  "quiz.newGame": { tr: "YENİ OYUN BAŞLAT", de: "NEUES SPIEL STARTEN", en: "START NEW GAME" },
+  "quiz.pts": { tr: "PTS", de: "PKT", en: "PTS" },
+  "quiz.yourScore": { tr: "Puanınız:", de: "Deine Punkte:", en: "Your score:" },
+  "quiz.finalScore": { tr: "Final Skorunuz", de: "Dein Endergebnis", en: "Your Final Score" },
+  "quiz.gameOver": { tr: "OYUN BİTTİ", de: "SPIEL VORBEI", en: "GAME OVER" },
+  "quiz.watchMainScreen": {
+    tr: "Lütfen ana ekrana bakarak oyunun başlamasını bekleyin.",
+    de: "Bitte auf den Hauptbildschirm schauen und auf den Spielstart warten.",
+    en: "Please watch the main screen and wait for the game to start.",
+  },
+  "quiz.getReady": { tr: "HAZIR OL", de: "MACH DICH BEREIT", en: "GET READY" },
+  "quiz.questionOf": {
+    tr: (r: number, total: number) => `Soru ${r} / ${total}`,
+    de: (r: number, total: number) => `Frage ${r} / ${total}`,
+    en: (r: number, total: number) => `Question ${r} / ${total}`,
+  },
+  "quiz.answerSaved": {
+    tr: "Cevap kaydedildi, süre bekleniyor...",
+    de: "Antwort gespeichert, warte auf Zeitablauf...",
+    en: "Answer saved, waiting for time...",
+  },
+  "quiz.result": { tr: "SONUÇ", de: "ERGEBNIS", en: "RESULT" },
+  "quiz.ranking": { tr: "SIRALAMA", de: "RANGLISTE", en: "RANKING" },
+  "quiz.followRankingOnScreen": {
+    tr: "Ana ekrandan sıralamayı takip edebilirsiniz.",
+    de: "Die Rangliste kannst du auf dem Hauptbildschirm verfolgen.",
+    en: "You can follow the ranking on the main screen.",
+  },
+
+  // ═══════════════════════════════════════════
+  // SENSOR (HostSensorDisplay + PlayerSensorController)
+  // ═══════════════════════════════════════════
+  "sensor.roundLabel": {
+    tr: (n: number) => `Tur ${n}`,
+    de: (n: number) => `Runde ${n}`,
+    en: (n: number) => `Round ${n}`,
+  },
+  "sensor.categoryLabel": { tr: "Kategori:", de: "Kategorie:", en: "Category:" },
+  "sensor.openImage": { tr: "Görseli Aç", de: "Bild öffnen", en: "Reveal Image" },
+  "sensor.buzzerActive": { tr: "Buzzer Aktif", de: "Buzzer aktiv", en: "Buzzer Active" },
+  "sensor.stop": { tr: "STOP!", de: "STOPP!", en: "STOP!" },
+  "sensor.pressedBuzzer": {
+    tr: (name: string) => `${name} butona bastı!`,
+    de: (name: string) => `${name} hat gebuzzert!`,
+    en: (name: string) => `${name} hit the buzzer!`,
+  },
+  "sensor.answerLabel": { tr: "Cevabı:", de: "Antwort:", en: "Answer:" },
+  "sensor.waitingAnswer": { tr: "Cevap Bekleniyor...", de: "Warte auf Antwort...", en: "Waiting for answer..." },
+  "sensor.correct": { tr: "DOĞRU", de: "RICHTIG", en: "CORRECT" },
+  "sensor.wrong": { tr: "YANLIŞ", de: "FALSCH", en: "WRONG" },
+  "sensor.wonPoints": {
+    tr: (name: string) => `${name} bildi ve +100 puan kazandı!`,
+    de: (name: string) => `${name} hat's erraten und +100 Punkte kassiert!`,
+    en: (name: string) => `${name} got it and won +100 points!`,
+  },
+  "sensor.nextRound": { tr: "Sıradaki Tur", de: "Nächste Runde", en: "Next Round" },
+  "sensor.gameOver": { tr: "Oyun Bitti!", de: "Spiel vorbei!", en: "Game Over!" },
+  "sensor.seeResults": { tr: "Sonuçları Gör", de: "Ergebnisse ansehen", en: "See Results" },
+  "sensor.getReady": { tr: "HAZIR OL", de: "MACH DICH BEREIT", en: "GET READY" },
+  "sensor.beFirst": {
+    tr: "Görsel açıldığında butona ilk basan sen ol!",
+    de: "Sei der Erste, der den Buzzer drückt, wenn das Bild erscheint!",
+    en: "Be the first to hit the button when the image appears!",
+  },
+  "sensor.buzz": { tr: "BUZZ!", de: "BUZZ!", en: "BUZZ!" },
+  "sensor.pressIfYouKnow": {
+    tr: "Cevabı biliyorsan bas!",
+    de: "Drück, wenn du die Antwort weißt!",
+    en: "Press it if you know the answer!",
+  },
+  "sensor.yourTurn": { tr: "Sende!", de: "Du bist dran!", en: "It's you!" },
+  "sensor.writeAndSend": {
+    tr: "Hemen cevabını yaz ve gönder.",
+    de: "Schreib jetzt deine Antwort und schick sie ab.",
+    en: "Type your answer now and send it.",
+  },
+  "sensor.answerPlaceholder": { tr: "Cevabın nedir?", de: "Was ist deine Antwort?", en: "What's your answer?" },
+  "sensor.send": { tr: "Gönder", de: "Senden", en: "Send" },
+  "sensor.locked": { tr: "KİLİTLİ", de: "GESPERRT", en: "LOCKED" },
+  "sensor.someoneElseBuzzed": {
+    tr: "Başka bir oyuncu butona bastı. Cevap vermesi bekleniyor...",
+    de: "Ein anderer Spieler hat gebuzzert. Warte auf seine Antwort...",
+    en: "Another player hit the buzzer. Waiting for their answer...",
+  },
+  "sensor.congrats": { tr: "TEBRİKLER!", de: "GLÜCKWUNSCH!", en: "CONGRATS!" },
+  "sensor.correctWonPoints": {
+    tr: "Doğru bildin ve +100 puan kazandın!",
+    de: "Richtig geraten, +100 Punkte für dich!",
+    en: "You got it right and won +100 points!",
+  },
+  "sensor.imageRevealed": { tr: "Görsel Açıldı", de: "Bild aufgedeckt", en: "Image Revealed" },
+  "sensor.getReadyNextRound": {
+    tr: "Doğru cevap ekranda. Sıradaki tura hazırlan!",
+    de: "Die richtige Antwort steht auf dem Bildschirm. Mach dich für die nächste Runde bereit!",
+    en: "The correct answer is on screen. Get ready for the next round!",
+  },
+  "sensor.toastError": { tr: "Bir hata oluştu!", de: "Ein Fehler ist aufgetreten!", en: "An error occurred!" },
+  "sensor.toastSubmitFailed": {
+    tr: "Cevap gönderilemedi!",
+    de: "Antwort konnte nicht gesendet werden!",
+    en: "Couldn't send the answer!",
+  },
+
+  // ═══════════════════════════════════════════
+  // PLAYER REVIEW (cevap gönderim/inceleme bekleme ekranı)
+  // ═══════════════════════════════════════════
+  "playerReview.title": { tr: "DEĞERLENDİRME", de: "AUSWERTUNG", en: "REVIEW" },
+  "playerReview.answersSent": { tr: "Cevaplar Gönderildi", de: "Antworten gesendet", en: "Answers Sent" },
+  "playerReview.reviewing": { tr: "Cevaplanır İnceleniyor...", de: "Antworten werden geprüft...", en: "Reviewing answers..." },
+  "playerReview.dataTransferred": { tr: "VERİ AKTARILDI", de: "DATEN ÜBERTRAGEN", en: "DATA TRANSFERRED" },
+  "playerReview.watchMainScreen": {
+    tr: "Lütfen ana ekranı takip ediniz.",
+    de: "Bitte den Hauptbildschirm im Blick behalten.",
+    en: "Please keep an eye on the main screen.",
+  },
 } as const;
 
 type TranslationKey = keyof typeof translations;

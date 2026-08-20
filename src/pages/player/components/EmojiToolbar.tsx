@@ -1,10 +1,12 @@
 import { motion } from "framer-motion";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface EmojiToolbarProps {
   onEmojiClick: (emoji: string) => void;
 }
 
 export function EmojiToolbar({ onEmojiClick }: EmojiToolbarProps) {
+  const { t } = useLocale();
   const emojis = ["👍", "👎", "😂", "🚨", "🤯", "💀"];
 
   return (
@@ -30,7 +32,7 @@ export function EmojiToolbar({ onEmojiClick }: EmojiToolbarProps) {
           ))}
         </div>
         <p className="text-xs text-center text-zinc-600 font-light uppercase tracking-[0.3em] mt-1.5">
-          TEPKİ GÖNDER
+          {t("emoji.sendReaction")}
         </p>
       </div>
     </div>

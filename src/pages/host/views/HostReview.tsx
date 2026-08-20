@@ -5,26 +5,32 @@ import { useLocale } from "../../../hooks/useLocale";
 import { safeForDisplay } from "../../../lib/profanity";
 import type { AnswerBreakdown, Player, RoundResultInfo } from "../../../types/database";
 
-/** Otomatik reddin sebebini host'a tek bakışta anlatan kısa etiket. */
-function autoRejectLabel(ans: AnswerBreakdown | undefined): string | null {
+/**
+ * Otomatik reddin sebebini host'a tek bakışta anlatan kısa etiket.
+ * `t` dışarıdan geçiliyor: bu bir bileşen değil, hook çağıramaz.
+ */
+function autoRejectLabel(
+  ans: AnswerBreakdown | undefined,
+  t: ReturnType<typeof useLocale>["t"],
+): string | null {
   if (!ans) return null;
-  if (ans.isProfane) return "UYGUNSUZ İÇERİK";
+  if (ans.isProfane) return t("review.autoRejectProfane");
   if (!ans.isGibberish) return null;
   switch (ans.gibberishReason) {
     case "tooShort":
-      return "ÇOK KISA";
+      return t("review.autoRejectTooShort");
     case "repeatedLetters":
-      return "TEKRARLANAN HARF";
+      return t("review.autoRejectRepeatedLetters");
     case "keyboardMash":
-      return "KLAVYE EZMESİ";
+      return t("review.autoRejectKeyboardMash");
     case "repeatedPattern":
-      return "TEKRARLANAN KALIP";
+      return t("review.autoRejectRepeatedPattern");
     case "noVowel":
-      return "ÜNLÜ HARF YOK";
+      return t("review.autoRejectNoVowel");
     case "consonantRun":
-      return "ÜNSÜZ YIĞILMASI";
+      return t("review.autoRejectConsonantRun");
     default:
-      return "ŞÜPHELİ CEVAP";
+      return t("review.autoRejectSuspicious");
   }
 }
 
@@ -414,12 +420,12 @@ export function HostReview({
                               <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
                               {ans?.isJoker ? (
                                 <span className="text-red-500">
-                                  -10 PUAN CEZASI
+                                  {t("review.jokerPenalty")}
                                 </span>
                               ) : (
                                 // Otomatik red varsa gerekçesini göster;
                                 // host tıklayarak yine de onaylayabilir.
-                                autoRejectLabel(ans) ??
+                                autoRejectLabel(ans, t) ??
                                 (ans?.value &&
                                 ans.value
                                   .toLowerCase()

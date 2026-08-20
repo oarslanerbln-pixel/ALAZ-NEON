@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useUserProfile } from "../../../hooks/useUserProfile";
 import type { LeagueTier } from "../../../types/database";
 import { auth } from "../../../lib/firebase";
+import { useLocale } from "../../../hooks/useLocale";
 
 const TIER_COLORS: Record<LeagueTier, string> = {
   BRONZE: "#cd7f32",
@@ -12,17 +13,23 @@ const TIER_COLORS: Record<LeagueTier, string> = {
   LEGEND: "#9400d3"
 };
 
-const TIER_NAMES: Record<LeagueTier, string> = {
-  BRONZE: "BRONZ LİG",
-  SILVER: "GÜMÜŞ LİG",
-  GOLD: "ALTIN LİG",
-  PLATINUM: "PLATİN LİG",
-  NEON: "NEON LİG",
-  LEGEND: "EFSANE LİG"
-};
+/**
+ * Lig adları artık modül seviyesinde sabit değil — çeviri anahtarına
+ * eşleniyor, isim `t()` ile render sırasında çözülüyor (modül yüklenirken
+ * çözseydik dil değişince güncellenmezdi).
+ */
+const TIER_KEYS = {
+  BRONZE: "profile.tier.BRONZE",
+  SILVER: "profile.tier.SILVER",
+  GOLD: "profile.tier.GOLD",
+  PLATINUM: "profile.tier.PLATINUM",
+  NEON: "profile.tier.NEON",
+  LEGEND: "profile.tier.LEGEND",
+} as const satisfies Record<LeagueTier, string>;
 
 export function PlayerProfileCard() {
   const { profile, loading } = useUserProfile();
+  const { t } = useLocale();
 
   if (loading) {
     return (
@@ -63,7 +70,7 @@ export function PlayerProfileCard() {
         */}
         <div className="flex justify-between items-start gap-3 z-10">
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] text-white/50 tracking-[0.3em] uppercase mb-1">HENGAME ID CARD</p>
+            <p className="text-[10px] text-white/50 tracking-[0.3em] uppercase mb-1">{t("profile.idCard")}</p>
             <h2
               className="text-xl sm:text-2xl font-bold tracking-wide uppercase drop-shadow-md truncate"
               style={{ color: "#fff", textShadow: `0 0 10px ${color}` }}
@@ -98,14 +105,14 @@ export function PlayerProfileCard() {
               className="text-[9px] font-bold tracking-[0.1em] mt-2 text-center whitespace-nowrap"
               style={{ color }}
             >
-              {TIER_NAMES[profile.current_league]}
+              {t(TIER_KEYS[profile.current_league])}
             </span>
           </div>
         </div>
 
         <div className="mt-2 pt-4 border-t border-white/10 flex justify-between items-end z-10">
           <div>
-            <p className="text-[10px] text-white/40 tracking-widest uppercase">Toplam Puan</p>
+            <p className="text-[10px] text-white/40 tracking-widest uppercase">{t("profile.totalScore")}</p>
             <p 
               className="text-3xl font-black tracking-wider"
               style={{ color: color, textShadow: `0 0 15px ${color}80` }}
@@ -118,7 +125,7 @@ export function PlayerProfileCard() {
             onClick={() => auth.signOut()}
             className="text-[10px] uppercase tracking-widest border border-white/20 px-3 py-1 hover:bg-white/10 transition-colors"
           >
-            ÇIKIŞ YAP
+            {t("profile.logout")}
           </button>
         </div>
       </div>

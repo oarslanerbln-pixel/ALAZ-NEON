@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useLocale } from "../hooks/useLocale";
 
 interface ExperienceBarProps {
   progress: number; // 0 to 100
@@ -11,11 +12,13 @@ export function ExperienceBar({
   label,
   color = "var(--color-alaz-orange)",
 }: ExperienceBarProps) {
+  const { t } = useLocale();
+
   return (
     <div className="w-full space-y-2">
       <div className="flex justify-between items-end px-1">
         <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">
-          {label || "TUR İLERLEMESİ"}
+          {label || t("xpBar.roundProgress")}
         </span>
         <span className="text-[10px] font-black text-white px-2 py-0.5 rounded bg-white/5">
           {Math.round(progress)}%

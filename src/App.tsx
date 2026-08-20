@@ -5,6 +5,7 @@ import { ToastProvider } from "./contexts/ToastContext";
 import { VenueProvider } from "./contexts/VenueContext";
 import { LandingPage } from "./pages/LandingPage";
 import { useAuth } from "./hooks/useAuth";
+import { useLocale } from "./hooks/useLocale";
 
 /**
  * Rota bazlı kod bölme.
@@ -38,10 +39,12 @@ const VenueSettings = lazy(() =>
 );
 
 function RouteFallback() {
+  const { t } = useLocale();
+
   return (
     <div className="fixed inset-0 bg-black flex items-center justify-center font-mono">
       <div className="text-alaz-orange text-sm uppercase tracking-[0.5em] animate-pulse">
-        YÜKLENİYOR...
+        {t("common.loading")}
       </div>
     </div>
   );

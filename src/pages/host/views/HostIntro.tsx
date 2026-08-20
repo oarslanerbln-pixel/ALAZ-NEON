@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { MatrixRain, HackerTerminal } from "../../../components/HackerBoot";
 import type { Player } from "../../../types/database";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface HostIntroProps {
   players: Player[];
@@ -10,6 +11,7 @@ interface HostIntroProps {
 }
 
 export function HostIntro({ players, onComplete }: HostIntroProps) {
+  const { t } = useLocale();
   const [phase, setPhase] = useState<"boot" | "matrix" | "players" | "countdown" | "wow">("boot");
   const [currentPlayerIdx, setCurrentPlayerIdx] = useState(0);
   const [countdown, setCountdown] = useState(3);
@@ -108,11 +110,11 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
           >
             <h2 className="text-3xl md:text-5xl lg:text-6xl font-black uppercase tracking-widest flex items-center gap-2">
               <span className="text-red-500 animate-ping">!</span> 
-              SİSTEM ÇÖKÜŞÜ 
+              {t("intro.systemCrash")}
               <span className="text-red-500 animate-ping">!</span>
             </h2>
             <div className="text-xl opacity-80 uppercase tracking-widest animate-pulse">
-              GÜVENLİK PROTOKOLÜ İHLAL EDİLDİ...
+              {t("intro.securityBreach")}
             </div>
           </motion.div>
         )}
@@ -126,8 +128,8 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
             className="flex flex-col items-center justify-center z-20 w-full h-full"
           >
             <HackerTerminal
-              downloadingLabel="DOWNLOADING PLAYER NEURAL DATA..."
-              mainframeLabel="CONNECTING TO HENGAME ARENA MAINFRAME..."
+              downloadingLabel={t("intro.arena.downloadLabel")}
+              mainframeLabel={t("intro.arena.mainframeLabel")}
             />
             <motion.div
               animate={{ opacity: [1, 0, 1, 0.5, 1], scale: [1, 1.05, 1] }}
@@ -138,7 +140,7 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
                 SECURITY BREACH
               </div>
               <h1 className="text-6xl md:text-8xl lg:text-9xl font-black text-red-500 uppercase tracking-tighter drop-shadow-[0_0_50px_rgba(255,0,0,1)]">
-                SİSTEM HACKLENDİ
+                {t("intro.systemHacked")}
               </h1>
             </motion.div>
           </motion.div>
@@ -154,7 +156,7 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
             className="text-center z-20"
           >
             <div className="text-xl text-[#00ff00] mb-4 opacity-50 uppercase tracking-widest">
-              ZİHİN AĞA BAĞLANIYOR...
+              {t("intro.arena.connecting")}
             </div>
             <h1 className="text-5xl md:text-7xl lg:text-[130px] font-black text-white uppercase tracking-tighter leading-none truncate max-w-[90vw]">
               {players[currentPlayerIdx].nickname}
@@ -229,7 +231,7 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
                 className="text-[120px] md:text-[180px] font-black text-white tracking-tighter uppercase mb-4 text-center leading-none"
                 style={{ textShadow: "0 0 100px rgba(255,77,0,1), 0 0 40px rgba(255,255,255,0.8)" }}
               >
-                HENGAME ARENA
+                {t("intro.arena.title")}
               </motion.h1>
 
               <motion.h2
@@ -239,7 +241,7 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
                 className="text-4xl md:text-6xl font-black text-[#00ff00] tracking-[0.5em] uppercase text-center"
                 style={{ textShadow: "0 0 50px rgba(0,255,0,0.8)" }}
               >
-                ATEŞ SERBEST
+                {t("intro.arena.subtitle")}
               </motion.h2>
             </motion.div>
           </motion.div>

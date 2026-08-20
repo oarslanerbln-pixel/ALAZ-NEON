@@ -2,12 +2,14 @@ import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SoundManager, sounds } from "../../../../lib/audio";
 import { MatrixRain, HackerTerminal } from "../../../../components/HackerBoot";
+import { useLocale } from "../../../../hooks/useLocale";
 
 interface HostQuizIntroProps {
   onComplete: () => void;
 }
 
 export function HostQuizIntro({ onComplete }: HostQuizIntroProps) {
+  const { t } = useLocale();
   const [phase, setPhase] = useState<"boot" | "matrix" | "countdown" | "wow">("boot");
   const [countdown, setCountdown] = useState(3);
 
@@ -88,11 +90,11 @@ export function HostQuizIntro({ onComplete }: HostQuizIntroProps) {
           >
             <h2 className="text-3xl md:text-5xl lg:text-6xl font-black uppercase tracking-widest flex items-center gap-2">
               <span className="text-red-500 animate-ping">!</span> 
-              SİSTEM ÇÖKÜŞÜ 
+              {t("intro.systemCrash")}
               <span className="text-red-500 animate-ping">!</span>
             </h2>
             <div className="text-xl opacity-80 uppercase tracking-widest animate-pulse">
-              GÜVENLİK PROTOKOLÜ İHLAL EDİLDİ...
+              {t("intro.securityBreach")}
             </div>
           </motion.div>
         )}
@@ -106,8 +108,8 @@ export function HostQuizIntro({ onComplete }: HostQuizIntroProps) {
             className="flex flex-col items-center justify-center z-20 w-full h-full"
           >
             <HackerTerminal
-              downloadingLabel="DOWNLOADING TRIVIA DATA..."
-              mainframeLabel="CONNECTING TO HENGAME QUIZ MAINFRAME..."
+              downloadingLabel={t("intro.quiz.downloadLabel")}
+              mainframeLabel={t("intro.quiz.mainframeLabel")}
             />
             <motion.div
               animate={{ opacity: [1, 0, 1, 0.5, 1], scale: [1, 1.05, 1] }}
@@ -118,7 +120,7 @@ export function HostQuizIntro({ onComplete }: HostQuizIntroProps) {
                 SECURITY BREACH
               </div>
               <h1 className="text-6xl md:text-8xl lg:text-9xl font-black text-red-500 uppercase tracking-tighter drop-shadow-[0_0_50px_rgba(255,0,0,1)]">
-                SİSTEM HACKLENDİ
+                {t("intro.systemHacked")}
               </h1>
             </motion.div>
           </motion.div>
@@ -191,7 +193,7 @@ export function HostQuizIntro({ onComplete }: HostQuizIntroProps) {
                 className="text-[100px] md:text-[150px] font-black text-white tracking-tighter uppercase mb-4 text-center leading-none z-10"
                 style={{ textShadow: "0 0 100px rgba(59,130,246,1), 0 0 40px rgba(255,255,255,0.8)" }}
               >
-                HENGAME QUIZ
+                {t("intro.quiz.title")}
               </motion.h1>
 
               <motion.h2
@@ -201,7 +203,7 @@ export function HostQuizIntro({ onComplete }: HostQuizIntroProps) {
                 className="text-4xl md:text-5xl font-black text-alaz-orange tracking-[0.5em] uppercase text-center z-10"
                 style={{ textShadow: "0 0 50px rgba(255,77,0,1)" }}
               >
-                ZİHİNLER ÇARPIŞIYOR
+                {t("intro.quiz.subtitle")}
               </motion.h2>
             </motion.div>
           </motion.div>

@@ -3,64 +3,38 @@ import type { Room } from "../../../types/database";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { updateDoc, doc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface Props {
   room: Room;
   onComplete: () => void;
 }
 
+/**
+ * Slaytlar metin değil çeviri anahtarı tutuyor — metin `t()` ile render
+ * sırasında çözülüyor, böylece dil değişince slayt da o dile geçiyor.
+ */
 const TUTORIAL_CONTENT = {
   scattegories: [
-    {
-      title: "HARFİ GÖR, KELİMELERİ BUL",
-      desc: "Her turun başında rastgele bir harf seçilir. Amacın, o harfle başlayan ve kategorilere uygun kelimeleri en hızlı şekilde bulmak.",
-      icon: "⚡"
-    },
-    {
-      title: "KOPYA YOK, YARATICILIK ŞART",
-      desc: "Başkasıyla aynı kelimeyi yazarsan az puan alırsın. Sadece sana özel, benzersiz kelimeler ekstra puan kazandırır!",
-      icon: "🧠"
-    }
+    { titleKey: "tutorial.host.scattegories.1.title", descKey: "tutorial.host.scattegories.1.desc", icon: "⚡" },
+    { titleKey: "tutorial.host.scattegories.2.title", descKey: "tutorial.host.scattegories.2.desc", icon: "🧠" },
   ],
   quiz: [
-    {
-      title: "BİLGİNİ KANITLA",
-      desc: "Ekranda beliren soruları oku ve en hızlı şekilde doğru şıkkı seç. Zaman daralıyor!",
-      icon: "🎯"
-    },
-    {
-      title: "HIZ VE DİKKAT",
-      desc: "Soru zorlaştıkça ve sen ne kadar hızlı cevaplarsan o kadar yüksek puan alırsın. Yanlış cevapta puan yok!",
-      icon: "⏱️"
-    }
+    { titleKey: "tutorial.host.quiz.1.title", descKey: "tutorial.host.quiz.1.desc", icon: "🎯" },
+    { titleKey: "tutorial.host.quiz.2.title", descKey: "tutorial.host.quiz.2.desc", icon: "⏱️" },
   ],
   bomb: [
-    {
-      title: "BOMBAYI ELİNDEN AT!",
-      desc: "Bomba sana geldiğinde telefonun titrer ve ekran kızarır. Hemen kategoriye uygun bir kelime yaz ve gönder!",
-      icon: "💣"
-    },
-    {
-      title: "KULLANILMIŞ KELİME YASAK",
-      desc: "Daha önce yazılan bir kelimeyi yazamazsın! Süre dolduğunda bomba kimin elindeyse bir canı gider.",
-      icon: "🔥"
-    }
+    { titleKey: "tutorial.host.bomb.1.title", descKey: "tutorial.host.bomb.1.desc", icon: "💣" },
+    { titleKey: "tutorial.host.bomb.2.title", descKey: "tutorial.host.bomb.2.desc", icon: "🔥" },
   ],
   sensor: [
-    {
-      title: "GÖRSELİ/SESİ İLK BULAN KAZANIR",
-      desc: "Ekranda beliren nesneyi, sesi veya logoyu ilk kim bilirse dev butona o bassın!",
-      icon: "⚡"
-    },
-    {
-      title: "HOST ONAYI ŞART",
-      desc: "Butona ilk basan oyuncunun cevabı doğruysa Host 'Doğru' der, yanlışsa oyun devam eder.",
-      icon: "🎯"
-    }
-  ]
-};
+    { titleKey: "tutorial.host.sensor.1.title", descKey: "tutorial.host.sensor.1.desc", icon: "⚡" },
+    { titleKey: "tutorial.host.sensor.2.title", descKey: "tutorial.host.sensor.2.desc", icon: "🎯" },
+  ],
+} as const;
 
 export function HostTutorial({ room, onComplete }: Props) {
+  const { t } = useLocale();
   const step = room.tutorial_step || 0;
   const gameType = room.active_game || room.game_type || "scattegories";
   const content = TUTORIAL_CONTENT[gameType as keyof typeof TUTORIAL_CONTENT] || TUTORIAL_CONTENT.scattegories;
@@ -88,7 +62,7 @@ export function HostTutorial({ room, onComplete }: Props) {
       }`} />
       
       <div className="z-10 w-full max-w-5xl px-8 flex flex-col items-center">
-        <h3 className="text-gray-500 font-bold tracking-[0.5em] uppercase mb-12 animate-pulse">Nasıl Oynanır?</h3>
+        <h3 className="text-gray-500 font-bold tracking-[0.5em] uppercase mb-12 animate-pulse">{t("tutorial.howToPlay")}</h3>
         
         <AnimatePresence mode="wait">
           <motion.div
@@ -108,10 +82,10 @@ export function HostTutorial({ room, onComplete }: Props) {
               </div>
               <div className="flex-1 text-center md:text-left">
                 <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter mb-6">
-                  {currentSlide.title}
+                  {t(currentSlide.titleKey)}
                 </h1>
                 <p className="text-xl md:text-2xl text-gray-300 font-medium leading-relaxed">
-                  {currentSlide.desc}
+                  {t(currentSlide.descKey)}
                 </p>
               </div>
             </div>
@@ -140,7 +114,7 @@ export function HostTutorial({ room, onComplete }: Props) {
               : 'bg-white/10 text-white border border-white/20 hover:bg-white/20'
           }`}
         >
-          {step === content.length - 1 ? 'OYUNU BAŞLAT' : 'SONRAKİ'}
+          {step === content.length - 1 ? t("tutorial.startGame") : t("tutorial.next")}
         </motion.button>
       </div>
     </div>

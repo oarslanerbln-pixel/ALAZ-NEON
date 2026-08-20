@@ -268,13 +268,13 @@ export function PlayerGame() {
               </div>
 
               <h2 className="text-2xl md:text-3xl font-black text-white tracking-[0.2em] mb-3 uppercase font-mono">
-                {gameState === "countdown" ? "HARF BELİRLENİYOR..." : "OYUN BAŞLIYOR!"}
+                {gameState === "countdown" ? t("game.determiningLetter") : t("game.starting")}
               </h2>
               <p className="text-alaz-orange text-sm md:text-base font-bold tracking-widest uppercase animate-pulse mb-6">
-                Lütfen Ana Ekrana Bakın...
+                {t("game.watchMainScreen")}
               </p>
               <div className="bg-black/60 border border-white/10 p-4 max-w-xs text-xs text-gray-400 font-mono rounded-sm">
-                Tur {currentRound || 1} / {room?.total_rounds || 3} • Hızlı yazan ekstra bonus puan kazanır!
+                {t("game.roundHint", currentRound || 1, room?.total_rounds || 3)}
               </div>
             </motion.div>
           )}

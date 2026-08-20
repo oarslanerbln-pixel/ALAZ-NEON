@@ -14,6 +14,7 @@ import { HostQuizIntro } from "./views/HostQuizIntro";
 import { HostHeader } from "../components/HostHeader";
 import { HostLobby } from "../views/HostLobby";
 import { HostTutorial } from "../components/HostTutorial";
+import { useLocale } from "../../../hooks/useLocale";
 
 import type { Room, Player } from "../../../types/database";
 
@@ -28,6 +29,7 @@ export function HostQuizDisplay({
   updateRoomStatus: (status: Room["status"], extra?: Partial<Room>) => Promise<void>;
   updatePlayerScore: (playerId: string, score: number) => Promise<void>;
 }) {
+  const { t } = useLocale();
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get("roomId");
 
@@ -278,7 +280,7 @@ export function HostQuizDisplay({
               className="w-full flex flex-col items-center"
             >
               <h1 className="text-6xl font-black text-blue-500 tracking-widest uppercase mb-10 drop-shadow-[0_0_30px_rgba(59,130,246,0.8)]">
-                HENGAME QUIZ
+                {t("quiz.title")}
               </h1>
               <div className="w-full h-full relative">
                 <HostLobby
@@ -308,10 +310,10 @@ export function HostQuizDisplay({
               className="flex flex-col items-center justify-center w-full max-w-5xl text-center"
             >
               <h2 className="text-2xl text-blue-400 font-black tracking-[0.3em] uppercase mb-10">
-                SORU {room.current_round} / {room.total_rounds}
+                {t("quiz.questionCounter", room.current_round, room.total_rounds)}
               </h2>
               {!currentQuestion ? (
-                <div className="text-white/50 text-2xl animate-pulse">Yükleniyor...</div>
+                <div className="text-white/50 text-2xl animate-pulse">{t("quiz.loading")}</div>
               ) : (
                 <>
                   <div className="bg-black/60 border border-blue-500/30 p-16 w-full shadow-[0_0_50px_rgba(59,130,246,0.2)]">
@@ -323,7 +325,7 @@ export function HostQuizDisplay({
                     onClick={startQuestionTimer}
                     className="mt-16 px-16 py-6 bg-blue-600 hover:bg-blue-500 text-white font-black text-2xl uppercase tracking-widest shadow-[0_0_30px_rgba(59,130,246,0.6)]"
                   >
-                    SÜREYİ BAŞLAT
+                    {t("quiz.startTimer")}
                   </button>
                 </>
               )}
@@ -370,7 +372,7 @@ export function HostQuizDisplay({
                   className="px-8 py-3 bg-red-950/80 hover:bg-red-900 border border-red-500/50 hover:border-red-500 text-red-500 font-bold uppercase tracking-widest text-sm transition-all duration-300 rounded-full flex items-center gap-3 group"
                 >
                   <span className="w-2 h-2 rounded-full bg-red-500 group-hover:animate-ping" />
-                  SÜREYİ BİTİR / CEVAPLARA GEÇ
+                  {t("quiz.endTimer")}
                 </button>
               </div>
             </motion.div>
@@ -385,7 +387,7 @@ export function HostQuizDisplay({
               className="flex flex-col items-center justify-center w-full max-w-7xl"
             >
               <h2 className="text-3xl text-white font-black tracking-widest uppercase mb-8">
-                DOĞRU CEVAP
+                {t("quiz.correctAnswer")}
               </h2>
               
               <div className="grid grid-cols-2 gap-8 w-full mb-12">
@@ -415,7 +417,7 @@ export function HostQuizDisplay({
                 onClick={showLeaderboard}
                 className="px-12 py-5 bg-white text-black hover:bg-gray-200 font-black text-xl uppercase tracking-widest"
               >
-                SIRALAMAYI GÖR
+                {t("quiz.seeRanking")}
               </button>
             </motion.div>
           )}
@@ -429,7 +431,7 @@ export function HostQuizDisplay({
               className="flex flex-col items-center justify-center w-full max-w-4xl"
             >
               <h2 className="text-4xl text-alaz-orange font-black tracking-[0.2em] uppercase mb-10">
-                GÜNCEL SIRALAMA
+                {t("quiz.currentRanking")}
               </h2>
               <div className="w-full space-y-4 mb-10">
                 {[...players].sort((a,b) => b.total_score - a.total_score).map((p, idx) => (
@@ -438,7 +440,7 @@ export function HostQuizDisplay({
                       #{idx + 1}
                     </div>
                     <div className="text-2xl font-black text-white flex-1">{p.nickname}</div>
-                    <div className="text-3xl font-black text-alaz-orange">{p.total_score} <span className="text-sm text-gray-500">PTS</span></div>
+                    <div className="text-3xl font-black text-alaz-orange">{p.total_score} <span className="text-sm text-gray-500">{t("quiz.pts")}</span></div>
                   </div>
                 ))}
               </div>
@@ -446,7 +448,7 @@ export function HostQuizDisplay({
                 onClick={nextQuestion}
                 className="px-12 py-5 bg-blue-600 hover:bg-blue-500 text-white font-black text-xl uppercase tracking-widest shadow-[0_0_30px_rgba(59,130,246,0.6)]"
               >
-                {room.current_round >= room.total_rounds ? "OYUNU BİTİR" : "SONRAKİ SORU"}
+                {room.current_round >= room.total_rounds ? t("quiz.finishGame") : t("quiz.nextQuestion")}
               </button>
             </motion.div>
           )}
@@ -459,7 +461,7 @@ export function HostQuizDisplay({
               className="flex flex-col items-center justify-center w-full max-w-4xl text-center"
             >
               <h1 className="text-6xl font-black text-alaz-orange mb-4 uppercase drop-shadow-[0_0_30px_rgba(255,77,0,0.8)]">
-                ŞAMPİYON
+                {t("quiz.champion")}
               </h1>
               
               {players.length > 0 && (() => {
@@ -468,7 +470,7 @@ export function HostQuizDisplay({
                 return (
                   <div className="bg-gradient-to-b from-alaz-orange/20 to-black/60 border border-alaz-orange p-16 w-full mb-12 shadow-[0_0_100px_rgba(255,77,0,0.3)] mt-8">
                     <h2 className="text-7xl font-black text-white mb-6">{winner.nickname}</h2>
-                    <div className="text-5xl font-black text-alaz-orange">{winner.total_score} PTS</div>
+                    <div className="text-5xl font-black text-alaz-orange">{winner.total_score} {t("quiz.pts")}</div>
                   </div>
                 );
               })()}
@@ -477,7 +479,7 @@ export function HostQuizDisplay({
                 onClick={resetGame}
                 className="px-12 py-5 border-2 border-white/20 text-white hover:bg-white hover:text-black font-black text-xl uppercase tracking-widest transition-colors"
               >
-                YENİ OYUN BAŞLAT
+                {t("quiz.newGame")}
               </button>
             </motion.div>
           )}

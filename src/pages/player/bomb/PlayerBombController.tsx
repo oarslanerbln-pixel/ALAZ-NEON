@@ -7,6 +7,7 @@ import { SoundManager, sounds } from "../../../lib/audio";
 import { useToast } from "../../../contexts/ToastContextCore";
 import { containsProfanity } from "../../../lib/profanity";
 import { looksLikeGibberish } from "../../../lib/wordValidation";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface Props {
   room: Room;
@@ -17,6 +18,7 @@ export function PlayerBombController({ room, player }: Props) {
   const [word, setWord] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { showToast } = useToast();
+  const { t } = useLocale();
 
   const isMyTurn = room.bomb_target_player === player.id;
   const currentLives = player.lives !== undefined ? player.lives : 3;
@@ -38,7 +40,7 @@ export function PlayerBombController({ room, player }: Props) {
 
     // Check if word is already used
     if (room.used_words?.some(w => w.toLowerCase() === normalizedWord)) {
-      showToast("Bu kelime zaten kullanıldı!", "error");
+      showToast(t("bomb.toastWordUsed"), "error");
       SoundManager.getInstance().playSFX(sounds.FAILURE);
       if (navigator.vibrate) navigator.vibrate(200);
       return;
@@ -47,14 +49,14 @@ export function PlayerBombController({ room, player }: Props) {
     // Bombada geri bildirim anında olmalı — host'un elle reddetmesini beklersek
     // sıradaki oyuncuya çoktan paslanmış oluyor. Kelime dev ekrana da düşüyor.
     if (containsProfanity(word)) {
-      showToast("Uygunsuz kelime kabul edilmiyor!", "error");
+      showToast(t("bomb.toastProfane"), "error");
       SoundManager.getInstance().playSFX(sounds.FAILURE);
       if (navigator.vibrate) navigator.vibrate(200);
       return;
     }
 
     if (looksLikeGibberish(word)) {
-      showToast("Gerçek bir kelime yaz!", "error");
+      showToast(t("bomb.toastGibberish"), "error");
       SoundManager.getInstance().playSFX(sounds.FAILURE);
       if (navigator.vibrate) navigator.vibrate(200);
       return;
@@ -90,7 +92,7 @@ export function PlayerBombController({ room, player }: Props) {
       setWord("");
     } catch (error) {
       console.error("Error passing bomb:", error);
-      showToast("Bir hata oluştu!", "error");
+      showToast(t("bomb.toastError"), "error");
     } finally {
       setTimeout(() => setIsSubmitting(false), 500);
     }
@@ -99,8 +101,8 @@ export function PlayerBombController({ room, player }: Props) {
   if (currentLives <= 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-black text-white p-6">
-        <h1 className="text-4xl font-black text-gray-600 tracking-widest uppercase">ELENDİN</h1>
-        <p className="text-gray-500 mt-4 text-center">Diğer oyuncuların patlamasını izle!</p>
+        <h1 className="text-4xl font-black text-gray-600 tracking-widest uppercase">{t("bomb.eliminatedYou")}</h1>
+        <p className="text-gray-500 mt-4 text-center">{t("bomb.watchOthers")}</p>
       </div>
     );
   }
@@ -109,7 +111,7 @@ export function PlayerBombController({ room, player }: Props) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-black text-white p-6">
         <div className="w-16 h-16 border-4 border-[#ff003c] border-t-transparent rounded-full animate-spin mb-6" />
-        <h1 className="text-2xl font-black text-[#ff003c] tracking-widest uppercase animate-pulse">BOMBA HAZIRLANIYOR</h1>
+        <h1 className="text-2xl font-black text-[#ff003c] tracking-widest uppercase animate-pulse">{t("bomb.preparing")}</h1>
       </div>
     );
   }
@@ -117,8 +119,8 @@ export function PlayerBombController({ room, player }: Props) {
   if (room.status === "bomb_explosion") {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-[#ff003c] text-white p-6 text-center">
-        <h1 className="text-5xl font-black text-black tracking-widest uppercase drop-shadow-lg">PATLADI!</h1>
-        <p className="mt-4 font-bold text-xl">Lütfen dev ekrana bakınız.</p>
+        <h1 className="text-5xl font-black text-black tracking-widest uppercase drop-shadow-lg">{t("bomb.explodedShort")}</h1>
+        <p className="mt-4 font-bold text-xl">{t("bomb.watchMainScreen")}</p>
       </div>
     );
   }
@@ -126,8 +128,8 @@ export function PlayerBombController({ room, player }: Props) {
   if (room.status === "finished") {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-black text-white p-6 text-center">
-        <h1 className="text-4xl font-black text-alaz-orange tracking-widest uppercase drop-shadow-lg">OYUN BİTTİ</h1>
-        <p className="mt-4 text-gray-400">Sonuçlar ekranda!</p>
+        <h1 className="text-4xl font-black text-alaz-orange tracking-widest uppercase drop-shadow-lg">{t("bomb.gameOver")}</h1>
+        <p className="mt-4 text-gray-400">{t("bomb.resultsOnScreen")}</p>
       </div>
     );
   }
@@ -155,7 +157,7 @@ export function PlayerBombController({ room, player }: Props) {
           ))}
         </div>
         <div className={`text-xs font-bold uppercase tracking-widest ${isMyTurn ? 'text-black' : 'text-gray-500'}`}>
-          Kategori: {room.active_letter}
+          {t("bomb.categoryLabel", room.active_letter || "")}
         </div>
       </div>
 
@@ -167,7 +169,7 @@ export function PlayerBombController({ room, player }: Props) {
             className="w-full"
           >
             <h2 className="text-4xl font-black text-black uppercase tracking-tighter mb-8 text-center drop-shadow-md animate-pulse">
-              BOMBA SENDE!
+              {t("bomb.yourTurn")}
             </h2>
             
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -178,7 +180,7 @@ export function PlayerBombController({ room, player }: Props) {
                 autoFocus
                 disabled={isSubmitting}
                 className="w-full bg-white text-black p-6 text-2xl font-black text-center uppercase tracking-widest shadow-[0_10px_30px_rgba(0,0,0,0.5)] focus:outline-none focus:ring-4 focus:ring-black"
-                placeholder="KELİME YAZ"
+                placeholder={t("bomb.wordPlaceholder")}
               />
               <button
                 type="submit"
@@ -189,16 +191,16 @@ export function PlayerBombController({ room, player }: Props) {
                     : 'bg-black text-[#ff003c] shadow-xl hover:scale-[1.02] active:scale-95'
                 }`}
               >
-                {isSubmitting ? "ATIYOR..." : "BOMBAYI AT!"}
+                {isSubmitting ? t("bomb.throwing") : t("bomb.throwBomb")}
               </button>
             </form>
           </motion.div>
         ) : (
           <div className="text-center">
             <div className="text-6xl mb-6 animate-bounce">💣</div>
-            <h2 className="text-2xl font-bold text-gray-400 uppercase tracking-widest mb-2">BOMBA</h2>
-            <p className="text-4xl font-black text-white uppercase tracking-tighter">BAŞKASINDA</p>
-            <p className="mt-8 text-gray-500 font-medium">Sıranın sana gelmesini bekle...</p>
+            <h2 className="text-2xl font-bold text-gray-400 uppercase tracking-widest mb-2">{t("bomb.elsewhereLabel")}</h2>
+            <p className="text-4xl font-black text-white uppercase tracking-tighter">{t("bomb.elsewhere")}</p>
+            <p className="mt-8 text-gray-500 font-medium">{t("bomb.waitYourTurn")}</p>
           </div>
         )}
       </div>

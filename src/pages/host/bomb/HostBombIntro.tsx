@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import type { Room } from "../../../types/database";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface Props {
   room: Room;
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export function HostBombIntro({ room, onComplete }: Props) {
+  const { t } = useLocale();
   const onCompleteRef = useRef(onComplete);
   
   useEffect(() => {
@@ -57,7 +59,7 @@ export function HostBombIntro({ room, onComplete }: Props) {
           transition={{ delay: 0.5 }}
         >
           <span className="w-12 h-[2px] bg-gray-600"></span>
-          KATEGORİ
+          {t("bomb.category")}
           <span className="w-12 h-[2px] bg-gray-600"></span>
         </motion.h2>
 
@@ -86,7 +88,7 @@ export function HostBombIntro({ room, onComplete }: Props) {
             />
           </div>
           <p className="text-sm text-[#ff003c] font-bold uppercase tracking-[0.3em] animate-pulse">
-            BOMBA AKTİFLEŞİYOR...
+            {t("bomb.activating")}
           </p>
         </motion.div>
       </motion.div>
