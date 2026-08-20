@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { playCinematicWhoosh } from "../lib/soundSynth";
 import { SoundManager, sounds } from "../lib/audio";
+import { titleFontSize } from "../lib/titleFontSize";
 
 interface KineticSparkProps {
   className?: string;
@@ -12,16 +13,6 @@ interface KineticSparkProps {
   /** Büyük 3B başlık metni. Mekan markasına göre değişebilir, varsayılan HENGAME. */
   text?: string;
 }
-
-/**
- * Başlık boyutu tek kaynaktan: 3B katmanların hepsi birebir aynı ölçüde
- * olmak zorunda, iki ayrı yerde tutmak kaymaya davetiye çıkarıyordu.
- *
- * Sabit `text-[10rem]` mobilde 160px demekti ve "HENGAME" 375px'lik bir ekranda
- * 557px yer kaplayıp iki yanından kırpılıyordu. clamp() ile telefondan TV'ye
- * kadar akışkan ölçekleniyor.
- */
-const TITLE_FONT_SIZE = "clamp(3.25rem, 17vw, 18rem)";
 
 /** Ekstrüzyon derinliği em cinsinden — böylece yazıyla orantılı kalıyor. */
 const LAYER_DEPTH_EM = 0.025;
@@ -59,6 +50,9 @@ export function KineticSpark({
   playAudio = false,
   text = "HENGAME",
 }: KineticSparkProps) {
+  // Ekstrüzyon katmanları ve ön yüz BİREBİR aynı boyutta olmak zorunda —
+  // tek yerde hesaplanıp ikisine de veriliyor.
+  const fontSize = titleFontSize(text);
 
   useEffect(() => {
     if (!playAudio) return;
@@ -153,7 +147,7 @@ export function KineticSpark({
                   key={i}
                   className="absolute top-0 left-0 font-black uppercase tracking-tighter"
                   style={{
-                    fontSize: TITLE_FONT_SIZE,
+                    fontSize,
                     transform: `translateZ(-${(i + 1) * LAYER_DEPTH_EM}em)`,
                     color: face.color,
                     WebkitTextStroke: `1.5px ${face.stroke}`,
@@ -175,7 +169,7 @@ export function KineticSpark({
               animate={{ backgroundPosition: ["0% center", "-200% center"] }}
               transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
               style={{
-                fontSize: TITLE_FONT_SIZE,
+                fontSize,
                 backgroundImage:
                   "linear-gradient(100deg, #FF5500 0%, #FF9A3C 14%, #FFE7B8 26%, #FFF6E8 32%, #FFC15E 44%, #FF6B1A 58%, #FFD98A 72%, #FFF2D6 80%, #FF7A22 92%, #FF5500 100%)",
                 backgroundSize: "200% auto",
