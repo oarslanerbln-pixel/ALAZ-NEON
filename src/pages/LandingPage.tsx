@@ -196,7 +196,11 @@ export function LandingPage() {
                   SoundManager.getInstance().playSFX(sounds.CLICK);
                   setShowIntro(false);
                 }}
-                className="relative px-8 py-4 sm:px-14 sm:py-6 bg-gradient-to-r from-[#FFC15E] via-[#FF8A2E] to-[#FF5500] hover:from-[#FFD98A] hover:via-[#FFA04D] hover:to-[#FF6B1A] transition-all text-base sm:text-xl font-sans font-black uppercase tracking-[0.18em] group shadow-[0_0_40px_rgba(255,85,0,0.45)] hover:shadow-[0_0_60px_rgba(255,140,40,0.6)] hover:scale-[1.03] active:scale-[0.99]"
+                // Zemin siyah: beyaz neon yazı için klasik neon-tabela
+                // kontrastı (parlak tüp + kapkaranlık cam). Turuncu artık
+                // sadece ince bir kenarlık ve butonun etrafındaki dış
+                // ışımada — marka rengini korurken zemini karartıyor.
+                className="relative px-8 py-4 sm:px-14 sm:py-6 bg-black hover:bg-[#0d0400] border-2 border-[#FF8A2E]/70 hover:border-[#FFA04D] transition-all text-base sm:text-xl font-sans font-black uppercase tracking-[0.18em] group shadow-[0_0_40px_rgba(255,85,0,0.45)] hover:shadow-[0_0_60px_rgba(255,140,40,0.6)] hover:scale-[1.03] active:scale-[0.99]"
                 // Köşe kesimi 15px → 22px: daha belirgin sekizgen siluet.
                 style={{ clipPath: "polygon(22px 0, calc(100% - 22px) 0, 100% 22px, 100% calc(100% - 22px), calc(100% - 22px) 100%, 22px 100%, 0 calc(100% - 22px), 0 22px)" }}
               >
