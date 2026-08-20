@@ -9,13 +9,15 @@ interface KineticSparkProps {
   showTagline?: boolean;
   tagline?: string;
   playAudio?: boolean;
+  /** Büyük 3B başlık metni. Mekan markasına göre değişebilir, varsayılan HENGAME. */
+  text?: string;
 }
 
 /**
  * Başlık boyutu tek kaynaktan: 3B katmanların hepsi birebir aynı ölçüde
  * olmak zorunda, iki ayrı yerde tutmak kaymaya davetiye çıkarıyordu.
  *
- * Sabit `text-[10rem]` mobilde 160px demekti ve "KAMUS" 375px'lik bir ekranda
+ * Sabit `text-[10rem]` mobilde 160px demekti ve "HENGAME" 375px'lik bir ekranda
  * 557px yer kaplayıp iki yanından kırpılıyordu. clamp() ile telefondan TV'ye
  * kadar akışkan ölçekleniyor.
  */
@@ -28,8 +30,9 @@ export function KineticSpark({
   className = "",
   delay = 0,
   showTagline = false,
-  tagline = "KAMUS ARENA",
+  tagline = "HENGAME ARENA",
   playAudio = false,
+  text = "HENGAME",
 }: KineticSparkProps) {
 
   useEffect(() => {
@@ -89,7 +92,7 @@ export function KineticSpark({
                 opacity: 1 - i * 0.1,
               }}
             >
-              KAMUS
+              {text}
             </div>
           ))}
 
@@ -107,7 +110,7 @@ export function KineticSpark({
               transform: "translateZ(0px)",
             }}
           >
-            KAMUS
+            {text}
           </motion.div>
         </div>
       </motion.div>
@@ -127,7 +130,7 @@ export function KineticSpark({
             className="h-[2px] w-[200px] bg-gradient-to-r from-transparent via-blue-400 to-transparent shadow-[0_0_10px_rgba(0,229,255,0.8)]"
           />
           <p
-            // Harf aralığı mobilde 1.5em iken "KAMUS ARENA" ekran genişliğini
+            // Harf aralığı mobilde 1.5em iken "HENGAME ARENA" ekran genişliğini
             // zorluyordu; küçük ekranda daha dar başlayıp yukarı doğru açılıyor.
             className="text-[10px] sm:text-xs md:text-sm lg:text-base tracking-[0.5em] sm:tracking-[1em] md:tracking-[2em] uppercase font-bold text-center pl-[0.5em] sm:pl-[1em] md:pl-[2em] bg-clip-text text-transparent bg-gradient-to-r from-gray-300 via-white to-gray-300 drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] max-w-full"
           >

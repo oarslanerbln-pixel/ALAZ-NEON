@@ -127,7 +127,7 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
           >
             <HackerTerminal
               downloadingLabel="DOWNLOADING PLAYER NEURAL DATA..."
-              mainframeLabel="CONNECTING TO KAMUS ARENA MAINFRAME..."
+              mainframeLabel="CONNECTING TO HENGAME ARENA MAINFRAME..."
             />
             <motion.div
               animate={{ opacity: [1, 0, 1, 0.5, 1], scale: [1, 1.05, 1] }}
@@ -229,7 +229,7 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
                 className="text-[120px] md:text-[180px] font-black text-white tracking-tighter uppercase mb-4 text-center leading-none"
                 style={{ textShadow: "0 0 100px rgba(255,77,0,1), 0 0 40px rgba(255,255,255,0.8)" }}
               >
-                KAMUS ARENA
+                HENGAME ARENA
               </motion.h1>
 
               <motion.h2

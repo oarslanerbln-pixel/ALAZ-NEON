@@ -64,9 +64,19 @@ async function seed(roomOverrides: Record<string, unknown> = {}) {
   });
 }
 
+const OWNER_UID = "uid-venue-owner";
+
 const asHost = () => testEnv.authenticatedContext(HOST_UID).firestore();
 const asPlayer = () => testEnv.authenticatedContext(PLAYER_UID).firestore();
 const asGuest = () => testEnv.unauthenticatedContext().firestore();
+// Gerçek Firebase ID token'larında sağlayıcı bilgisi burada durur:
+// token.firebase.sign_in_provider. Uygulamadaki her anonim host/oyuncu
+// oturumunun "anonymous" olduğu, yalnızca e-posta/şifreyle giriş yapmış
+// hesapların "password" taşıdığı varsayımını burada simüle ediyoruz.
+const asVenueOwner = () =>
+  testEnv
+    .authenticatedContext(OWNER_UID, { firebase: { sign_in_provider: "password" } })
+    .firestore();
 
 beforeAll(async () => {
   testEnv = await initializeTestEnvironment({
@@ -272,6 +282,45 @@ describe("players — skor bütünlüğü", () => {
         nickname: "SAHTE",
         total_score: 0,
       })
+    );
+  });
+});
+
+describe("app_config — mekan markası", () => {
+  it("herkes aktif markayı okuyabilir (oda açılmadan önce landing/login bakıyor)", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "app_config", "active_venue"), {
+        name: "TEST MEKANI",
+        rewards_enabled: true,
+      });
+    });
+    await assertSucceeds(getDoc(doc(asGuest(), "app_config", "active_venue")));
+  });
+
+  it("e-posta/şifre ile giriş yapmış işletme hesabı markayı değiştirebilir", async () => {
+    await assertSucceeds(
+      setDoc(doc(asVenueOwner(), "app_config", "active_venue"), {
+        name: "YENİ MEKAN",
+        primary_color: "#00ff00",
+        rewards_enabled: false,
+        updated_at: Date.now(),
+      })
+    );
+  });
+
+  it("anonim host oturumu markayı değiştiremez", async () => {
+    // asHost() bu paketteki HER anonim oturumu temsil ediyor — gerçek
+    // uygulamada host/oyuncu girişi hep anonim, sadece işletme hesabı
+    // e-posta/şifre kullanıyor. Bu ayrım kırılırsa herhangi bir ziyaretçi
+    // tüm uygulamanın markasını değiştirebilir hâle gelir.
+    await assertFails(
+      setDoc(doc(asHost(), "app_config", "active_venue"), { name: "ELE GEÇİRİLDİ" })
+    );
+  });
+
+  it("girişsiz kullanıcı markayı değiştiremez", async () => {
+    await assertFails(
+      setDoc(doc(asGuest(), "app_config", "active_venue"), { name: "ELE GEÇİRİLDİ" })
     );
   });
 });

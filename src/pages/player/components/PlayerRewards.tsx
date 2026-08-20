@@ -4,8 +4,10 @@ import { onAuthStateChanged } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import { db, auth } from "../../../lib/firebase";
 import type { Reward } from "../../../types/database";
+import { useVenue } from "../../../contexts/VenueContextCore";
 
 export function PlayerRewards() {
+  const { venue } = useVenue();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,6 +46,13 @@ export function PlayerRewards() {
 
     return () => unsubscribeAuth();
   }, []);
+
+  // Bu mekanda ödül sistemi kapalıysa panel hiç görünmez — daha önce her
+  // mekanda (kapalı olsa bile) "KULLANILABİLİR ÖDÜL BULUNMUYOR" gösteren,
+  // hiçbir zaman dolmayan boş bir panel vardı.
+  if (!venue.rewards_enabled) {
+    return null;
+  }
 
   if (loading) {
     return (

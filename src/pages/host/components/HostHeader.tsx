@@ -1,4 +1,5 @@
 import { NeonIcon } from "../../../components/NeonIcon";
+import { LanguageSwitcher } from "../../../components/LanguageSwitcher";
 
 interface HostHeaderProps {
   room: {
@@ -6,6 +7,7 @@ interface HostHeaderProps {
     current_round: number;
     total_rounds: number;
     status: string;
+    venue_name?: string;
   } | null;
   onEndGameEarly?: () => void;
 }
@@ -16,7 +18,7 @@ export function HostHeader({ room, onEndGameEarly }: HostHeaderProps) {
   return (
     <header className="flex justify-between items-center mb-8 relative z-20 bg-black/40 p-4 rounded-3xl border border-white/10 backdrop-blur-md">
       <h1 className="text-3xl font-black italic tracking-widest bg-gradient-to-r from-alaz-orange to-cyber-yellow bg-clip-text text-transparent">
-        KAMUS
+        {room.venue_name || "HENGAME"}
       </h1>
       {(room.status === "playing" ||
         room.status === "review" ||
@@ -34,6 +36,7 @@ export function HostHeader({ room, onEndGameEarly }: HostHeaderProps) {
         </div>
       )}
       <div className="flex items-center gap-4">
+        <LanguageSwitcher />
         {onEndGameEarly && (
           <button
             onClick={onEndGameEarly}

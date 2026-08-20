@@ -278,7 +278,7 @@ export function HostQuizDisplay({
               className="w-full flex flex-col items-center"
             >
               <h1 className="text-6xl font-black text-blue-500 tracking-widest uppercase mb-10 drop-shadow-[0_0_30px_rgba(59,130,246,0.8)]">
-                KAMUS QUIZ
+                HENGAME QUIZ
               </h1>
               <div className="w-full h-full relative">
                 <HostLobby

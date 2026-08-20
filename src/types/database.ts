@@ -73,6 +73,13 @@ export interface Room {
   sensor_buzzer_player_id?: string | null;
   sensor_buzzer_timestamp?: number | null;
   sensor_player_answer?: string | null;
+  // Mekan markalaması — oda açılırken o anki aktif mekan profilinden
+  // KOPYALANIR (canlı referans değil). Böylece bir mekana satış sonrası
+  // marka değiştirilse bile geçmiş odaların/demoların markası değişmez.
+  // Alanlar boşsa varsayılan HENGAME markası kullanılır.
+  venue_name?: string;
+  venue_logo_url?: string;
+  venue_primary_color?: string;
 }
 
 export interface Player {
@@ -153,6 +160,29 @@ export interface RoundLog {
   prediction_error: number;
   created_at?: string;
 }
+
+/**
+ * Aktif mekan markası — tek bir doküman (app_config/active_venue).
+ *
+ * Bu, tam çoklu-kiracı (multi-tenant) bir sistem DEĞİL: aynı anda tek bir
+ * "aktif" marka vardır, satıcı bunu her mekana giderken değiştirir. Bir oda
+ * açıldığında bu ayarların bir KOPYASI Room'a yazılır (bkz. Room.venue_*),
+ * böylece marka sonradan değişse bile geçmiş odalar etkilenmez.
+ */
+export interface VenueConfig {
+  name: string;
+  logo_url?: string;
+  /** Hex renk, örn. "#ff5500". Boşsa varsayılan HENGAME turuncusu kullanılır. */
+  primary_color?: string;
+  rewards_enabled: boolean;
+  updated_at?: number;
+}
+
+export const DEFAULT_VENUE_CONFIG: VenueConfig = {
+  name: "HENGAME",
+  primary_color: "#ff5500",
+  rewards_enabled: true,
+};
 
 export type LeagueTier = "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "NEON" | "LEGEND";
 

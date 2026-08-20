@@ -8,6 +8,7 @@ import { db, auth } from "../../lib/firebase";
 import { useLocale } from "../../hooks/useLocale";
 import { errorMessage } from "../../lib/errors";
 import { PhoneAuth } from "../../components/PhoneAuth";
+import { LanguageSwitcher } from "../../components/LanguageSwitcher";
 import { PlayerProfileCard } from "./components/PlayerProfileCard";
 import { PlayerRewards } from "./components/PlayerRewards";
 import { useUserProfile } from "../../hooks/useUserProfile";
@@ -27,7 +28,7 @@ export function PlayerJoin() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authChecking, setAuthChecking] = useState(true);
   const { profile, updateNickname } = useUserProfile();
-  const { t, switchLocale } = useLocale();
+  const { t } = useLocale();
   const [nicknamePrefilledFrom, setNicknamePrefilledFrom] = useState<string | null>(null);
 
   // Profile'dan gelen nickname'i RENDER sırasında senkronla (bkz. useRoom.ts
@@ -97,9 +98,11 @@ export function PlayerJoin() {
         return;
       }
 
-      if (room.locale) {
-        switchLocale(room.locale);
-      }
+      // Odanın dilini artık oyuncunun kendi seçtiği arayüz diline
+      // zorlamıyoruz: oyuncu kendi telefonunda kendi dilini seçebiliyor
+      // (bkz. LanguageSwitcher), bunu sessizce ezmek o seçimi anlamsız
+      // kılardı. room.locale hâlâ host tarafında kategori diline karar
+      // veriyor, sadece oyuncunun arayüzünü artık değiştirmiyor.
 
       try {
         if (profile?.nickname !== nickname.trim()) {
@@ -147,12 +150,15 @@ export function PlayerJoin() {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="w-full max-w-lg z-10"
       >
-        <button
-          onClick={() => navigate("/")}
-          className="mb-4 flex items-center gap-2 text-alaz-orange/70 hover:text-alaz-orange transition-colors text-xs font-bold uppercase tracking-widest"
-        >
-          <span className="text-xl">←</span> {t("common.back", "ANA SAYFA")}
-        </button>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <button
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2 text-alaz-orange/70 hover:text-alaz-orange transition-colors text-xs font-bold uppercase tracking-widest shrink-0"
+          >
+            <span className="text-xl">←</span> {t("common.back", "ANA SAYFA")}
+          </button>
+          <LanguageSwitcher />
+        </div>
         <div className="border border-alaz-orange/30 bg-black/80 backdrop-blur-sm shadow-[0_0_30px_rgba(255,77,0,0.1)] relative">
           
           {/* Terminal Header */}

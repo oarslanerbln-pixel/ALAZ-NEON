@@ -5,11 +5,13 @@ import { db, auth } from "../../lib/firebase";
 import { motion } from "framer-motion";
 import { NeonIcon } from "../../components/NeonIcon";
 import { KineticSpark } from "../../components/KineticSpark";
+import { LanguageSwitcher } from "../../components/LanguageSwitcher";
 import { ParticleBackground } from "../../components/ParticleBackground";
 import { getCategoryPresets } from "../../lib/categoryPresets";
 import { useLocale } from "../../hooks/useLocale";
 import { useToast } from "../../contexts/ToastContextCore";
 import { errorMessage } from "../../lib/errors";
+import { useVenue } from "../../contexts/VenueContextCore";
 
 // Premium Glass Panel with Looping Neon Animation
 function GlassPanel({ 
@@ -55,8 +57,9 @@ const generateRoomCode = () => {
 
 export function HostSetup() {
   const navigate = useNavigate();
-  const { t, locale, switchLocale } = useLocale();
+  const { t, locale } = useLocale();
   const { showToast } = useToast();
+  const { venue } = useVenue();
   const [categories, setCategories] = useState(t("categories.default"));
   const [timerValue, setTimerValue] = useState("60");
   const [gameMode, setGameMode] = useState<"individual" | "team">("individual");
@@ -106,7 +109,12 @@ export function HostSetup() {
           game_mode: gameMode,
           locale: locale,
           created_at: Date.now(),
-          host_uid: auth.currentUser?.uid || "anonymous"
+          host_uid: auth.currentUser?.uid || "anonymous",
+          // Aktif mekan markasının anlık kopyası — canlı referans değil,
+          // bkz. types/database.ts Room.venue_* alanlarındaki not.
+          venue_name: venue.name,
+          venue_logo_url: venue.logo_url || null,
+          venue_primary_color: venue.primary_color || null,
         });
         
         navigate(`/host/display?roomId=${docRef.id}`);
@@ -165,7 +173,7 @@ export function HostSetup() {
               <div className="flex justify-between items-start mb-10 relative z-10">
                 <div>
                   <h2 className="text-3xl font-sans font-black text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-alaz-orange tracking-tighter uppercase">
-                    KAFE GECESİ OTURUMU
+                    {t("setup.title")}
                   </h2>
                   <p className="text-gray-400 font-bold text-xs mt-1 uppercase tracking-widest">{t("setup.subtitle")}</p>
                 </div>
@@ -280,34 +288,16 @@ export function HostSetup() {
                     <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
                       {t("setup.languageLabel")}
                     </label>
-                    <div className="grid grid-cols-2 gap-4">
-                      <button
-                        onClick={() => {
-                          switchLocale("tr");
-                          setCategories(t("categories.default"));
-                        }}
-                        className={`py-4 font-sans font-black text-xs uppercase tracking-widest transition-all border-[0.5px] flex items-center justify-center rounded-none ${
-                          locale === "tr"
-                            ? "bg-white/20 text-white border-white/40"
-                            : "bg-black/60 border-white/20 text-gray-400 hover:border-white/30 hover:text-white"
-                        }`}
-                      >
-                        TÜRKÇE
-                      </button>
-                      <button
-                        onClick={() => {
-                          switchLocale("de");
-                          setCategories(t("categories.default"));
-                        }}
-                        className={`py-4 font-sans font-black text-xs uppercase tracking-widest transition-all border-[0.5px] flex items-center justify-center rounded-none ${
-                          locale === "de"
-                            ? "bg-white/20 text-white border-white/40"
-                            : "bg-black/60 border-white/20 text-gray-400 hover:border-white/30 hover:text-white"
-                        }`}
-                      >
-                        DEUTSCH
-                      </button>
-                    </div>
+                    {/*
+                      Dil değişince kategori kutusunu o dilin varsayılanına
+                      yeniliyoruz — aksi hâlde ör. Almanca seçilince kutuda
+                      hâlâ Türkçe "Şehir, Ülke..." yazılı kalırdı.
+                    */}
+                    <LanguageSwitcher
+                      className="w-full"
+                      fullWidth
+                      onSwitch={() => setCategories(t("categories.default"))}
+                    />
                   </div>
                 </div>
 

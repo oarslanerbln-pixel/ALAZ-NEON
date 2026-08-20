@@ -107,7 +107,7 @@ export function HostQuizIntro({ onComplete }: HostQuizIntroProps) {
           >
             <HackerTerminal
               downloadingLabel="DOWNLOADING TRIVIA DATA..."
-              mainframeLabel="CONNECTING TO KAMUS QUIZ MAINFRAME..."
+              mainframeLabel="CONNECTING TO HENGAME QUIZ MAINFRAME..."
             />
             <motion.div
               animate={{ opacity: [1, 0, 1, 0.5, 1], scale: [1, 1.05, 1] }}
@@ -191,7 +191,7 @@ export function HostQuizIntro({ onComplete }: HostQuizIntroProps) {
                 className="text-[100px] md:text-[150px] font-black text-white tracking-tighter uppercase mb-4 text-center leading-none z-10"
                 style={{ textShadow: "0 0 100px rgba(59,130,246,1), 0 0 40px rgba(255,255,255,0.8)" }}
               >
-                KAMUS QUIZ
+                HENGAME QUIZ
               </motion.h1>
 
               <motion.h2
