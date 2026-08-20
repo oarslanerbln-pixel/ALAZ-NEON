@@ -40,6 +40,9 @@ const VenueSettings = lazy(() =>
 const RewardVerify = lazy(() =>
   import("./pages/admin/RewardVerify").then((m) => ({ default: m.RewardVerify }))
 );
+const NightlyReport = lazy(() =>
+  import("./pages/admin/NightlyReport").then((m) => ({ default: m.NightlyReport }))
+);
 
 function RouteFallback() {
   const { t } = useLocale();
@@ -81,6 +84,8 @@ function App() {
                 <Route path="/admin/venue" element={<VenueSettings />} />
                 {/* Personel: barda ödül kodu doğrulama ekranı */}
                 <Route path="/admin/rewards" element={<RewardVerify />} />
+                {/* Mekan sahibi: gecelik/haftalık/aylık özet rapor */}
+                <Route path="/admin/report" element={<NightlyReport />} />
               </Route>
             </Routes>
           </Suspense>

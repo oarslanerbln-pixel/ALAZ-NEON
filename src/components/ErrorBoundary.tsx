@@ -1,5 +1,6 @@
 import { Component } from "react";
 import type { ReactNode, ErrorInfo } from "react";
+import * as Sentry from "@sentry/react";
 
 interface Props {
   children?: ReactNode;
@@ -22,6 +23,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
+    // DSN ayarlanmadıysa main.tsx'te Sentry.init() hiç çağrılmıyor —
+    // captureException o durumda sessizce hiçbir şey yapmıyor (SDK'nın
+    // kendi no-op davranışı), burada ekstra bir if kontrolü gerekmiyor.
+    Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack } });
     this.setState({ errorInfo });
   }
 

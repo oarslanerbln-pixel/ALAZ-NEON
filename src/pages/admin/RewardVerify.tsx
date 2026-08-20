@@ -145,12 +145,20 @@ export function RewardVerify() {
           </button>
         </div>
 
-        <Link
-          to="/admin/venue"
-          className="inline-block text-[10px] uppercase tracking-widest text-white/40 hover:text-white mb-8"
-        >
-          ← Mekan Ayarlarına Dön
-        </Link>
+        <div className="flex gap-4 mb-8">
+          <Link
+            to="/admin/venue"
+            className="text-[10px] uppercase tracking-widest text-white/40 hover:text-white"
+          >
+            ← Mekan Ayarları
+          </Link>
+          <Link
+            to="/admin/report"
+            className="text-[10px] uppercase tracking-widest text-white/40 hover:text-white"
+          >
+            Gecelik Rapor →
+          </Link>
+        </div>
 
         <form onSubmit={handleLookup} className="space-y-4 mb-8">
           <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest block">

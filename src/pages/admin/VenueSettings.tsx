@@ -294,12 +294,20 @@ export function VenueSettings() {
                 Kazanan: bireysel modda en yüksek puanlı oyuncu (veya beraberlikte hepsi); takım modunda kazanan takımın tüm üyeleri; bomba modunda son ayakta kalan oyuncu. Oyun bittiği an otomatik dağıtılır.
               </p>
 
-              <Link
-                to="/admin/rewards"
-                className="block text-center text-[10px] uppercase tracking-widest text-alaz-orange hover:text-white border border-alaz-orange/30 hover:border-white/30 rounded-xl py-3 transition-colors"
-              >
-                Ödül Doğrulama Ekranına Git →
-              </Link>
+              <div className="grid grid-cols-2 gap-3">
+                <Link
+                  to="/admin/rewards"
+                  className="block text-center text-[10px] uppercase tracking-widest text-alaz-orange hover:text-white border border-alaz-orange/30 hover:border-white/30 rounded-xl py-3 transition-colors"
+                >
+                  Ödül Doğrula →
+                </Link>
+                <Link
+                  to="/admin/report"
+                  className="block text-center text-[10px] uppercase tracking-widest text-alaz-orange hover:text-white border border-alaz-orange/30 hover:border-white/30 rounded-xl py-3 transition-colors"
+                >
+                  Gecelik Rapor →
+                </Link>
+              </div>
             </div>
           )}
 
