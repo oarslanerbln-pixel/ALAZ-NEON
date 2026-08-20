@@ -5,9 +5,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { db, auth } from "../../../lib/firebase";
 import type { Reward } from "../../../types/database";
 import { useVenue } from "../../../contexts/VenueContextCore";
+import { useLocale } from "../../../hooks/useLocale";
 
 export function PlayerRewards() {
   const { venue } = useVenue();
+  const { t } = useLocale();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -65,7 +67,7 @@ export function PlayerRewards() {
   if (rewards.length === 0) {
     return (
       <div className="w-full border border-white/10 bg-black/20 p-4 text-center">
-        <p className="text-white/40 text-[10px] tracking-[0.2em] uppercase font-bold">KULLANILABİLİR ÖDÜL BULUNMUYOR</p>
+        <p className="text-white/40 text-[10px] tracking-[0.2em] uppercase font-bold">{t("rewards.none")}</p>
       </div>
     );
   }
@@ -74,7 +76,7 @@ export function PlayerRewards() {
     <div className="w-full flex flex-col gap-3">
       <div className="flex items-center gap-2 mb-2">
         <div className="w-2 h-2 bg-[#ff003c] animate-pulse" />
-        <h3 className="text-[#ff003c] text-xs font-bold uppercase tracking-widest">AKTİF ÖDÜLLER</h3>
+        <h3 className="text-[#ff003c] text-xs font-bold uppercase tracking-widest">{t("rewards.active")}</h3>
       </div>
       
       <AnimatePresence>
@@ -91,7 +93,7 @@ export function PlayerRewards() {
               <p className="text-white/60 text-[10px] tracking-wider mt-1">{reward.description}</p>
             </div>
             <button className="px-3 py-2 bg-[#ff003c]/20 border border-[#ff003c]/50 text-[#ff003c] text-[10px] uppercase font-bold tracking-widest group-hover:bg-[#ff003c] group-hover:text-black transition-colors">
-              KULLAN
+              {t("rewards.use")}
             </button>
           </motion.div>
         ))}

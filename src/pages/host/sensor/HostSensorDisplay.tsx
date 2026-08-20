@@ -9,6 +9,7 @@ import { safeForDisplay } from "../../../lib/profanity";
 
 import { HostHeader } from "../components/HostHeader";
 import { HostLobby } from "../views/HostLobby";
+import { useLocale } from "../../../hooks/useLocale";
 
 import type { Room, Player } from "../../../types/database";
 
@@ -23,6 +24,7 @@ export function HostSensorDisplay({
   updateRoomStatus: (status: Room["status"], extra?: Partial<Room>) => Promise<void>;
   updatePlayerScore: (playerId: string, score: number) => Promise<void>;
 }) {
+  const { t } = useLocale();
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get("roomId");
   
@@ -171,14 +173,14 @@ export function HostSensorDisplay({
             className="text-center"
           >
             <h1 className="text-5xl font-black text-purple-500 mb-8 tracking-widest uppercase animate-pulse">
-              Tur {currentImageIndex + 1}
+              {t("sensor.roundLabel", currentImageIndex + 1)}
             </h1>
-            <p className="text-2xl text-gray-400 mb-12">Kategori: <span className="text-white font-bold">{currentImage.category}</span></p>
+            <p className="text-2xl text-gray-400 mb-12">{t("sensor.categoryLabel")} <span className="text-white font-bold">{currentImage.category}</span></p>
             <button
               onClick={startRound}
               className="px-12 py-5 bg-white text-black text-xl font-black uppercase tracking-widest hover:bg-purple-500 hover:text-white transition-colors"
             >
-              Görseli Aç
+              {t("sensor.openImage")}
             </button>
           </motion.div>
         )}
@@ -194,7 +196,7 @@ export function HostSensorDisplay({
               className="w-full h-full object-cover"
             />
             <div className="absolute top-4 right-4 bg-black/80 px-4 py-2 text-purple-400 font-bold uppercase tracking-widest text-sm rounded animate-pulse">
-              Buzzer Aktif
+              {t("sensor.buzzerActive")}
             </div>
           </div>
         )}
@@ -213,15 +215,15 @@ export function HostSensorDisplay({
                 className="bg-black/90 p-8 border-2 border-red-500 text-center"
               >
                 <h2 className="text-3xl text-red-500 font-black mb-2 tracking-widest uppercase">
-                  STOP!
+                  {t("sensor.stop")}
                 </h2>
                 <p className="text-xl text-white font-bold mb-6">
-                  <span className="text-neon-blue">{buzzerPlayerName}</span> butona bastı!
+                  {t("sensor.pressedBuzzer", buzzerPlayerName || "")}
                 </p>
                 
                 {room.sensor_player_answer ? (
                    <div className="mb-8">
-                     <p className="text-gray-400 text-sm mb-2 uppercase">Cevabı:</p>
+                     <p className="text-gray-400 text-sm mb-2 uppercase">{t("sensor.answerLabel")}</p>
                      <p className="text-4xl font-black text-white">"{safeForDisplay(room.sensor_player_answer)}"</p>
                    </div>
                 ) : (
@@ -229,7 +231,7 @@ export function HostSensorDisplay({
                     <span className="w-4 h-4 rounded-full bg-alaz-orange animate-bounce" />
                     <span className="w-4 h-4 rounded-full bg-alaz-orange animate-bounce" style={{ animationDelay: "0.2s" }} />
                     <span className="w-4 h-4 rounded-full bg-alaz-orange animate-bounce" style={{ animationDelay: "0.4s" }} />
-                    <span className="ml-2 font-bold uppercase">Cevap Bekleniyor...</span>
+                    <span className="ml-2 font-bold uppercase">{t("sensor.waitingAnswer")}</span>
                   </div>
                 )}
 
@@ -239,13 +241,13 @@ export function HostSensorDisplay({
                       onClick={() => handleEvaluate(true)}
                       className="px-8 py-3 bg-green-500 text-black font-black uppercase hover:bg-green-400 transition-colors"
                     >
-                      DOĞRU
+                      {t("sensor.correct")}
                     </button>
                     <button 
                       onClick={() => handleEvaluate(false)}
                       className="px-8 py-3 bg-red-600 text-white font-black uppercase hover:bg-red-500 transition-colors"
                     >
-                      YANLIŞ
+                      {t("sensor.wrong")}
                     </button>
                   </div>
                 )}
@@ -271,14 +273,14 @@ export function HostSensorDisplay({
               {currentImage.answer}
             </h2>
             <p className="text-xl text-green-400 font-bold mb-10">
-              {buzzerPlayerName} bildi ve +100 puan kazandı!
+              {t("sensor.wonPoints", buzzerPlayerName || "")}
             </p>
 
             <button
               onClick={nextRound}
               className="px-12 py-5 bg-white text-black text-xl font-black uppercase tracking-widest hover:bg-purple-500 hover:text-white transition-colors"
             >
-              Sıradaki Tur
+              {t("sensor.nextRound")}
             </button>
           </motion.div>
         )}
@@ -286,13 +288,13 @@ export function HostSensorDisplay({
         {gameState === "finished" && (
           <div className="text-center">
             <h1 className="text-5xl font-black text-white mb-8 tracking-widest uppercase">
-              Oyun Bitti!
+              {t("sensor.gameOver")}
             </h1>
             <button
               onClick={() => updateRoomStatus("standings")}
               className="px-12 py-5 bg-purple-600 text-white text-xl font-black uppercase tracking-widest hover:bg-purple-500 transition-colors"
             >
-              Sonuçları Gör
+              {t("sensor.seeResults")}
             </button>
           </div>
         )}

@@ -193,7 +193,7 @@ export function LandingPage() {
               >
                 <span className="flex items-center gap-3">
                   <span className="w-2 h-2 bg-black animate-pulse"></span>
-                  SİSTEME GİRİŞ YAP
+                  {t("landing.loginCta")}
                   <span className="w-2 h-2 bg-black animate-pulse"></span>
                 </span>
               </button>
@@ -232,13 +232,13 @@ export function LandingPage() {
                 <div className="relative z-20 text-center flex flex-col items-center justify-center min-h-[160px]">
                   <span className="text-white/60 text-[10px] uppercase tracking-[0.4em] font-black mb-4 group-hover:text-alaz-orange transition-colors flex items-center justify-center gap-3">
                     <span className="w-1.5 h-1.5 bg-alaz-orange rounded-none animate-pulse"></span>
-                    GECE OTURUMU (HOST)
+                    {t("landing.hostSectionLabel")}
                   </span>
                   <h2 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight uppercase">
-                    YÖNETİCİ
+                    {t("landing.hostSectionTitle")}
                   </h2>
                   <p className="text-gray-400 text-sm leading-relaxed font-medium">
-                    Kafe gecesini başlat ve oyuncuları davet et.
+                    {t("landing.hostSectionDesc")}
                   </p>
                 </div>
                 <div className="absolute inset-0 bg-alaz-orange/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20 mix-blend-screen" />
@@ -296,7 +296,7 @@ export function LandingPage() {
                       <NeonIcon type="flame" color="orange" className="w-8 h-8" />
                     </div>
                     <h3 className="text-2xl font-black text-white mb-2 tracking-widest group-hover:text-alaz-orange transition-colors">HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-alaz-orange to-yellow-500">ARENA</span></h3>
-                    <p className="text-gray-400 text-xs leading-relaxed mt-2 flex-1">Klasik kelime oyununun hiper-modern versiyonu.</p>
+                    <p className="text-gray-400 text-xs leading-relaxed mt-2 flex-1">{t("landing.modeArenaDesc")}</p>
                   </div>
                 </button>
 
@@ -316,7 +316,7 @@ export function LandingPage() {
                       <NeonIcon type="lightbulb" color="blue" className="w-8 h-8" />
                     </div>
                     <h3 className="text-2xl font-black text-white mb-2 tracking-widest group-hover:text-neon-blue transition-colors">HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-blue-400">QUIZ</span></h3>
-                    <p className="text-gray-400 text-xs leading-relaxed mt-2 flex-1">Zeka, hız ve bilginin çarpıştığı arena.</p>
+                    <p className="text-gray-400 text-xs leading-relaxed mt-2 flex-1">{t("landing.modeQuizDesc")}</p>
                   </div>
                 </button>
 
@@ -336,7 +336,7 @@ export function LandingPage() {
                       <NeonIcon type="rocket" color="red" className="w-8 h-8" />
                     </div>
                     <h3 className="text-2xl font-black text-white mb-2 tracking-widest group-hover:text-red-500 transition-colors">HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">BOMB</span></h3>
-                    <p className="text-gray-400 text-xs leading-relaxed mt-2 flex-1">Bomba elinde patlamadan kelimeyi bul!</p>
+                    <p className="text-gray-400 text-xs leading-relaxed mt-2 flex-1">{t("landing.modeBombDesc")}</p>
                   </div>
                 </button>
 
@@ -356,7 +356,7 @@ export function LandingPage() {
                       <NeonIcon type="dashboard" color="pink" className="w-8 h-8" />
                     </div>
                     <h3 className="text-2xl font-black text-white mb-2 tracking-widest group-hover:text-neon-pink transition-colors">HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-pink to-purple-500">SENSÖR</span></h3>
-                    <p className="text-gray-400 text-xs leading-relaxed mt-2 flex-1">Gizemli görseli ilk sen bil, devasa butonla yarış.</p>
+                    <p className="text-gray-400 text-xs leading-relaxed mt-2 flex-1">{t("landing.modeSensorDesc")}</p>
                   </div>
                 </button>
 

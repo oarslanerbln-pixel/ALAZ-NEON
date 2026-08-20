@@ -125,7 +125,7 @@ export function RegisterPage() {
             </motion.h1>
             <p className="text-gray-400 font-bold uppercase tracking-[0.4em] text-[10px] mt-4 flex items-center justify-center gap-2">
               <span className="w-4 h-[1px] bg-alaz-orange/50"></span>
-              YENİ KAYIT
+              {t("auth.registerHeading")}
               <span className="w-4 h-[1px] bg-alaz-orange/50"></span>
             </p>
           </div>

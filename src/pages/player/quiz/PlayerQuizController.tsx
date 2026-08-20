@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ParticleBackground } from "../../../components/ParticleBackground";
 import { SoundManager, sounds } from "../../../lib/audio";
 import type { Room, Player } from "../../../types/database";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface PlayerQuizControllerProps {
   room: Room;
@@ -12,6 +13,7 @@ interface PlayerQuizControllerProps {
 }
 
 export function PlayerQuizController({ room, player }: PlayerQuizControllerProps) {
+  const { t } = useLocale();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [gameState, setGameState] = useState(room.status);
@@ -103,7 +105,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
           {player.nickname}
         </div>
         <div className="bg-black/60 border border-alaz-orange/30 px-4 py-2 text-alaz-orange font-bold">
-          {player.total_score} PTS
+          {player.total_score} {t("quiz.pts")}
         </div>
       </div>
 
@@ -120,10 +122,10 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
             >
               <div className="bg-black/80 border border-blue-500/50 p-8 rounded-xl shadow-[0_0_30px_rgba(59,130,246,0.3)]">
                 <h2 className="text-2xl font-black text-blue-400 uppercase tracking-widest mb-4">
-                  HENGAME QUIZ
+                  {t("quiz.title")}
                 </h2>
                 <p className="text-gray-400 font-medium">
-                  Lütfen ana ekrana bakarak oyunun başlamasını bekleyin.
+                  {t("quiz.watchMainScreen")}
                 </p>
               </div>
             </motion.div>
@@ -138,10 +140,10 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
               className="text-center"
             >
               <h2 className="text-3xl font-black text-white uppercase tracking-widest mb-4 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">
-                HAZIR OL
+                {t("quiz.getReady")}
               </h2>
               <p className="text-blue-400 font-bold">
-                Soru {room.current_round} / {room.total_rounds}
+                {t("quiz.questionOf", room.current_round, room.total_rounds)}
               </p>
             </motion.div>
           )}
@@ -180,7 +182,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
               })}
               {hasSubmitted && (
                 <p className="text-center text-blue-400 font-bold mt-4 animate-pulse">
-                  Cevap kaydedildi, süre bekleniyor...
+                  {t("quiz.answerSaved")}
                 </p>
               )}
             </motion.div>
@@ -195,7 +197,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
               className="text-center w-full"
             >
               <h2 className="text-2xl font-black text-white uppercase tracking-widest mb-8">
-                SONUÇ
+                {t("quiz.result")}
               </h2>
               <div className="flex flex-col gap-4">
                 {(["A", "B", "C", "D"] as const).map(opt => {
@@ -240,13 +242,13 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
             >
               <div className="bg-black/80 border border-alaz-orange/50 p-8 rounded-xl shadow-[0_0_30px_rgba(255,77,0,0.3)]">
                 <h2 className="text-2xl font-black text-alaz-orange uppercase tracking-widest mb-4">
-                  SIRALAMA
+                  {t("quiz.ranking")}
                 </h2>
                 <p className="text-white font-medium text-lg">
-                  Ana ekrandan sıralamayı takip edebilirsiniz.
+                  {t("quiz.followRankingOnScreen")}
                 </p>
                 <div className="mt-6 pt-6 border-t border-white/10">
-                  <p className="text-gray-400 text-sm">Puanınız:</p>
+                  <p className="text-gray-400 text-sm">{t("quiz.yourScore")}</p>
                   <p className="text-3xl font-black text-alaz-orange">{player.total_score}</p>
                 </div>
               </div>
@@ -261,10 +263,10 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
               className="text-center"
             >
               <h2 className="text-4xl font-black text-white uppercase tracking-widest mb-6">
-                OYUN BİTTİ
+                {t("quiz.gameOver")}
               </h2>
               <div className="bg-gradient-to-b from-alaz-orange/20 to-black/60 border border-alaz-orange p-8">
-                <p className="text-gray-400 mb-2">Final Skorunuz</p>
+                <p className="text-gray-400 mb-2">{t("quiz.finalScore")}</p>
                 <div className="text-5xl font-black text-alaz-orange">{player.total_score}</div>
               </div>
             </motion.div>

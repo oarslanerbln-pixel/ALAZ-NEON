@@ -1,62 +1,68 @@
 import { motion, AnimatePresence } from "framer-motion";
 import type { Room } from "../../../types/database";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface Props {
   room: Room;
 }
 
+/**
+ * Slaytlar metin değil çeviri anahtarı tutuyor — metin `t()` ile render
+ * sırasında çözülüyor, böylece dil değişince slayt da o dile geçiyor.
+ */
 const PLAYER_TUTORIAL_CONTENT = {
   scattegories: [
     {
-      title: "KLAVYE HIZINI HAZIRLA!",
-      desc: "Ana ekranda harf belirdiğinde, telefonun senin oyun kumandan olacak. Panik yapma, odaklan.",
+      titleKey: "tutorial.player.scattegories.1.title",
+      descKey: "tutorial.player.scattegories.1.desc",
       icon: "📱"
     },
     {
-      title: "KUTUCUKLARI DOLDUR",
-      desc: "Kategorilere uygun en ilginç kelimeleri yaz ve süre bitmeden 'GÖNDER' butonuna bas!",
+      titleKey: "tutorial.player.scattegories.2.title",
+      descKey: "tutorial.player.scattegories.2.desc",
       icon: "✍️"
     }
   ],
   quiz: [
     {
-      title: "SORU EKRANDA, CEVAP BURADA",
-      desc: "Sorular ana ekranda (TV) görünecek. Sen telefonundan A, B, C veya D şıklarından birini seçeceksin.",
+      titleKey: "tutorial.player.quiz.1.title",
+      descKey: "tutorial.player.quiz.1.desc",
       icon: "👀"
     },
     {
-      title: "EN HIZLI SEN TIKLA!",
-      desc: "Doğru cevabı ne kadar hızlı seçersen o kadar çok puan alırsın. Hızlı ol!",
+      titleKey: "tutorial.player.quiz.2.title",
+      descKey: "tutorial.player.quiz.2.desc",
       icon: "⚡"
     }
   ],
   bomb: [
     {
-      title: "BOMBA SANA GELİRSE...",
-      desc: "Ekranın aniden KIRMIZI olacak ve telefonun titreyecek. Panik yapma, sakin kal!",
+      titleKey: "tutorial.player.bomb.1.title",
+      descKey: "tutorial.player.bomb.1.desc",
       icon: "🚨"
     },
     {
-      title: "HEMEN YAZ VE AT!",
-      desc: "Kategoriye uygun, DAHA ÖNCE YAZILMAMIŞ bir kelime yaz ve BOMBAYI AT butonuna basarak kurtul!",
+      titleKey: "tutorial.player.bomb.2.title",
+      descKey: "tutorial.player.bomb.2.desc",
       icon: "🏃‍♂️"
     }
   ],
   sensor: [
     {
-      title: "REFLEKSLERİNİ TEST ET",
-      desc: "Ekranda beliren görseli/sesi herkesten önce bulmalısın. Telefonundaki devasa DEV BUTON'a ilk basan cevap hakkı kazanır!",
+      titleKey: "tutorial.player.sensor.1.title",
+      descKey: "tutorial.player.sensor.1.desc",
       icon: "⚡"
     },
     {
-      title: "HIZLI OLAN KAZANIR",
-      desc: "Butona bastıktan sonra kelimeyi TV ekranında veya Host'a söyle, puanı kap!",
+      titleKey: "tutorial.player.sensor.2.title",
+      descKey: "tutorial.player.sensor.2.desc",
       icon: "🏆"
     }
   ]
-};
+} as const;
 
 export function PlayerTutorial({ room }: Props) {
+  const { t } = useLocale();
   const step = room.tutorial_step || 0;
   const gameType = room.active_game || room.game_type || "scattegories";
   const content = PLAYER_TUTORIAL_CONTENT[gameType as keyof typeof PLAYER_TUTORIAL_CONTENT] || PLAYER_TUTORIAL_CONTENT.scattegories;
@@ -74,7 +80,7 @@ export function PlayerTutorial({ room }: Props) {
       <div className="z-10 w-full max-w-sm flex flex-col items-center">
         <div className="bg-black/60 backdrop-blur-md px-4 py-1 rounded-full border border-white/10 mb-8">
           <p className="text-gray-400 text-xs font-bold tracking-widest uppercase">
-            Dev ekrana da bakın
+            {t("tutorial.watchBigScreen")}
           </p>
         </div>
         
@@ -91,17 +97,17 @@ export function PlayerTutorial({ room }: Props) {
               {currentSlide.icon}
             </div>
             <h1 className="text-3xl font-black text-white uppercase tracking-tighter mb-4 leading-tight">
-              {currentSlide.title}
+              {t(currentSlide.titleKey)}
             </h1>
             <p className="text-lg text-gray-400 font-medium leading-relaxed">
-              {currentSlide.desc}
+              {t(currentSlide.descKey)}
             </p>
           </motion.div>
         </AnimatePresence>
 
         <div className="mt-16 text-gray-500 flex flex-col items-center gap-3">
           <div className="w-8 h-8 rounded-full border-2 border-gray-600 border-t-white animate-spin" />
-          <p className="text-xs uppercase tracking-widest font-bold">Oyun Yöneticisi Bekleniyor...</p>
+          <p className="text-xs uppercase tracking-widest font-bold">{t("tutorial.waitingHost")}</p>
         </div>
       </div>
     </div>

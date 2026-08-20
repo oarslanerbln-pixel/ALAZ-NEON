@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useLocale } from "../hooks/useLocale";
 
 interface HoldButtonProps {
   onComplete: () => void;
@@ -14,9 +15,13 @@ export function HoldButton({
   disabled = false,
   className = "",
   text,
-  holdText = "GÖNDERİLİYOR...",
+  holdText,
   holdDuration = 1000,
 }: HoldButtonProps) {
+  const { t } = useLocale();
+  // Varsayılan artık sabit Türkçe değil: prop imzasında bir literal
+  // olamayacağı için (t() çağrısı gerekiyor) burada çözülüyor.
+  const resolvedHoldText = holdText ?? t("game.submitting");
   const [isHolding, setIsHolding] = useState(false);
   const [progress, setProgress] = useState(0);
   const animationRef = useRef<number>(0);
@@ -90,7 +95,7 @@ export function HoldButton({
       )}
 
       <span className="relative z-10 drop-shadow-md">
-        {isHolding ? `> ${holdText}` : `> ${text}`}
+        {isHolding ? `> ${resolvedHoldText}` : `> ${text}`}
       </span>
     </button>
   );

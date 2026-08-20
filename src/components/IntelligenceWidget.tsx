@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { getRoundIntelligence } from "../lib/intelligence";
 import { NeonIcon } from "./NeonIcon";
+import { useLocale } from "../hooks/useLocale";
 
 interface IntelligenceWidgetProps {
   currentLetter: string;
@@ -17,6 +18,7 @@ export function IntelligenceWidget({
   timeLeft,
   currentRound,
 }: IntelligenceWidgetProps) {
+  const { t } = useLocale();
   const intel = getRoundIntelligence(
     currentLetter,
     categories,
@@ -49,7 +51,7 @@ export function IntelligenceWidget({
           className="w-5 h-5 animate-pulse"
         />
         <h3 className="text-sm font-black text-neon-blue uppercase tracking-widest">
-          STRATEJİK ANALİZ (AI)
+          {t("intelligence.title")}
         </h3>
       </div>
 
@@ -58,7 +60,7 @@ export function IntelligenceWidget({
         <div>
           <div className="flex justify-between mb-2">
             <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-              Tur Zorluğu
+              {t("intelligence.roundDifficulty")}
             </span>
             <span className="text-xs font-black text-white">
               {intel.complexityScore}%
@@ -77,18 +79,18 @@ export function IntelligenceWidget({
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-white/5 p-3 rounded-xl border border-white/5">
             <span className="text-[9px] text-gray-500 font-bold uppercase block mb-1">
-              Tahminî Ort.
+              {t("intelligence.expectedAvg")}
             </span>
             <span className="text-xl font-black text-white">
               {intel.expectedAvgScore}
             </span>
             <span className="text-[8px] text-gray-500 block">
-              Puan / Oyuncu
+              {t("intelligence.pointsPerPlayer")}
             </span>
           </div>
           <div className="bg-white/5 p-3 rounded-xl border border-white/5">
             <span className="text-[9px] text-gray-500 font-bold uppercase block mb-1">
-              Piyasa Durumu
+              {t("intelligence.marketStatus")}
             </span>
             <span
               className={`text-xs font-black uppercase ${
@@ -106,7 +108,7 @@ export function IntelligenceWidget({
         <div className="bg-black/40 p-4 rounded-2xl border border-white/5 relative group">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-neon-blue/40 rounded-full" />
           <span className="text-[9px] text-gray-500 font-bold uppercase block mb-2 tracking-widest">
-            Operasyonel İpucu
+            {t("intelligence.operationalTip")}
           </span>
           <p className="text-[11px] text-gray-300 font-medium leading-relaxed italic">
             "{intel.operationalTip}"

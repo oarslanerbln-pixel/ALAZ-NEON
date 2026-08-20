@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { NeonIcon } from "../../../components/NeonIcon";
 import type { JulesAward } from "../../../lib/intelligence";
 import { QRCodeSVG } from "qrcode.react";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface ShareableRecapCardProps {
   awards: { creative: JulesAward | null; funny: JulesAward | null };
@@ -9,6 +10,7 @@ interface ShareableRecapCardProps {
 }
 
 export function ShareableRecapCard({ awards, roomCode }: ShareableRecapCardProps) {
+  const { t } = useLocale();
   const joinUrl = typeof window !== "undefined" ? `${window.location.origin}?code=${roomCode || ""}` : "";
 
   return (
@@ -22,8 +24,8 @@ export function ShareableRecapCard({ awards, roomCode }: ShareableRecapCardProps
       <div className="absolute inset-0 bg-gradient-to-b from-neon-blue/20 to-alaz-orange/10 pointer-events-none" />
       
       <div className="text-center mb-6 relative z-10 pt-2">
-        <h2 className="text-3xl font-black text-white tracking-widest uppercase text-glow-neon-blue">GECENİN ENLERİ</h2>
-        <p className="text-[10px] text-neon-blue tracking-[0.3em] uppercase font-bold mt-1">Jules AI Kararı</p>
+        <h2 className="text-3xl font-black text-white tracking-widest uppercase text-glow-neon-blue">{t("recap.title")}</h2>
+        <p className="text-[10px] text-neon-blue tracking-[0.3em] uppercase font-bold mt-1">{t("recap.aiVerdict")}</p>
       </div>
 
       <div className="flex-1 flex flex-col gap-6 relative z-10 justify-center">
@@ -70,7 +72,7 @@ export function ShareableRecapCard({ awards, roomCode }: ShareableRecapCardProps
           <QRCodeSVG value={joinUrl} size={64} bgColor="#ffffff" fgColor="#000000" />
         </div>
         <p className="text-[10px] font-black text-white uppercase tracking-[0.3em]">
-          Sen de katıl!
+          {t("recap.joinCta")}
         </p>
       </div>
     </motion.div>

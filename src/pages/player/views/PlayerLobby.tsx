@@ -12,13 +12,18 @@ interface PlayerLobbyProps {
   roomId: string | null;
 }
 
+/**
+ * İpuçları çeviri anahtarı olarak tutuluyor, düz metin değil — metin `t()`
+ * ile render sırasında çözülüyor ki dil değişince ekrandaki ipucu da
+ * anında o dile geçsin.
+ */
 const TIPS = [
-  { icon: "⚡", text: "Erken gönder → Erken bonus puan kazan!" },
-  { icon: "🎯", text: "Benzersiz cevap → 20 puan. Ortak cevap → 10 puan." },
-  { icon: "🃏", text: "JOKER ile bir kategoride puanını 2 katına çıkar." },
-  { icon: "🏆", text: "Her turda sıralama değişir. Son tura kadar mücadele et!" },
-  { icon: "💡", text: "Harfle başlayan her geçerli cevap sayılır." },
-];
+  { icon: "⚡", key: "tips.early" },
+  { icon: "🎯", key: "tips.uniqueBonus" },
+  { icon: "🃏", key: "tips.joker" },
+  { icon: "🏆", key: "tips.ranking" },
+  { icon: "💡", key: "tips.validLetter" },
+] as const;
 
 export function PlayerLobby({ room, roomId }: PlayerLobbyProps) {
   const { t } = useLocale();
@@ -94,7 +99,7 @@ export function PlayerLobby({ room, roomId }: PlayerLobbyProps) {
         >
           <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
           <span className="text-xs font-mono text-gray-500 tracking-widest uppercase">
-            {playerCount} oyuncu bağlandı
+            {t("waitingRoom.playersConnected", playerCount)}
           </span>
         </motion.div>
 
@@ -104,7 +109,7 @@ export function PlayerLobby({ room, roomId }: PlayerLobbyProps) {
             <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-alaz-orange/50" />
             <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-alaz-orange/50" />
             <p className="text-xs text-alaz-orange/60 uppercase tracking-[0.3em] font-mono mb-3">
-              BU TURDAKİ KATEGORİLER
+              {t("waitingRoom.categoriesTitle")}
             </p>
             <div className="flex flex-wrap gap-2 justify-center">
               {room.categories.map((cat) => (
@@ -118,10 +123,10 @@ export function PlayerLobby({ room, roomId }: PlayerLobbyProps) {
             </div>
             <div className="flex items-center justify-center gap-4 mt-4 pt-3 border-t border-zinc-800">
               <span className="text-[10px] text-zinc-500 font-mono uppercase tracking-wide">
-                ⏱ {room.timer_setting}sn
+                {t("waitingRoom.timerLabel", String(room.timer_setting))}
               </span>
               <span className="text-[10px] text-zinc-500 font-mono uppercase tracking-wide">
-                🏁 {room.total_rounds} tur
+                {t("waitingRoom.roundsLabel", String(room.total_rounds))}
               </span>
             </div>
           </div>
@@ -140,7 +145,7 @@ export function PlayerLobby({ room, roomId }: PlayerLobbyProps) {
             >
               <span className="text-lg shrink-0 mt-0.5">{TIPS[tipIdx].icon}</span>
               <p className="text-xs text-zinc-400 font-light leading-relaxed text-left">
-                {TIPS[tipIdx].text}
+                {t(TIPS[tipIdx].key)}
               </p>
             </motion.div>
           </AnimatePresence>

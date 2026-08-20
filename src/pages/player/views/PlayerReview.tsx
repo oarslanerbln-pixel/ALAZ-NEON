@@ -1,11 +1,13 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { PlayerBackground } from "../../../components/PlayerBackground";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface PlayerReviewProps {
   submitStatus: "idle" | "submitting" | "success" | "error";
 }
 
 export function PlayerReview({ submitStatus }: PlayerReviewProps) {
+  const { t } = useLocale();
   return (
     <motion.div
       key="review"
@@ -63,7 +65,7 @@ export function PlayerReview({ submitStatus }: PlayerReviewProps) {
         transition={{ delay: 0.2 }}
         className="text-xl font-light text-white tracking-[0.3em] mb-3 uppercase"
       >
-        DEĞERLENDİRME
+        {t("playerReview.title")}
       </motion.h2>
 
       {/* Rotating review messages */}
@@ -78,7 +80,7 @@ export function PlayerReview({ submitStatus }: PlayerReviewProps) {
             >
               <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
               <span className="text-green-400 text-xs font-mono tracking-[0.3em] uppercase">
-                Cevaplar Gönderildi
+                {t("playerReview.answersSent")}
               </span>
             </motion.div>
           ) : (
@@ -93,7 +95,7 @@ export function PlayerReview({ submitStatus }: PlayerReviewProps) {
                 transition={{ duration: 2.5, repeat: Infinity }}
                 className="text-zinc-500 text-xs font-mono tracking-[0.2em] uppercase"
               >
-                Cevaplanır İnceleniyor...
+                {t("playerReview.reviewing")}
               </motion.p>
             </motion.div>
           )}
@@ -110,7 +112,7 @@ export function PlayerReview({ submitStatus }: PlayerReviewProps) {
           >
             <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-green-500" />
             <div className="w-1.5 h-1.5 bg-green-500 animate-pulse ml-1" />
-            VERİ AKTARILDI
+            {t("playerReview.dataTransferred")}
           </motion.div>
         )}
       </AnimatePresence>
@@ -121,7 +123,7 @@ export function PlayerReview({ submitStatus }: PlayerReviewProps) {
         transition={{ delay: 0.6 }}
         className="mt-8 text-zinc-700 text-[10px] font-light uppercase tracking-widest"
       >
-        Lütfen ana ekranı takip ediniz.
+        {t("playerReview.watchMainScreen")}
       </motion.p>
     </motion.div>
   );

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface Props {
   room: Room;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function HostBombExplosion({ room, players, onComplete }: Props) {
+  const { t } = useLocale();
   const targetPlayer = players.find((p) => p.id === room.bomb_target_player);
   const onCompleteRef = useRef(onComplete);
   
@@ -76,7 +78,7 @@ export function HostBombExplosion({ room, players, onComplete }: Props) {
             transition={{ duration: 0.2, repeat: 10 }}
             className="text-5xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-[#ff003c] uppercase tracking-tighter mb-4 drop-shadow-[0_0_30px_rgba(255,0,60,1)]"
           >
-            BOMBA PATLADI!
+            {t("bomb.exploded")}
           </motion.h2>
           
           <div className="bg-black/60 border border-[#ff003c]/40 backdrop-blur-2xl p-12 mt-8 rounded-[3rem] shadow-[0_0_100px_rgba(255,0,60,0.3)] relative">
@@ -84,7 +86,7 @@ export function HostBombExplosion({ room, players, onComplete }: Props) {
             <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-[#ff003c]" />
             <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-[#ff003c]" />
 
-            <p className="text-xl font-bold text-[#ff4d00] uppercase tracking-[0.4em] mb-4">CAN KAYBEDEN</p>
+            <p className="text-xl font-bold text-[#ff4d00] uppercase tracking-[0.4em] mb-4">{t("bomb.livesLost")}</p>
             <h1 className="text-6xl md:text-8xl font-black text-white uppercase tracking-tighter drop-shadow-[0_0_30px_rgba(255,0,60,0.8)]">
               {targetPlayer.nickname}
             </h1>
@@ -123,7 +125,7 @@ export function HostBombExplosion({ room, players, onComplete }: Props) {
                 className="mt-12 bg-[#ff003c] py-4 px-12 rounded-full shadow-[0_0_40px_rgba(255,0,60,0.6)] inline-block"
               >
                 <p className="text-3xl font-black text-white uppercase tracking-[0.3em]">
-                  ELENDİ
+                  {t("bomb.eliminated")}
                 </p>
               </motion.div>
             )}
