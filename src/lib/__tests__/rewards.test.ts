@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { resolveWinners } from "../rewards";
+import { resolveWinners } from "../rewardWinners";
 import type { Player } from "../../types/database";
 
 function makePlayer(overrides: Partial<Player> = {}): Player {
