@@ -1,23 +1,22 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useLocale } from "../hooks/useLocale";
 import { upperTL } from "../lib/stringUtils";
+import { useTopPlayers, type LeaderboardRange } from "../hooks/useTopPlayers";
 
+/**
+ * Bu sayfa eskiden TAMAMEN sahte veri gösteriyordu (kodda "Mock data for now"
+ * notu ve uydurma 8 oyuncu vardı). Ana sayfadaki "Haftalık Şampiyonlar"
+ * butonu buraya çıktığı için, bir mekan sahibine demo yapılırken uydurma
+ * isimler görünüyordu — hem güven kırıcı hem de kendi misafirleri oynadıktan
+ * sonra listede yer almadıkları için yanlış.
+ */
 export function Leaderboard() {
   const navigate = useNavigate();
   const { t } = useLocale();
-
-  // Mock data for now - will connect to Supabase later
-  const leaderboardData = [
-    { rank: 1, name: "Ateşin_Oğlu", score: 12450, persona: "Sprinter" },
-    { rank: 2, name: "Gece_Yarısı", score: 11200, persona: "Innovator" },
-    { rank: 3, name: "Mistik_Ruh", score: 10800, persona: "Sniper" },
-    { rank: 4, name: "Cyber_Warrior", score: 9500, persona: "Strategist" },
-    { rank: 5, name: "Neon_Blade", score: 8900, persona: "Ghost" },
-    { rank: 6, name: "Alaz_Usta", score: 8200, persona: "Innovator" },
-    { rank: 7, name: "Shadow_King", score: 7500, persona: "Sprinter" },
-    { rank: 8, name: "Pixel_Master", score: 7100, persona: "Sniper" },
-  ];
+  const [range, setRange] = useState<LeaderboardRange>("week");
+  const { players: leaderboardData, loading } = useTopPlayers(range, 10);
 
   return (
     <div className="min-h-screen bg-black text-white p-8 font-inter relative overflow-hidden">
@@ -36,11 +35,26 @@ export function Leaderboard() {
           >
             {t("leaderboard.back")}
           </motion.button>
+          {/* Bu iki buton eskiden hiçbir şey yapmıyordu (sabit görünüm). */}
           <div className="flex gap-4">
-            <button className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-alaz-orange shadow-[0_0_15px_rgba(255,77,0,0.2)]">
+            <button
+              onClick={() => setRange("week")}
+              className={`px-4 py-2 rounded-full bg-white/5 border text-[10px] font-black uppercase tracking-widest transition-colors ${
+                range === "week"
+                  ? "border-white/10 text-alaz-orange shadow-[0_0_15px_rgba(255,77,0,0.2)]"
+                  : "border-white/10 text-gray-500 hover:text-white"
+              }`}
+            >
               {t("leaderboard.thisWeek")}
             </button>
-            <button className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors">
+            <button
+              onClick={() => setRange("all")}
+              className={`px-4 py-2 rounded-full bg-white/5 border text-[10px] font-black uppercase tracking-widest transition-colors ${
+                range === "all"
+                  ? "border-white/10 text-alaz-orange shadow-[0_0_15px_rgba(255,77,0,0.2)]"
+                  : "border-white/10 text-gray-500 hover:text-white"
+              }`}
+            >
               {t("leaderboard.allTime")}
             </button>
           </div>
@@ -70,8 +84,22 @@ export function Leaderboard() {
             </div>
           </div>
 
+          {loading && (
+            <div className="flex justify-center py-16">
+              <div className="w-8 h-8 border-2 border-alaz-orange border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+
+          {!loading && leaderboardData.length === 0 && (
+            <div className="text-center py-16">
+              <p className="text-gray-500 font-bold uppercase tracking-widest text-sm">
+                {t("leaderboard.empty")}
+              </p>
+            </div>
+          )}
+
           {/* Rows */}
-          {leaderboardData.map((player, index) => {
+          {!loading && leaderboardData.map((player, index) => {
             const isFirst = player.rank === 1;
             const isSecond = player.rank === 2;
             const isThird = player.rank === 3;
@@ -118,9 +146,6 @@ export function Leaderboard() {
                   <div>
                     <div className="text-2xl font-black text-white tracking-wide group-hover:text-alaz-orange transition-colors">
                       {player.name}
-                    </div>
-                    <div className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em] mt-1 group-hover:text-gray-400 transition-colors">
-                      {player.persona}
                     </div>
                   </div>
                 </div>

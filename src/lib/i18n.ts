@@ -384,6 +384,11 @@ const translations = {
   "leaderboard.back": { tr: "← GERİ DÖN", de: "← ZURÜCK", en: "← BACK" },
   "leaderboard.thisWeek": { tr: "BU HAFTA", de: "DIESE WOCHE", en: "THIS WEEK" },
   "leaderboard.allTime": { tr: "TÜM ZAMANLAR", de: "ALLE ZEITEN", en: "ALL TIME" },
+  "leaderboard.empty": {
+    tr: "Henüz sıralamaya girecek oyun oynanmadı.",
+    de: "Noch keine Spiele für die Rangliste gespielt.",
+    en: "No games played for the ranking yet.",
+  },
   "podium.individual": { tr: "Bireysel", de: "Einzelspieler", en: "Solo" },
 
   // ═══════════════════════════════════════════

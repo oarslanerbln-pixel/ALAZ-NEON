@@ -2,26 +2,34 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { useLocale } from "../hooks/useLocale";
+import { useTopPlayers } from "../hooks/useTopPlayers";
 
 const SLIDE_DURATION = 10000; // 10 seconds per slide
 
 export function AttractMode({ onClose }: { onClose: () => void }) {
   const { t } = useLocale();
   const [slide, setSlide] = useState(0);
+  // Eskiden burada sabit, uydurma bir üçlü vardı ("Ateşin_Oğlu", 12450 puan...)
+  // ve mekan sahibine demo yapılırken TV'de bu sahte isimler dönüyordu.
+  const { players: topPlayers } = useTopPlayers("week", 3);
 
-  // Auto-slide
+  // Gerçek veriyle podyum her zaman dolu olmayabilir. Üç kişi yoksa şampiyon
+  // slaytı hiç gösterilmiyor (boş kutular yerine), yalnızca "nasıl oynanır"
+  // slaytı kalıyor — yeni bir mekanın ilk gecesinde olan tam olarak budur.
+  const hasPodium = topPlayers.length >= 3;
+  // Effect içinde setSlide(1) çağırmak yerine TÜRETİYORUZ: podyum yoksa
+  // gösterilecek slayt zaten hep 1, bunu state'e yazmak gereksiz bir
+  // render turu doğuruyordu.
+  const activeSlide = hasPodium ? slide : 1;
+
+  // Auto-slide — yalnızca iki slayt varken anlamlı
   useEffect(() => {
+    if (!hasPodium) return;
     const timer = setInterval(() => {
       setSlide((prev) => (prev === 0 ? 1 : 0));
     }, SLIDE_DURATION);
     return () => clearInterval(timer);
-  }, []);
-
-  const topPlayers = [
-    { rank: 1, name: "Ateşin_Oğlu", score: 12450, persona: "Sprinter" },
-    { rank: 2, name: "Gece_Yarısı", score: 11200, persona: "Innovator" },
-    { rank: 3, name: "Mistik_Ruh", score: 10800, persona: "Sniper" },
-  ];
+  }, [hasPodium]);
 
   return (
     <motion.div
@@ -39,7 +47,7 @@ export function AttractMode({ onClose }: { onClose: () => void }) {
       </div>
 
       <AnimatePresence mode="wait">
-        {slide === 0 ? (
+        {activeSlide === 0 ? (
           // SLIDE 1: CHAMPIONS
           <motion.div
             key="champions"
