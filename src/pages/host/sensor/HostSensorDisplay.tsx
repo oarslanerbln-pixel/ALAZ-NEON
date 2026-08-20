@@ -236,11 +236,26 @@ export function HostSensorDisplay({
                      <p className="text-4xl font-black text-white">"{safeForDisplay(room.sensor_player_answer)}"</p>
                    </div>
                 ) : (
-                  <div className="mb-8 flex items-center justify-center gap-3 text-alaz-orange">
-                    <span className="w-4 h-4 rounded-full bg-alaz-orange animate-bounce" />
-                    <span className="w-4 h-4 rounded-full bg-alaz-orange animate-bounce" style={{ animationDelay: "0.2s" }} />
-                    <span className="w-4 h-4 rounded-full bg-alaz-orange animate-bounce" style={{ animationDelay: "0.4s" }} />
-                    <span className="ml-2 font-bold uppercase">{t("sensor.waitingAnswer")}</span>
+                  <div className="mb-8 flex flex-col items-center gap-5">
+                    <div className="flex items-center justify-center gap-3 text-alaz-orange">
+                      <span className="w-4 h-4 rounded-full bg-alaz-orange animate-bounce" />
+                      <span className="w-4 h-4 rounded-full bg-alaz-orange animate-bounce" style={{ animationDelay: "0.2s" }} />
+                      <span className="w-4 h-4 rounded-full bg-alaz-orange animate-bounce" style={{ animationDelay: "0.4s" }} />
+                      <span className="ml-2 font-bold uppercase">{t("sensor.waitingAnswer")}</span>
+                    </div>
+                    {/*
+                      Oyuncu buzzer'a basıp cevap yazmazsa (telefon kilitlenir,
+                      dikkati dağılır vb.) host'un tüm oyunu bitirmek dışında
+                      turu ilerletmenin hiçbir yolu yoktu. handleEvaluate(false)
+                      ile aynı sıfırlamayı kullanıyoruz — "yanlış" demekle
+                      "vazgeçti, buzzer'ı serbest bırak" aynı sonucu üretiyor.
+                    */}
+                    <button
+                      onClick={() => handleEvaluate(false)}
+                      className="text-[10px] text-white/40 hover:text-white uppercase tracking-widest border border-white/20 hover:border-white/40 px-4 py-2 transition-colors"
+                    >
+                      {t("sensor.releaseBuzzer")}
+                    </button>
                   </div>
                 )}
 

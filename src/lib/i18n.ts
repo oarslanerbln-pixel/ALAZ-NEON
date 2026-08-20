@@ -562,6 +562,11 @@ const translations = {
     de: "Zeig diesen Bildschirm an der Bar",
     en: "Show this screen at the counter",
   },
+  "rewards.validUntil": {
+    tr: (date: string) => `Son geçerlilik: ${date}`,
+    de: (date: string) => `Gültig bis: ${date}`,
+    en: (date: string) => `Valid until: ${date}`,
+  },
 
   // ═══════════════════════════════════════════
   // REVIEW — otomatik ret sebepleri (host'a kısa etiket)
@@ -1045,6 +1050,11 @@ const translations = {
   },
   "sensor.answerLabel": { tr: "Cevabı:", de: "Antwort:", en: "Answer:" },
   "sensor.waitingAnswer": { tr: "Cevap Bekleniyor...", de: "Warte auf Antwort...", en: "Waiting for answer..." },
+  "sensor.releaseBuzzer": {
+    tr: "Yanıt yok — buzzer'ı serbest bırak",
+    de: "Keine Antwort — Buzzer freigeben",
+    en: "No response — release buzzer",
+  },
   "sensor.correct": { tr: "DOĞRU", de: "RICHTIG", en: "CORRECT" },
   "sensor.wrong": { tr: "YANLIŞ", de: "FALSCH", en: "WRONG" },
   "sensor.wonPoints": {

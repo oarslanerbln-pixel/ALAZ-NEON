@@ -10,7 +10,11 @@ import { useLocale } from "../../../hooks/useLocale";
 
 export function PlayerRewards() {
   const { venue } = useVenue();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
+  // toLocaleDateString parametresiz çağrılırsa tarayıcının kendi dilini
+  // kullanır — üç dilli bir uygulamada bu, arayüz dili İngilizce iken
+  // tarihin Türkçe formatta çıkması gibi tutarsızlıklara yol açabiliyordu.
+  const dateLocaleTag = { tr: "tr-TR", de: "de-DE", en: "en-US" }[locale];
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
   const [openReward, setOpenReward] = useState<Reward | null>(null);
@@ -171,6 +175,12 @@ export function PlayerRewards() {
               <p className="text-white/40 text-[10px] text-center uppercase tracking-widest">
                 {t("rewards.showAtCounter")}
               </p>
+
+              {openReward.expires_at && (
+                <p className="text-white/25 text-[9px] text-center uppercase tracking-widest">
+                  {t("rewards.validUntil", new Date(openReward.expires_at).toLocaleDateString(dateLocaleTag))}
+                </p>
+              )}
             </motion.div>
           </motion.div>
         )}
