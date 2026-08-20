@@ -185,6 +185,12 @@ export interface VenueConfig {
   reward_title?: string;
   reward_description?: string;
   reward_type?: "drink" | "discount" | "special";
+  /**
+   * Bir ödül kaç gün geçerli kalsın. Önceden ödüller hiç sona ermiyordu —
+   * bir oyuncu kazanıp hiç kullanmazsa "available" statüsünde sonsuza kadar
+   * birikiyordu. Varsayılan 30 gün; satıcı isterse kısaltıp uzatabiliyor.
+   */
+  reward_validity_days?: number;
   updated_at?: number;
 }
 
@@ -195,6 +201,7 @@ export const DEFAULT_VENUE_CONFIG: VenueConfig = {
   reward_title: "",
   reward_description: "",
   reward_type: "drink",
+  reward_validity_days: 30,
 };
 
 export type LeagueTier = "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "NEON" | "LEGEND";
@@ -227,4 +234,12 @@ export interface Reward {
   code: string;
   earned_at: number;
   claimed_at?: number;
+  /**
+   * `venue.reward_validity_days`'e göre kazanıldığı anda hesaplanıp
+   * dokümana gömülür (o anki mekan ayarı neyse) — sonradan satıcı süreyi
+   * değiştirse bile ZATEN dağıtılmış kuponları geriye dönük etkilemez.
+   * Eski (bu alan olmadan üretilmiş) ödüller `undefined` gelir; okuyan
+   * taraf bunu "süresiz" değil "eski format" olarak ele almalı.
+   */
+  expires_at?: number;
 }

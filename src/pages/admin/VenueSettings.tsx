@@ -35,6 +35,7 @@ export function VenueSettings() {
   const [rewardTitle, setRewardTitle] = useState("");
   const [rewardDescription, setRewardDescription] = useState("");
   const [rewardType, setRewardType] = useState<Reward["type"]>("drink");
+  const [rewardValidityDays, setRewardValidityDays] = useState(30);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -53,6 +54,7 @@ export function VenueSettings() {
     setRewardTitle(venue.reward_title || "");
     setRewardDescription(venue.reward_description || "");
     setRewardType(venue.reward_type || "drink");
+    setRewardValidityDays(venue.reward_validity_days ?? DEFAULT_VENUE_CONFIG.reward_validity_days!);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -73,6 +75,7 @@ export function VenueSettings() {
         reward_title: rewardTitle.trim(),
         reward_description: rewardDescription.trim(),
         reward_type: rewardType,
+        reward_validity_days: Math.max(1, Math.round(rewardValidityDays) || 30),
         updated_at: Date.now(),
       });
       setSavedAt(Date.now());
@@ -269,6 +272,22 @@ export function VenueSettings() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
+                  Geçerlilik Süresi (Gün)
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={rewardValidityDays}
+                  onChange={(e) => setRewardValidityDays(Number(e.target.value))}
+                  className="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-alaz-orange transition-all"
+                />
+                <p className="text-white/30 text-[11px]">
+                  Oyuncu bir ödülü kazandıktan kaç gün sonra kullanamaz hâle gelsin. Zaten dağıtılmış ödülleri etkilemez, yalnızca bundan sonra kazanılanlara uygulanır.
+                </p>
               </div>
 
               <p className="text-white/30 text-[11px]">

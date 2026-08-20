@@ -71,8 +71,18 @@ export function RewardVerify() {
     }
   };
 
+  const isExpired = (r: Reward) =>
+    r.status === "available" && !!r.expires_at && Date.now() > r.expires_at;
+
   const handleRedeem = async () => {
     if (!found) return;
+    // Ekrandaki "Onayla" butonu zaten süresi dolmuşken gizleniyor ama bu
+    // fonksiyon başka bir yoldan (ör. eski bir sekmede kalmış state) yine de
+    // çağrılabilir — son kontrol burada.
+    if (isExpired(found)) {
+      setErrorMsg("Bu ödülün süresi dolmuş, kullanılamaz.");
+      return;
+    }
     setRedeeming(true);
     setErrorMsg("");
     try {
@@ -195,6 +205,18 @@ export function RewardVerify() {
                     : ""}
                 </p>
               </div>
+            ) : isExpired(found) ? (
+              <div className="text-center py-4">
+                <p className="text-[#ff003c] font-black uppercase tracking-widest mb-2">
+                  Bu ödülün süresi dolmuş
+                </p>
+                <p className="text-white/40 text-xs mb-1">
+                  {found.nickname} · {found.title}
+                </p>
+                <p className="text-white/30 text-[11px]">
+                  Son geçerlilik: {new Date(found.expires_at!).toLocaleString("tr-TR")}
+                </p>
+              </div>
             ) : (
               <>
                 <div>
@@ -210,6 +232,11 @@ export function RewardVerify() {
                   <p className="text-white/30 text-[11px] mt-2 uppercase tracking-widest">
                     {REWARD_TYPE_LABEL[found.type]}
                   </p>
+                  {found.expires_at && (
+                    <p className="text-white/30 text-[11px] mt-1">
+                      Son geçerlilik: {new Date(found.expires_at).toLocaleDateString("tr-TR")}
+                    </p>
+                  )}
                 </div>
                 <button
                   onClick={handleRedeem}

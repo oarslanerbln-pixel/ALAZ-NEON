@@ -12,6 +12,7 @@ import { db } from "../../../lib/firebase";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { grantRewardToPlayers } from "../../../lib/rewards";
 import { useVenue } from "../../../contexts/VenueContextCore";
+import { HostHeader } from "../components/HostHeader";
 
 interface Props {
   room: Room;
@@ -152,9 +153,23 @@ export function HostBombDisplay({
     }
   }, [room, players, venue]);
 
+  // Diğer üç modun hepsinde (Arena/Quiz/Sensör) HostHeader hep görünür —
+  // oda kodu, tur sayacı, dil seçici ve "ERKEN BİTİR" her zaman erişilebilir.
+  // Bomba modunda bu bileşen hiç import edilmemişti: host TV ekranında
+  // oyunu manuel bitirmenin HİÇBİR yolu yoktu, oda kodunu da göremiyordu.
+  // Erken bitirmede ödül verilmiyor — bomba modelinde "en yüksek puan" gibi
+  // her an net bir lider yok, birden fazla oyuncu hâlâ hayattayken host
+  // oyunu keserse tek bir kazanan seçmek keyfi olurdu.
+  const handleEndGameEarly = () => {
+    updateDoc(doc(db, "rooms", room.id), { status: "finished" }).catch((err) =>
+      console.error("[HostBombDisplay] Erken bitirme başarısız:", err),
+    );
+  };
 
   return (
-    <div className="w-full h-screen overflow-hidden bg-black text-white">
+    <div className="w-full h-screen overflow-hidden bg-black text-white flex flex-col p-4">
+      <HostHeader room={room} onEndGameEarly={handleEndGameEarly} />
+      <div className="flex-1 relative overflow-hidden">
       <AnimatePresence mode="wait">
         {room.status === "lobby" && (
           <motion.div
@@ -242,6 +257,7 @@ export function HostBombDisplay({
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 }

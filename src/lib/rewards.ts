@@ -29,6 +29,15 @@ export async function grantRewardToPlayers(
 
   const batch = writeBatch(db);
   const now = Date.now();
+  // Firestore `set()` undefined alan kabul etmiyor (hata fırlatıyor) — bu
+  // yüzden geçerlilik günü tanımlı değilse expires_at anahtarını objeye hiç
+  // eklemiyoruz, `undefined` olarak set etmiyoruz.
+  const validityDays = venue.reward_validity_days;
+  const expiresAt =
+    typeof validityDays === "number" && validityDays > 0
+      ? now + validityDays * 24 * 60 * 60 * 1000
+      : null;
+
   for (const { uid, nickname } of validWinners) {
     const rewardRef = doc(collection(db, "rewards"));
     const reward: Omit<Reward, "id"> = {
@@ -40,6 +49,7 @@ export async function grantRewardToPlayers(
       status: "available",
       code: generateCode(6),
       earned_at: now,
+      ...(expiresAt !== null ? { expires_at: expiresAt } : {}),
     };
     batch.set(rewardRef, reward);
   }
