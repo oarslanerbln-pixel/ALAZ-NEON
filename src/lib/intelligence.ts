@@ -49,7 +49,7 @@ export interface RoundIntelligence {
   complexityScore: number; // 0-100
   expectedAvgScore: number;
   winProbability: number;
-  marketStability: "Stabıl" | "Değişken" | "Kaotik";
+  marketStability: "Stabil" | "Değişken" | "Kaotik";
   operationalTip: string;
 }
 
@@ -78,7 +78,7 @@ export function getRoundIntelligence(
   );
 
   // Market Stability metaphor
-  let marketStability: "Stabıl" | "Değişken" | "Kaotik" = "Stabıl";
+  let marketStability: "Stabil" | "Değişken" | "Kaotik" = "Stabil";
   if (complexityScore > 70) marketStability = "Kaotik";
   else if (complexityScore > 40) marketStability = "Değişken";
 
