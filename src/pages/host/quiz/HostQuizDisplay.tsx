@@ -15,6 +15,8 @@ import { HostHeader } from "../components/HostHeader";
 import { HostLobby } from "../views/HostLobby";
 import { HostTutorial } from "../components/HostTutorial";
 import { useLocale } from "../../../hooks/useLocale";
+import { grantGameRewards } from "../../../lib/rewards";
+import { useVenue } from "../../../contexts/VenueContextCore";
 
 import type { Room, Player } from "../../../types/database";
 
@@ -30,6 +32,16 @@ export function HostQuizDisplay({
   updatePlayerScore: (playerId: string, score: number) => Promise<void>;
 }) {
   const { t } = useLocale();
+  const { venue } = useVenue();
+  // Quiz kendi ekranında hiçbir zaman takım sıralaması GÖSTERMİYOR
+  // (sıralama daima bireysel) — bu yüzden ödül de her zaman "individual"
+  // mantığıyla dağıtılıyor, room.game_mode "team" olsa bile. Aksi hâlde
+  // oyuncu ekranında hiç görmediği bir takım kazanımı üzerinden ödül
+  // verilirdi, kafa karıştırıcı olurdu.
+  const grantQuizRewards = () =>
+    grantGameRewards("individual", players, venue).catch((err) =>
+      console.error("[HostQuizDisplay] Ödül dağıtımı başarısız:", err),
+    );
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get("roomId");
 
@@ -229,6 +241,7 @@ export function HostQuizDisplay({
     
     const nextIndex = (room.current_question_index || 0) + 1;
     if (nextIndex >= room.total_rounds) {
+      grantQuizRewards();
       await updateRoomStatus("finished");
     } else {
       await updateRoomStatus("question_intro", {
@@ -266,7 +279,7 @@ export function HostQuizDisplay({
         <div className="absolute inset-0 bg-red-500/20 animate-pulse pointer-events-none z-0" />
       )}
 
-      <HostHeader room={room} onEndGameEarly={() => updateRoomStatus("finished")} />
+      <HostHeader room={room} onEndGameEarly={() => { grantQuizRewards(); updateRoomStatus("finished"); }} />
 
       <div className="flex-1 flex items-center justify-center relative w-full z-10 mt-10">
         <AnimatePresence mode="wait">

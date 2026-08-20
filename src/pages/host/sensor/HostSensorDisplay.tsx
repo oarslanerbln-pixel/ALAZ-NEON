@@ -10,6 +10,8 @@ import { safeForDisplay } from "../../../lib/profanity";
 import { HostHeader } from "../components/HostHeader";
 import { HostLobby } from "../views/HostLobby";
 import { useLocale } from "../../../hooks/useLocale";
+import { grantGameRewards } from "../../../lib/rewards";
+import { useVenue } from "../../../contexts/VenueContextCore";
 
 import type { Room, Player } from "../../../types/database";
 
@@ -25,6 +27,12 @@ export function HostSensorDisplay({
   updatePlayerScore: (playerId: string, score: number) => Promise<void>;
 }) {
   const { t } = useLocale();
+  const { venue } = useVenue();
+  // Sensör de quiz gibi hep bireysel sıralama gösteriyor.
+  const grantSensorRewards = () =>
+    grantGameRewards("individual", players, venue).catch((err) =>
+      console.error("[HostSensorDisplay] Ödül dağıtımı başarısız:", err),
+    );
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get("roomId");
   
@@ -118,6 +126,7 @@ export function HostSensorDisplay({
     const nextIdx = (room.current_round || 0) + 1;
     // For sensor, if we played 10 rounds or all available images, end it
     if (nextIdx >= Math.min(room.total_rounds, SENSOR_IMAGES.length)) {
+      grantSensorRewards();
       await updateRoomStatus("finished");
       return;
     }
@@ -139,7 +148,7 @@ export function HostSensorDisplay({
   if (gameState === "lobby") {
     return (
       <div className="min-h-screen bg-black text-white overflow-hidden flex flex-col font-mono relative">
-        <HostHeader room={room} onEndGameEarly={() => updateRoomStatus("finished")} />
+        <HostHeader room={room} onEndGameEarly={() => { grantSensorRewards(); updateRoomStatus("finished"); }} />
         {/*
           Burada ikinci bir "başlat" butonu vardı: HostLobby zaten kendi
           başlatma butonunu gösteriyor, bu ise onun üzerine sabitlenmiş
@@ -162,7 +171,7 @@ export function HostSensorDisplay({
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden flex flex-col font-sans relative">
-      <HostHeader room={room} onEndGameEarly={() => updateRoomStatus("finished")} />
+      <HostHeader room={room} onEndGameEarly={() => { grantSensorRewards(); updateRoomStatus("finished"); }} />
       
       <div className="flex-1 flex flex-col items-center justify-center p-8 relative z-10">
         

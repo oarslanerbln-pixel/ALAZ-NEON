@@ -175,6 +175,16 @@ export interface VenueConfig {
   /** Hex renk, örn. "#ff5500". Boşsa varsayılan HENGAME turuncusu kullanılır. */
   primary_color?: string;
   rewards_enabled: boolean;
+  /**
+   * Ödül şablonu — oyun bittiğinde kazanana (bireysel modda tek oyuncu,
+   * takım modunda kazanan takımın TÜM üyelerine) bu şablondan bir Reward
+   * dokümanı üretilir. Boş bırakılırsa (reward_title yok) hiç ödül
+   * üretilmez, `rewards_enabled` açık olsa bile — satıcı ödülü henüz
+   * tanımlamadıysa sahte/boş bir ödül dağıtılmasın diye.
+   */
+  reward_title?: string;
+  reward_description?: string;
+  reward_type?: "drink" | "discount" | "special";
   updated_at?: number;
 }
 
@@ -182,6 +192,9 @@ export const DEFAULT_VENUE_CONFIG: VenueConfig = {
   name: "HENGAME",
   primary_color: "#ff5500",
   rewards_enabled: true,
+  reward_title: "",
+  reward_description: "",
+  reward_type: "drink",
 };
 
 export type LeagueTier = "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "NEON" | "LEGEND";
@@ -199,6 +212,14 @@ export interface UserProfile {
 export interface Reward {
   id?: string;
   uid: string;
+  /**
+   * Kazanıldığı andaki oyuncu adı — kalıcı bir kullanıcı profiline (users/
+   * {uid}) bağımlı değil, çünkü telefonla giriş yapmamış (yalnızca anonim)
+   * oyuncuların böyle bir profili hiç olmayabilir. Personel doğrulama
+   * ekranı bu yüzden ekstra bir sorguya gerek duymadan direkt bu alanı
+   * gösteriyor.
+   */
+  nickname: string;
   type: "drink" | "discount" | "special";
   title: string;
   description: string;

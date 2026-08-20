@@ -10,6 +10,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { updateDoc, doc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { SoundManager, sounds } from "../../../lib/audio";
+import { grantRewardToPlayers } from "../../../lib/rewards";
+import { useVenue } from "../../../contexts/VenueContextCore";
 
 interface Props {
   room: Room;
@@ -22,6 +24,7 @@ export function HostBombDisplay({
   room,
   players,
 }: Props) {
+  const { venue } = useVenue();
   // Initialize bomb game when started from lobby
   const handleStartGame = async () => {
     try {
@@ -106,7 +109,20 @@ export function HostBombDisplay({
     const activePlayers = players.filter(p => (p.lives !== undefined ? p.lives : 3) > 0);
     
     if (activePlayers.length <= 1) {
-      // We have a winner
+      // We have a winner — bomba modu puan değil "son ayakta kalan"
+      // modeliyle çalışıyor, bu yüzden grantGameRewards'ın puan bazlı
+      // kazanan bulma mantığı burada işe yaramaz; kazananı doğrudan
+      // hayatta kalan tek oyuncudan alıyoruz. İki oyuncu aynı anda
+      // elenirse (activePlayers 0'a düşer) kimseye ödül verilmiyor.
+      const survivor = activePlayers[0];
+      if (survivor?.uid) {
+        grantRewardToPlayers(
+          [{ uid: survivor.uid, nickname: survivor.nickname }],
+          venue,
+        ).catch((err) =>
+          console.error("[HostBombDisplay] Ödül dağıtımı başarısız:", err),
+        );
+      }
       await updateDoc(doc(db, "rooms", room.id), {
         status: "finished"
       });
@@ -134,7 +150,7 @@ export function HostBombDisplay({
         bomb_speed_multiplier: 1.0,
       });
     }
-  }, [room, players]);
+  }, [room, players, venue]);
 
 
   return (

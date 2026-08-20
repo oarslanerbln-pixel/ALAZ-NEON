@@ -37,6 +37,9 @@ const RegisterPage = lazy(() =>
 const VenueSettings = lazy(() =>
   import("./pages/admin/VenueSettings").then((m) => ({ default: m.VenueSettings }))
 );
+const RewardVerify = lazy(() =>
+  import("./pages/admin/RewardVerify").then((m) => ({ default: m.RewardVerify }))
+);
 
 function RouteFallback() {
   const { t } = useLocale();
@@ -76,6 +79,8 @@ function App() {
                 <Route path="/register" element={<RegisterPage />} />
                 {/* Satıcı/işletme: aktif mekan markasını değiştirme ekranı */}
                 <Route path="/admin/venue" element={<VenueSettings />} />
+                {/* Personel: barda ödül kodu doğrulama ekranı */}
+                <Route path="/admin/rewards" element={<RewardVerify />} />
               </Route>
             </Routes>
           </Suspense>
