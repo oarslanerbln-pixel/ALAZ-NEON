@@ -1,8 +1,26 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import * as Sentry from "@sentry/react";
 import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import "./index.css";
+
+// DSN yoksa init() çağrılmıyor — Sentry tamamen no-op kalıyor, hesap
+// açılana kadar mevcut davranışta hiçbir değişiklik olmaz. Mekanda canlı
+// çalışırken bir şey patlarsa daha önce bundan HABERİMİZ olmuyordu (yalnızca
+// ErrorBoundary ekranını fotoğraflayıp göndermesi için kullanıcıya güveniyorduk).
+const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
+if (sentryDsn) {
+  Sentry.init({
+    dsn: sentryDsn,
+    environment: import.meta.env.MODE,
+    // Performans izleme/session replay bilerek kapalı: bu bir maliyet
+    // merkezi değil, sadece "bir şey patladı mı" haberimiz olsun diye var —
+    // gereğinden fazla veri toplamak hem ücretsiz kotayı hem gizliliği
+    // gereksiz yere zorlar.
+    tracesSampleRate: 0,
+  });
+}
 
 const firebaseApiKey = import.meta.env.VITE_FIREBASE_API_KEY;
 const firebaseProjectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
