@@ -191,6 +191,16 @@ export interface VenueConfig {
    * birikiyordu. Varsayılan 30 gün; satıcı isterse kısaltıp uzatabiliyor.
    */
   reward_validity_days?: number;
+  /**
+   * Boşta ekranı (AttractMode) döngüsüne eklenen tanıtım görselleri —
+   * mekanın kendi kampanyası/menüsü/etkinliği. Firebase Storage
+   * kullanılmıyor bilerek: proje Spark (ücretsiz) planda ve Storage artık
+   * yalnızca Blaze planında çalışıyor (Google, Eylül 2024'te duyurup
+   * kademeli zorunlu hâle getirdi). Satıcı görselini kendi barındırdığı bir
+   * yere (Instagram, Google Drive genel link vb.) koyup URL'ini buraya
+   * yapıştırıyor — tıpkı logo_url gibi.
+   */
+  promo_images?: string[];
   updated_at?: number;
 }
 
@@ -202,6 +212,7 @@ export const DEFAULT_VENUE_CONFIG: VenueConfig = {
   reward_description: "",
   reward_type: "drink",
   reward_validity_days: 30,
+  promo_images: [],
 };
 
 export type LeagueTier = "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "NEON" | "LEGEND";
