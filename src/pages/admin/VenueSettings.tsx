@@ -36,6 +36,8 @@ export function VenueSettings() {
   const [rewardDescription, setRewardDescription] = useState("");
   const [rewardType, setRewardType] = useState<Reward["type"]>("drink");
   const [rewardValidityDays, setRewardValidityDays] = useState(30);
+  const [promoImages, setPromoImages] = useState<string[]>([]);
+  const [newPromoUrl, setNewPromoUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -55,8 +57,20 @@ export function VenueSettings() {
     setRewardDescription(venue.reward_description || "");
     setRewardType(venue.reward_type || "drink");
     setRewardValidityDays(venue.reward_validity_days ?? DEFAULT_VENUE_CONFIG.reward_validity_days!);
+    setPromoImages(venue.promo_images || []);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const addPromoImage = () => {
+    const url = newPromoUrl.trim();
+    if (!url) return;
+    setPromoImages((prev) => [...prev, url]);
+    setNewPromoUrl("");
+  };
+
+  const removePromoImage = (index: number) => {
+    setPromoImages((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const isPasswordAuthed =
     !!authUser && authUser.providerData.some((p) => p.providerId === "password");
@@ -76,6 +90,7 @@ export function VenueSettings() {
         reward_description: rewardDescription.trim(),
         reward_type: rewardType,
         reward_validity_days: Math.max(1, Math.round(rewardValidityDays) || 30),
+        promo_images: promoImages,
         updated_at: Date.now(),
       });
       setSavedAt(Date.now());
@@ -191,6 +206,65 @@ export function VenueSettings() {
             <p className="text-white/30 text-[11px]">
               Uygulama genelindeki turuncu vurgu rengini değiştirir (bomba/quiz/sensör kendi neon renklerini korur).
             </p>
+          </div>
+
+          <div className="space-y-3">
+            <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
+              Tanıtım Görselleri (opsiyonel)
+            </label>
+            <p className="text-white/30 text-[11px]">
+              Boşta ekranında (TV) şampiyonlar ve "nasıl oynanır" slaytları arasına eklenir — mekanın kendi kampanya/menü görseli. Görseli kendi barındırdığınız bir yere (Instagram, Google Drive genel link vb.) koyup URL'ini buraya yapıştırın.
+            </p>
+            <div className="flex gap-3">
+              <input
+                type="url"
+                value={newPromoUrl}
+                onChange={(e) => setNewPromoUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addPromoImage();
+                  }
+                }}
+                placeholder="https://..."
+                className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-alaz-orange transition-all"
+              />
+              <button
+                type="button"
+                onClick={addPromoImage}
+                className="px-6 py-4 bg-white/10 hover:bg-white/20 text-white font-black uppercase tracking-widest text-xs rounded-2xl transition-colors shrink-0"
+              >
+                Ekle
+              </button>
+            </div>
+            {promoImages.length > 0 && (
+              <ul className="space-y-2">
+                {promoImages.map((url, index) => (
+                  <li
+                    key={`${url}-${index}`}
+                    className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-5 py-3"
+                  >
+                    <img
+                      src={url}
+                      alt=""
+                      className="w-10 h-10 rounded-lg object-cover shrink-0 bg-black/40"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.visibility = "hidden";
+                      }}
+                    />
+                    <span className="flex-1 text-white/60 text-xs truncate">{url}</span>
+                    <button
+                      type="button"
+                      onClick={() => removePromoImage(index)}
+                      className="text-white/40 hover:text-[#ff003c] transition-colors shrink-0 text-lg leading-none px-2"
+                      aria-label="Kaldır"
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-2xl px-6 py-5">

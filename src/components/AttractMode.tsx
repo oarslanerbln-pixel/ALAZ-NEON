@@ -3,33 +3,48 @@ import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { useLocale } from "../hooks/useLocale";
 import { useTopPlayers } from "../hooks/useTopPlayers";
+import { useVenue } from "../contexts/VenueContextCore";
 
 const SLIDE_DURATION = 10000; // 10 seconds per slide
 
+type Slide =
+  | { kind: "champions" }
+  | { kind: "promo"; url: string }
+  | { kind: "howToPlay" };
+
 export function AttractMode({ onClose }: { onClose: () => void }) {
   const { t } = useLocale();
-  const [slide, setSlide] = useState(0);
+  const { venue } = useVenue();
+  const [index, setIndex] = useState(0);
   // Eskiden burada sabit, uydurma bir üçlü vardı ("Ateşin_Oğlu", 12450 puan...)
   // ve mekan sahibine demo yapılırken TV'de bu sahte isimler dönüyordu.
   const { players: topPlayers } = useTopPlayers("week", 3);
 
   // Gerçek veriyle podyum her zaman dolu olmayabilir. Üç kişi yoksa şampiyon
-  // slaytı hiç gösterilmiyor (boş kutular yerine), yalnızca "nasıl oynanır"
-  // slaytı kalıyor — yeni bir mekanın ilk gecesinde olan tam olarak budur.
+  // slaytı hiç gösterilmiyor (boş kutular yerine) — yeni bir mekanın ilk
+  // gecesinde olan tam olarak budur. Mekanın kendi tanıtım görselleri
+  // (VenueSettings'ten URL olarak eklenir) varsa şampiyon/nasıl-oynanır
+  // slaytlarının arasına serpiştiriliyor.
   const hasPodium = topPlayers.length >= 3;
-  // Effect içinde setSlide(1) çağırmak yerine TÜRETİYORUZ: podyum yoksa
-  // gösterilecek slayt zaten hep 1, bunu state'e yazmak gereksiz bir
-  // render turu doğuruyordu.
-  const activeSlide = hasPodium ? slide : 1;
+  const promoImages = venue.promo_images || [];
+  const slides: Slide[] = [
+    ...(hasPodium ? [{ kind: "champions" as const }] : []),
+    ...promoImages.map((url) => ({ kind: "promo" as const, url })),
+    { kind: "howToPlay" as const },
+  ];
+  // index sınır dışına taşabilir (ör. görsel listesi küçülürse) — effect
+  // içinde ayrıca setIndex çağırmak yerine render sırasında TÜRETİYORUZ.
+  const activeIndex = index % slides.length;
+  const activeSlide = slides[activeIndex];
 
-  // Auto-slide — yalnızca iki slayt varken anlamlı
+  // Auto-slide — yalnızca birden fazla slayt varken anlamlı
   useEffect(() => {
-    if (!hasPodium) return;
+    if (slides.length <= 1) return;
     const timer = setInterval(() => {
-      setSlide((prev) => (prev === 0 ? 1 : 0));
+      setIndex((prev) => (prev + 1) % slides.length);
     }, SLIDE_DURATION);
     return () => clearInterval(timer);
-  }, [hasPodium]);
+  }, [slides.length]);
 
   return (
     <motion.div
@@ -47,8 +62,8 @@ export function AttractMode({ onClose }: { onClose: () => void }) {
       </div>
 
       <AnimatePresence mode="wait">
-        {activeSlide === 0 ? (
-          // SLIDE 1: CHAMPIONS
+        {activeSlide.kind === "champions" ? (
+          // SLIDE: CHAMPIONS
           <motion.div
             key="champions"
             initial={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
@@ -99,8 +114,30 @@ export function AttractMode({ onClose }: { onClose: () => void }) {
               </motion.div>
             </div>
           </motion.div>
+        ) : activeSlide.kind === "promo" ? (
+          // SLIDE: MEKANIN TANITIM GÖRSELİ
+          <motion.div
+            key={`promo-${activeIndex}`}
+            initial={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
+            animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+            exit={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }}
+            transition={{ duration: 1.2 }}
+            className="w-full h-full flex items-center justify-center px-10 py-10"
+          >
+            <img
+              src={activeSlide.url}
+              alt=""
+              className="max-w-full max-h-full object-contain rounded-3xl shadow-[0_0_80px_rgba(0,0,0,0.6)]"
+              onError={() => {
+                // URL bozuksa (silinmiş paylaşım, süresi dolmuş link vb.)
+                // TV'de kırık görsel ikonuyla takılı kalmak yerine hemen
+                // bir sonraki slayta geç.
+                setIndex((prev) => (prev + 1) % slides.length);
+              }}
+            />
+          </motion.div>
         ) : (
-          // SLIDE 2: HOW TO PLAY
+          // SLIDE: HOW TO PLAY
           <motion.div
             key="howToPlay"
             initial={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
@@ -118,12 +155,12 @@ export function AttractMode({ onClose }: { onClose: () => void }) {
                 { step: 1, text: t("attract.step1"), color: "border-blue-500", glow: "shadow-[0_0_30px_rgba(59,130,246,0.3)]" },
                 { step: 2, text: t("attract.step2"), color: "border-purple-500", glow: "shadow-[0_0_30px_rgba(168,85,247,0.3)]" },
                 { step: 3, text: t("attract.step3"), color: "border-alaz-orange", glow: "shadow-[0_0_50px_rgba(255,77,0,0.5)]" }
-              ].map((item, index) => (
+              ].map((item, i) => (
                 <motion.div
                   key={item.step}
                   initial={{ opacity: 0, y: 50 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.5 + 0.5 }}
+                  transition={{ delay: i * 0.5 + 0.5 }}
                   className={`bg-black/60 backdrop-blur-xl border-t-4 ${item.color} p-10 rounded-2xl ${item.glow} flex flex-col items-center text-center`}
                 >
                   <div className={`text-6xl font-black mb-6 opacity-30 ${item.color.replace('border-', 'text-')}`}>
