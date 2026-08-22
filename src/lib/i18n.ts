@@ -172,6 +172,8 @@ const translations = {
   "lobby.connect": { tr: "BAĞLAN", de: "VERBINDEN", en: "CONNECT" },
   "lobby.categories": { tr: "KATEGORİLER", de: "KATEGORIEN", en: "CATEGORIES" },
   "lobby.active": { tr: "AKTİF", de: "AKTIV", en: "ACTIVE" },
+  "lobby.removeCategory": { tr: "Kategoriyi Sil", de: "Kategorie entfernen", en: "Remove Category" },
+  "lobby.addCategory": { tr: "Kategori Ekle", de: "Kategorie hinzufügen", en: "Add Category" },
   "lobby.noCategories": {
     tr: "Kategori seçilmedi...",
     de: "Keine Kategorien gewählt...",
