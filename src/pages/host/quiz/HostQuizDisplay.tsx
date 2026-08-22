@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { collection, query, where, getDocs, doc, writeBatch, onSnapshot } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { ParticleBackground } from "../../../components/ParticleBackground";
+import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { getQuizQuestions } from "../../../lib/quizQuestions";
 import { toMillis } from "../../../lib/timestamps";
@@ -46,7 +47,7 @@ export function HostQuizDisplay({
   const roomId = searchParams.get("roomId");
 
   const [timeLeft, setTimeLeft] = useState(room?.timer_setting || 30);
-  const [roundEndTime, setRoundEndTime] = useState<number | null>(null);
+  const roundEndTime = room?.round_end_time ?? null;
 
   // Soru bitişi iki bağımsız tetikleyiciden gelebiliyor: sürenin dolması VE
   // "herkes cevapladı" dinleyicisi. İkisi aynı anda tetiklenirse endQuestion
@@ -111,14 +112,15 @@ export function HostQuizDisplay({
     
     SoundManager.getInstance().playMusic(sounds.GAME_PULSE, 0.4);
     const timeToAnswer = room.timer_setting || 30;
+    const endTime = Date.now() + timeToAnswer * 1000;
     
-    await updateRoomStatus("question_active", {
-      time_left: timeToAnswer
-    });
-
     endingQuestionRef.current = false;
     setTimeLeft(timeToAnswer);
-    setRoundEndTime(Date.now() + timeToAnswer * 1000);
+
+    await updateRoomStatus("question_active", {
+      time_left: timeToAnswer,
+      round_end_time: endTime,
+    });
   };
 
   const endQuestion = useCallback(async () => {
@@ -194,20 +196,26 @@ export function HostQuizDisplay({
 
   // Timer logic
   useEffect(() => {
-    if (gameState === "question_active") {
-      const interval = setInterval(() => {
-        if (!roundEndTime) return;
-        const now = Date.now();
-        const remaining = Math.max(0, Math.floor((roundEndTime - now) / 1000));
-        setTimeLeft(remaining);
+    if (gameState !== "question_active" || !roundEndTime) return;
 
-        if (remaining === 0) {
-          clearInterval(interval);
-          endQuestion();
-        }
-      }, 500);
-      return () => clearInterval(interval);
+    const tick = () => {
+      const remaining = Math.max(0, Math.floor((roundEndTime - Date.now()) / 1000));
+      setTimeLeft(remaining);
+      return remaining;
+    };
+
+    if (tick() === 0) {
+      const t = setTimeout(endQuestion, 0);
+      return () => clearTimeout(t);
     }
+
+    const interval = setInterval(() => {
+      if (tick() === 0) {
+        clearInterval(interval);
+        endQuestion();
+      }
+    }, 500);
+    return () => clearInterval(interval);
   }, [gameState, roundEndTime, endQuestion]);
 
   // Listen for all players answering to end question early
@@ -272,7 +280,8 @@ export function HostQuizDisplay({
 
 
   return (
-    <div className="flex-1 flex flex-col p-8 h-screen overflow-hidden">
+    <TVScaleFrame>
+    <div className="w-full h-full flex flex-col p-8 overflow-hidden">
       <ParticleBackground speedMultiplier={gameState === "question_active" && timeLeft <= 5 ? 5 : 1} />
       
       {gameState === "question_active" && timeLeft <= 5 && (
@@ -500,5 +509,6 @@ export function HostQuizDisplay({
         </AnimatePresence>
       </div>
     </div>
+    </TVScaleFrame>
   );
 }

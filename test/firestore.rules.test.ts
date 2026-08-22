@@ -426,3 +426,43 @@ describe("rewards koleksiyonu", () => {
     await assertFails(deleteDoc(doc(asVenueOwner(), "rewards", REWARD_ID)));
   });
 });
+
+describe("users koleksiyonu (ALAZ League)", () => {
+  it("herkes kullanıcı profilini okuyabilir (liderlik tablosu için)", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users", PLAYER_UID), {
+        nickname: "ALAZ_CHAMPION",
+        total_xp: 450,
+      });
+    });
+    await assertSucceeds(getDoc(doc(asGuest(), "users", PLAYER_UID)));
+  });
+
+  it("kullanıcı kendi profilini oluşturabilir veya güncelleyebilir", async () => {
+    await assertSucceeds(
+      setDoc(doc(asPlayer(), "users", PLAYER_UID), {
+        nickname: "ALAZ_CHAMPION",
+        total_xp: 500,
+      })
+    );
+  });
+
+  it("kullanıcı başka birinin profilini değiştiremez", async () => {
+    await assertFails(
+      setDoc(doc(asPlayer(), "users", STRANGER_UID), {
+        nickname: "HACKED",
+        total_xp: 0,
+      })
+    );
+  });
+
+  it("kullanıcı profili doğrudan silinemez", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users", PLAYER_UID), {
+        nickname: "PLAYER",
+      });
+    });
+    await assertFails(deleteDoc(doc(asPlayer(), "users", PLAYER_UID)));
+  });
+});
+

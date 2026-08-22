@@ -8,6 +8,7 @@ import { getRandomSensorImage, SENSOR_IMAGES, type SensorImage } from "../../../
 import { safeForDisplay } from "../../../lib/profanity";
 
 import { HostHeader } from "../components/HostHeader";
+import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { HostLobby } from "../views/HostLobby";
 import { useLocale } from "../../../hooks/useLocale";
 import { grantGameRewards } from "../../../lib/rewards";
@@ -147,7 +148,8 @@ export function HostSensorDisplay({
 
   if (gameState === "lobby") {
     return (
-      <div className="min-h-screen bg-black text-white overflow-hidden flex flex-col font-mono relative">
+      <TVScaleFrame>
+      <div className="w-full h-full bg-black text-white overflow-hidden flex flex-col font-mono relative">
         <HostHeader room={room} onEndGameEarly={() => { grantSensorRewards(); updateRoomStatus("finished"); }} />
         {/*
           Burada ikinci bir "başlat" butonu vardı: HostLobby zaten kendi
@@ -166,13 +168,15 @@ export function HostSensorDisplay({
           />
         </div>
       </div>
+      </TVScaleFrame>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden flex flex-col font-sans relative">
+    <TVScaleFrame>
+    <div className="w-full h-full bg-black text-white overflow-hidden flex flex-col font-sans relative">
       <HostHeader room={room} onEndGameEarly={() => { grantSensorRewards(); updateRoomStatus("finished"); }} />
-      
+
       <div className="flex-1 flex flex-col items-center justify-center p-8 relative z-10">
         
         {gameState === "sensor_intro" && currentImage && (
@@ -325,5 +329,6 @@ export function HostSensorDisplay({
 
       </div>
     </div>
+    </TVScaleFrame>
   );
 }

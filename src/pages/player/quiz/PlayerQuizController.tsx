@@ -4,6 +4,7 @@ import { db } from "../../../lib/firebase";
 import { AnimatePresence, motion } from "framer-motion";
 import { ParticleBackground } from "../../../components/ParticleBackground";
 import { SoundManager, sounds } from "../../../lib/audio";
+import { haptics } from "../../../lib/haptics";
 import type { Room, Player } from "../../../types/database";
 import { useLocale } from "../../../hooks/useLocale";
 
@@ -58,6 +59,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
   const handleSubmit = useCallback(async (option: string) => {
     if (hasSubmitted) return;
 
+    haptics.tap();
     SoundManager.getInstance().playSFX(sounds.CLICK);
     setSelectedOption(option);
     setHasSubmitted(true);
@@ -73,6 +75,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
         },
         created_at: serverTimestamp() // For accurate speed bonus calculation on the host
       });
+      haptics.success();
     } catch (err) {
       console.error("Failed to submit quiz answer", err);
       setHasSubmitted(false);

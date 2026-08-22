@@ -260,6 +260,47 @@ export class SoundManager {
           setTimeout(() => ctx.close(), 700);
           break;
         }
+        case "synth:tick_urgent": {
+          const osc = ctx.createOscillator();
+          const g = ctx.createGain();
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(1800, now);
+          osc.frequency.exponentialRampToValueAtTime(300, now + 0.05);
+          g.gain.setValueAtTime(0.4, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+          osc.connect(g);
+          g.connect(master);
+          osc.start(now);
+          osc.stop(now + 0.06);
+          setTimeout(() => ctx.close(), 150);
+          break;
+        }
+        case "synth:fanfare": {
+          // Triad victory flourish: C5 -> E5 -> G5 -> C6
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.type = "sawtooth";
+            osc.frequency.setValueAtTime(freq, now + i * 0.12);
+            g.gain.setValueAtTime(0, now + i * 0.12);
+            g.gain.linearRampToValueAtTime(0.2, now + i * 0.12 + 0.02);
+            g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + (i === 3 ? 1.8 : 0.4));
+            
+            const filter = ctx.createBiquadFilter();
+            filter.type = "lowpass";
+            filter.frequency.value = 2500;
+            
+            osc.connect(filter);
+            filter.connect(g);
+            g.connect(master);
+            
+            osc.start(now + i * 0.12);
+            osc.stop(now + i * 0.12 + (i === 3 ? 2.0 : 0.5));
+          });
+          setTimeout(() => ctx.close(), 2500);
+          break;
+        }
         default:
           ctx.close();
       }
@@ -417,6 +458,8 @@ export const sounds = {
   FAILURE: "synth:failure",
   CLICK: "synth:click",
   VOTE_TICK: "synth:click",
+  TICK_URGENT: "synth:tick_urgent",
+  FANFARE: "synth:fanfare",
   BURN: "synth:burn",
   START: "synth:burn",
 };

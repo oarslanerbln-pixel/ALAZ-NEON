@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { collection, query, where, getDocs, doc, writeBatch } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { ParticleBackground } from "../../components/ParticleBackground";
+import { TVScaleFrame } from "../../components/TVScaleFrame";
 import { KineticSpark } from "../../components/KineticSpark";
 import { sounds, SoundManager } from "../../lib/audio";
 import { calculateRoundScores } from "../../lib/scoring";
@@ -549,6 +550,20 @@ function HostDisplayGame({
     return () => clearInterval(interval);
   }, [gameState, roundEndTime, endRoundOnce]);
 
+  // Herkes cevapladıysa süre dolmasını beklemeden turu bitir. Kısa bir
+  // duraklama bırakıyoruz ki son oyuncunun cevabı "Live Link Status"ta
+  // (bkz. HostPlaying) 100% olarak görünsün, sonra tur kapansın — aniden
+  // kesilmiş hissi vermesin. endRoundOnce zaten tek seferlik olduğu için
+  // zamanlayıcı efektiyle yarışsa bile (biri erken biter, öbürü hiç
+  // tetiklenmez) iki kez puan yazılmaz.
+  useEffect(() => {
+    if (gameState !== "playing") return;
+    if (players.length === 0) return;
+    if (submittedPlayerIds.length < players.length) return;
+    const t = setTimeout(endRoundOnce, 900);
+    return () => clearTimeout(t);
+  }, [gameState, submittedPlayerIds.length, players.length, endRoundOnce]);
+
   // Calculate Aesthetic Tension
   const tensionRatio =
     room && room.total_rounds > 0
@@ -563,8 +578,9 @@ function HostDisplayGame({
   }, [tensionRatio]);
 
   return (
+    <TVScaleFrame>
     <div
-      className={`flex-1 flex flex-col p-8 h-screen overflow-hidden ${gameState === "playing" && timeLeft <= 10 ? "animate-shake" : ""}`}
+      className={`w-full h-full flex flex-col p-8 overflow-hidden ${gameState === "playing" && timeLeft <= 10 ? "animate-shake" : ""}`}
       data-tension={
         tensionRatio > 0.8 ? "high" : tensionRatio > 0.5 ? "medium" : "low"
       }
@@ -682,5 +698,6 @@ function HostDisplayGame({
 
       <DatabaseStatus />
     </div>
+    </TVScaleFrame>
   );
 }

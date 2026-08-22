@@ -13,6 +13,7 @@ import { SoundManager, sounds } from "../../../lib/audio";
 import { grantRewardToPlayers } from "../../../lib/rewards";
 import { useVenue } from "../../../contexts/VenueContextCore";
 import { HostHeader } from "../components/HostHeader";
+import { TVScaleFrame } from "../../../components/TVScaleFrame";
 
 interface Props {
   room: Room;
@@ -167,7 +168,8 @@ export function HostBombDisplay({
   };
 
   return (
-    <div className="w-full h-screen overflow-hidden bg-black text-white flex flex-col p-4">
+    <TVScaleFrame>
+    <div className="w-full h-full overflow-hidden bg-black text-white flex flex-col p-4">
       <HostHeader room={room} onEndGameEarly={handleEndGameEarly} />
       <div className="flex-1 relative overflow-hidden">
       <AnimatePresence mode="wait">
@@ -259,5 +261,6 @@ export function HostBombDisplay({
       </AnimatePresence>
       </div>
     </div>
+    </TVScaleFrame>
   );
 }

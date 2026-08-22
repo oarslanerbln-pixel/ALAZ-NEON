@@ -4,13 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { useLocale } from "../hooks/useLocale";
 import { upperTL } from "../lib/stringUtils";
 import { useTopPlayers, type LeaderboardRange } from "../hooks/useTopPlayers";
+import { getLeagueFromScore } from "../lib/league";
 
 /**
- * Bu sayfa eskiden TAMAMEN sahte veri gösteriyordu (kodda "Mock data for now"
- * notu ve uydurma 8 oyuncu vardı). Ana sayfadaki "Haftalık Şampiyonlar"
- * butonu buraya çıktığı için, bir mekan sahibine demo yapılırken uydurma
- * isimler görünüyordu — hem güven kırıcı hem de kendi misafirleri oynadıktan
- * sonra listede yer almadıkları için yanlış.
+ * HEGAME League sıralama sayfası — gerçek oyuncu verilerinden
+ * lig seviyeleri ve rozetleriyle kümülatif skorları listeler.
  */
 export function Leaderboard() {
   const navigate = useNavigate();
@@ -35,7 +33,7 @@ export function Leaderboard() {
           >
             {t("leaderboard.back")}
           </motion.button>
-          {/* Bu iki buton eskiden hiçbir şey yapmıyordu (sabit görünüm). */}
+          
           <div className="flex gap-4">
             <button
               onClick={() => setRange("week")}
@@ -61,11 +59,17 @@ export function Leaderboard() {
         </header>
 
         <div className="text-center mb-16">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="inline-block px-4 py-1.5 rounded-full bg-alaz-orange/10 border border-alaz-orange/30 text-alaz-orange text-[11px] font-black tracking-widest uppercase mb-4 shadow-[0_0_20px_rgba(255,85,0,0.2)]"
+          >
+            ⚡ HEGAME LEAGUE ⚡
+          </motion.div>
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-4xl md:text-6xl lg:text-7xl font-black italic tracking-tighter text-glow-ultra-alaz mb-4"
-            data-text={t("leaderboard.title")}
           >
             {t("leaderboard.title")}
           </motion.h1>
@@ -103,6 +107,7 @@ export function Leaderboard() {
             const isFirst = player.rank === 1;
             const isSecond = player.rank === 2;
             const isThird = player.rank === 3;
+            const league = getLeagueFromScore(player.score);
             
             let rowBg = "bg-white/5 border-white/5 hover:border-white/20";
             let rankColor = "text-gray-500";
@@ -144,13 +149,26 @@ export function Leaderboard() {
                     {upperTL(player.name[0])}
                   </div>
                   <div>
-                    <div className="text-2xl font-black text-white tracking-wide group-hover:text-alaz-orange transition-colors">
-                      {player.name}
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl font-black text-white tracking-wide group-hover:text-alaz-orange transition-colors">
+                        {player.name}
+                      </span>
+                      <span
+                        className="text-xs px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1"
+                        style={{
+                          backgroundColor: `${league.color}20`,
+                          color: league.color,
+                          border: `1px solid ${league.color}40`,
+                        }}
+                      >
+                        <span>{league.badge}</span>
+                        <span>{league.title}</span>
+                      </span>
                     </div>
                   </div>
                 </div>
                 <div className={`col-span-4 text-right text-4xl font-black tracking-tighter ${scoreColor}`}>
-                  {player.score.toLocaleString()}
+                  {player.score.toLocaleString()} <span className="text-xs text-gray-500 font-bold uppercase ml-1">XP</span>
                 </div>
               </motion.div>
             );

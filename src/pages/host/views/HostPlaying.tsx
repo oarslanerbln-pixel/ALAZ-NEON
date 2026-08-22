@@ -1,6 +1,8 @@
+import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IntelligenceWidget } from "../../../components/IntelligenceWidget";
 import { useLocale } from "../../../hooks/useLocale";
+import { SoundManager, sounds } from "../../../lib/audio";
 
 interface HostPlayingProps {
   currentLetter: string;
@@ -20,6 +22,14 @@ export function HostPlaying({
   currentRound = 1,
 }: HostPlayingProps) {
   const { t } = useLocale();
+
+  // Play urgent ticks in the last 5 seconds to build party excitement
+  useEffect(() => {
+    if (timeLeft <= 5 && timeLeft > 0) {
+      SoundManager.getInstance().playSFX(sounds.TICK_URGENT, 0.4);
+    }
+  }, [timeLeft]);
+
   return (
     <motion.div
       key="playing"
@@ -27,8 +37,13 @@ export function HostPlaying({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 1.05 }}
       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-      className="w-full h-full flex flex-col items-center justify-between py-12 relative"
+      className={`w-full h-full flex flex-col items-center justify-between py-12 relative transition-colors duration-500 ${
+        timeLeft <= 5 ? "bg-red-950/20" : ""
+      }`}
     >
+      {timeLeft <= 5 && (
+        <div className="absolute inset-0 border-4 border-red-500/40 animate-pulse pointer-events-none z-30" />
+      )}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,255,65,0.05)_0%,transparent_70%)] pointer-events-none animate-scanline" />
 
       <IntelligenceWidget

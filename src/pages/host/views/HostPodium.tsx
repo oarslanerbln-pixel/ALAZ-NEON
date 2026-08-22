@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { NeonIcon } from "../../../components/NeonIcon";
 import { useLocale } from "../../../hooks/useLocale";
 import { ShareableRecapCard } from "../components/ShareableRecapCard";
+import { SoundManager, sounds } from "../../../lib/audio";
 import type { Player } from "../../../types/database";
 import type { JulesAward } from "../../../lib/intelligence";
 
@@ -27,6 +29,14 @@ export function HostPodium({
   onResetGame,
 }: HostPodiumProps) {
   const { t } = useLocale();
+
+  useEffect(() => {
+    // Play celebratory fanfare timed with 1st place rising
+    const timer = setTimeout(() => {
+      SoundManager.getInstance().playSFX(sounds.FANFARE, 0.7);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
   const getWinner = (key: "uniqueCount" | "earlyCount" | "blankCount") => {
     let max = 0;
     let pid = "";
