@@ -1,0 +1,48 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  medications Medication[]
+  documents  Document[]
+}
+
+model Medication {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  dosage    String
+  frequency String
+  timeOfDay String[]
+  user      User     @relation(fields: [userId], references: [id])
+  logs      MedicationLog[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MedicationLog {
+  id           String     @id @default(uuid())
+  medicationId String
+  takenAt      DateTime   @default(now())
+  medication   Medication @relation(fields: [medicationId], references: [id])
+}
+
+model Document {
+  id               String   @id @default(uuid())
+  userId           String
+  encryptedSummary String   // Ephemeral processing requirement: original text not stored, summary encrypted
+  language         String   @default("tr")
+  user             User     @relation(fields: [userId], references: [id])
+  createdAt        DateTime @default(now())
+}
