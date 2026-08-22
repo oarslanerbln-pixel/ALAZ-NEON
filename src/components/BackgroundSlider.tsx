@@ -12,7 +12,7 @@ export function BackgroundSlider({ className = "absolute inset-0 z-0 overflow-hi
   useEffect(() => {
     const interval = setInterval(() => {
       setBgIndex((prev) => (prev + 1) % HERO_IMAGES.length);
-    }, 6000); // 6 seconds per image
+    }, 7000); // 7 seconds per cinematic image
     return () => clearInterval(interval);
   }, []);
 
