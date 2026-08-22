@@ -60,7 +60,7 @@ export function PlayerPlaying({
             className={`space-y-3 transition-all duration-300 ${isOthersFocused ? "grayscale-[50%]" : ""}`}
           >
             <div className="flex items-center justify-between ml-2 mb-2">
-              <label className="text-xs text-hacker-green/80 font-black font-mono uppercase tracking-[0.3em]">
+              <label htmlFor={`input-${idx}`} className="text-xs text-hacker-green/80 font-black font-mono uppercase tracking-[0.3em]">
                 &gt; {idx + 1}. {cat}
               </label>
               <button
@@ -80,6 +80,7 @@ export function PlayerPlaying({
             </div>
             <div className="relative group">
               <motion.input
+                id={`input-${idx}`}
                 whileFocus={{ scale: 1.02 }}
                 type="text"
                 value={answers[cat] || ""}
