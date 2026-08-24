@@ -78,6 +78,20 @@ export function PlayerSensorController({ room, player }: Props) {
     }
   };
 
+  if (room.status === "lobby") {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center z-10 relative">
+        <NeonIcon type="rocket" color="pink" className="w-20 h-20 mb-6 opacity-50" />
+        <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-widest">
+          {t("sensor.title" as any) || "SENSÖR"}
+        </h2>
+        <p className="text-gray-400 font-medium">
+          {t("sensor.watchMainScreen" as any) || "Ana ekranı takip edin"}
+        </p>
+      </div>
+    );
+  }
+
   if (room.status === "sensor_intro") {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center z-10 relative">
@@ -200,5 +214,10 @@ export function PlayerSensorController({ room, player }: Props) {
     );
   }
 
-  return null;
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center p-6 z-10 relative text-center">
+      <div className="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mb-4" />
+      <p className="text-gray-400 uppercase tracking-widest">{t("game.loading" as any) || "YÜKLENİYOR..."}</p>
+    </div>
+  );
 }

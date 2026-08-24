@@ -139,8 +139,19 @@ export function PlayerBombController({ room, player }: Props) {
     );
   }
 
+  if (room.status === "lobby") {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-black text-white p-6 text-center">
+        <div className="text-6xl mb-6">💣</div>
+        <h1 className="text-2xl font-black text-[#ff003c] tracking-widest uppercase mb-4">{t("bomb.title" as any) || "BOMBA"}</h1>
+        <p className="text-gray-400">{t("bomb.watchMainScreen" as any) || "Ana ekranı takip edin"}</p>
+      </div>
+    );
+  }
+
   // Active game logic
-  return (
+  if (room.status === "bomb_active") {
+    return (
     <div className={`flex-1 flex flex-col min-h-[100dvh] p-4 transition-colors duration-300 ${isMyTurn ? 'bg-[#ff003c]' : 'bg-black'} text-white`}>
       <div className="flex justify-between items-center mb-8 px-2 py-4">
         <div className="flex gap-1">
@@ -209,6 +220,14 @@ export function PlayerBombController({ room, player }: Props) {
           </div>
         )}
       </div>
+    </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-black text-white p-6 text-center">
+      <div className="w-12 h-12 border-4 border-[#ff003c] border-t-transparent rounded-full animate-spin mb-4" />
+      <p className="text-gray-400 uppercase tracking-widest">{t("game.loading" as any) || "YÜKLENİYOR..."}</p>
     </div>
   );
 }
