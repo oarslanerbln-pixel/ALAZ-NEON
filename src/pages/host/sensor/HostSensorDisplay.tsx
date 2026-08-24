@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
-import { collection, query, where, getDocs, writeBatch } from "firebase/firestore";
+import { doc, collection, query, where, getDocs, writeBatch } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { getRandomSensorImage, SENSOR_IMAGES, type SensorImage } from "../../../data/sensorImages";
@@ -56,7 +56,7 @@ export function HostSensorDisplay({
     gameState === "sensor_reveal";
   const currentImage: SensorImage | null =
     (isSensorScreen && room.sensor_current_media
-      ? SENSOR_IMAGES.find(i => i.url === room.sensor_current_media)
+      ? SENSOR_IMAGES.find(i => i.url === room.sensor_current_media) || SENSOR_IMAGES[0]
       : null) || null;
   const currentImageIndex = room.current_round || 0;
   const buzzerPlayerName = room.sensor_buzzer_player_id
@@ -145,6 +145,28 @@ export function HostSensorDisplay({
       sensor_buzzer_timestamp: null,
       sensor_player_answer: null
     });
+  };
+
+  const handleResetGame = async () => {
+    if (!roomId) return;
+    try {
+      const batch = writeBatch(db);
+      players.forEach(p => {
+        const pRef = doc(db, "players", p.id);
+        batch.update(pRef, { total_score: 0 });
+      });
+
+      const q = query(collection(db, "answers"), where("room_id", "==", roomId));
+      const snapshot = await getDocs(q);
+      snapshot.forEach(docSnap => {
+        batch.delete(docSnap.ref);
+      });
+
+      await batch.commit();
+      await updateRoomStatus("lobby", { active_game: "none", current_round: 0 });
+    } catch (err) {
+      console.error("Error resetting sensor game:", err);
+    }
   };
 
   if (gameState === "lobby") {
@@ -319,7 +341,7 @@ export function HostSensorDisplay({
             room={room}
             players={players} 
             playerStats={{}}
-            onResetGame={() => {}}
+            onResetGame={handleResetGame}
           />
         )}
 

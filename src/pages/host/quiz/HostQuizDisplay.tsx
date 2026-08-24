@@ -355,7 +355,7 @@ export function HostQuizDisplay({
           )}
 
 
-          {gameState === "question_active" && currentQuestion && (
+          {gameState === "question_active" && (
             <motion.div
               key="active"
               initial={{ opacity: 0 }}
@@ -363,6 +363,10 @@ export function HostQuizDisplay({
               exit={{ opacity: 0 }}
               className="flex flex-col items-center justify-center w-full max-w-7xl"
             >
+              {!currentQuestion ? (
+                <div className="text-white/50 text-2xl animate-pulse">{t("quiz.loading")}</div>
+              ) : (
+                <>
               {/* Question */}
               <div className="bg-black/80 border border-blue-500/50 p-12 w-full text-center mb-10 shadow-[0_0_40px_rgba(59,130,246,0.3)]">
                 <h1 className="text-4xl font-black text-white">{currentQuestion.text}</h1>
@@ -397,10 +401,12 @@ export function HostQuizDisplay({
                   {t("quiz.endTimer")}
                 </button>
               </div>
+                </>
+              )}
             </motion.div>
           )}
 
-          {gameState === "question_reveal" && currentQuestion && (
+          {gameState === "question_reveal" && (
             <motion.div
               key="reveal"
               initial={{ opacity: 0 }}
@@ -408,6 +414,10 @@ export function HostQuizDisplay({
               exit={{ opacity: 0 }}
               className="flex flex-col items-center justify-center w-full max-w-7xl"
             >
+              {!currentQuestion ? (
+                <div className="text-white/50 text-2xl animate-pulse">{t("quiz.loading")}</div>
+              ) : (
+                <>
               <h2 className="text-3xl text-white font-black tracking-widest uppercase mb-8">
                 {t("quiz.correctAnswer")}
               </h2>
@@ -441,6 +451,8 @@ export function HostQuizDisplay({
               >
                 {t("quiz.seeRanking")}
               </button>
+                </>
+              )}
             </motion.div>
           )}
 

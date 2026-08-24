@@ -167,6 +167,26 @@ export function HostBombDisplay({
     );
   };
 
+  const handleResetGame = useCallback(async () => {
+    try {
+      import("firebase/firestore").then(async ({ writeBatch }) => {
+        const batch = writeBatch(db);
+        players.forEach(p => {
+          const pRef = doc(db, "players", p.id);
+          batch.update(pRef, { total_score: 0, lives: 3 });
+        });
+        await batch.commit();
+
+        await updateDoc(doc(db, "rooms", room.id), {
+          status: "lobby",
+          current_round: 0,
+        });
+      });
+    } catch (err) {
+      console.error("Error resetting bomb game:", err);
+    }
+  }, [room.id, players]);
+
   return (
     <TVScaleFrame>
     <div className="w-full h-full overflow-hidden bg-black text-white flex flex-col p-4">
@@ -254,7 +274,23 @@ export function HostBombDisplay({
               room={room}
               players={players} 
               playerStats={{}}
-              onResetGame={() => {}}
+              onResetGame={handleResetGame}
+            />
+          </motion.div>
+        )}
+        {!["lobby", "tutorial", "bomb_intro", "bomb_active", "bomb_explosion", "finished"].includes(room.status) && (
+          <motion.div
+            key="fallback"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="w-full h-full"
+          >
+            <HostLobby
+              room={room}
+              players={players}
+              onStartGame={handleStartGame}
+              onUpdateCategories={() => {}}
             />
           </motion.div>
         )}
