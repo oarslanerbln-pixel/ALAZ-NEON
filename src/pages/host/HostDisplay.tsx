@@ -721,7 +721,7 @@ function HostDisplayGame({
             <HostAdBreak 
               onComplete={() => {
                 const next = room?.ad_break_next_state || "lobby";
-                updateRoomStatus(next).then(() => setGameState(next as any));
+                updateRoomStatus(next).then(() => setGameState(next as RoomStatus));
               }} 
             />
           )}
