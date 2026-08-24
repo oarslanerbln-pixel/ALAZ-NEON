@@ -9,6 +9,8 @@ import { HostHeader } from "../components/HostHeader";
 import type { Room, Player, GameType } from "../../../types/database";
 
 import { getRandomSensorImage } from "../../../data/sensorImages";
+import { getCategoryPresets } from "../../../lib/categoryPresets";
+import { useToast } from "../../../contexts/ToastContextCore";
 import { useLocale } from "../../../hooks/useLocale";
 import { useVenue } from "../../../contexts/VenueContextCore";
 
@@ -19,10 +21,17 @@ interface HostDashboardProps {
 }
 
 export function HostDashboard({ room, players, updateRoomStatus }: HostDashboardProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { venue } = useVenue();
+  const { showToast } = useToast();
   const [isKioskMode, setIsKioskMode] = useState(false);
   const [kioskImageIndex, setKioskImageIndex] = useState(0);
+
+  // Game Setup State
+  const [setupGameMode, setSetupGameMode] = useState<GameType | null>(null);
+  const [categories, setCategories] = useState(t("categories.default"));
+  const [activePreset, setActivePreset] = useState<string | null>(null);
+  const presets = getCategoryPresets(locale);
 
   useEffect(() => {
     if (!isKioskMode) return;
@@ -32,7 +41,40 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     return () => clearInterval(interval);
   }, [isKioskMode, venue.promo_images]);
 
-  const handleStartGame = async (game: GameType) => {
+  const applyPreset = (name: string) => {
+    setCategories(presets[name].join(", "));
+    setActivePreset(name);
+  };
+
+  const confirmStartGame = async () => {
+    if (!setupGameMode) return;
+    
+    let parsedCategories: string[] = [];
+    if (["scattegories", "quiz", "bomb"].includes(setupGameMode)) {
+      parsedCategories = categories
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean);
+            
+      if (parsedCategories.length === 0) {
+        showToast(t("setup.errorNoCategory", "Kategori seçiniz!"), "warning");
+        return;
+      }
+    }
+
+    await executeStartGame(setupGameMode, parsedCategories.length > 0 ? parsedCategories : undefined);
+    setSetupGameMode(null);
+  };
+
+  const handleStartGame = (game: GameType) => {
+    if (["scattegories", "quiz", "bomb"].includes(game)) {
+      setSetupGameMode(game);
+    } else {
+      executeStartGame(game);
+    }
+  };
+
+  const executeStartGame = async (game: GameType, gameCategories?: string[]) => {
     SoundManager.getInstance().playSFX(sounds.START);
     // Scattegories "lobby" ile başlar. Buraya kalıcı olarak "intro" yazmak
     // oyunu tamamen kilitliyordu: "intro" host'un YEREL sinematik animasyonu,
@@ -43,6 +85,10 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     // onlarda böyle bir sorun yok.
     let initialStatus: Room["status"] = "lobby";
     let extraUpdates: Partial<Room> = { active_game: game };
+    
+    if (gameCategories) {
+      extraUpdates.categories = gameCategories;
+    }
 
     if (game === "quiz") initialStatus = "quiz_intro";
     if (game === "bomb") initialStatus = "bomb_intro";
@@ -279,6 +325,86 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
               </div>
               <span className="text-alaz-orange font-mono font-bold mt-2">{room.code}</span>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Game Setup Modal */}
+      <AnimatePresence>
+        {setupGameMode && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-[#0a0a0f] border border-white/20 p-8 w-full max-w-2xl shadow-[0_0_50px_rgba(255,77,0,0.2)] relative overflow-hidden"
+            >
+              <div className="absolute -right-20 -top-20 w-48 h-48 bg-alaz-orange/20 rounded-full blur-[80px] pointer-events-none" />
+              
+              <h3 className="text-2xl font-black text-white uppercase tracking-widest mb-2 relative z-10">
+                {setupGameMode === "scattegories" ? "HENGAME ARENA" : setupGameMode === "quiz" ? "HENGAME QUIZ" : "HENGAME BOMB"}
+              </h3>
+              <p className="text-alaz-orange text-xs font-bold uppercase tracking-widest mb-8 relative z-10">{t("setup.title", "Oyun Ayarları")}</p>
+
+              <div className="space-y-6 relative z-10">
+                <div>
+                  <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
+                    {t("setup.presetLabel", "Hızlı Preset")}
+                  </label>
+                  <div className="flex flex-wrap gap-3">
+                    {Object.keys(presets).map((name) => (
+                      <button
+                        key={name}
+                        onClick={() => applyPreset(name)}
+                        className={`px-4 py-2 font-sans font-black text-[10px] uppercase tracking-widest transition-all border-[0.5px] rounded-none shadow-md ${
+                          activePreset === name
+                            ? "bg-white border-white text-black"
+                            : "bg-black/60 border-white/20 text-gray-400 hover:border-white/50 hover:text-white"
+                        }`}
+                      >
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-col">
+                  <label className="block text-[11px] uppercase tracking-[0.3em] font-black text-alaz-orange mb-3 animate-pulse">
+                    {t("setup.categoriesLabel", "Kategoriler (Virgülle Ayır)")}
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={categories}
+                    onChange={(e) => {
+                      setCategories(e.target.value);
+                      setActivePreset(null);
+                    }}
+                    className="w-full bg-black/60 border-[0.5px] border-white/20 p-5 text-white focus:border-alaz-orange focus:outline-none resize-none font-black leading-relaxed rounded-none shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]"
+                    placeholder="Şehir, Ülke, İsim..."
+                  />
+                </div>
+
+                <div className="flex gap-4 mt-8">
+                  <button
+                    onClick={() => setSetupGameMode(null)}
+                    className="flex-1 py-4 font-black text-xs uppercase tracking-widest bg-white/5 hover:bg-white/10 text-white transition-colors"
+                  >
+                    {t("common.cancel", "İPTAL")}
+                  </button>
+                  <button
+                    onClick={confirmStartGame}
+                    className="flex-1 py-4 font-black text-xs uppercase tracking-widest bg-alaz-orange hover:bg-alaz-orange/80 text-black transition-colors shadow-[0_0_20px_rgba(255,77,0,0.3)]"
+                  >
+                    {t("setup.startButton", "BAŞLAT")}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
