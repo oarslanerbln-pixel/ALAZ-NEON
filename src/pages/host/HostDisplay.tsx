@@ -16,7 +16,7 @@ import { useVenue } from "../../contexts/VenueContextCore";
 import { useHostRoom } from "../../hooks/useHostRoom";
 
 // Types
-import type { RoundResultInfo, Answer } from "../../types/database";
+import type { RoundResultInfo, Answer, RoomStatus } from "../../types/database";
 
 // Extracted Components
 import { HostHeader } from "./components/HostHeader";
@@ -127,19 +127,7 @@ function HostDisplayGame({
 }: { roomId: string | null } & ReturnType<typeof useHostRoom>) {
   const { venue } = useVenue();
   // Local UI States
-  const [gameState, setGameState] = useState<
-    | "intro"
-    | "lobby"
-    | "tutorial"
-    | "gameIntro"
-    | "countdown"
-    | "playing"
-    | "review"
-    | "standings"
-    | "finished"
-    | "closed"
-    | "ad_break"
-  >(() => {
+  const [gameState, setGameState] = useState<RoomStatus>(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const rId = urlParams.get("roomId");
     return rId && sessionStorage.getItem(`hostIntro_${rId}`)
