@@ -25,10 +25,14 @@ export type RoomStatus =
   | "sensor_intro"
   | "sensor_active"
   | "sensor_buzzed"
-  | "sensor_reveal";
+  | "sensor_reveal"
+  | "ad_break"
+  | "wheel_active"
+  | "wheel_spinning"
+  | "wheel_result";
 
 export type GameMode = "individual" | "team";
-export type GameType = "scattegories" | "quiz" | "bomb" | "sensor";
+export type GameType = "scattegories" | "quiz" | "bomb" | "sensor" | "wheel";
 
 export interface QuizQuestion {
   id: string;
@@ -73,6 +77,11 @@ export interface Room {
   sensor_buzzer_player_id?: string | null;
   sensor_buzzer_timestamp?: number | null;
   sensor_player_answer?: string | null;
+  // Wheel Game Fields
+  wheel_spinner_id?: string | null;
+  wheel_result_index?: number | null;
+  // Ad Break Flow Control
+  ad_break_next_state?: RoomStatus;
   // Mekan markalaması — oda açılırken o anki aktif mekan profilinden
   // KOPYALANIR (canlı referans değil). Böylece bir mekana satış sonrası
   // marka değiştirilse bile geçmiş odaların/demoların markası değişmez.
@@ -161,6 +170,21 @@ export interface RoundLog {
   created_at?: string;
 }
 
+export interface SponsorAd {
+  id: string;
+  type: "image" | "video";
+  url: string;
+  duration_seconds: number;
+  sponsor_name: string;
+}
+
+export interface WheelSlice {
+  id: string;
+  text: string;
+  color: string;
+  weight: number;
+}
+
 /**
  * Aktif mekan markası — tek bir doküman (app_config/active_venue).
  *
@@ -201,6 +225,14 @@ export interface VenueConfig {
    * yapıştırıyor — tıpkı logo_url gibi.
    */
   promo_images?: string[];
+  /**
+   * Sponsor reklamları - Ad Network için
+   */
+  sponsor_ads?: SponsorAd[];
+  /**
+   * Çarkıfelek dilimleri
+   */
+  wheel_slices?: WheelSlice[];
   updated_at?: number;
 }
 
@@ -213,6 +245,15 @@ export const DEFAULT_VENUE_CONFIG: VenueConfig = {
   reward_type: "drink",
   reward_validity_days: 30,
   promo_images: [],
+  sponsor_ads: [],
+  wheel_slices: [
+    { id: "1", text: "%10 İndirim", color: "#ff5500", weight: 3 },
+    { id: "2", text: "Pas", color: "#333333", weight: 5 },
+    { id: "3", text: "Bedava Çay", color: "#00f3ff", weight: 2 },
+    { id: "4", text: "Pas", color: "#333333", weight: 5 },
+    { id: "5", text: "Tatlı İkramı", color: "#ff00e5", weight: 1 },
+    { id: "6", text: "Pas", color: "#333333", weight: 5 },
+  ],
 };
 
 export type LeagueTier = "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "NEON" | "LEGEND";

@@ -26,9 +26,11 @@ import { HostPlaying } from "./views/HostPlaying";
 import { HostReview } from "./views/HostReview";
 import { HostStandings } from "./views/HostStandings";
 import { HostPodium } from "./views/HostPodium";
+import { HostAdBreak } from "./views/HostAdBreak";
 import { HostQuizDisplay } from "./quiz/HostQuizDisplay";
 import { HostBombDisplay } from "./bomb/HostBombDisplay";
 import { HostSensorDisplay } from "./sensor/HostSensorDisplay";
+import { HostWheelDisplay } from "./wheel/HostWheelDisplay";
 import { HostDashboard } from "./dashboard/HostDashboard";
 import { HostTutorial } from "./components/HostTutorial";
 import { DatabaseStatus } from "../../components/DatabaseStatus";
@@ -92,6 +94,16 @@ export function HostDisplay() {
     );
   }
 
+  if (room.active_game === "wheel" || room.game_type === "wheel") {
+    return (
+      <HostWheelDisplay
+        room={room}
+        players={hostRoom.players}
+        updateRoomStatus={hostRoom.updateRoomStatus}
+      />
+    );
+  }
+
   if (room.status === "night_lobby" || room.active_game === "none") {
     return (
       <HostDashboard
@@ -126,6 +138,7 @@ function HostDisplayGame({
     | "standings"
     | "finished"
     | "closed"
+    | "ad_break"
   >(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const rId = urlParams.get("roomId");
@@ -370,12 +383,19 @@ function HostDisplayGame({
     // Instead, let's just update room status right away.
     setNextLetter(randomLetter);
     
-    if (room.current_round === 0) {
-      await updateRoomStatus("tutorial", { tutorial_step: 0, used_letters: newUsedLetters });
-      setGameState("tutorial");
+    const hasAds = venue.sponsor_ads && venue.sponsor_ads.length > 0;
+    const nextState = room.current_round === 0 ? "tutorial" : "countdown";
+    const nextUpdateData = { 
+      tutorial_step: room.current_round === 0 ? 0 : undefined, 
+      used_letters: newUsedLetters 
+    };
+
+    if (hasAds) {
+      await updateRoomStatus("ad_break", { ...nextUpdateData, ad_break_next_state: nextState });
+      setGameState("ad_break");
     } else {
-      await updateRoomStatus("countdown", { used_letters: newUsedLetters });
-      setGameState("countdown");
+      await updateRoomStatus(nextState, nextUpdateData);
+      setGameState(nextState);
     }
   };
 
@@ -591,8 +611,15 @@ function HostDisplayGame({
       {gameState === "playing" && timeLeft <= 10 && (
         <div className="danger-overlay" />
       )}
-
-      {gameState !== "intro" && gameState !== "gameIntro" && <HostHeader room={room} onEndGameEarly={handleEndGameEarly} />}
+      {gameState !== "intro" && gameState !== "gameIntro" && gameState !== "ad_break" && (
+        <HostHeader 
+          room={room} 
+          onEndGameEarly={handleEndGameEarly} 
+          onTriggerAdBreak={() => {
+            updateRoomStatus("ad_break", { ad_break_next_state: "lobby" }).then(() => setGameState("ad_break"));
+          }}
+        />
+      )}
 
       <div className="flex-1 flex items-center justify-center relative w-full">
         <AnimatePresence mode="wait">
@@ -687,6 +714,15 @@ function HostDisplayGame({
               playerStats={playerStats}
               awards={awards}
               onResetGame={resetGame}
+            />
+          )}
+
+          {gameState === "ad_break" && (
+            <HostAdBreak 
+              onComplete={() => {
+                const next = room?.ad_break_next_state || "lobby";
+                updateRoomStatus(next).then(() => setGameState(next as any));
+              }} 
             />
           )}
         </AnimatePresence>

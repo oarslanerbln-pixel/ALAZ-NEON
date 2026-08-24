@@ -4,6 +4,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { NeonIcon } from "../../../components/NeonIcon";
 import { useLocale } from "../../../hooks/useLocale";
 import { upperTL } from "../../../lib/stringUtils";
+import { getCategoryPresets } from "../../../lib/categoryPresets";
 import type { Player, Room } from "../../../types/database";
 
 const CAFE_IMAGES = [
@@ -30,19 +31,28 @@ export function HostLobby({
   onUpdateCategories,
 }: HostLobbyProps) {
   const [newCategory, setNewCategory] = useState("");
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
+  const presets = getCategoryPresets(locale);
+  const [activePreset, setActivePreset] = useState<string | null>(null);
+
+  const applyPreset = (name: string) => {
+    onUpdateCategories(presets[name]);
+    setActivePreset(name);
+  };
 
   const handleAddCategory = () => {
     if (!newCategory.trim() || !room) return;
     const updated = [...(room.categories || []), newCategory.trim()];
     onUpdateCategories(updated);
     setNewCategory("");
+    setActivePreset(null);
   };
 
   const handleRemoveCategory = (index: number) => {
     if (!room) return;
     const updated = room.categories.filter((_, i) => i !== index);
     onUpdateCategories(updated);
+    setActivePreset(null);
   };
 
   const currentCategories = room?.categories || [];
@@ -254,6 +264,24 @@ export function HostLobby({
                 {currentCategories.length} {t("lobby.active")}
               </span>
             </div>
+
+            {requiresCategories && (
+              <div className="flex flex-wrap gap-2">
+                {Object.keys(presets).map((name) => (
+                  <button
+                    key={name}
+                    onClick={() => applyPreset(name)}
+                    className={`px-3 py-1 font-sans font-black text-[9px] uppercase tracking-widest transition-all border-[0.5px] rounded-none ${
+                      activePreset === name
+                        ? "bg-white border-white text-black"
+                        : "bg-black/60 border-white/20 text-gray-400 hover:border-white/50 hover:text-white"
+                    }`}
+                  >
+                    {name}
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div className="flex flex-wrap gap-3 min-h-[160px] p-5 bg-black/60 border border-white/10 content-start">
               <AnimatePresence>

@@ -11,9 +11,10 @@ interface HostHeaderProps {
     venue_name?: string;
   } | null;
   onEndGameEarly?: () => void;
+  onTriggerAdBreak?: () => void;
 }
 
-export function HostHeader({ room, onEndGameEarly }: HostHeaderProps) {
+export function HostHeader({ room, onEndGameEarly, onTriggerAdBreak }: HostHeaderProps) {
   // Hook, erken `return null`'dan ÖNCE çağrılmak zorunda — koşullu hook
   // çağrısı React'in hook sırası kuralını bozardı.
   const { t } = useLocale();
@@ -41,6 +42,14 @@ export function HostHeader({ room, onEndGameEarly }: HostHeaderProps) {
         </div>
       )}
       <div className="flex items-center gap-4">
+        {onTriggerAdBreak && (
+          <button
+            onClick={onTriggerAdBreak}
+            className="text-[10px] text-cyber-yellow hover:text-black border border-cyber-yellow/30 hover:bg-cyber-yellow px-3 py-1.5 rounded-lg uppercase tracking-widest font-black transition-colors"
+          >
+            Reklam Arası
+          </button>
+        )}
         <LanguageSwitcher />
         {onEndGameEarly && (
           <button

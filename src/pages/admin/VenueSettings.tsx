@@ -5,7 +5,7 @@ import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../../lib/firebase";
 import { useVenue } from "../../contexts/VenueContextCore";
-import { DEFAULT_VENUE_CONFIG, type Reward } from "../../types/database";
+import { DEFAULT_VENUE_CONFIG, type Reward, type SponsorAd, type WheelSlice } from "../../types/database";
 import { errorMessage } from "../../lib/errors";
 
 const REWARD_TYPE_OPTIONS: { value: Reward["type"]; label: string }[] = [
@@ -38,6 +38,17 @@ export function VenueSettings() {
   const [rewardValidityDays, setRewardValidityDays] = useState(30);
   const [promoImages, setPromoImages] = useState<string[]>([]);
   const [newPromoUrl, setNewPromoUrl] = useState("");
+  const [sponsorAds, setSponsorAds] = useState<SponsorAd[]>([]);
+  const [newAdUrl, setNewAdUrl] = useState("");
+  const [newAdSponsor, setNewAdSponsor] = useState("");
+  const [newAdDuration, setNewAdDuration] = useState(10);
+  const [newAdType, setNewAdType] = useState<"image" | "video">("image");
+
+  const [wheelSlices, setWheelSlices] = useState<WheelSlice[]>([]);
+  const [newSliceText, setNewSliceText] = useState("");
+  const [newSliceColor, setNewSliceColor] = useState("#ffffff");
+  const [newSliceWeight, setNewSliceWeight] = useState(1);
+  
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -58,6 +69,8 @@ export function VenueSettings() {
     setRewardType(venue.reward_type || "drink");
     setRewardValidityDays(venue.reward_validity_days ?? DEFAULT_VENUE_CONFIG.reward_validity_days!);
     setPromoImages(venue.promo_images || []);
+    setSponsorAds(venue.sponsor_ads || []);
+    setWheelSlices(venue.wheel_slices || DEFAULT_VENUE_CONFIG.wheel_slices || []);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -70,6 +83,39 @@ export function VenueSettings() {
 
   const removePromoImage = (index: number) => {
     setPromoImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const addSponsorAd = () => {
+    if (!newAdUrl.trim() || !newAdSponsor.trim()) return;
+    setSponsorAds(prev => [...prev, {
+      id: crypto.randomUUID(),
+      type: newAdType,
+      url: newAdUrl.trim(),
+      sponsor_name: newAdSponsor.trim(),
+      duration_seconds: newAdDuration
+    }]);
+    setNewAdUrl("");
+    setNewAdSponsor("");
+  };
+
+  const removeSponsorAd = (id: string) => {
+    setSponsorAds(prev => prev.filter(ad => ad.id !== id));
+  };
+
+  const addWheelSlice = () => {
+    if (!newSliceText.trim()) return;
+    setWheelSlices(prev => [...prev, {
+      id: crypto.randomUUID(),
+      text: newSliceText.trim(),
+      color: newSliceColor,
+      weight: newSliceWeight
+    }]);
+    setNewSliceText("");
+    setNewSliceWeight(1);
+  };
+
+  const removeWheelSlice = (id: string) => {
+    setWheelSlices(prev => prev.filter(s => s.id !== id));
   };
 
   const isPasswordAuthed =
@@ -91,6 +137,8 @@ export function VenueSettings() {
         reward_type: rewardType,
         reward_validity_days: Math.max(1, Math.round(rewardValidityDays) || 30),
         promo_images: promoImages,
+        sponsor_ads: sponsorAds,
+        wheel_slices: wheelSlices,
         updated_at: Date.now(),
       });
       setSavedAt(Date.now());
@@ -258,6 +306,157 @@ export function VenueSettings() {
                       onClick={() => removePromoImage(index)}
                       className="text-white/40 hover:text-[#ff003c] transition-colors shrink-0 text-lg leading-none px-2"
                       aria-label="Kaldır"
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="space-y-4 bg-white/5 border border-white/10 rounded-2xl px-6 py-6">
+            <div>
+              <div className="text-sm font-bold uppercase tracking-widest text-cyber-yellow">DOOH Reklam Ağı (Sponsorlar)</div>
+              <p className="text-white/40 text-[11px] mt-1">
+                TV ekranında (Host arayüzü) tam ekran gösterilecek reklamlar. İster video (mp4), ister görsel (jpg/png) ekleyin.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                type="text"
+                value={newAdSponsor}
+                onChange={(e) => setNewAdSponsor(e.target.value)}
+                placeholder="Sponsor Adı (örn: Red Bull)"
+                className="bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-alaz-orange text-sm"
+              />
+              <input
+                type="url"
+                value={newAdUrl}
+                onChange={(e) => setNewAdUrl(e.target.value)}
+                placeholder="Medya URL (https://...)"
+                className="bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-alaz-orange text-sm"
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-3 items-center">
+              <select
+                value={newAdType}
+                onChange={(e) => setNewAdType(e.target.value as "image" | "video")}
+                className="bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-alaz-orange text-sm"
+              >
+                <option value="image">Görsel (Image)</option>
+                <option value="video">Video (MP4)</option>
+              </select>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={1}
+                  value={newAdDuration}
+                  onChange={(e) => setNewAdDuration(Number(e.target.value))}
+                  placeholder="Süre (Sn)"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-alaz-orange text-sm"
+                />
+                <span className="text-xs text-gray-500 font-bold uppercase">SN</span>
+              </div>
+              <button
+                type="button"
+                onClick={addSponsorAd}
+                className="px-4 py-3 bg-white/10 hover:bg-cyber-yellow hover:text-black text-white font-black uppercase tracking-widest text-xs rounded-xl transition-colors"
+              >
+                Reklam Ekle
+              </button>
+            </div>
+
+            {sponsorAds.length > 0 && (
+              <ul className="space-y-2 mt-4">
+                {sponsorAds.map((ad) => (
+                  <li
+                    key={ad.id}
+                    className="flex items-center gap-3 bg-black/40 border border-white/10 rounded-xl px-4 py-3"
+                  >
+                    {ad.type === "video" ? (
+                      <div className="w-10 h-10 rounded-lg bg-blue-900/50 flex items-center justify-center shrink-0 text-xs">🎥</div>
+                    ) : (
+                      <img src={ad.url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0 bg-black/40" />
+                    )}
+                    <div className="flex-1 overflow-hidden">
+                      <div className="text-white text-xs font-bold truncate">{ad.sponsor_name}</div>
+                      <div className="text-white/40 text-[10px] truncate">{ad.type.toUpperCase()} • {ad.duration_seconds}sn</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeSponsorAd(ad.id)}
+                      className="text-white/40 hover:text-[#ff003c] transition-colors shrink-0 text-lg leading-none px-2"
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {/* Wheel Slices Panel */}
+          <div className="space-y-4 bg-white/5 border border-white/10 rounded-2xl px-6 py-6">
+            <div>
+              <div className="text-sm font-bold uppercase tracking-widest text-alaz-orange">Çarkıfelek Ayarları</div>
+              <p className="text-white/40 text-[11px] mt-1">
+                Çarkıfelek mini-oyununda yer alacak dilimleri ve olasılıklarını (Ağırlık) belirleyin.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-4 gap-3 items-center">
+              <input
+                type="text"
+                value={newSliceText}
+                onChange={(e) => setNewSliceText(e.target.value)}
+                placeholder="Ödül (Örn: %10 İndirim)"
+                className="col-span-2 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-alaz-orange text-sm"
+              />
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={newSliceColor}
+                  onChange={(e) => setNewSliceColor(e.target.value)}
+                  className="w-8 h-8 rounded-lg cursor-pointer"
+                  title="Dilim Rengi"
+                />
+                <input
+                  type="number"
+                  min={1}
+                  value={newSliceWeight}
+                  onChange={(e) => setNewSliceWeight(Number(e.target.value))}
+                  placeholder="Ağırlık"
+                  title="Olasılık Ağırlığı (Yüksek olan daha çok çıkar)"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-2 py-3 text-white focus:outline-none focus:border-alaz-orange text-sm text-center"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={addWheelSlice}
+                className="px-2 py-3 bg-white/10 hover:bg-alaz-orange hover:text-black text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-colors"
+              >
+                Dilim Ekle
+              </button>
+            </div>
+
+            {wheelSlices.length > 0 && (
+              <ul className="space-y-2 mt-4 grid grid-cols-2 gap-2">
+                {wheelSlices.map((slice) => (
+                  <li
+                    key={slice.id}
+                    className="flex items-center gap-3 bg-black/40 border border-white/10 rounded-xl px-3 py-2"
+                  >
+                    <div className="w-4 h-4 rounded-full shrink-0" style={{ backgroundColor: slice.color }} />
+                    <div className="flex-1 overflow-hidden">
+                      <div className="text-white text-xs font-bold truncate">{slice.text}</div>
+                      <div className="text-white/40 text-[10px] truncate">Ağırlık: {slice.weight}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeWheelSlice(slice.id)}
+                      className="text-white/40 hover:text-[#ff003c] transition-colors shrink-0 text-lg leading-none px-2"
                     >
                       ×
                     </button>

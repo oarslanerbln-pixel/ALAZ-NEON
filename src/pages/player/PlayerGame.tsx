@@ -24,6 +24,7 @@ import { PlayerStandings } from "./views/PlayerStandings";
 import { PlayerQuizController } from "./quiz/PlayerQuizController";
 import { PlayerBombController } from "./bomb/PlayerBombController";
 import { PlayerSensorController } from "./sensor/PlayerSensorController";
+import { PlayerWheelController } from "./wheel/PlayerWheelController";
 import { BackgroundSlider } from "../../components/BackgroundSlider";
 import { PlayerTutorial } from "./components/PlayerTutorial";
 
@@ -184,17 +185,21 @@ export function PlayerGame() {
   }, [isLocked, gameState, submitAnswers]);
 
   // Route to Quiz Controller if active_game is quiz
-  if ((room?.active_game === "quiz" || room?.game_type === "quiz") && player && room.status !== "tutorial") {
+  if ((room?.active_game === "quiz" || room?.game_type === "quiz") && player && room.status !== "tutorial" && room.status !== "ad_break") {
     return <PlayerQuizController room={room} player={player} />;
   }
 
   // Route to Bomb Controller if active_game is bomb (except during tutorial)
-  if ((room?.active_game === "bomb" || room?.game_type === "bomb") && player && room.status !== "tutorial") {
+  if ((room?.active_game === "bomb" || room?.game_type === "bomb") && player && room.status !== "tutorial" && room.status !== "ad_break") {
     return <PlayerBombController room={room} player={player} />;
   }
 
-  if ((room?.active_game === "sensor" || room?.game_type === "sensor") && player && room.status !== "tutorial") {
+  if ((room?.active_game === "sensor" || room?.game_type === "sensor") && player && room.status !== "tutorial" && room.status !== "ad_break") {
     return <PlayerSensorController room={room} player={player} />;
+  }
+
+  if ((room?.active_game === "wheel" || room?.game_type === "wheel") && player && room.status !== "tutorial" && room.status !== "ad_break") {
+    return <PlayerWheelController room={room} player={player} />;
   }
 
   // Render tutorial for all game modes if status is tutorial
@@ -239,7 +244,7 @@ export function PlayerGame() {
         <AnimatePresence mode="wait">
           {(gameState === "lobby" || gameState === "night_lobby") && <PlayerLobby room={room} roomId={roomId} />}
 
-          {(gameState === "intro" || gameState === "gameIntro" || gameState === "countdown") && (
+          {(gameState === "intro" || gameState === "gameIntro" || gameState === "countdown" || gameState === "ad_break") && (
             <motion.div
               key="preparing"
               initial={{ opacity: 0, scale: 0.95 }}
@@ -268,10 +273,10 @@ export function PlayerGame() {
               </div>
 
               <h2 className="text-2xl md:text-3xl font-black text-white tracking-[0.2em] mb-3 uppercase font-mono">
-                {gameState === "countdown" ? t("game.determiningLetter") : t("game.starting")}
+                {gameState === "countdown" ? t("game.determiningLetter") : gameState === "ad_break" ? "REKLAM ARASI" : t("game.starting")}
               </h2>
               <p className="text-alaz-orange text-sm md:text-base font-bold tracking-widest uppercase animate-pulse mb-6">
-                {t("game.watchMainScreen")}
+                {gameState === "ad_break" ? "Sponsorumuzdan kısa bir mesaj, lütfen ana ekrana bakın" : t("game.watchMainScreen")}
               </p>
               <div className="bg-black/60 border border-white/10 p-4 max-w-xs text-xs text-gray-400 font-mono rounded-sm">
                 {t("game.roundHint", currentRound || 1, room?.total_rounds || 3)}

@@ -9,10 +9,11 @@ import { errorMessage } from "../../lib/errors";
 type RangePreset = "today" | "week" | "month";
 
 const GAME_LABEL: Record<GameType, string> = {
-  scattegories: "Arena",
-  quiz: "Quiz",
-  bomb: "Bomba",
-  sensor: "Sensör",
+  scattegories: "Hengame Arena",
+  quiz: "Hengame Quiz",
+  bomb: "Hengame Bomb",
+  sensor: "Hengame Sensör",
+  wheel: "Hengame Çark"
 };
 
 function rangeFor(preset: RangePreset): { start: number; end: number } {

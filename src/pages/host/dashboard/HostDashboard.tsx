@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 
 import { SoundManager, sounds } from "../../../lib/audio";
@@ -9,6 +10,7 @@ import type { Room, Player, GameType } from "../../../types/database";
 
 import { getRandomSensorImage } from "../../../data/sensorImages";
 import { useLocale } from "../../../hooks/useLocale";
+import { useVenue } from "../../../contexts/VenueContextCore";
 
 interface HostDashboardProps {
   room: Room;
@@ -18,6 +20,17 @@ interface HostDashboardProps {
 
 export function HostDashboard({ room, players, updateRoomStatus }: HostDashboardProps) {
   const { t } = useLocale();
+  const { venue } = useVenue();
+  const [isKioskMode, setIsKioskMode] = useState(false);
+  const [kioskImageIndex, setKioskImageIndex] = useState(0);
+
+  useEffect(() => {
+    if (!isKioskMode) return;
+    const interval = setInterval(() => {
+      setKioskImageIndex((prev) => (prev + 1) % (venue.promo_images?.length || 1));
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [isKioskMode, venue.promo_images]);
 
   const handleStartGame = async (game: GameType) => {
     SoundManager.getInstance().playSFX(sounds.START);
@@ -47,6 +60,14 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
         sensor_player_answer: null
       };
     }
+    if (game === "wheel") {
+      initialStatus = "wheel_active";
+      extraUpdates = {
+        active_game: game,
+        wheel_spinner_id: null,
+        wheel_result_index: null
+      };
+    }
 
     await updateRoomStatus(initialStatus, extraUpdates);
   };
@@ -74,6 +95,15 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                 <QRCodeSVG value={joinUrl} size={180} bgColor="#ffffff" fgColor="#000000" level="H" />
               </div>
               <p className="mt-6 text-alaz-orange font-mono font-bold text-3xl tracking-widest">{room.code}</p>
+              
+              {venue.promo_images && venue.promo_images.length > 0 && (
+                <button
+                  onClick={() => setIsKioskMode(true)}
+                  className="mt-6 w-full py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white font-bold uppercase tracking-widest text-xs transition-colors"
+                >
+                  Kiosk Modunu Başlat
+                </button>
+              )}
             </div>
 
             <div className="flex-1 bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 p-6 flex flex-col overflow-hidden max-h-[400px]">
@@ -190,10 +220,68 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                 </div>
               </button>
 
+              {/* ALAZ ÇARK Card */}
+              <button
+                onClick={() => handleStartGame("wheel")}
+                className="relative group overflow-hidden bg-black/40 backdrop-blur-xl border border-white/10 hover:border-cyber-yellow/50 p-8 rounded-3xl text-left transition-all duration-500 hover:scale-[1.03] shadow-[0_0_20px_rgba(0,0,0,0.5)] hover:shadow-[0_0_40px_rgba(255,215,0,0.3)] md:col-span-2"
+              >
+                <div className="absolute -right-20 -top-20 w-48 h-48 bg-cyber-yellow/20 rounded-full blur-[80px] group-hover:bg-cyber-yellow/40 transition-colors duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+                
+                <div className="relative z-10 flex flex-col h-full">
+                  <div className="w-14 h-14 bg-cyber-yellow/10 border border-cyber-yellow/30 rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-180 transition-transform duration-1000">
+                    <NeonIcon type="flame" color="gold" className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-3xl font-black text-white mb-2 tracking-widest group-hover:text-cyber-yellow transition-colors">HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyber-yellow to-alaz-orange">ÇARK</span></h3>
+                  <p className="text-gray-400 text-sm leading-relaxed mt-2 flex-1">Oyun aralarında müşterilerinize sürpriz ödüller (indirim, bedava içecek vb.) dağıtın. Rastgele seçilen müşteri çarkı çevirir.</p>
+                  
+                  <div className="mt-6 flex items-center gap-2 text-cyber-yellow text-xs font-bold tracking-[0.2em] uppercase opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">
+                    Çarkıfeleği Başlat <span className="text-lg leading-none">→</span>
+                  </div>
+                </div>
+              </button>
+
             </div>
           </div>
         </div>
       </div>
+      
+      <AnimatePresence>
+        {isKioskMode && venue.promo_images && venue.promo_images.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsKioskMode(false)}
+            className="fixed inset-0 z-[999] bg-black cursor-pointer flex items-center justify-center"
+          >
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={kioskImageIndex}
+                src={venue.promo_images[kioskImageIndex]}
+                initial={{ opacity: 0, scale: 1.05 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1 }}
+                className="w-full h-full object-contain"
+                alt="Promo"
+              />
+            </AnimatePresence>
+            <div className="absolute top-8 right-8 text-white/30 text-[10px] uppercase tracking-widest bg-black/50 px-4 py-2 rounded-lg">
+              Çıkmak için ekrana dokunun
+            </div>
+            
+            {/* Show QR code subtly in corner during kiosk mode */}
+            <div className="absolute bottom-8 right-8 bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/20 flex flex-col items-center">
+              <span className="text-white font-bold uppercase tracking-widest text-[10px] mb-2">Oyuna Katıl</span>
+              <div className="bg-white p-2 rounded-lg">
+                <QRCodeSVG value={joinUrl} size={80} bgColor="#ffffff" fgColor="#000000" level="H" />
+              </div>
+              <span className="text-alaz-orange font-mono font-bold mt-2">{room.code}</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

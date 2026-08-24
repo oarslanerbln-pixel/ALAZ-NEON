@@ -7,7 +7,6 @@ import { NeonIcon } from "../../components/NeonIcon";
 import { KineticSpark } from "../../components/KineticSpark";
 import { LanguageSwitcher } from "../../components/LanguageSwitcher";
 import { ParticleBackground } from "../../components/ParticleBackground";
-import { getCategoryPresets } from "../../lib/categoryPresets";
 import { useLocale } from "../../hooks/useLocale";
 import { useToast } from "../../contexts/ToastContextCore";
 import { errorMessage } from "../../lib/errors";
@@ -60,48 +59,24 @@ export function HostSetup() {
   const { t, locale } = useLocale();
   const { showToast } = useToast();
   const { venue } = useVenue();
-  const [categories, setCategories] = useState(t("categories.default"));
   const [timerValue, setTimerValue] = useState("60");
   const [gameMode, setGameMode] = useState<"individual" | "team">("individual");
   const [totalRounds, setTotalRounds] = useState("3");
   const [isCreating, setIsCreating] = useState(false);
-  const [activePreset, setActivePreset] = useState<string | null>(null);
-
-  const presets = getCategoryPresets(locale);
-
-  const applyPreset = (name: string) => {
-    setCategories(presets[name].join(", "));
-    setActivePreset(name);
-  };
 
   const startLobby = async () => {
     setIsCreating(true);
     localStorage.setItem("cafe_game_timer", timerValue);
-    localStorage.setItem("cafe_game_categories", categories);
     localStorage.setItem("cafe_game_mode", gameMode);
 
     try {
-      const parsedCategories = categories
-            .split(",")
-            .map((c) => c.trim())
-            .filter(Boolean);
-            
-      if (parsedCategories.length === 0) {
-        showToast(
-          t("setup.errorNoCategory"),
-          "warning",
-        );
-        setIsCreating(false);
-        return;
-      }
       const roomCode = generateRoomCode();
 
-      try {
-        const docRef = await addDoc(collection(db, "rooms"), {
+      const docRef = await addDoc(collection(db, "rooms"), {
           code: roomCode,
           status: "night_lobby",
           active_game: "none",
-          categories: parsedCategories,
+          categories: [],
           timer_setting: parseInt(timerValue, 10),
           total_rounds: parseInt(totalRounds, 10),
           current_round: 0,
@@ -122,16 +97,7 @@ export function HostSetup() {
         console.error("Error creating room:", err);
         showToast(t("setup.errorCreate") + errorMessage(err), "error");
         setIsCreating(false);
-        return;
       }
-    } catch (error) {
-      console.error("Unexpected error:", error);
-      showToast(
-        t("setup.errorFirebase"),
-        "error",
-      );
-      setIsCreating(false);
-    }
   };
 
   return (
@@ -166,7 +132,7 @@ export function HostSetup() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 auto-rows-[minmax(220px,auto)]">
             {/* Main Settings Panel */}
-            <GlassPanel className="md:col-span-2 md:row-span-2" neonColor="rgba(255,215,0,0.8)">
+            <GlassPanel className="md:col-span-3 md:row-span-2" neonColor="rgba(255,215,0,0.8)">
               <div className="p-10 flex flex-col h-full relative">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-neon-blue/10 blur-[100px] -mr-32 -mt-32 pointer-events-none" />
 
@@ -288,63 +254,12 @@ export function HostSetup() {
                     <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
                       {t("setup.languageLabel")}
                     </label>
-                    {/*
-                      Dil değişince kategori kutusunu o dilin varsayılanına
-                      yeniliyoruz — aksi hâlde ör. Almanca seçilince kutuda
-                      hâlâ Türkçe "Şehir, Ülke..." yazılı kalırdı.
-                    */}
                     <LanguageSwitcher
                       className="w-full"
                       fullWidth
-                      onSwitch={() => setCategories(t("categories.default"))}
                     />
                   </div>
                 </div>
-
-                {/* Categories Column */}
-                <div className="flex flex-col gap-4">
-                  {/* Preset Buttons */}
-                    <div>
-                      <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
-                        {t("setup.presetLabel")}
-                      </label>
-                      <div className="flex flex-wrap gap-3">
-                        {Object.keys(presets).map((name) => (
-                          <button
-                            key={name}
-                            onClick={() => applyPreset(name)}
-                            className={`px-5 py-3 font-sans font-black text-[11px] uppercase tracking-widest transition-all border-[0.5px] rounded-none shadow-md ${
-                              activePreset === name
-                                ? "bg-white border-white text-black"
-                                : "bg-black/60 border-white/20 text-gray-400 hover:border-white/50 hover:text-white"
-                            }`}
-                          >
-                            {name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Categories textarea */}
-                    <div className="flex flex-col flex-1">
-                      <label className="block text-[11px] uppercase tracking-[0.3em] font-black text-alaz-orange mb-3 animate-pulse drop-shadow-[0_0_10px_rgba(255,77,0,0.8)]">
-                        {t("setup.categoriesLabel")}
-                      </label>
-                      <textarea
-                        rows={5}
-                        value={categories}
-                        onChange={(e) => {
-                          setCategories(e.target.value);
-                          setActivePreset(null);
-                        }}
-                        className="w-full bg-black/60 border-[0.5px] border-white/20 p-5 text-white focus:border-alaz-orange focus:outline-none flex-1 resize-none font-black leading-relaxed rounded-none shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]"
-                        placeholder={t("setup.categoriesPlaceholder")}
-                      />
-                      <p className="text-[10px] text-gray-500 mt-2 italic opacity-60">
-                        {t("setup.categoriesHint")}
-                      </p>
-                    </div>
-                  </div>
               </div>
 
               <motion.button
