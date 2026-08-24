@@ -83,7 +83,7 @@ export function PlayerJoin() {
       const roomDoc = querySnapshot.docs[0];
       const room = { id: roomDoc.id, ...roomDoc.data() } as Room;
 
-      if (room.status !== "lobby") {
+      if (room.status === "closed" || room.status === "finished") {
         setErrorMsg(t("join.errorStarted"));
         setIsLoading(false);
         return;
