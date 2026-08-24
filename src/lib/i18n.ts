@@ -47,12 +47,13 @@ const translations = {
   // ═══════════════════════════════════════════
   // HOST SETUP
   // ═══════════════════════════════════════════
-  "setup.title": { tr: "OYUN AYARLARI", de: "SPIELEINSTELLUNGEN", en: "GAME SETTINGS" },
+  "setup.title": { tr: "OTURUM AYARLARI", de: "SITZUNGSEINSTELLUNGEN", en: "SESSION SETTINGS" },
   "setup.subtitle": {
-    tr: "Zamanı, tur sayısını ve kategorileri belirle.",
-    de: "Zeit, Rundenzahl und Kategorien festlegen.",
-    en: "Set the time, round count, and categories.",
+    tr: "Tüm oyunlar için geçerli varsayılan süreyi ve tur sayısını belirle.",
+    de: "Lege die Standardzeit und Rundenanzahl für alle Spiele fest.",
+    en: "Set the default time and round count for all games.",
   },
+  "setup.gamesTitle": { tr: "OYUN KATALOĞU", de: "SPIELEKATALOG", en: "GAMES CATALOG" },
   "setup.premiumMode": { tr: "Premium Mode", de: "Premium Modus", en: "Premium Mode" },
   "setup.timerLabel": { tr: "Süre / Tempo", de: "Zeit / Tempo", en: "Time / Pace" },
   "setup.timerAriaLabel": {

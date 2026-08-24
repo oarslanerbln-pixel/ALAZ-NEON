@@ -300,28 +300,28 @@ export function HostSetup() {
               </div>
             </GlassPanel>
 
-            {/* Scoring Info Bento */}
+            {/* Games Info Bento */}
             <GlassPanel neonColor="rgba(0,243,255,0.8)" delay="-2s">
               <div className="p-8 flex flex-col h-full relative">
               <h3 className="text-lg font-sans font-semibold mb-5 text-white uppercase tracking-tight relative z-10">
-                {t("setup.scoringTitle")}
+                {t("setup.gamesTitle", "OYUN KATALOĞU")}
               </h3>
-              <div className="space-y-2 relative z-10">
-                <div className="flex justify-between text-[11px]">
-                  <span className="text-gray-500">
-                    {t("setup.scoreUnique")}
-                  </span>
-                  <span className="text-neon-blue font-black">+20</span>
+              <div className="space-y-3 relative z-10">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-gray-400 font-bold">HENGAME QUIZ</span>
+                  <span className="text-neon-blue font-black border border-neon-blue/30 px-2 py-0.5 rounded-full text-[9px]">KELİME</span>
                 </div>
-                <div className="flex justify-between text-[11px]">
-                  <span className="text-gray-500">
-                    {t("setup.scoreShared")}
-                  </span>
-                  <span className="text-white font-black">+10</span>
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-gray-400 font-bold">HENGAME BOMB</span>
+                  <span className="text-neon-pink font-black border border-neon-pink/30 px-2 py-0.5 rounded-full text-[9px]">ZAMAN</span>
                 </div>
-                <div className="flex justify-between text-[11px]">
-                  <span className="text-gray-500">{t("setup.scoreEarly")}</span>
-                  <span className="text-neon-blue font-black">+15</span>
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-gray-400 font-bold">HENGAME SENSÖR</span>
+                  <span className="text-purple-400 font-black border border-purple-500/30 px-2 py-0.5 rounded-full text-[9px]">HAREKET</span>
+                </div>
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-gray-400 font-bold">HENGAME ÇARK</span>
+                  <span className="text-cyber-yellow font-black border border-cyber-yellow/30 px-2 py-0.5 rounded-full text-[9px]">ŞANS</span>
                 </div>
               </div>
                 <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-neon-blue/5 blur-3xl rounded-full" />
