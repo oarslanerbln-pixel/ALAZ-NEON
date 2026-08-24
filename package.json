@@ -19,6 +19,8 @@
     "@tailwindcss/vite": "^4.2.1",
     "firebase": "^12.17.1",
     "framer-motion": "^12.35.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
     "lucide-react": "^0.577.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.0",

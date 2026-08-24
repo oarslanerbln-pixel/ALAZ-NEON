@@ -1,5 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { NeonIcon } from "../../../components/NeonIcon";
 import { useLocale } from "../../../hooks/useLocale";
 import { ShareableRecapCard } from "../components/ShareableRecapCard";
@@ -77,12 +79,57 @@ export function HostPodium({
   const second = ranking[1];
   const third = ranking[2];
 
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    const element = document.getElementById("podium-container");
+    if (!element) return;
+
+    try {
+      setIsGeneratingPDF(true);
+      
+      // Temporarily hide buttons to exclude from PDF
+      const actionButtons = document.getElementById("podium-action-buttons");
+      if (actionButtons) actionButtons.style.display = "none";
+
+      const canvas = await html2canvas(element, {
+        backgroundColor: "#000000",
+        scale: 2, // higher resolution
+        useCORS: true,
+        logging: false,
+      });
+
+      // Restore buttons
+      if (actionButtons) actionButtons.style.display = "flex";
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4"
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      
+      const date = new Date().toISOString().split("T")[0];
+      pdf.save(`ALAZ-NEON-Sonuclar-${date}.pdf`);
+    } catch (error) {
+      console.error("PDF generation failed:", error);
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   return (
     <motion.div
+      id="podium-container"
       key="finished"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="flex flex-col items-center justify-center min-h-full w-full py-20 overflow-y-auto"
+      className="flex flex-col items-center justify-center min-h-full w-full py-20 overflow-y-auto bg-black"
     >
       <motion.h2
         initial={{ y: -50, opacity: 0, scale: 0.8 }}
@@ -271,15 +318,27 @@ export function HostPodium({
         </div>
       </motion.div>
 
-      <motion.button
-        onClick={onResetGame}
+      <motion.div
+        id="podium-action-buttons"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 4 }}
-        className="mt-16 px-12 py-4 border-2 border-white/20 hover:border-white/50 text-white font-black rounded-sm transition-all uppercase tracking-widest hover:bg-white/5 relative z-20 mb-20"
+        className="mt-16 flex items-center justify-center gap-6 mb-20 relative z-20"
       >
-        {t("podium.newGame")}
-      </motion.button>
+        <button
+          onClick={handleDownloadPDF}
+          disabled={isGeneratingPDF}
+          className="px-8 py-4 border-2 border-alaz-orange hover:bg-alaz-orange hover:text-black text-alaz-orange font-black rounded-sm transition-all uppercase tracking-widest disabled:opacity-50 flex items-center gap-2"
+        >
+          {isGeneratingPDF ? "PDF HAZIRLANIYOR..." : "PDF İNDİR"}
+        </button>
+        <button
+          onClick={onResetGame}
+          className="px-12 py-4 border-2 border-white/20 hover:border-white/50 hover:bg-white/5 text-white font-black rounded-sm transition-all uppercase tracking-widest"
+        >
+          {t("podium.newGame")}
+        </button>
+      </motion.div>
     </motion.div>
   );
 }
