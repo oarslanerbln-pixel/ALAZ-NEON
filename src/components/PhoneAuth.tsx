@@ -125,7 +125,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
       {!confirmationResult ? (
         <form onSubmit={handleSendCode} className="space-y-6">
           <div className="group">
-            <label className="flex items-center gap-2 text-alaz-orange/70 text-xs font-bold uppercase tracking-widest mb-2">
+            <label htmlFor="phone-number" className="flex items-center gap-2 text-alaz-orange/70 text-xs font-bold uppercase tracking-widest mb-2">
               <span className="text-[#ff003c]">[ID]</span> PHONE NUMBER
             </label>
             <div className="flex bg-alaz-orange/5 border border-alaz-orange/30 group-focus-within:border-alaz-orange transition-colors">
@@ -133,6 +133,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
                 +90
               </div>
               <input
+                id="phone-number"
                 type="tel"
                 required
                 maxLength={10}
@@ -173,7 +174,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
       ) : (
         <form onSubmit={handleVerifyCode} className="space-y-6">
           <div className="group">
-            <label className="flex items-center gap-2 text-alaz-orange/70 text-xs font-bold uppercase tracking-widest mb-2">
+            <label htmlFor="verification-code" className="flex items-center gap-2 text-alaz-orange/70 text-xs font-bold uppercase tracking-widest mb-2">
               <span className="text-[#ff003c]">[KEY]</span> 6-DIGIT CODE
             </label>
             <div className="flex bg-[#ff003c]/5 border border-[#ff003c]/30 group-focus-within:border-[#ff003c] transition-colors">
@@ -181,6 +182,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
                 &gt;
               </div>
               <input
+                id="verification-code"
                 type="text"
                 required
                 maxLength={6}
