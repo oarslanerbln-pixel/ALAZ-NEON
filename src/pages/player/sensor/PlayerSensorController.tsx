@@ -187,5 +187,18 @@ export function PlayerSensorController({ room, player }: Props) {
     );
   }
 
+  if (room.status === "finished") {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-6 z-10 relative text-center">
+        <h2 className="text-4xl font-black text-purple-500 mb-4 uppercase tracking-widest">
+          {t("sensor.gameOver")}
+        </h2>
+        <p className="text-gray-400 font-medium">
+          {t("sensor.resultsOnScreen", "Sonuçlar ekranda!")}
+        </p>
+      </div>
+    );
+  }
+
   return null;
 }

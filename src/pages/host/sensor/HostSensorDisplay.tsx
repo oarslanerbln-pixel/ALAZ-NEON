@@ -10,6 +10,7 @@ import { safeForDisplay } from "../../../lib/profanity";
 import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { HostLobby } from "../views/HostLobby";
+import { HostPodium } from "../views/HostPodium";
 import { useLocale } from "../../../hooks/useLocale";
 import { grantGameRewards } from "../../../lib/rewards";
 import { useVenue } from "../../../contexts/VenueContextCore";
@@ -314,17 +315,12 @@ export function HostSensorDisplay({
         )}
 
         {gameState === "finished" && (
-          <div className="text-center">
-            <h1 className="text-5xl font-black text-white mb-8 tracking-widest uppercase">
-              {t("sensor.gameOver")}
-            </h1>
-            <button
-              onClick={() => updateRoomStatus("standings")}
-              className="px-12 py-5 bg-purple-600 text-white text-xl font-black uppercase tracking-widest hover:bg-purple-500 transition-colors"
-            >
-              {t("sensor.seeResults")}
-            </button>
-          </div>
+          <HostPodium 
+            room={room}
+            players={players} 
+            playerStats={{}}
+            onResetGame={() => {}}
+          />
         )}
 
       </div>

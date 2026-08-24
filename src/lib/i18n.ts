@@ -912,6 +912,7 @@ const translations = {
   },
   "bomb.gameOver": { tr: "OYUN BİTTİ", de: "SPIEL VORBEI", en: "GAME OVER" },
   "bomb.resultsOnScreen": { tr: "Sonuçlar ekranda!", de: "Ergebnisse auf dem Bildschirm!", en: "Results are on screen!" },
+  "sensor.resultsOnScreen": { tr: "Sonuçlar ekranda!", de: "Ergebnisse auf dem Bildschirm!", en: "Results are on screen!" },
   "bomb.categoryLabel": {
     tr: (letter: string) => `Kategori: ${letter}`,
     de: (letter: string) => `Kategorie: ${letter}`,
