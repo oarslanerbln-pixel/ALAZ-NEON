@@ -71,86 +71,85 @@ export function HostStandings({
   return (
     <motion.div
       key="standings"
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 1.1 }}
-      className="w-full max-w-4xl flex flex-col items-center py-10 h-full overflow-hidden"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="w-full max-w-5xl flex flex-col items-center py-6 h-full max-h-full overflow-hidden"
     >
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.1 }}
-        className="w-full flex items-center justify-between px-6 py-4 bg-black/80 backdrop-blur-xl border border-white/20 mb-6 shadow-2xl"
+        transition={{ delay: 0.1, type: "spring", stiffness: 100 }}
+        className="w-full flex items-center justify-between px-8 py-6 bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-3xl mb-8 shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
       >
         <div className="flex items-center gap-4">
-          <div className="w-2 h-8 bg-alaz-orange"></div>
-          <h2 className="text-3xl font-black text-white uppercase tracking-[0.3em] font-mono">
+          <h2 className="text-3xl font-light text-white uppercase tracking-[0.2em]">
             {t("standings.title")}
           </h2>
         </div>
-        <div className="flex items-center gap-4 border-l border-white/20 pl-6">
-          <span className="text-white/50 text-sm tracking-widest uppercase">Round</span>
-          <span className="text-alaz-orange font-mono font-black text-2xl">
+        <div className="flex items-center gap-4 border-l border-white/10 pl-6">
+          <span className="text-white/40 text-sm tracking-widest uppercase">Round</span>
+          <span className="text-white font-light text-3xl">
             {room?.current_round}
-            <span className="text-white/30 mx-1">/</span>
-            <span className="text-white/80">{room?.total_rounds}</span>
+            <span className="text-white/20 mx-2">/</span>
+            <span className="text-white/60">{room?.total_rounds}</span>
           </span>
         </div>
       </motion.div>
 
-      <div className="flex-1 w-full flex flex-col overflow-y-auto cyber-scrollbar pr-2">
+      <div className="flex-1 w-full flex flex-col overflow-y-auto pr-4 pb-10 space-y-4" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.2) transparent" }}>
         {ranking.map((item, index) => {
           const isFirst = index === 0;
 
-          // EA Sports Broadcast Style
-          let rowBg = "bg-black/60 backdrop-blur-xl border-l-4 border-l-white/10 border-y border-y-white/5";
-          let textStyle = "text-white";
-          let scoreStyle = "text-white";
-          let badgeBg = "bg-white/10";
-          let rankText = "text-white/50";
+          // Apple/Tesla Premium Style
+          let rowBg = "bg-white/[0.02] backdrop-blur-2xl border border-white/5 shadow-lg";
+          let textStyle = "text-white/90";
+          let scoreStyle = "text-white/80 font-light";
+          let badgeBg = "bg-white/5 text-white/70";
+          let rankText = "text-white/30";
 
           if (isFirst) {
-            rowBg = "bg-black/80 backdrop-blur-xl border-l-[6px] border-l-alaz-orange border-y border-y-white/20";
-            textStyle = "text-white font-black drop-shadow-md";
-            scoreStyle = "text-alaz-orange drop-shadow-[0_0_10px_rgba(255,85,0,0.8)]";
-            badgeBg = "bg-alaz-orange text-black font-black";
-            rankText = "text-alaz-orange drop-shadow-md";
+            rowBg = "bg-white/[0.08] backdrop-blur-3xl border border-white/20 shadow-[0_0_40px_rgba(255,255,255,0.1)]";
+            textStyle = "text-white font-medium";
+            scoreStyle = "text-white font-normal";
+            badgeBg = "bg-white/20 text-white font-medium";
+            rankText = "text-white/80";
           }
 
           return (
             <motion.div
               key={item.id}
-              initial={{ x: -50, opacity: 0 }}
+              initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.2 + index * 0.1, type: "tween", ease: "easeOut", duration: 0.4 }}
-              className={`relative w-full flex items-center h-20 overflow-hidden mb-2 shadow-2xl transition-all duration-300 hover:bg-white/5 ${rowBg}`}
+              transition={{ delay: 0.2 + index * 0.05, type: "spring", stiffness: 100 }}
+              className={`relative w-full flex items-center h-20 overflow-hidden rounded-2xl transition-all duration-500 hover:bg-white/[0.06] hover:scale-[1.01] ${rowBg}`}
             >
               {/* Rank Column */}
-              <div className={`w-16 h-full flex items-center justify-center border-r border-white/10 bg-black/40`}>
-                 <span className={`text-2xl font-mono font-bold tracking-tighter italic ${rankText}`}>
+              <div className={`w-20 h-full flex items-center justify-center border-r border-white/5`}>
+                 <span className={`text-3xl font-light tracking-tighter ${rankText}`}>
                    {index + 1}
                  </span>
               </div>
 
               {/* Avatar/Badge */}
-              <div className="w-20 h-full flex items-center justify-center border-r border-white/10">
-                <div className={`w-10 h-10 flex items-center justify-center font-bold tracking-widest ${badgeBg}`}>
+              <div className="w-20 h-full flex items-center justify-center border-r border-white/5">
+                <div className={`w-12 h-12 flex items-center justify-center rounded-full text-sm tracking-widest ${badgeBg}`}>
                   {upperTL(item.name.substring(0, 3))}
                 </div>
               </div>
 
               {/* Name Column */}
-              <div className="flex-1 flex flex-col justify-center px-6 border-r border-white/10 h-full">
+              <div className="flex-1 flex flex-col justify-center px-6 h-full">
                 <div className="flex items-center gap-4">
-                  <h3 className={`text-2xl tracking-[0.15em] uppercase ${textStyle}`}>
+                  <h3 className={`text-2xl tracking-widest uppercase ${textStyle}`}>
                     {item.name}
                   </h3>
                   {item.roundScore > 0 && (
                     <motion.span 
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 1.5 + index * 0.1 }}
-                      className="text-sm font-bold text-green-400 bg-green-400/10 px-2 py-1 rounded-sm border border-green-400/20"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 1.0 + index * 0.1 }}
+                      className="text-sm font-medium text-white/80 bg-white/10 px-3 py-1 rounded-full border border-white/20"
                     >
                       +{item.roundScore}
                     </motion.span>
@@ -159,12 +158,12 @@ export function HostStandings({
               </div>
 
               {/* Score Column */}
-              <div className={`w-40 h-full flex items-center justify-center bg-black/50`}>
-                <div className={`text-4xl font-mono font-black tracking-tighter ${scoreStyle}`}>
+              <div className={`w-40 h-full flex items-center justify-center border-l border-white/5`}>
+                <div className={`text-4xl tracking-tighter ${scoreStyle}`}>
                   <AnimatedCounter
                     from={item.score - item.roundScore}
                     to={item.score}
-                    delay={1.0}
+                    delay={0.8}
                   />
                 </div>
               </div>
@@ -175,12 +174,12 @@ export function HostStandings({
 
       <motion.button
         onClick={onNextStep}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 2 }}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        className="mt-6 w-full max-w-sm py-4 bg-white text-black hover:bg-alaz-orange hover:text-white font-black uppercase tracking-[0.3em] text-xl transition-all border-b-4 border-black active:border-b-0 active:translate-y-1"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.5 }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className="mt-6 w-full max-w-sm py-5 bg-white text-black hover:bg-gray-100 rounded-full font-medium uppercase tracking-[0.2em] text-lg shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-all"
       >
         {room?.current_round === room?.total_rounds ? t("standings.finishGame") : t("standings.nextRound")}
       </motion.button>

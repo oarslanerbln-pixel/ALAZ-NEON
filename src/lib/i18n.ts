@@ -10,6 +10,7 @@ const translations = {
   // LANDING PAGE
   // ═══════════════════════════════════════════
   "common.back": { tr: "ANA SAYFA", de: "ZURÜCK ZUR STARTSEITE", en: "HOME" },
+  "common.cancel": { tr: "İPTAL", de: "ABBRECHEN", en: "CANCEL" },
   "landing.hostLabel": { tr: "Yayıncı / Kurucu", de: "Moderator / Gastgeber", en: "Broadcaster / Host" },
   "join.hostOffline": { tr: "HOST ÇEVRİMDIŞI", de: "HOST OFFLINE", en: "HOST OFFLINE" },
   "join.title": { tr: "SAVAŞA KATIL", de: "TRITT DEM KAMPF BEI", en: "JOIN THE BATTLE" },

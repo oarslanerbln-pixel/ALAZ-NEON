@@ -25,6 +25,7 @@ import { PlayerQuizController } from "./quiz/PlayerQuizController";
 import { PlayerBombController } from "./bomb/PlayerBombController";
 import { PlayerSensorController } from "./sensor/PlayerSensorController";
 import { PlayerWheelController } from "./wheel/PlayerWheelController";
+import { PlayerOverloadGame } from "./overload/PlayerOverloadGame";
 import { BackgroundSlider } from "../../components/BackgroundSlider";
 import { PlayerTutorial } from "./components/PlayerTutorial";
 
@@ -200,6 +201,10 @@ export function PlayerGame() {
 
   if ((room?.active_game === "wheel" || room?.game_type === "wheel") && player && room.status !== "tutorial" && room.status !== "ad_break") {
     return <PlayerWheelController room={room} player={player} />;
+  }
+
+  if (room?.active_game === "overload" && player && room.status !== "tutorial" && room.status !== "ad_break") {
+    return <PlayerOverloadGame room={room} player={player} />;
   }
 
   // Render tutorial for all game modes if status is tutorial

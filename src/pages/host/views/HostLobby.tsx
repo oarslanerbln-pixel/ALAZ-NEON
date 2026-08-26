@@ -201,31 +201,31 @@ export function HostLobby({
       exit={{ opacity: 0, scale: 1.05 }}
       className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-4 gap-8"
     >
-      <div className="lg:col-span-3 bg-black/80 backdrop-blur-xl border border-white/20 p-10 md:p-14 text-left relative overflow-hidden shadow-2xl">
+      <div className="lg:col-span-3 bg-white/[0.04] backdrop-blur-3xl border border-white/10 rounded-3xl p-10 md:p-14 text-left relative overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
         <div className="relative z-10 flex flex-col xl:flex-row items-start gap-12">
           <div className="flex-1">
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-2 h-10 bg-alaz-orange"></div>
+              <div className="w-1.5 h-10 bg-white/40 rounded-full"></div>
               <motion.h2
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                className="text-white text-4xl md:text-5xl font-black tracking-widest uppercase font-mono"
+                className="text-white text-4xl md:text-5xl font-light tracking-[0.2em] uppercase"
               >
                 {t("lobby.title")}
               </motion.h2>
             </div>
-            <p className="text-white/60 text-lg md:text-xl max-w-lg leading-relaxed font-mono uppercase tracking-wide">
+            <p className="text-white/60 text-lg md:text-xl max-w-lg leading-relaxed font-light uppercase tracking-widest">
               {t("lobby.subtitle", room?.total_rounds || 3)}
             </p>
 
             <div className="mt-12 flex flex-wrap gap-10 items-center">
               <div className="relative group/code">
-                <span className="text-white/40 uppercase tracking-[0.3em] text-[10px] font-black block mb-3 font-mono">
+                <span className="text-white/40 uppercase tracking-[0.3em] text-[10px] font-medium block mb-3 pl-2">
                   ROOM_CODE
                 </span>
                 <div className="relative">
                   <div 
-                    className="text-5xl md:text-7xl lg:text-9xl font-mono font-black tracking-tighter text-white bg-black/90 px-6 md:px-10 py-4 md:py-6 border-l-[6px] border-alaz-orange border-y border-y-white/10 relative z-10"
+                    className="text-5xl md:text-7xl lg:text-9xl font-light tracking-widest text-white bg-white/[0.03] px-6 md:px-10 py-4 md:py-6 border-l-[4px] border-white/30 rounded-r-3xl border-y border-y-white/5 relative z-10 shadow-sm"
                     data-text={room?.code || "...."}
                   >
                     {room?.code || "...."}
@@ -235,9 +235,9 @@ export function HostLobby({
 
               {room?.code && (
                 <motion.div
-                  className="bg-black/80 backdrop-blur-xl p-6 border-l-[6px] border-alaz-orange border-y border-y-white/10 flex flex-col items-center gap-6 shrink-0"
+                  className="bg-white/[0.03] backdrop-blur-xl p-6 border-l-[4px] border-white/30 rounded-r-3xl border-y border-y-white/5 flex flex-col items-center gap-6 shrink-0 shadow-sm"
                 >
-                  <div className="bg-white p-4">
+                  <div className="bg-white p-4 rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.2)]">
                     <QRCodeSVG
                       value={`${window.location.protocol}//${(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && typeof __LOCAL_IP__ !== 'undefined' ? __LOCAL_IP__ + (window.location.port ? ':' + window.location.port : '') : window.location.host}/join?code=${room.code}`}
                       size={200}
@@ -247,7 +247,7 @@ export function HostLobby({
                       marginSize={0}
                     />
                   </div>
-                  <div className="bg-white text-black px-10 py-3 text-sm font-black uppercase tracking-[0.3em]">
+                  <div className="bg-white/10 text-white px-10 py-3 rounded-full text-sm font-medium uppercase tracking-[0.3em]">
                     {t("lobby.connect")}
                   </div>
                 </motion.div>
@@ -256,11 +256,11 @@ export function HostLobby({
           </div>
 
           <div className="w-full xl:w-96 space-y-6">
-            <div className="flex items-center justify-between">
-              <span className="text-white/50 uppercase tracking-[0.3em] text-[10px] font-black font-mono">
+            <div className="flex items-center justify-between pl-2">
+              <span className="text-white/50 uppercase tracking-[0.3em] text-[10px] font-medium">
                 {t("lobby.categories")}
               </span>
-              <span className="text-alaz-orange text-[10px] font-black tracking-widest uppercase">
+              <span className="text-white/80 text-[10px] font-medium tracking-widest uppercase bg-white/10 px-3 py-1 rounded-full">
                 {currentCategories.length} {t("lobby.active")}
               </span>
             </div>
@@ -271,10 +271,10 @@ export function HostLobby({
                   <button
                     key={name}
                     onClick={() => applyPreset(name)}
-                    className={`px-3 py-1 font-sans font-black text-[9px] uppercase tracking-widest transition-all border-[0.5px] rounded-none ${
+                    className={`px-4 py-1.5 font-sans font-medium text-[10px] uppercase tracking-widest transition-all border-[0.5px] rounded-full ${
                       activePreset === name
-                        ? "bg-white border-white text-black"
-                        : "bg-black/60 border-white/20 text-gray-400 hover:border-white/50 hover:text-white"
+                        ? "bg-white border-white text-black shadow-[0_0_15px_rgba(255,255,255,0.4)]"
+                        : "bg-white/[0.02] border-white/20 text-white/50 hover:border-white/50 hover:text-white"
                     }`}
                   >
                     {name}
@@ -283,7 +283,7 @@ export function HostLobby({
               </div>
             )}
 
-            <div className="flex flex-wrap gap-3 min-h-[160px] p-5 bg-black/60 border border-white/10 content-start">
+            <div className="flex flex-wrap gap-3 min-h-[160px] p-6 bg-white/[0.02] rounded-2xl border border-white/5 shadow-inner content-start">
               <AnimatePresence>
                 {currentCategories.map((cat, idx) => (
                   <motion.div
@@ -291,12 +291,12 @@ export function HostLobby({
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.8, opacity: 0 }}
-                    className="bg-white text-black px-6 py-2 text-xs font-black border border-white/20 flex items-center gap-3 uppercase tracking-widest"
+                    className="bg-white/[0.1] text-white px-5 py-2 rounded-full text-xs font-medium border border-white/10 flex items-center gap-3 uppercase tracking-widest shadow-sm hover:bg-white/[0.15] transition-colors"
                   >
                     {cat}
                     <button
                       onClick={() => handleRemoveCategory(idx)}
-                      className="text-black/50 hover:text-alaz-orange transition-colors text-lg leading-none"
+                      className="text-white/40 hover:text-white transition-colors text-lg leading-none mt-[-2px]"
                     >
                       ×
                     </button>
@@ -310,19 +310,19 @@ export function HostLobby({
               )}
             </div>
 
-            <div className="flex gap-2 p-2 bg-black/60 border border-white/10 focus-within:border-white/30 transition-all">
+            <div className="flex gap-2 p-1.5 bg-white/[0.03] border border-white/10 rounded-full focus-within:border-white/30 transition-all shadow-inner">
               <input
                 type="text"
                 placeholder={t("lobby.newCategory")}
                 value={newCategory}
                 onChange={(e) => setNewCategory(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAddCategory()}
-                className="flex-1 bg-transparent px-5 py-3 text-sm focus:outline-none placeholder:text-white/30 font-medium text-white uppercase tracking-widest font-mono"
+                className="flex-1 bg-transparent px-5 py-3 text-sm focus:outline-none placeholder:text-white/30 font-medium text-white uppercase tracking-widest"
               />
               <button
                 type="button"
                 onClick={handleAddCategory}
-                className="bg-alaz-orange text-white w-12 h-12 flex items-center justify-center text-xl font-black cursor-pointer hover:bg-white hover:text-black transition-colors"
+                className="bg-white/10 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-light cursor-pointer hover:bg-white hover:text-black transition-all"
               >
                 +
               </button>
@@ -331,55 +331,55 @@ export function HostLobby({
         </div>
       </div>
 
-      <div className="lg:col-span-1 bg-black/80 backdrop-blur-xl border border-white/20 p-10 flex flex-col justify-center text-center">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent pointer-events-none" />
+      <div className="lg:col-span-1 bg-white/[0.04] backdrop-blur-3xl border border-white/10 rounded-3xl p-10 flex flex-col justify-center text-center shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent pointer-events-none rounded-3xl" />
         <div className="relative z-10">
-          <div className="w-20 h-20 bg-white/10 border-2 border-white flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 bg-white/[0.05] border border-white/20 rounded-full flex items-center justify-center mx-auto mb-8 shadow-sm">
             <NeonIcon
               type="users"
-              color="orange"
-              className="w-10 h-10 text-white"
+              color="white"
+              className="w-8 h-8 opacity-80"
             />
           </div>
-          <h3 className="text-6xl font-black text-white transition-all mb-2 font-mono">
+          <h3 className="text-7xl font-light text-white transition-all mb-4 tracking-tight">
             {room?.game_mode === "team"
               ? Array.from(new Set(players.map((p) => p.team_name))).filter(
                   Boolean,
                 ).length
               : players.length}
           </h3>
-          <p className="text-white/50 text-xs uppercase tracking-[0.4em] font-black font-mono">
+          <p className="text-white/50 text-xs uppercase tracking-[0.4em] font-medium bg-white/5 px-4 py-2 rounded-full inline-block">
             {room?.game_mode === "team"
               ? t("lobby.teamReady")
               : t("lobby.playerReady")}
           </p>
         </div>
 
-        <div className="mt-10 pt-10 border-t border-white/20 relative z-10">
+        <div className="mt-12 pt-10 border-t border-white/10 relative z-10">
           <button
             onClick={onStartGame}
             disabled={!canStart}
-            className={`w-full py-5 font-black uppercase tracking-[0.3em] text-lg transition-all border-b-4 ${
+            className={`w-full py-5 font-medium uppercase tracking-[0.3em] text-sm transition-all ${
               !canStart
-                ? "bg-black text-white/30 border-black cursor-not-allowed border-x border-t border-white/5"
-                : "bg-white text-black border-black hover:bg-alaz-orange hover:text-white hover:border-alaz-orange active:border-b-0 active:translate-y-1"
+                ? "bg-white/[0.05] text-white/30 border border-white/10 cursor-not-allowed rounded-full"
+                : "bg-white text-black border border-white hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] rounded-full shadow-[0_0_20px_rgba(255,255,255,0.3)]"
             }`}
           >
             <span className="relative z-10">{t("lobby.startGame")}</span>
           </button>
           
-          <div className="mt-4 flex gap-2 w-full justify-center">
+          <div className="mt-4 flex gap-3 w-full justify-center">
              <button
                 onClick={() => startCountdown(5)}
                 disabled={!canStart}
-                className="flex-1 py-3 bg-black/80 border border-white/20 text-white hover:bg-white hover:text-black text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-colors"
+                className="flex-1 py-3 bg-white/[0.05] border border-white/10 rounded-full text-white hover:bg-white/20 text-[10px] font-medium uppercase tracking-widest disabled:opacity-30 transition-all"
              >
                 5 Dk Bekle
              </button>
              <button
                 onClick={() => startCountdown(10)}
                 disabled={!canStart}
-                className="flex-1 py-3 bg-black/80 border border-white/20 text-white hover:bg-white hover:text-black text-[10px] font-black uppercase tracking-widest disabled:opacity-30 transition-colors"
+                className="flex-1 py-3 bg-white/[0.05] border border-white/10 rounded-full text-white hover:bg-white/20 text-[10px] font-medium uppercase tracking-widest disabled:opacity-30 transition-all"
              >
                 10 Dk Bekle
              </button>
@@ -429,19 +429,19 @@ export function HostLobby({
                   x: { duration: durationX, repeat: Infinity, ease: "easeInOut" },
                   y: { duration: durationY, repeat: Infinity, ease: "easeInOut" }
                 }}
-                className="absolute left-1/2 top-1/2 bg-black/90 px-5 py-3 flex items-center gap-4 border border-white/20 border-l-[6px] border-l-alaz-orange shadow-2xl backdrop-blur-xl"
+                className="absolute left-1/2 top-1/2 bg-white/[0.05] px-5 py-3 rounded-2xl flex items-center gap-4 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-3xl"
               >
-                <div className="w-8 h-8 bg-white flex items-center justify-center shrink-0">
-                  <span className="text-xs font-black text-black">
+                <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
+                  <span className="text-sm font-light text-white">
                     {upperTL(p.nickname.substring(0, 2))}
                   </span>
                 </div>
                 <div className="flex flex-col items-start pr-4">
-                  <p className="text-sm font-bold text-white uppercase tracking-widest truncate max-w-[120px]">
+                  <p className="text-sm font-medium text-white/90 uppercase tracking-widest truncate max-w-[120px]">
                     {p.nickname}
                   </p>
                   {p.team_name && (
-                    <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest leading-none truncate max-w-[120px] mt-1 font-mono">
+                    <p className="text-[10px] text-white/50 font-medium uppercase tracking-widest leading-none truncate max-w-[120px] mt-1">
                       {p.team_name}
                     </p>
                   )}

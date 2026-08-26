@@ -31,6 +31,9 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
   const [setupGameMode, setSetupGameMode] = useState<GameType | null>(null);
   const [categories, setCategories] = useState(t("categories.default"));
   const [activePreset, setActivePreset] = useState<string | null>(null);
+  const [timerValue, setTimerValue] = useState("60");
+  const [gameMode, setGameMode] = useState<"individual" | "team">("individual");
+  const [totalRounds, setTotalRounds] = useState("3");
   const presets = getCategoryPresets(locale);
 
   useEffect(() => {
@@ -62,19 +65,26 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       }
     }
 
-    await executeStartGame(setupGameMode, parsedCategories.length > 0 ? parsedCategories : undefined);
+    const settings: Partial<Room> = {
+      timer_setting: parseInt(timerValue, 10),
+      total_rounds: parseInt(totalRounds, 10),
+      game_mode: gameMode,
+      ...(parsedCategories.length > 0 ? { categories: parsedCategories } : {})
+    };
+
+    await executeStartGame(setupGameMode, settings);
     setSetupGameMode(null);
   };
 
   const handleStartGame = (game: GameType) => {
-    if (["scattegories", "quiz", "bomb"].includes(game)) {
+    if (["scattegories", "quiz", "bomb", "sensor"].includes(game)) {
       setSetupGameMode(game);
     } else {
       executeStartGame(game);
     }
   };
 
-  const executeStartGame = async (game: GameType, gameCategories?: string[]) => {
+  const executeStartGame = async (game: GameType, settings?: Partial<Room>) => {
     SoundManager.getInstance().playSFX(sounds.START);
     // Scattegories "lobby" ile başlar. Buraya kalıcı olarak "intro" yazmak
     // oyunu tamamen kilitliyordu: "intro" host'un YEREL sinematik animasyonu,
@@ -84,11 +94,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     // Quiz/bomba/sensör kendi intro DURUMLARINI ekranlarında yönettiği için
     // onlarda böyle bir sorun yok.
     let initialStatus: Room["status"] = "lobby";
-    let extraUpdates: Partial<Room> = { active_game: game };
-    
-    if (gameCategories) {
-      extraUpdates.categories = gameCategories;
-    }
+    let extraUpdates: Partial<Room> = { active_game: game, ...settings };
 
     if (game === "quiz") initialStatus = "quiz_intro";
     if (game === "bomb") initialStatus = "bomb_intro";
@@ -112,6 +118,16 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
         active_game: game,
         wheel_spinner_id: null,
         wheel_result_index: null
+      };
+    }
+    if (game === "overload") {
+      initialStatus = "playing";
+      extraUpdates = {
+        active_game: game,
+        overload_target_id: null,
+        overload_time_allowed: 10,
+        overload_start_time: 0,
+        overload_eliminated_ids: []
       };
     }
 
@@ -266,6 +282,28 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                 </div>
               </button>
 
+              {/* NEON OVERLOAD Card */}
+              <button
+                onClick={() => handleStartGame("overload")}
+                className="relative group overflow-hidden bg-black/40 backdrop-blur-xl border border-white/10 hover:border-cyan-400/50 p-8 rounded-3xl text-left transition-all duration-500 hover:scale-[1.03] shadow-[0_0_20px_rgba(0,0,0,0.5)] hover:shadow-[0_0_40px_rgba(0,255,255,0.3)]"
+              >
+                <div className="absolute -right-20 -top-20 w-48 h-48 bg-cyan-400/20 rounded-full blur-[80px] group-hover:bg-cyan-400/40 transition-colors duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0)_50%,rgba(0,255,255,0.05)_50%)] bg-[length:100%_4px] pointer-events-none opacity-50" />
+                
+                <div className="relative z-10 flex flex-col h-full">
+                  <div className="w-14 h-14 bg-cyan-400/10 border border-cyan-400/30 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                    <NeonIcon type="flame" color="blue" className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-3xl font-black text-white mb-2 tracking-widest group-hover:text-cyan-400 transition-colors">NEON <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">OVERLOAD</span></h3>
+                  <p className="text-gray-400 text-sm leading-relaxed mt-2 flex-1">Cyberpunk temalı hız ve refleks oyunu. Top patlamadan telefonu salla veya butona basarak sıranı devret!</p>
+                  
+                  <div className="mt-6 flex items-center gap-2 text-cyan-400 text-xs font-bold tracking-[0.2em] uppercase opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">
+                    Oturumu Başlat <span className="text-lg leading-none">→</span>
+                  </div>
+                </div>
+              </button>
+
               {/* ALAZ ÇARK Card */}
               <button
                 onClick={() => handleStartGame("wheel")}
@@ -351,43 +389,112 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
               </h3>
               <p className="text-alaz-orange text-xs font-bold uppercase tracking-widest mb-8 relative z-10">{t("setup.title", "Oyun Ayarları")}</p>
 
-              <div className="space-y-6 relative z-10">
-                <div>
-                  <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
-                    {t("setup.presetLabel", "Hızlı Preset")}
-                  </label>
-                  <div className="flex flex-wrap gap-3">
-                    {Object.keys(presets).map((name) => (
-                      <button
-                        key={name}
-                        onClick={() => applyPreset(name)}
-                        className={`px-4 py-2 font-sans font-black text-[10px] uppercase tracking-widest transition-all border-[0.5px] rounded-none shadow-md ${
-                          activePreset === name
-                            ? "bg-white border-white text-black"
-                            : "bg-black/60 border-white/20 text-gray-400 hover:border-white/50 hover:text-white"
-                        }`}
-                      >
-                        {name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+              <div className="space-y-6 relative z-10 max-h-[60vh] overflow-y-auto pr-2">
+                
+                {["scattegories", "quiz", "bomb"].includes(setupGameMode) && (
+                  <>
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
+                        {t("setup.presetLabel", "Hızlı Preset")}
+                      </label>
+                      <div className="flex flex-wrap gap-3">
+                        {Object.keys(presets).map((name) => (
+                          <button
+                            key={name}
+                            onClick={() => applyPreset(name)}
+                            className={`px-4 py-2 font-sans font-black text-[10px] uppercase tracking-widest transition-all border-[0.5px] rounded-none shadow-md ${
+                              activePreset === name
+                                ? "bg-white border-white text-black"
+                                : "bg-black/60 border-white/20 text-gray-400 hover:border-white/50 hover:text-white"
+                            }`}
+                          >
+                            {name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-                <div className="flex flex-col">
-                  <label className="block text-[11px] uppercase tracking-[0.3em] font-black text-alaz-orange mb-3 animate-pulse">
-                    {t("setup.categoriesLabel", "Kategoriler (Virgülle Ayır)")}
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={categories}
-                    onChange={(e) => {
-                      setCategories(e.target.value);
-                      setActivePreset(null);
-                    }}
-                    className="w-full bg-black/60 border-[0.5px] border-white/20 p-5 text-white focus:border-alaz-orange focus:outline-none resize-none font-black leading-relaxed rounded-none shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]"
-                    placeholder="Şehir, Ülke, İsim..."
-                  />
-                </div>
+                    <div className="flex flex-col">
+                      <label className="block text-[11px] uppercase tracking-[0.3em] font-black text-alaz-orange mb-3 animate-pulse">
+                        {t("setup.categoriesLabel", "Kategoriler (Virgülle Ayır)")}
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={categories}
+                        onChange={(e) => {
+                          setCategories(e.target.value);
+                          setActivePreset(null);
+                        }}
+                        className="w-full bg-black/60 border-[0.5px] border-white/20 p-5 text-white focus:border-alaz-orange focus:outline-none resize-none font-black leading-relaxed rounded-none shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]"
+                        placeholder="Şehir, Ülke, İsim..."
+                      />
+                    </div>
+
+                    {/* Timer */}
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
+                        {t("setup.timerLabel", "Tur Süresi")}
+                      </label>
+                      <select
+                        value={timerValue}
+                        onChange={(e) => setTimerValue(e.target.value)}
+                        className="w-full bg-black/60 border-[0.5px] border-white/20 p-3 text-white focus:border-alaz-orange focus:outline-none transition-all font-sans font-black text-[12px] uppercase tracking-[0.1em] rounded-none"
+                      >
+                        <option className="bg-[#0a0a0f] text-white" value="30">{t("setup.timer30", "30 Saniye")}</option>
+                        <option className="bg-[#0a0a0f] text-white" value="45">{t("setup.timer45", "45 Saniye")}</option>
+                        <option className="bg-[#0a0a0f] text-white" value="60">{t("setup.timer60", "60 Saniye")}</option>
+                        <option className="bg-[#0a0a0f] text-white" value="90">{t("setup.timer90", "90 Saniye")}</option>
+                      </select>
+                    </div>
+
+                    {/* Game Mode */}
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
+                        {t("setup.gameModeLabel", "Oyun Modu")}
+                      </label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <button
+                          onClick={() => setGameMode("individual")}
+                          className={`py-3 font-sans font-black text-xs uppercase tracking-widest transition-all border-[0.5px] rounded-none ${
+                            gameMode === "individual" ? "bg-white text-black border-white" : "bg-black/60 border-white/20 text-gray-400 hover:border-white/40"
+                          }`}
+                        >
+                          {t("setup.individual", "Bireysel")}
+                        </button>
+                        <button
+                          onClick={() => setGameMode("team")}
+                          className={`py-3 font-sans font-black text-xs uppercase tracking-widest transition-all border-[0.5px] rounded-none ${
+                            gameMode === "team" ? "bg-alaz-orange text-black border-alaz-orange" : "bg-black/60 border-white/20 text-gray-400 hover:border-alaz-orange/40"
+                          }`}
+                        >
+                          {t("setup.team", "Takım")}
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Total Rounds (For all except wheel) */}
+                {["scattegories", "quiz", "bomb", "sensor"].includes(setupGameMode) && (
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
+                      {t("setup.roundsLabel", "Tur Sayısı")}
+                    </label>
+                    <div className="grid grid-cols-4 gap-4">
+                      {["3", "5", "7", "10"].map((r) => (
+                        <button
+                          key={r}
+                          onClick={() => setTotalRounds(r)}
+                          className={`py-3 font-sans font-black text-lg transition-all border-[0.5px] rounded-none ${
+                            totalRounds === r ? "bg-alaz-orange text-black border-alaz-orange" : "bg-black/60 border-white/20 text-gray-400 hover:border-alaz-orange/40"
+                          }`}
+                        >
+                          {r}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex gap-4 mt-8">
                   <button

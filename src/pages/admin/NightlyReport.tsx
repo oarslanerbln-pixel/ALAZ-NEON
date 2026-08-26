@@ -10,10 +10,11 @@ type RangePreset = "today" | "week" | "month";
 
 const GAME_LABEL: Record<GameType, string> = {
   scattegories: "Hengame Arena",
-  quiz: "Hengame Quiz",
-  bomb: "Hengame Bomb",
-  sensor: "Hengame Sensör",
-  wheel: "Hengame Çark"
+  quiz: "Alaz Quiz",
+  bomb: "Alaz Bomb",
+  sensor: "Alaz Sensör",
+  wheel: "Alaz Çark",
+  overload: "Neon Overload",
 };
 
 function rangeFor(preset: RangePreset): { start: number; end: number } {

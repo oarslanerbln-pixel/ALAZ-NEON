@@ -132,10 +132,10 @@ export function HostPodium({
       className="flex flex-col items-center justify-center min-h-full w-full py-20 overflow-y-auto bg-black"
     >
       <motion.h2
-        initial={{ y: -50, opacity: 0, scale: 0.8 }}
+        initial={{ y: -50, opacity: 0, scale: 0.9 }}
         animate={{ y: 0, opacity: 1, scale: 1 }}
-        transition={{ delay: 0.2, type: "spring" }}
-        className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-20 uppercase tracking-[0.2em] text-glow-ultra-alaz"
+        transition={{ delay: 0.2, type: "spring", stiffness: 80 }}
+        className="text-4xl md:text-5xl lg:text-6xl font-light text-white mb-20 uppercase tracking-[0.3em]"
       >
         {t("podium.title")}
       </motion.h2>
@@ -147,19 +147,19 @@ export function HostPodium({
         {second && (
           <motion.div
             initial={{ height: 0 }}
-            animate={{ height: "60%" }}
-            transition={{ delay: 1, duration: 1 }}
-            className="w-64 bg-white/10 border-2 border-white/20 rounded-t-sm flex flex-col items-center justify-start pt-8 relative group"
+            animate={{ height: "50%" }}
+            transition={{ delay: 1, duration: 1.2, type: "spring" }}
+            className="w-64 bg-white/[0.03] backdrop-blur-3xl border-t border-x border-white/10 rounded-t-3xl flex flex-col items-center justify-start pt-8 relative group"
           >
-            <div className="absolute -top-16 text-center w-full">
-              <div className="text-4xl font-black text-white truncate max-w-[240px] px-2 mx-auto">
+            <div className="absolute -top-20 text-center w-full">
+              <div className="text-3xl font-light text-white truncate max-w-[240px] px-2 mx-auto tracking-widest">
                 {second.name}
               </div>
-              <div className="text-2xl font-black text-gray-400">
-                {second.score} PTS
+              <div className="text-xl font-light text-white/50 mt-1 tracking-widest">
+                {second.score}
               </div>
             </div>
-            <div className="text-4xl md:text-6xl font-black text-white/20">2</div>
+            <div className="text-4xl md:text-5xl font-thin text-white/20 mt-4">2</div>
           </motion.div>
         )}
 
@@ -167,24 +167,19 @@ export function HostPodium({
         {first && (
           <motion.div
             initial={{ height: 0 }}
-            animate={{ height: "80%" }}
-            transition={{ delay: 1.5, duration: 1, type: "spring" }}
-            className="w-72 bg-gradient-to-b from-alaz-orange/40 to-alaz-orange/5 border-4 border-alaz-orange rounded-t-sm flex flex-col items-center justify-start pt-8 relative z-10 shadow-[0_-20px_80px_rgba(255,77,0,0.3)]"
+            animate={{ height: "70%" }}
+            transition={{ delay: 1.5, duration: 1.5, type: "spring", stiffness: 80 }}
+            className="w-72 bg-white/[0.08] backdrop-blur-3xl border-t border-x border-white/20 rounded-t-3xl flex flex-col items-center justify-start pt-8 relative z-10 shadow-[0_-20px_60px_rgba(255,255,255,0.05)]"
           >
-            <div className="absolute -top-24 text-center w-full">
-              <NeonIcon
-                type="crown"
-                color="orange"
-                className="w-12 h-12 mx-auto mb-2 animate-beat drop-shadow-[0_0_20px_rgba(255,77,0,1)]"
-              />
-              <div className="text-3xl md:text-5xl font-black text-glow-alaz text-alaz-orange truncate max-w-[280px] px-2 mx-auto">
+            <div className="absolute -top-32 text-center w-full">
+              <div className="text-3xl md:text-4xl font-medium text-white truncate max-w-[280px] px-2 mx-auto tracking-[0.1em] drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">
                 {first.name}
               </div>
-              <div className="text-3xl font-black text-white">
-                {first.score} PTS
+              <div className="text-2xl font-light text-white mt-2 tracking-widest">
+                {first.score}
               </div>
             </div>
-            <div className="text-5xl md:text-7xl lg:text-8xl font-black text-alaz-orange/40 mt-4">
+            <div className="text-5xl md:text-6xl lg:text-7xl font-thin text-white/40 mt-6">
               1
             </div>
           </motion.div>
@@ -194,19 +189,19 @@ export function HostPodium({
         {third && (
           <motion.div
             initial={{ height: 0 }}
-            animate={{ height: "40%" }}
-            transition={{ delay: 0.5, duration: 1 }}
-            className="w-64 bg-white/5 border border-white/10 rounded-t-sm flex flex-col items-center justify-start pt-8 relative"
+            animate={{ height: "35%" }}
+            transition={{ delay: 0.5, duration: 1, type: "spring" }}
+            className="w-64 bg-white/[0.02] backdrop-blur-3xl border-t border-x border-white/5 rounded-t-3xl flex flex-col items-center justify-start pt-8 relative"
           >
-            <div className="absolute -top-16 text-center w-full">
-              <div className="text-3xl font-black text-white truncate max-w-[240px] px-2 mx-auto">
+            <div className="absolute -top-20 text-center w-full">
+              <div className="text-2xl font-light text-white/80 truncate max-w-[240px] px-2 mx-auto tracking-widest">
                 {third.name}
               </div>
-              <div className="text-xl font-black text-gray-500">
-                {third.score} PTS
+              <div className="text-lg font-light text-white/40 mt-1 tracking-widest">
+                {third.score}
               </div>
             </div>
-            <div className="text-3xl md:text-5xl font-black text-white/10">3</div>
+            <div className="text-3xl md:text-4xl font-thin text-white/10 mt-4">3</div>
           </motion.div>
         )}
 
@@ -229,88 +224,79 @@ export function HostPodium({
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 2.5, duration: 1 }}
-        className="mt-12 w-full max-w-5xl"
+        className="mt-16 w-full max-w-4xl"
       >
-        <h3 className="text-center text-sm font-black text-gray-500 uppercase tracking-widest mb-6">
+        <h3 className="text-center text-xs font-light text-white/40 uppercase tracking-[0.4em] mb-8">
           {t("podium.awardsTitle")}
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Mitik Yaratıcı */}
-          <div className="glass-panel-alaz rounded-sm p-6 flex flex-col items-center justify-center text-center border-alaz-orange/30 group hover:border-alaz-orange transition-all">
-            <div className="w-16 h-16 rounded-sm bg-alaz-orange/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-[0_0_20px_rgba(255,77,0,0.3)]">
-              <NeonIcon type="lightbulb" color="orange" className="w-8 h-8" />
-            </div>
-            <h4 className="text-alaz-orange font-black text-lg uppercase tracking-tight mb-1">
+          <div className="bg-white/[0.02] backdrop-blur-2xl border border-white/5 rounded-3xl p-8 flex flex-col items-center justify-center text-center transition-all hover:bg-white/[0.04]">
+            <h4 className="text-white font-medium text-sm uppercase tracking-widest mb-1">
               {t("podium.creativeTitle")}
             </h4>
-            <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-4">
+            <p className="text-white/40 text-[10px] font-light uppercase tracking-widest mb-6">
               {t("podium.creativeDesc")}
             </p>
             {uniqueW ? (
               <>
-                <div className="text-2xl font-black text-white truncate w-full px-2 mx-auto">
+                <div className="text-2xl font-light text-white truncate w-full px-2 mx-auto tracking-wider">
                   {uniqueW.name}
                 </div>
-                <div className="text-alaz-orange font-bold text-sm mt-1">
+                <div className="text-white/60 font-light text-xs mt-2 uppercase tracking-widest">
                   {uniqueW.count} {t("podium.creativeCount")}
                 </div>
               </>
             ) : (
-              <div className="text-gray-600 font-bold italic">
+              <div className="text-white/30 font-light italic text-sm">
                 {t("podium.creativeNone")}
               </div>
             )}
           </div>
 
           {/* Ateşin Oğlu */}
-          <div className="glass-panel-pulse-blue rounded-sm p-6 flex flex-col items-center justify-center text-center border-neon-blue/30 group hover:border-neon-blue transition-all">
-            <div className="w-16 h-16 rounded-sm bg-neon-blue/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-[0_0_20px_rgba(0,255,255,0.3)]">
-              <NeonIcon type="rocket" color="blue" className="w-8 h-8" />
-            </div>
-            <h4 className="text-neon-blue font-black text-lg uppercase tracking-tight mb-1">
+          <div className="bg-white/[0.02] backdrop-blur-2xl border border-white/5 rounded-3xl p-8 flex flex-col items-center justify-center text-center transition-all hover:bg-white/[0.04]">
+            <h4 className="text-white font-medium text-sm uppercase tracking-widest mb-1">
               {t("podium.speedTitle")}
             </h4>
-            <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-4">
+            <p className="text-white/40 text-[10px] font-light uppercase tracking-widest mb-6">
               {t("podium.speedDesc")}
             </p>
             {earlyW ? (
               <>
-                <div className="text-2xl font-black text-white truncate w-full px-2 mx-auto">
+                <div className="text-2xl font-light text-white truncate w-full px-2 mx-auto tracking-wider">
                   {earlyW.name}
                 </div>
-                <div className="text-neon-blue font-bold text-sm mt-1">
+                <div className="text-white/60 font-light text-xs mt-2 uppercase tracking-widest">
                   {earlyW.count} {t("podium.speedCount")}
                 </div>
               </>
             ) : (
-              <div className="text-gray-600 font-bold italic">
+              <div className="text-white/30 font-light italic text-sm">
                 {t("podium.speedNone")}
               </div>
             )}
           </div>
 
           {/* Hayalet */}
-          <div className="bg-white/5 border border-white/10 rounded-sm p-6 flex flex-col items-center justify-center text-center group hover:bg-white/10 transition-all">
-            <div className="w-16 h-16 rounded-sm bg-white/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform text-3xl">
-              👻
-            </div>
-            <h4 className="text-gray-300 font-black text-lg uppercase tracking-tight mb-1">
+          <div className="bg-white/[0.02] backdrop-blur-2xl border border-white/5 rounded-3xl p-8 flex flex-col items-center justify-center text-center transition-all hover:bg-white/[0.04]">
+            <h4 className="text-white font-medium text-sm uppercase tracking-widest mb-1">
               {t("podium.ghostTitle")}
             </h4>
-            <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-4">
+            <p className="text-white/40 text-[10px] font-light uppercase tracking-widest mb-6">
               {t("podium.ghostDesc")}
             </p>
             {blankW ? (
               <>
-                <div className="text-2xl font-black text-gray-300 truncate w-full px-2 mx-auto">
+                <div className="text-2xl font-light text-white truncate w-full px-2 mx-auto tracking-wider">
                   {blankW.name}
                 </div>
-                <div className="text-gray-500 font-bold text-sm mt-1">
+                <div className="text-white/60 font-light text-xs mt-2 uppercase tracking-widest">
                   {blankW.count} {t("podium.ghostCount")}
                 </div>
               </>
             ) : (
-              <div className="text-green-500/50 font-bold italic">
+              <div className="text-white/30 font-light italic text-sm">
                 {t("podium.ghostNone")}
               </div>
             )}
@@ -328,13 +314,13 @@ export function HostPodium({
         <button
           onClick={handleDownloadPDF}
           disabled={isGeneratingPDF}
-          className="px-8 py-4 border-2 border-alaz-orange hover:bg-alaz-orange hover:text-black text-alaz-orange font-black rounded-sm transition-all uppercase tracking-widest disabled:opacity-50 flex items-center gap-2"
+          className="px-8 py-4 border border-white/20 hover:bg-white/5 text-white/80 font-medium rounded-full transition-all uppercase tracking-widest disabled:opacity-50 flex items-center gap-2"
         >
           {isGeneratingPDF ? "PDF HAZIRLANIYOR..." : "PDF İNDİR"}
         </button>
         <button
           onClick={onResetGame}
-          className="px-12 py-4 border-2 border-white/20 hover:border-white/50 hover:bg-white/5 text-white font-black rounded-sm transition-all uppercase tracking-widest"
+          className="px-12 py-4 bg-white hover:bg-gray-200 text-black font-medium rounded-full transition-all uppercase tracking-[0.2em] shadow-[0_0_30px_rgba(255,255,255,0.2)]"
         >
           {t("podium.newGame")}
         </button>

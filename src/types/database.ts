@@ -32,7 +32,7 @@ export type RoomStatus =
   | "wheel_result";
 
 export type GameMode = "individual" | "team";
-export type GameType = "scattegories" | "quiz" | "bomb" | "sensor" | "wheel";
+export type GameType = "scattegories" | "quiz" | "bomb" | "sensor" | "wheel" | "overload";
 
 export interface QuizQuestion {
   id: string;
@@ -80,6 +80,11 @@ export interface Room {
   // Wheel Game Fields
   wheel_spinner_id?: string | null;
   wheel_result_index?: number | null;
+  // Overload Game Fields
+  overload_target_id?: string | null;
+  overload_time_allowed?: number;
+  overload_start_time?: number;
+  overload_eliminated_ids?: string[];
   // Ad Break Flow Control
   ad_break_next_state?: RoomStatus;
   // Mekan markalaması — oda açılırken o anki aktif mekan profilinden

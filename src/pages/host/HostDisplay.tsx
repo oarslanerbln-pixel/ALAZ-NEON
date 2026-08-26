@@ -31,6 +31,7 @@ import { HostQuizDisplay } from "./quiz/HostQuizDisplay";
 import { HostBombDisplay } from "./bomb/HostBombDisplay";
 import { HostSensorDisplay } from "./sensor/HostSensorDisplay";
 import { HostWheelDisplay } from "./wheel/HostWheelDisplay";
+import { HostOverloadDisplay } from "./overload/HostOverloadDisplay";
 import { HostDashboard } from "./dashboard/HostDashboard";
 import { HostTutorial } from "./components/HostTutorial";
 import { DatabaseStatus } from "../../components/DatabaseStatus";
@@ -97,6 +98,16 @@ export function HostDisplay() {
   if (room.active_game === "wheel" || room.game_type === "wheel") {
     return (
       <HostWheelDisplay
+        room={room}
+        players={hostRoom.players}
+        updateRoomStatus={hostRoom.updateRoomStatus}
+      />
+    );
+  }
+
+  if (room.active_game === "overload") {
+    return (
+      <HostOverloadDisplay
         room={room}
         players={hostRoom.players}
         updateRoomStatus={hostRoom.updateRoomStatus}
@@ -609,7 +620,7 @@ function HostDisplayGame({
         />
       )}
 
-      <div className="flex-1 flex items-center justify-center relative w-full">
+      <div className={`flex-1 flex justify-center relative w-full ${gameState === "standings" || gameState === "finished" ? "items-start pt-8" : "items-center"}`}>
         <AnimatePresence mode="wait">
           {gameState === "intro" && (
             <motion.div

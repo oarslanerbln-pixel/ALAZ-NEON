@@ -59,15 +59,13 @@ export function HostSetup() {
   const { t, locale } = useLocale();
   const { showToast } = useToast();
   const { venue } = useVenue();
-  const [timerValue, setTimerValue] = useState("60");
-  const [gameMode, setGameMode] = useState<"individual" | "team">("individual");
-  const [totalRounds, setTotalRounds] = useState("3");
   const [isCreating, setIsCreating] = useState(false);
 
   const startLobby = async () => {
     setIsCreating(true);
-    localStorage.setItem("cafe_game_timer", timerValue);
-    localStorage.setItem("cafe_game_mode", gameMode);
+    // Defaults for the room, to be overridden by individual games
+    localStorage.setItem("cafe_game_timer", "60");
+    localStorage.setItem("cafe_game_mode", "individual");
 
     try {
       const roomCode = generateRoomCode();
@@ -77,11 +75,11 @@ export function HostSetup() {
           status: "night_lobby",
           active_game: "none",
           categories: [],
-          timer_setting: parseInt(timerValue, 10),
-          total_rounds: parseInt(totalRounds, 10),
+          timer_setting: 60,
+          total_rounds: 3,
           current_round: 0,
           time_left: 0,
-          game_mode: gameMode,
+          game_mode: "individual",
           locale: locale,
           created_at: Date.now(),
           host_uid: auth.currentUser?.uid || "anonymous",
@@ -145,139 +143,31 @@ export function HostSetup() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 flex-1 relative z-10">
-                <div className="space-y-6">
-                  {/* Timer */}
-                  <div>
-                    <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
-                      {t("setup.timerLabel")}
-                    </label>
-                    <select
-                      aria-label={t("setup.timerAriaLabel")}
-                      value={timerValue}
-                      onChange={(e) => setTimerValue(e.target.value)}
-                      className="w-full bg-black/60 border-[0.5px] border-white/20 p-5 text-white focus:border-alaz-orange focus:outline-none transition-all font-sans font-black text-[14px] uppercase tracking-[0.1em] rounded-none shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]"
-                    >
-                      <option
-                        className="bg-[#0a0a0f] text-white py-2"
-                        value="30"
-                      >
-                        {t("setup.timer30")}
-                      </option>
-                      <option
-                        className="bg-[#0a0a0f] text-white py-2"
-                        value="45"
-                      >
-                        {t("setup.timer45")}
-                      </option>
-                      <option
-                        className="bg-[#0a0a0f] text-white py-2"
-                        value="60"
-                      >
-                        {t("setup.timer60")}
-                      </option>
-                      <option
-                        className="bg-[#0a0a0f] text-white py-2"
-                        value="90"
-                      >
-                        {t("setup.timer90")}
-                      </option>
-                    </select>
-                  </div>
-
-                  {/* Total Rounds */}
-                  <div>
-                    <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
-                      {t("setup.roundsLabel")}
-                    </label>
-                    <div className="grid grid-cols-4 gap-4">
-                      {["3", "5", "7", "10"].map((r) => (
-                        <button
-                          key={r}
-                          onClick={() => setTotalRounds(r)}
-                          className={`py-4 font-sans font-black text-lg transition-all border-[0.5px] rounded-none ${
-                            totalRounds === r
-                              ? "bg-alaz-orange text-black border-alaz-orange"
-                              : "bg-black/60 border-white/20 text-gray-400 hover:border-alaz-orange/40 hover:text-white"
-                          }`}
-                        >
-                          {r}
-                        </button>
-                      ))}
-                    </div>
-                    <p className="text-[10px] text-gray-600 mt-2 italic">
-                      {t(
-                        "setup.roundsCalc",
-                        totalRounds,
-                        timerValue,
-                        parseInt(totalRounds) * parseInt(timerValue),
-                      )}
-                    </p>
-                  </div>
-
-                  {/* Game Mode */}
-                  <div>
-                    <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
-                      {t("setup.gameModeLabel")}
-                    </label>
-                    <div className="grid grid-cols-2 gap-4">
-                      <button
-                        onClick={() => setGameMode("individual")}
-                        className={`py-4 font-sans font-black text-xs uppercase tracking-widest transition-all border-[0.5px] flex items-center justify-center rounded-none ${
-                          gameMode === "individual"
-                            ? "bg-white text-black border-white"
-                            : "bg-black/60 border-white/20 text-gray-400 hover:border-white/40"
-                        }`}
-                      >
-                        {t("setup.individual")}
-                      </button>
-                      <button
-                        onClick={() => setGameMode("team")}
-                        className={`py-4 font-sans font-black text-xs uppercase tracking-widest transition-all border-[0.5px] flex items-center justify-center rounded-none ${
-                          gameMode === "team"
-                            ? "bg-alaz-orange text-black border-alaz-orange"
-                            : "bg-black/60 border-white/20 text-gray-400 hover:border-alaz-orange/40"
-                        }`}
-                      >
-                        {t("setup.team")}
-                      </button>
-                    </div>
-                    <p className="text-[10px] text-gray-600 mt-2 italic">
-                      {gameMode === "individual"
-                        ? t("setup.individualDesc")
-                        : t("setup.teamDesc")}
-                    </p>
-                  </div>
-
-                  {/* Language Selector */}
-                  <div>
-                    <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
-                      {t("setup.languageLabel")}
-                    </label>
-                    <LanguageSwitcher
-                      className="w-full"
-                      fullWidth
-                    />
-                  </div>
+              <div className="flex-1 relative z-10 w-full max-w-md mx-auto">
+                {/* Language Selector */}
+                <div>
+                  <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
+                    {t("setup.languageLabel")}
+                  </label>
+                  <LanguageSwitcher
+                    className="w-full"
+                    fullWidth
+                  />
                 </div>
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                onClick={startLobby}
-                disabled={isCreating}
-                className={`w-full py-6 mt-10 font-sans font-black text-xl uppercase tracking-[0.2em] transition-all duration-500 relative z-50 cursor-pointer rounded-none border-[0.5px] border-white/20 shadow-[0_0_30px_rgba(255,77,0,0.3)] hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] ${
-                  isCreating
-                    ? "bg-black/80 text-gray-500 cursor-not-allowed"
-                    : "btn-magic-gradient hover:text-white"
-                }`}
-              >
-                {isCreating
-                  ? t("setup.starting")
-                  : t("setup.startButton", totalRounds)}
-              </motion.button>
+              <div className="mt-10 relative z-10">
+                <button
+                  onClick={startLobby}
+                  disabled={isCreating}
+                  className="w-full py-6 bg-gradient-to-r from-neon-blue to-teal-400 text-black font-black text-lg uppercase tracking-[0.2em] transition-all hover:scale-[1.01] hover:shadow-[0_0_40px_rgba(0,229,255,0.4)] disabled:opacity-50 disabled:hover:scale-100 rounded-none shadow-[0_0_20px_rgba(0,0,0,0.5)]"
+                >
+                  {isCreating
+                    ? t("setup.starting")
+                    : "GECEYİ BAŞLAT →"}
+                </button>
               </div>
+            </div>
             </GlassPanel>
 
             {/* Status Bento */}

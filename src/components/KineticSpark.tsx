@@ -181,6 +181,52 @@ export function KineticSpark({
             >
               {text}
             </motion.div>
+
+            {/* DRAGON NEON STROKE */}
+            <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-visible z-50" style={{ transform: "translateZ(10px)" }}>
+              <svg width="100%" height="100%" className="absolute overflow-visible" style={{ left: "50%", top: "50%", transform: "translate(-50%, -50%)" }}>
+                <defs>
+                  <linearGradient id="dragonGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#00e5ff" stopOpacity="0" />
+                    <stop offset="20%" stopColor="#00e5ff" />
+                    <stop offset="50%" stopColor="#ff00ff" />
+                    <stop offset="80%" stopColor="#ff5500" />
+                    <stop offset="100%" stopColor="#ff5500" stopOpacity="0" />
+                  </linearGradient>
+                  <filter id="dragonGlow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="6" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                </defs>
+                
+                {/* 
+                  Using SVG text for the stroke. 
+                  dy="0.35em" is a common hack to vertically center dominant-baseline in varying browsers,
+                  but here we match the HTML text positioning as close as possible.
+                */}
+                <motion.text
+                  x="50%"
+                  y="50%"
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  className="font-black uppercase tracking-tighter"
+                  style={{ fontSize }}
+                  fill="transparent"
+                  stroke="url(#dragonGradient)"
+                  strokeWidth="3"
+                  filter="url(#dragonGlow)"
+                  initial={{ strokeDasharray: "150 1500", strokeDashoffset: 1500 }}
+                  animate={{ strokeDashoffset: 0 }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                >
+                  {text}
+                </motion.text>
+              </svg>
+            </div>
           </div>
         </motion.div>
       </motion.div>
