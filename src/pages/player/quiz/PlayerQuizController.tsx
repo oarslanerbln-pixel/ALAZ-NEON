@@ -151,6 +151,18 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
             </motion.div>
           )}
 
+          {gameState === "question_active" && !currentQ && (
+            <motion.div
+              key="loading-q"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-center"
+            >
+              <div className="text-white/50 text-2xl animate-pulse">{t("quiz.loading")}</div>
+            </motion.div>
+          )}
+
           {gameState === "question_active" && currentQ && (
             <motion.div
               key="active"

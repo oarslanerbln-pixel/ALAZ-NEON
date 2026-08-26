@@ -61,6 +61,32 @@ export function PlayerWheelController({ room, player }: Props) {
         <NeonIcon type="flame" color="gold" className="w-20 h-20 mb-4" />
 
         <AnimatePresence mode="wait">
+          {(room.status === "lobby" || room.status === "night_lobby") && (
+            <motion.div
+              key="lobby"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="text-center"
+            >
+              <h2 className="text-2xl font-black uppercase tracking-widest text-white mb-2">ÇARKIFELEK</h2>
+              <p className="text-gray-400">Oyunun başlamasını bekliyoruz. Ana ekranı takip edin.</p>
+            </motion.div>
+          )}
+
+          {room.status === "finished" && (
+            <motion.div
+              key="finished"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="text-center"
+            >
+              <h2 className="text-2xl font-black uppercase tracking-widest text-cyber-yellow mb-2">OYUN BİTTİ</h2>
+              <p className="text-gray-400">Sonuçlar ana ekranda!</p>
+            </motion.div>
+          )}
+
           {room.status === "wheel_active" && !room.wheel_spinner_id && (
             <motion.div
               key="waiting-host"
@@ -137,7 +163,7 @@ export function PlayerWheelController({ room, player }: Props) {
               {isMyTurn ? (
                 <div className="bg-cyber-yellow/20 border border-cyber-yellow p-6 rounded-2xl">
                   <div className="text-sm font-bold text-cyber-yellow uppercase tracking-widest mb-2">KAZANDIĞIN ÖDÜL:</div>
-                  <div className="text-3xl font-black text-white">{slices[room.wheel_result_index!].text}</div>
+                  <div className="text-3xl font-black text-white">{slices[room.wheel_result_index || 0]?.text}</div>
                 </div>
               ) : (
                 <div className="bg-white/10 border border-white/20 p-6 rounded-2xl">

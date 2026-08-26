@@ -18,7 +18,8 @@ interface NeonIconProps {
     | "black"
     | "gray"
     | "green"
-    | "red";
+    | "red"
+    | "white";
   className?: string;
 }
 
@@ -42,7 +43,9 @@ export function NeonIcon({
                 ? "text-black"
                 : color === "gray"
                   ? "text-gray-500"
-                  : "svg-glow-gold text-yellow-400";
+                  : color === "white"
+                    ? "text-white"
+                    : "svg-glow-gold text-yellow-400";
 
   const renderIcon = () => {
     switch (type) {

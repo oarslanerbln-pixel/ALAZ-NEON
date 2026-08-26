@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { db } from "../../../lib/firebase";
@@ -17,6 +17,13 @@ export function PlayerSensorController({ room, player }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { showToast } = useToast();
   const { t } = useLocale();
+
+  useEffect(() => {
+    if (room.status === "sensor_active") {
+      setAnswer("");
+      setIsSubmitting(false);
+    }
+  }, [room.status]);
 
   const handleBuzz = async () => {
     if (room.status !== "sensor_active" || isSubmitting) return;
@@ -83,10 +90,10 @@ export function PlayerSensorController({ room, player }: Props) {
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center z-10 relative">
         <NeonIcon type="rocket" color="pink" className="w-20 h-20 mb-6 opacity-50" />
         <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-widest">
-          {t("sensor.title" as any) || "SENSÖR"}
+          {t("sensor.title" as never) || "SENSÖR"}
         </h2>
         <p className="text-gray-400 font-medium">
-          {t("sensor.watchMainScreen" as any) || "Ana ekranı takip edin"}
+          {t("sensor.watchMainScreen" as never) || "Ana ekranı takip edin"}
         </p>
       </div>
     );
@@ -217,7 +224,7 @@ export function PlayerSensorController({ room, player }: Props) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-6 z-10 relative text-center">
       <div className="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mb-4" />
-      <p className="text-gray-400 uppercase tracking-widest">{t("game.loading" as any) || "YÜKLENİYOR..."}</p>
+      <p className="text-gray-400 uppercase tracking-widest">{t("game.loading" as never) || "YÜKLENİYOR..."}</p>
     </div>
   );
 }

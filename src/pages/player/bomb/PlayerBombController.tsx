@@ -34,6 +34,8 @@ export function PlayerBombController({ room, player }: Props) {
       if (navigator.vibrate) {
         navigator.vibrate([200, 100, 200]);
       }
+    } else if (!isMyTurn) {
+      setWord("");
     }
   }, [isMyTurn, room.status]);
 
@@ -44,7 +46,7 @@ export function PlayerBombController({ room, player }: Props) {
     const normalizedWord = word.trim().toLowerCase();
 
     // Check if word is already used
-    if (room.used_words?.some(w => w.toLowerCase() === normalizedWord)) {
+    if ((room.used_words || []).some(w => w.toLowerCase() === normalizedWord)) {
       showToast(t("bomb.toastWordUsed"), "error");
       SoundManager.getInstance().playSFX(sounds.FAILURE);
       if (navigator.vibrate) navigator.vibrate(200);
@@ -143,8 +145,8 @@ export function PlayerBombController({ room, player }: Props) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-black text-white p-6 text-center">
         <div className="text-6xl mb-6">💣</div>
-        <h1 className="text-2xl font-black text-[#ff003c] tracking-widest uppercase mb-4">{t("bomb.title" as any) || "BOMBA"}</h1>
-        <p className="text-gray-400">{t("bomb.watchMainScreen" as any) || "Ana ekranı takip edin"}</p>
+        <h1 className="text-2xl font-black text-[#ff003c] tracking-widest uppercase mb-4">{t("bomb.title" as never) || "BOMBA"}</h1>
+        <p className="text-gray-400">{t("bomb.watchMainScreen" as never) || "Ana ekranı takip edin"}</p>
       </div>
     );
   }
@@ -227,7 +229,7 @@ export function PlayerBombController({ room, player }: Props) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-black text-white p-6 text-center">
       <div className="w-12 h-12 border-4 border-[#ff003c] border-t-transparent rounded-full animate-spin mb-4" />
-      <p className="text-gray-400 uppercase tracking-widest">{t("game.loading" as any) || "YÜKLENİYOR..."}</p>
+      <p className="text-gray-400 uppercase tracking-widest">{t("game.loading" as never) || "YÜKLENİYOR..."}</p>
     </div>
   );
 }

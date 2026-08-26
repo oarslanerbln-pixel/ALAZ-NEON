@@ -26,8 +26,8 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
   useEffect(() => {
     if (activePlayers.length === 0) return; // Game over or no players
 
-    // If there is no target, pick one randomly (only the host should do this to avoid race conditions, but since host is rendering this, it's fine)
-    if (!room.overload_target_id) {
+    // If there is no target, or the target has left/disconnected, pick one randomly (only the host should do this to avoid race conditions, but since host is rendering this, it's fine)
+    if (!room.overload_target_id || !activePlayers.find(p => p.id === room.overload_target_id)) {
       const nextTarget = activePlayers[Math.floor(Math.random() * activePlayers.length)];
       updateRoomStatus("playing", {
         overload_target_id: nextTarget.id,
@@ -60,10 +60,10 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
       // Boom! Time's up!
       if (remaining === 0) {
         setIsExploding(true);
-        SoundManager.getInstance().playSFX(sounds.WRONG); // Or specific explosion
+        SoundManager.getInstance().playSFX(sounds.FAILURE); // Or specific explosion
         
         // Eliminate player
-        const newEliminated = [...(room.overload_eliminated_ids || []), room.overload_target_id];
+        const newEliminated: string[] = [...(room.overload_eliminated_ids || []), room.overload_target_id as string];
         
         setTimeout(() => {
           updateRoomStatus("playing", {
@@ -84,7 +84,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
   // Sound for target change
   useEffect(() => {
     if (room.overload_target_id && !isExploding) {
-      SoundManager.getInstance().playSFX(sounds.POP);
+      SoundManager.getInstance().playSFX(sounds.CLICK);
     }
   }, [room.overload_target_id, isExploding]);
 
