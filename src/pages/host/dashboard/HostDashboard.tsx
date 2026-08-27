@@ -78,6 +78,11 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
 
   const handleStartGame = (game: GameType) => {
     if (["scattegories", "quiz", "bomb", "sensor"].includes(game)) {
+      // gameMode "team" olarak kalmış olabilir (bir önceki Arena oturumundan
+      // bu dashboard state'i sıfırlanmıyor). Quiz/Bomba/Sensör takımı hiç
+      // kullanmasa da room.game_mode="team" yazılırsa PlayerJoin oyunculardan
+      // hiçbir işe yaramayacak bir takım adı istemeye devam ediyordu.
+      if (game !== "scattegories") setGameMode("individual");
       setSetupGameMode(game);
     } else {
       executeStartGame(game);
@@ -447,30 +452,37 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                       </select>
                     </div>
 
-                    {/* Game Mode */}
-                    <div>
-                      <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
-                        {t("setup.gameModeLabel", "Oyun Modu")}
-                      </label>
-                      <div className="grid grid-cols-2 gap-4">
-                        <button
-                          onClick={() => setGameMode("individual")}
-                          className={`py-3 font-sans font-black text-xs uppercase tracking-widest transition-all border-[0.5px] rounded-none ${
-                            gameMode === "individual" ? "bg-white text-black border-white" : "bg-black/60 border-white/20 text-gray-400 hover:border-white/40"
-                          }`}
-                        >
-                          {t("setup.individual", "Bireysel")}
-                        </button>
-                        <button
-                          onClick={() => setGameMode("team")}
-                          className={`py-3 font-sans font-black text-xs uppercase tracking-widest transition-all border-[0.5px] rounded-none ${
-                            gameMode === "team" ? "bg-alaz-orange text-black border-alaz-orange" : "bg-black/60 border-white/20 text-gray-400 hover:border-alaz-orange/40"
-                          }`}
-                        >
-                          {t("setup.team", "Takım")}
-                        </button>
+                    {/* Game Mode — yalnızca Arena (scattegories) takım modunu
+                        gerçekten uyguluyor: puanlar takım bazında toplanıyor,
+                        katılımda takım adı soruluyor. Quiz her zaman bireysel
+                        sıralama gösteriyor, Bomba da yaşamları/hedefi hep
+                        bireysel oyuncu bazında tutuyor — ikisinde de bu seçim
+                        hiçbir şeyi değiştirmiyordu, sadece hostu yanıltıyordu. */}
+                    {setupGameMode === "scattegories" && (
+                      <div>
+                        <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
+                          {t("setup.gameModeLabel", "Oyun Modu")}
+                        </label>
+                        <div className="grid grid-cols-2 gap-4">
+                          <button
+                            onClick={() => setGameMode("individual")}
+                            className={`py-3 font-sans font-black text-xs uppercase tracking-widest transition-all border-[0.5px] rounded-none ${
+                              gameMode === "individual" ? "bg-white text-black border-white" : "bg-black/60 border-white/20 text-gray-400 hover:border-white/40"
+                            }`}
+                          >
+                            {t("setup.individual", "Bireysel")}
+                          </button>
+                          <button
+                            onClick={() => setGameMode("team")}
+                            className={`py-3 font-sans font-black text-xs uppercase tracking-widest transition-all border-[0.5px] rounded-none ${
+                              gameMode === "team" ? "bg-alaz-orange text-black border-alaz-orange" : "bg-black/60 border-white/20 text-gray-400 hover:border-alaz-orange/40"
+                            }`}
+                          >
+                            {t("setup.team", "Takım")}
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </>
                 )}
 

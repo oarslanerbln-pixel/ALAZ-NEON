@@ -226,9 +226,12 @@ export function HostSensorDisplay({
             {/* 30 seconds blur animation from 50px to 0px */}
             <motion.img 
               src={currentImage.url}
+              // Kurulum ekranı Sensör için "Tur Süresi" seçtiriyor (30/45/60/90sn)
+              // ama bu animasyon süresi 30'da sabit kodluydu — host hangi süreyi
+              // seçerse seçsin blur açılışı hep 30 saniye sürüyordu.
               initial={{ filter: "blur(50px)", scale: 1.2 }}
               animate={{ filter: "blur(0px)", scale: 1 }}
-              transition={{ duration: 30, ease: "linear" }}
+              transition={{ duration: room.timer_setting || 30, ease: "linear" }}
               className="w-full h-full object-cover"
             />
             <div className="absolute top-4 right-4 bg-black/80 px-4 py-2 text-purple-400 font-bold uppercase tracking-widest text-sm rounded animate-pulse">
