@@ -11,6 +11,7 @@ import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { HostLobby } from "../views/HostLobby";
 import { HostPodium } from "../views/HostPodium";
+import { HostTutorial } from "../components/HostTutorial";
 import { useLocale } from "../../../hooks/useLocale";
 import { grantGameRewards } from "../../../lib/rewards";
 import { useVenue } from "../../../contexts/VenueContextCore";
@@ -97,6 +98,15 @@ export function HostSensorDisplay({
       sensor_buzzer_timestamp: null,
       sensor_player_answer: null
     });
+  };
+
+  // Dashboard'dan başlatıldığında bu oyun artık "tutorial" durumundan geçiyor
+  // (bkz. HostDashboard.executeStartGame). Quiz/Bomba'nın kendi
+  // handleTutorialComplete'leri gibi, burada set edilmiş sensor_current_media
+  // vb. alanlara dokunmadan sadece bir sonraki duruma geçiyor.
+  const handleTutorialComplete = async () => {
+    if (!roomId) return;
+    await updateRoomStatus("sensor_intro");
   };
 
   const startRound = async () => {
@@ -201,7 +211,11 @@ export function HostSensorDisplay({
       <HostHeader room={room} onEndGameEarly={() => { grantSensorRewards(); updateRoomStatus("finished"); }} />
 
       <div className="flex-1 flex flex-col items-center justify-center p-8 relative z-10">
-        
+
+        {gameState === "tutorial" && (
+          <HostTutorial room={room} onComplete={handleTutorialComplete} />
+        )}
+
         {gameState === "sensor_intro" && currentImage && (
           <motion.div 
             initial={{ opacity: 0, scale: 0.8 }}
