@@ -9,6 +9,7 @@ import { HostHeader } from "../components/HostHeader";
 import type { Room, Player, GameType } from "../../../types/database";
 
 import { getRandomSensorImage } from "../../../data/sensorImages";
+import { getQuizQuestions } from "../../../lib/quizQuestions";
 import { getCategoryPresets } from "../../../lib/categoryPresets";
 import { useToast } from "../../../contexts/ToastContextCore";
 import { useLocale } from "../../../hooks/useLocale";
@@ -101,13 +102,63 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     let initialStatus: Room["status"] = "lobby";
     let extraUpdates: Partial<Room> = { active_game: game, ...settings };
 
-    if (game === "quiz") initialStatus = "quiz_intro";
-    if (game === "bomb") initialStatus = "bomb_intro";
+    // Quiz/Bomba/Sensör'ün KENDİ ekranları (HostQuizDisplay/HostBombDisplay/
+    // HostSensorDisplay) her birinin "quiz_intro"/"bomb_intro"/"sensor_intro"
+    // aşamasının ihtiyaç duyduğu verileri (sırasıyla quiz_questions, hedef
+    // oyuncu + kategori, ilk görsel) kendi dahili "Oyunu Başlat" akışlarında
+    // dolduruyor. Bu Dashboard'daki asıl (üretimde kullanılan) başlatma yolu
+    // ise o adımı hiç atlamıyordu — sadece status'u doğrudan "..._intro"ya
+    // yazıp gerekli alanları HİÇ SET ETMEDEN geçiyordu. Sonuç: Quiz "Soru
+    // Yükleniyor" ekranında sonsuza kadar takılı kalıyordu (quiz_questions
+    // hiç yoktu), Bomba ise kategori göstermeyen bir intro'dan sonra hedefsiz,
+    // donmuş bir zamanlayıcıyla tamamen boş bir ekrana düşüyordu (bomb_target_player
+    // hiç yoktu). Aşağıda her iki oyun için de gerekli veriler burada
+    // dolduruluyor — üç mod da artık aynı zamanda kısa bir "nasıl oynanır"
+    // ekranından geçiyor (tutorial_step:0 + status:"tutorial"), bu da hazır
+    // ve çevrilmiş ama daha önce hiç tetiklenmeyen tanıtım içeriğini devreye
+    // sokuyor. HostXDisplay bileşenlerindeki handleTutorialComplete zaten bu
+    // alanları koruyarak bir sonraki duruma geçiyor (updateDoc sadece verilen
+    // alanları güncelliyor, gerisini olduğu gibi bırakıyor).
+    if (game === "quiz") {
+      const totalRounds = settings?.total_rounds ?? room.total_rounds;
+      const questions = getQuizQuestions(room.locale, totalRounds);
+      initialStatus = "tutorial";
+      extraUpdates = {
+        ...extraUpdates,
+        tutorial_step: 0,
+        current_question_index: 0,
+        quiz_questions: questions,
+      };
+    }
+    if (game === "bomb") {
+      const activePlayers = players.filter((p) => (p.lives === undefined ? 3 : p.lives) > 0);
+      const categories = settings?.categories ?? room.categories;
+      // Oyuncu ya da kategori yoksa (host'un aceleyle, kimse katılmadan
+      // butona basması gibi) kırık bir oyun durumuna düşmek yerine güvenle
+      // "lobby"ye düşüyoruz — Bomba'nın kendi HostLobby'si zaten en az bir
+      // oyuncu şartını koyuyor.
+      if (activePlayers.length > 0 && categories.length > 0) {
+        const randomPlayer = activePlayers[Math.floor(Math.random() * activePlayers.length)];
+        const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+        initialStatus = "tutorial";
+        extraUpdates = {
+          ...extraUpdates,
+          tutorial_step: 0,
+          current_round: 1,
+          bomb_target_player: randomPlayer.id,
+          active_letter: randomCategory,
+          used_bomb_categories: [randomCategory],
+          used_words: [],
+          bomb_speed_multiplier: 1.0,
+        };
+      }
+    }
     if (game === "sensor") {
       const firstImg = getRandomSensorImage([]);
-      initialStatus = "sensor_intro";
+      initialStatus = "tutorial";
       extraUpdates = {
-        active_game: game,
+        ...extraUpdates,
+        tutorial_step: 0,
         current_round: 0,
         used_sensor_images: [firstImg.id],
         sensor_current_media: firstImg.url,
