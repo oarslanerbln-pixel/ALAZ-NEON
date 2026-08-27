@@ -281,25 +281,122 @@ export const deQuestions: QuizQuestion[] = [
     id: "de_hard_3",
     text: "Wie heißt der längste Fluss der Erde?",
     options: { A: "Amazonas", B: "Nil", C: "Jangtsekiang", D: "Mississippi" },
-    correctOption: "B", 
+    correctOption: "B",
     difficulty: 3,
+  },
+  // Expanded Questions — the German pool had only 9 questions while Turkish
+  // had 29; with up to 10 selectable rounds in Host Setup, a German-language
+  // quiz game would repeat a question by round 10. Brought up to parity.
+  {
+    id: "de_exp_1",
+    text: "Wie heißt der höchste Berg der Welt?",
+    options: { A: "K2", B: "Mount Everest", C: "Kilimandscharo", D: "Mont Blanc" },
+    correctOption: "B",
+    difficulty: 1,
+  },
+  {
+    id: "de_exp_2",
+    text: "Welches Tier wird als „Wüstenschiff“ bezeichnet?",
+    options: { A: "Kamel", B: "Pferd", C: "Elefant", D: "Lama" },
+    correctOption: "A",
+    difficulty: 1,
+  },
+  {
+    id: "de_exp_3",
+    text: "Wie viele Bundesländer hat Deutschland?",
+    options: { A: "14", B: "15", C: "16", D: "17" },
+    correctOption: "C",
+    difficulty: 1,
+  },
+  {
+    id: "de_exp_4",
+    text: "Wie lautet die chemische Formel von Wasser?",
+    options: { A: "CO2", B: "O2", C: "H2O", D: "NaCl" },
+    correctOption: "C",
+    difficulty: 1,
+  },
+  {
+    id: "de_exp_5",
+    text: "Wer schrieb „Romeo und Julia“?",
+    options: { A: "Charles Dickens", B: "William Shakespeare", C: "Victor Hugo", D: "Leo Tolstoi" },
+    correctOption: "B",
+    difficulty: 2,
+  },
+  {
+    id: "de_exp_6",
+    text: "Wie lauten die ersten drei Nachkommastellen von Pi?",
+    options: { A: "3.12", B: "3.14", C: "3.16", D: "3.18" },
+    correctOption: "B",
+    difficulty: 2,
+  },
+  {
+    id: "de_exp_7",
+    text: "Was kommt der Lichtgeschwindigkeit am nächsten?",
+    options: { A: "Schallgeschwindigkeit", B: "Windgeschwindigkeit", C: "Elektronengeschwindigkeit", D: "Sonnenwindgeschwindigkeit" },
+    correctOption: "C",
+    difficulty: 3,
+  },
+  {
+    id: "de_exp_8",
+    text: "Welche der folgenden Zahlen ist keine Primzahl?",
+    options: { A: "2", B: "7", C: "9", D: "11" },
+    correctOption: "C",
+    difficulty: 2,
+  },
+  {
+    id: "de_exp_9",
+    text: "Wo befindet sich der kleinste Knochen des menschlichen Körpers?",
+    options: { A: "Ohr", B: "Nase", C: "Kleiner Finger", D: "Fuß" },
+    correctOption: "A",
+    difficulty: 3,
+  },
+  {
+    id: "de_exp_10",
+    text: "Wer gilt als die erste Computerprogrammiererin der Geschichte?",
+    options: { A: "Alan Turing", B: "Ada Lovelace", C: "Charles Babbage", D: "Bill Gates" },
+    correctOption: "B",
+    difficulty: 3,
+  },
+  {
+    id: "de_exp_11",
+    text: "Wie viele Figuren hat jede Seite zu Beginn einer Schachpartie?",
+    options: { A: "12", B: "14", C: "16", D: "18" },
+    correctOption: "C",
+    difficulty: 1,
   }
 ];
 
 export function getQuizQuestions(locale: string = "tr", count: number = 5): QuizQuestion[] {
-  const pool = locale.startsWith("de") ? [...deQuestions] : [...trQuestions];
-  
-  // Shuffle the pool
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
+  const basePool = locale.startsWith("de") ? deQuestions : trQuestions;
+
+  const shuffle = (arr: QuizQuestion[]) => {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  };
+
+  // Draw without replacement for as long as the pool allows (each locale's
+  // pool comfortably covers every selectable round count in Host Setup, so
+  // this is the common case and never repeats a question within a single
+  // game). Only if `count` exceeds the pool size do we start a fresh
+  // shuffled "lap" — still never repeating within a lap, and never repeating
+  // the previous lap's last question back-to-back across the seam.
+  const result: QuizQuestion[] = [];
+  let lap = shuffle(basePool);
+  while (result.length < count) {
+    if (lap.length === 0) {
+      const nextLap = shuffle(basePool);
+      const prev = result[result.length - 1];
+      if (prev && nextLap[0]?.id === prev.id && nextLap.length > 1) {
+        [nextLap[0], nextLap[1]] = [nextLap[1], nextLap[0]];
+      }
+      lap = nextLap;
+    }
+    result.push(lap.shift()!);
   }
 
-  // Return exactly 'count' questions, repeating if necessary
-  const result: QuizQuestion[] = [];
-  for (let i = 0; i < count; i++) {
-    result.push(pool[i % pool.length]);
-  }
-  
   return result;
 }

@@ -260,30 +260,26 @@ function HostDisplayGame({
       return;
     }
 
-    // 1. SENTINEL FILTER: Remove shadowbanned players and sanitize payloads
-    const safeAnswers: Answer[] = [];
-    for (const ans of rawAnswers) {
-      if (Sentinel.radar.isShadowbanned(ans.player_id)) {
-        console.warn(
-          `[SENTINEL] Dropping answer from shadowbanned player: ${ans.player_id}`,
-        );
-        continue;
-      }
-
-      // Sanitize all category inputs
+    // 1. SENTINEL: Sanitize every answer payload (defense-in-depth against
+    // malicious/XSS input). We intentionally do NOT auto-drop answers flagged
+    // by the speed-anomaly radar anymore — that used to silently zero a real
+    // player's score for the rest of the game (clock drift or just fast
+    // typing could trigger it) with no way for the host to see or undo it.
+    // The radar still runs and logs anomalies to the console for visibility;
+    // actually rejecting an answer is left to the host via the Review screen.
+    const safeAnswers: Answer[] = rawAnswers.map((ans) => {
       const safeData: Record<string, string> = {};
       if (ans.data) {
         for (const [cat, val] of Object.entries(ans.data)) {
           Reflect.set(safeData, cat, Sentinel.crypto.sanitizePayload(val || ""));
         }
       }
-
-      safeAnswers.push({ ...ans, data: safeData });
-    }
+      return { ...ans, data: safeData };
+    });
 
     if (safeAnswers.length === 0) {
       setIsAnalyzing(false);
-      return; // Everyone was a bot, or no valid answers
+      return; // No answers submitted this round
     }
 
     // Use the safe, sanitized answers
@@ -455,8 +451,26 @@ function HostDisplayGame({
         const targetAns = Reflect.get(res.answers, category);
         const wasValid = targetAns.isValid;
         const newValid = !wasValid;
-        const newPoints = newValid ? (targetAns.isUnique ? 20 : 10) : 0;
-        const pointDiff = newPoints - (wasValid ? targetAns.points : 0);
+
+        // Recompute points with the same base + Joker rules calculateRoundScores
+        // uses (x2 for a valid Joker answer, -10 penalty for an invalid one) so
+        // manually approving/rejecting an answer in Review never silently
+        // strips a player's Joker multiplier or penalty.
+        const newPoints = targetAns.isJoker
+          ? newValid
+            ? targetAns.isUnique
+              ? 40
+              : 20
+            : -10
+          : newValid
+            ? targetAns.isUnique
+              ? 20
+              : 10
+            : 0;
+        // targetAns.points already reflects the correct current value in every
+        // case (including the -10 Joker penalty when invalid), so diff against
+        // it directly instead of assuming "invalid" always means 0.
+        const pointDiff = newPoints - targetAns.points;
 
         const updatedResult = {
           ...res,

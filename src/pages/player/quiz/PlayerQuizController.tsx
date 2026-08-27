@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { collection, addDoc, query, where, getDocs, limit, serverTimestamp } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { AnimatePresence, motion } from "framer-motion";
@@ -19,6 +19,14 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [gameState, setGameState] = useState(room.status);
 
+  // Senkron çift-gönderim kilidi. React state (hasSubmitted) asenkron
+  // güncellendiği için aynı olay döngüsü tiki içinde gelen iki dokunuş
+  // (mobil "ghost click" çift tetiklemesi gibi) ikisi de hasSubmitted'i
+  // henüz false görüp iki cevap dokümanı yazabiliyordu. Host tarafı artık
+  // oyuncu başına tekilleştirip çift puanlamayı engelliyor, ama gereksiz
+  // ikinci bir Firestore yazmasını burada engellemek daha temiz.
+  const hasSubmittedRef = useRef(false);
+
   // Oda durumunu RENDER sırasında senkronla (React'in "prop değişince state'i
   // ayarla" deseni). Effect içinde yapmak fazladan bir render turu doğuruyordu.
   if (room.status !== gameState) {
@@ -34,6 +42,14 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
     setGameState(room.status);
   }
 
+  // Refs must not be mutated during render, so mirror hasSubmitted into the
+  // ref here instead (handleSubmit still sets the ref synchronously and
+  // ahead of setHasSubmitted for the actual double-tap guard — this just
+  // keeps the ref in sync for the "new question" reset above).
+  useEffect(() => {
+    hasSubmittedRef.current = hasSubmitted;
+  }, [hasSubmitted]);
+
   // Check if player already submitted for this question
   useEffect(() => {
     const checkSubmission = async () => {
@@ -48,6 +64,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
         );
         const snapshot = await getDocs(q);
         if (!snapshot.empty) {
+          hasSubmittedRef.current = true;
           setHasSubmitted(true);
           setSelectedOption(snapshot.docs[0].data().data.selectedOption);
         }
@@ -57,7 +74,8 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
   }, [room.status, room.id, player.id, room.current_question_index, hasSubmitted]);
 
   const handleSubmit = useCallback(async (option: string) => {
-    if (hasSubmitted) return;
+    if (hasSubmittedRef.current) return;
+    hasSubmittedRef.current = true;
 
     haptics.tap();
     SoundManager.getInstance().playSFX(sounds.CLICK);
@@ -78,10 +96,11 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
       haptics.success();
     } catch (err) {
       console.error("Failed to submit quiz answer", err);
+      hasSubmittedRef.current = false;
       setHasSubmitted(false);
       setSelectedOption(null);
     }
-  }, [hasSubmitted, room.id, room.current_question_index, player.id]);
+  }, [room.id, room.current_question_index, player.id]);
 
   // Auto-submit on time up. Gönderimi bir tik sonraya alıyoruz: effect içinde
   // senkron setState zincirleme render doğuruyor (PlayerGame'deki otomatik
