@@ -40,6 +40,25 @@ export function PlayerJoin() {
     setNicknamePrefilledFrom(profile.nickname);
   }
 
+  // App.tsx'in kökünde `useAuth()` HERKESİ (bu sayfaya daha PhoneAuth hiç
+  // görünmeden) otomatik olarak anonim oturuma açıyor — bu tüm uygulama için
+  // tek bir global Firebase Auth örneği, yani o anonim oturum bu sayfanın
+  // KENDİ onAuthStateChanged dinleyicisine de anında yansıyordu. Sonuç: bu
+  // sayfa `!currentUser` kontrolüyle "giriş yapılmış mı" diye bakıyordu ama
+  // anonim oturum zaten bunu karşılıyordu — PhoneAuth ekranı bir anlığına
+  // görünüp oyuncu daha numarasını yazmadan katılım formuna geçiyordu.
+  // Telefonla doğrulama böylece FİİLEN hiç zorunlu olmuyordu: leaderboard,
+  // ödül ve lig sistemi gerçek bir telefon numarasına değil, rastgele bir
+  // anonim uid'e bağlanabiliyordu. isAnonymous kontrolü, gerçekten "phone"
+  // sağlayıcısıyla doğrulanmış bir oturum gelene kadar PhoneAuth'u açık
+  // tutuyor (bkz. RewardVerify/NightlyReport'taki providerId === "password"
+  // ile aynı desen, oradaki de aynı sebepten anonim oturumu personel girişi
+  // saymıyor).
+  const isPhoneVerified =
+    !!currentUser &&
+    !currentUser.isAnonymous &&
+    currentUser.providerData.some((p) => p.providerId === "phone");
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
@@ -198,7 +217,7 @@ export function PlayerJoin() {
               <div className="flex justify-center items-center py-10">
                 <span className="text-alaz-orange font-bold uppercase tracking-widest animate-pulse">CONNECTING...</span>
               </div>
-            ) : !currentUser ? (
+            ) : !isPhoneVerified ? (
               <PhoneAuth onSuccess={() => {}} />
             ) : (
               <>

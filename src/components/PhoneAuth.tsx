@@ -22,6 +22,21 @@ interface PhoneAuthProps {
   onCancel?: () => void;
 }
 
+/**
+ * Kullanıcının yazdığı ham rakamlardan baştaki tek bir "0"ı (varsa) atar.
+ * "+90" arayüzde zaten sabit gösterildiği için beklenen format 10 haneli
+ * "555 123 4567" — ama Türkiye'de insanlar numaralarını neredeyse hep
+ * başında "0" ile söyler/yazar ("0555 123 45 67"). input eskiden maxLength=10
+ * idi: kullanıcı "0" ile başlarsa 10. hanede kesiliyor, sonra bu "0" atılıyor
+ * ve elde "555123456" gibi 9 haneli (SON HANESİ EKSİK) bir numara kalıyordu —
+ * SMS ya hiç gitmiyor ya da yanlış/eksik bir numaraya gidiyordu. Artık 11
+ * haneye kadar yazılabiliyor ve gerçek 10 haneyi her durumda bu fonksiyon
+ * belirliyor.
+ */
+function normalizeDigits(raw: string): string {
+  return raw.startsWith("0") ? raw.slice(1) : raw;
+}
+
 export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
@@ -48,15 +63,17 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
     };
   }, []);
 
+  const digits = normalizeDigits(phoneNumber);
+
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phoneNumber) return;
-    
+    if (digits.length !== 10) return;
+
     setError("");
     setLoading(true);
 
     try {
-      const formattedNumber = phoneNumber.startsWith("+") ? phoneNumber : `+90${phoneNumber.replace(/^0/, '')}`;
+      const formattedNumber = `+90${digits}`;
       const appVerifier = window.recaptchaVerifier;
       if (!appVerifier) {
         setError("ERR: RECAPTCHA NOT READY. TRY AGAIN.");
@@ -135,7 +152,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
               <input
                 type="tel"
                 required
-                maxLength={10}
+                maxLength={11}
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ''))}
                 placeholder="555 123 4567"
@@ -143,16 +160,16 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
               />
             </div>
           </div>
-          
+
           <motion.button
             whileHover={!loading ? { scale: 1.01, backgroundColor: "rgba(255, 77, 0, 0.2)" } : {}}
             whileTap={!loading ? { scale: 0.99 } : {}}
             type="submit"
-            disabled={loading || phoneNumber.length < 10}
+            disabled={loading || digits.length !== 10}
             className={`w-full py-5 border-2 transition-all font-bold tracking-[0.3em] uppercase text-sm mt-8 ${
               loading
                 ? "border-gray-700 text-gray-500 cursor-not-allowed"
-                : phoneNumber.length === 10
+                : digits.length === 10
                   ? "border-[#ff003c] text-[#ff003c] bg-[#ff003c]/10 hover:shadow-[0_0_20px_rgba(255,0,60,0.4)]"
                   : "border-alaz-orange/30 text-alaz-orange/50 hover:border-alaz-orange hover:text-alaz-orange"
             }`}
