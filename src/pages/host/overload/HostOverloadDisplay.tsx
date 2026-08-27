@@ -2,6 +2,8 @@ import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { SoundManager, sounds } from "../../../lib/audio";
+import { HostHeader } from "../components/HostHeader";
+import { TVScaleFrame } from "../../../components/TVScaleFrame";
 
 interface HostOverloadDisplayProps {
   room: Room;
@@ -24,7 +26,22 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
 
   // Host Logic (Server Authoritative)
   useEffect(() => {
-    if (activePlayers.length === 0) return; // Game over or no players
+    // Oyun BAŞTAN 1 oyuncuyla başlatılırsa (HostLobby genel bir bileşen ve
+    // burada özel bir minimum oyuncu şartı koymuyor) eski kod şuna
+    // takılıyordu: tek oyuncu her seferinde kendi kendine "hedef" seçiliyor,
+    // süresi dolup elendiğinde activePlayers 0'a düşüyor, "kazanan" kontrolü
+    // (eskiden yalnızca tam olarak ===1 VE en az bir eleme olmuşsa tetiklenen)
+    // hiç çalışmıyordu — oyun sonsuza dek "boş hedef" ekranında donuyordu ve
+    // (aşağıda eklenen HostHeader'dan önce) çıkış için hiçbir buton da yoktu.
+    // Kazanma/bitiş kontrolünü EN BAŞA aldık ve <= 1 (0 dahil) yaptık, böylece
+    // hem normal çok oyunculu bitiş hem de bu marjinal tek oyunculu durum
+    // güvenle sonuçlanıyor.
+    if (activePlayers.length <= 1) {
+      setTimeout(() => {
+        updateRoomStatus("standings", { active_game: "none" });
+      }, activePlayers.length === 1 ? 5000 : 0);
+      return;
+    }
 
     // If there is no target, or the target has left/disconnected, pick one randomly (only the host should do this to avoid race conditions, but since host is rendering this, it's fine)
     if (!room.overload_target_id || !activePlayers.find(p => p.id === room.overload_target_id)) {
@@ -33,16 +50,6 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
         overload_target_id: nextTarget.id,
         overload_start_time: Date.now()
       });
-      return;
-    }
-
-    // Check if the game is won (only 1 player left)
-    if (activePlayers.length === 1 && (room.overload_eliminated_ids?.length || 0) > 0) {
-      // We have a winner!
-      // In a real app we might route to podium, but for now let's just go to standings
-      setTimeout(() => {
-        updateRoomStatus("standings", { active_game: "none" });
-      }, 5000);
       return;
     }
 
@@ -88,17 +95,40 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
     }
   }, [room.overload_target_id, isExploding]);
 
-  if (activePlayers.length === 1 && (room.overload_eliminated_ids?.length || 0) > 0) {
+  const handleEndGameEarly = () => {
+    updateRoomStatus("standings", { active_game: "none" }).catch((err) =>
+      console.error("[HostOverloadDisplay] Erken bitirme başarısız:", err),
+    );
+  };
+
+  // activePlayers.length <= 1 kapsıyor: normal çok-oyunculu bitişte tam 1
+  // hayatta kalan olur (şampiyon gösterilir); tek-oyuncuyla başlatılmış
+  // marjinal durumda 0'a da düşebilir — orada "şampiyon" göstermek yerine
+  // nötr bir bitiş mesajı veriyoruz, activePlayers[0] burada olmayabilir.
+  if (activePlayers.length <= 1) {
+    const champion = activePlayers[0];
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center bg-[#050505]">
-        <h1 className="text-6xl text-cyan-400 font-black uppercase tracking-widest animate-pulse">ŞAMPİYON</h1>
-        <h2 className="text-8xl text-white font-black mt-4 uppercase">{activePlayers[0].nickname}</h2>
-      </div>
+      <TVScaleFrame>
+        <div className="w-full h-full flex flex-col p-4 bg-[#050505]">
+          <HostHeader room={room} onEndGameEarly={handleEndGameEarly} />
+          <div className="flex-1 flex flex-col items-center justify-center">
+            <h1 className="text-6xl text-cyan-400 font-black uppercase tracking-widest animate-pulse">
+              {champion ? "ŞAMPİYON" : "OYUN BİTTİ"}
+            </h1>
+            {champion && (
+              <h2 className="text-8xl text-white font-black mt-4 uppercase">{champion.nickname}</h2>
+            )}
+          </div>
+        </div>
+      </TVScaleFrame>
     );
   }
 
   return (
-    <div className="relative w-full h-full bg-[#050505] overflow-hidden flex flex-col items-center justify-center font-sans">
+    <TVScaleFrame>
+    <div className="relative w-full h-full bg-[#050505] overflow-hidden flex flex-col p-4 font-sans">
+      <HostHeader room={room} onEndGameEarly={handleEndGameEarly} />
+      <div className="relative flex-1 overflow-hidden flex flex-col items-center justify-center">
       {/* Strategy 5: Neon Grid Background */}
       <div className="absolute inset-0 pointer-events-none opacity-30 bg-[linear-gradient(rgba(0,255,255,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.2)_1px,transparent_1px)] bg-[size:40px_40px] [transform:perspective(1000px)_rotateX(60deg)_translateY(-100px)_translateZ(-200px)]" />
       <div className="absolute top-0 w-full h-full bg-gradient-to-t from-transparent via-[#050505]/80 to-[#050505] pointer-events-none" />
@@ -184,6 +214,8 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
+    </TVScaleFrame>
   );
 }
