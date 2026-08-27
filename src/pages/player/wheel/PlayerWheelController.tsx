@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { updateDoc, doc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
@@ -16,12 +16,20 @@ export function PlayerWheelController({ room, player }: Props) {
   const { venue } = useVenue();
   const slices = venue.wheel_slices?.length ? venue.wheel_slices : DEFAULT_VENUE_CONFIG.wheel_slices!;
   const [isSpinning, setIsSpinning] = useState(false);
+  // isSpinning React state'i asenkron; aynı tik içinde gelen çift dokunma
+  // ikisi de isSpinning'i henüz false görüp İKİ FARKLI rastgele sonuç
+  // hesaplayıp yazabiliyordu. Host'un animasyonu sadece İLK gördüğü değere
+  // kilitleniyor (hasSpunRef), ama Firestore'da SON yazılan değer kalıyordu —
+  // yani çark görsel olarak bir dilimde durup ekranda BAŞKA bir ödülün adını
+  // gösterebiliyordu. Senkron ref ile tek yazıma indiriyoruz.
+  const isSpinningRef = useRef(false);
 
   const isMyTurn = room.wheel_spinner_id === player.id;
   const showSpinButton = room.status === "wheel_active" && isMyTurn && room.wheel_result_index === null;
 
   const handleSpinClick = async () => {
-    if (isSpinning) return;
+    if (isSpinningRef.current) return;
+    isSpinningRef.current = true;
     setIsSpinning(true);
     SoundManager.getInstance().playSFX(sounds.START);
 
@@ -46,6 +54,7 @@ export function PlayerWheelController({ room, player }: Props) {
       });
     } catch (error) {
       console.error("Error spinning wheel:", error);
+      isSpinningRef.current = false;
       setIsSpinning(false);
     }
   };
