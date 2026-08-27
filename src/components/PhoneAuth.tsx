@@ -3,6 +3,8 @@ import { auth } from "../lib/firebase";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import type { ConfirmationResult } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocale } from "../hooks/useLocale";
+import type { Locale } from "../lib/i18n";
 
 // grecaptcha isn't part of the DOM lib types — it's injected by the reCAPTCHA
 // script Firebase Auth loads. Only the bits used here are declared.
@@ -22,22 +24,55 @@ interface PhoneAuthProps {
   onCancel?: () => void;
 }
 
+interface Country {
+  dialCode: string; // no "+"
+  iso: string;
+  flag: string;
+  label: string;
+  // Mobile national numbers aren't a fixed length everywhere — Turkish
+  // numbers are always exactly 10 digits, German ones commonly run 10 or 11.
+  // A single hardcoded "must be exactly 10" (this component's original
+  // assumption) silently rejects a large share of real German numbers.
+  minDigits: number;
+  maxDigits: number;
+}
+
+// Oyun Berlin'de pazarlanacak: yerel (+49) VE Berlin'in çok büyük Türk
+// topluluğu (+90) aynı gecede aynı barda oynayabilir. Tek bir ülke kodunu
+// sabitlemek yerine ikisi arasında seçim sunuyoruz — varsayılan, arayüz
+// diline göre seçiliyor (aşağıya bkz.), ama oyuncu istediği an değiştirebilir.
+const COUNTRIES: Country[] = [
+  { dialCode: "49", iso: "DE", flag: "🇩🇪", label: "Deutschland", minDigits: 10, maxDigits: 11 },
+  { dialCode: "90", iso: "TR", flag: "🇹🇷", label: "Türkiye", minDigits: 10, maxDigits: 10 },
+];
+
+function defaultCountryForLocale(locale: Locale): Country {
+  // "tr" arayüzü seçiliyse muhtemelen Türkçe konuşan bir oyuncu — Türkiye
+  // numarasını öne çıkar. "de"/"en" (ve her ihtimalde) Berlin'deki asıl
+  // dağıtım pazarı olan Almanya'ya düş.
+  return COUNTRIES.find((c) => c.iso === (locale === "tr" ? "TR" : "DE")) || COUNTRIES[0];
+}
+
 /**
  * Kullanıcının yazdığı ham rakamlardan baştaki tek bir "0"ı (varsa) atar.
- * "+90" arayüzde zaten sabit gösterildiği için beklenen format 10 haneli
- * "555 123 4567" — ama Türkiye'de insanlar numaralarını neredeyse hep
- * başında "0" ile söyler/yazar ("0555 123 45 67"). input eskiden maxLength=10
- * idi: kullanıcı "0" ile başlarsa 10. hanede kesiliyor, sonra bu "0" atılıyor
- * ve elde "555123456" gibi 9 haneli (SON HANESİ EKSİK) bir numara kalıyordu —
- * SMS ya hiç gitmiyor ya da yanlış/eksik bir numaraya gidiyordu. Artık 11
- * haneye kadar yazılabiliyor ve gerçek 10 haneyi her durumda bu fonksiyon
- * belirliyor.
+ * Ülke kodu arayüzde ayrı gösterildiği için beklenen format ülkenin ulusal
+ * numarası — ama hem Türkiye'de hem Almanya'da insanlar numaralarını
+ * neredeyse hep başında "0" ile söyler/yazar ("0555 123 45 67",
+ * "0151 2345678"). Bu tek fonksiyon her iki ülke için de aynı şekilde
+ * çalışıyor; asıl haneleri SAYAN kontrol (bkz. isValidLength) ülkeye göre
+ * ayrı bir aralık kullanıyor, sabit "tam 10" değil.
  */
 function normalizeDigits(raw: string): string {
   return raw.startsWith("0") ? raw.slice(1) : raw;
 }
 
+function isValidLength(digits: string, country: Country): boolean {
+  return digits.length >= country.minDigits && digits.length <= country.maxDigits;
+}
+
 export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
+  const { locale } = useLocale();
+  const [country, setCountry] = useState<Country>(() => defaultCountryForLocale(locale));
   const [phoneNumber, setPhoneNumber] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
@@ -54,7 +89,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
         }
       });
     }
-    
+
     return () => {
       if (window.recaptchaVerifier) {
         window.recaptchaVerifier.clear();
@@ -64,16 +99,17 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
   }, []);
 
   const digits = normalizeDigits(phoneNumber);
+  const digitsValid = isValidLength(digits, country);
 
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (digits.length !== 10) return;
+    if (!digitsValid) return;
 
     setError("");
     setLoading(true);
 
     try {
-      const formattedNumber = `+90${digits}`;
+      const formattedNumber = `+${country.dialCode}${digits}`;
       const appVerifier = window.recaptchaVerifier;
       if (!appVerifier) {
         setError("ERR: RECAPTCHA NOT READY. TRY AGAIN.");
@@ -116,7 +152,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
   return (
     <div className="w-full">
       <div id="recaptcha-container"></div>
-      
+
       <div className="text-center mb-8 flex flex-col items-center">
         <h2 className="text-2xl md:text-3xl font-bold text-[#ff003c] uppercase tracking-widest drop-shadow-[0_0_10px_rgba(255,0,60,0.8)] flex justify-center items-center gap-2">
           &gt; IDENTIFICATION <span className="w-3 h-8 bg-[#ff003c] animate-pulse" />
@@ -142,20 +178,44 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
       {!confirmationResult ? (
         <form onSubmit={handleSendCode} className="space-y-6">
           <div className="group">
-            <label className="flex items-center gap-2 text-alaz-orange/70 text-xs font-bold uppercase tracking-widest mb-2">
-              <span className="text-[#ff003c]">[ID]</span> PHONE NUMBER
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="flex items-center gap-2 text-alaz-orange/70 text-xs font-bold uppercase tracking-widest">
+                <span className="text-[#ff003c]">[ID]</span> PHONE NUMBER
+              </label>
+              {/* Ülke seçici: Berlin'de hem yerel (+49) hem çok büyük Türk
+                  topluluğu (+90) numarasıyla katılan olacak. */}
+              <div className="flex items-center gap-1">
+                {COUNTRIES.map((c) => (
+                  <button
+                    key={c.iso}
+                    type="button"
+                    onClick={() => {
+                      setCountry(c);
+                      setError("");
+                    }}
+                    aria-pressed={country.iso === c.iso}
+                    className={`px-2 py-1 text-[10px] font-black uppercase tracking-widest rounded-md transition-colors flex items-center gap-1 ${
+                      country.iso === c.iso
+                        ? "bg-alaz-orange text-black"
+                        : "bg-white/5 text-white/40 hover:text-white hover:bg-white/10"
+                    }`}
+                  >
+                    <span>{c.flag}</span> +{c.dialCode}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="flex bg-alaz-orange/5 border border-alaz-orange/30 group-focus-within:border-alaz-orange transition-colors">
               <div className="px-4 py-4 border-r border-alaz-orange/30 text-alaz-orange font-bold bg-alaz-orange/10 flex items-center justify-center">
-                +90
+                +{country.dialCode}
               </div>
               <input
                 type="tel"
                 required
-                maxLength={11}
+                maxLength={country.maxDigits + 1}
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ''))}
-                placeholder="555 123 4567"
+                placeholder={country.iso === "DE" ? "151 2345678" : "555 123 4567"}
                 className="w-full px-4 py-4 text-xl tracking-[0.2em] font-bold focus:outline-none bg-transparent text-alaz-orange placeholder:text-alaz-orange/20"
               />
             </div>
@@ -165,18 +225,18 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
             whileHover={!loading ? { scale: 1.01, backgroundColor: "rgba(255, 77, 0, 0.2)" } : {}}
             whileTap={!loading ? { scale: 0.99 } : {}}
             type="submit"
-            disabled={loading || digits.length !== 10}
+            disabled={loading || !digitsValid}
             className={`w-full py-5 border-2 transition-all font-bold tracking-[0.3em] uppercase text-sm mt-8 ${
               loading
                 ? "border-gray-700 text-gray-500 cursor-not-allowed"
-                : digits.length === 10
+                : digitsValid
                   ? "border-[#ff003c] text-[#ff003c] bg-[#ff003c]/10 hover:shadow-[0_0_20px_rgba(255,0,60,0.4)]"
                   : "border-alaz-orange/30 text-alaz-orange/50 hover:border-alaz-orange hover:text-alaz-orange"
             }`}
           >
             {loading ? "TRANSMITTING..." : "SEND SMS"}
           </motion.button>
-          
+
           {onCancel && (
             <button
               type="button"
@@ -208,7 +268,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
               />
             </div>
           </div>
-          
+
           <motion.button
             whileHover={!loading ? { scale: 1.01, backgroundColor: "rgba(255, 0, 60, 0.2)" } : {}}
             whileTap={!loading ? { scale: 0.99 } : {}}
