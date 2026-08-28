@@ -218,6 +218,42 @@ describe("rooms — sensör buzzer", () => {
   });
 });
 
+describe("rooms — overload savuşturma", () => {
+  beforeEach(() =>
+    seed({ status: "playing", overload_target_id: PLAYER_ID, overload_time_allowed: 10 })
+  );
+
+  it("hedef olan oyuncu bombayı savuşturup paslayabilir", async () => {
+    await assertSucceeds(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        overload_target_id: null,
+        overload_time_allowed: 9,
+      })
+    );
+  });
+
+  it("oyuncu savuşturma bahanesiyle oda durumunu değiştiremez", async () => {
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        overload_target_id: null,
+        status: "finished",
+      })
+    );
+  });
+
+  it("oyuncu oyun 'playing' değilken savuşturma yazamaz", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), { status: "lobby" });
+    });
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        overload_target_id: null,
+        overload_time_allowed: 9,
+      })
+    );
+  });
+});
+
 describe("rooms — host yetkisi", () => {
   beforeEach(() => seed());
 
