@@ -79,8 +79,18 @@ export function usePlayer(playerId: string | null) {
     }
 
     const delta = current - syncedScoreRef.current;
-    if (delta === 0) return;
     syncedScoreRef.current = current;
+    if (delta === 0) return;
+
+    // "Tekrar Oyna" (host resetGame) HER modda total_score'u 0'a
+    // sıfırlıyor (bkz. HostDisplayClassic/HostQuizDisplay/
+    // HostSensorDisplay/HostBombDisplay resetGame). Bu, buradan bakınca
+    // dev bir NEGATİF delta gibi görünür — kontrol etmezsek her "yeni oyun"
+    // oyuncunun kalıcı lig puanından o ana kadar kazandığını SİLERDİ. 0'a
+    // dönüşü (gerçek bir düşüş değil, oda sıfırlaması) senkron dışı bırakıp
+    // sadece yeni baseline'a geçiyoruz; küçük düzeltmeler (ör. hakem bir
+    // cevabı geçersiz kılınca puanın azalması) her zamanki gibi işleniyor.
+    if (current === 0 && delta < 0) return;
 
     const userRef = doc(db, "users", player.uid);
     updateDoc(userRef, {

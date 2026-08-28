@@ -1,9 +1,11 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
+import { grantRewardToPlayers } from "../../../lib/rewards";
+import { useVenue } from "../../../contexts/VenueContextCore";
 
 interface HostOverloadDisplayProps {
   room: Room;
@@ -14,6 +16,13 @@ interface HostOverloadDisplayProps {
 export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOverloadDisplayProps) {
   const [timeLeft, setTimeLeft] = useState<number>(room.overload_time_allowed || 10);
   const [isExploding, setIsExploding] = useState(false);
+  const { venue } = useVenue();
+  // Overload; Klasik/Quiz/Sensör/Bomba'nın hepsi kazanana grantRewardToPlayers
+  // ile venue ödülü veriyordu, Overload hiç vermiyordu — şampiyon başka hiçbir
+  // şey kazanmıyordu. hasGrantedReward, "aktif oyuncu sayısı 1'e düştü" durumu
+  // birkaç render boyunca sabit kalırken (aşağıdaki 5sn'lik standings geçişi
+  // sırasında) ödülün BİRDEN FAZLA kez verilmesini engelliyor.
+  const hasGrantedReward = useRef(false);
 
   // Active players (not eliminated)
   const activePlayers = useMemo(() => {
@@ -87,6 +96,20 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
     return () => clearInterval(interval);
   }, [room.overload_target_id, room.overload_start_time, room.overload_time_allowed, activePlayers, isExploding, updateRoomStatus, room.overload_eliminated_ids]);
 
+
+  // Şampiyona venue ödülünü ver (bkz. yukarıdaki hasGrantedReward yorumu).
+  useEffect(() => {
+    if (activePlayers.length !== 1 || hasGrantedReward.current) return;
+    const champion = activePlayers[0];
+    if (!champion?.uid) return;
+    hasGrantedReward.current = true;
+    grantRewardToPlayers(
+      [{ uid: champion.uid, nickname: champion.nickname }],
+      venue,
+    ).catch((err) =>
+      console.error("[HostOverloadDisplay] Ödül dağıtımı başarısız:", err),
+    );
+  }, [activePlayers, venue]);
 
   // Sound for target change
   useEffect(() => {
