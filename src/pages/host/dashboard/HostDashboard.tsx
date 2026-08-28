@@ -52,14 +52,23 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
 
   const confirmStartGame = async () => {
     if (!setupGameMode) return;
-    
+
+    // Kategoriler yalnızca Arena VE Bomba için gerçekten kullanılıyor
+    // (bkz. executeStartGame — Bomba her turda room.categories'ten rastgele
+    // birini seçiyor). Quiz kendi sabit soru havuzundan çekiyor, Sensör kendi
+    // görsel havuzundan; ikisi de room.categories'e hiç bakmıyor. Bu kontrol
+    // eskiden Quiz'i de kapsıyordu — kurulum ekranında Quiz için kategori
+    // kutusu hiç GÖRÜNMÜYORDU ama bu doğrulama yine de "Kategori seçiniz!"
+    // diyerek Quiz'in başlamasını engelleyebiliyordu (özellikle host daha
+    // önce Arena kurarken kutuyu boşaltmışsa) — host'un düzeltebileceği
+    // görünür bir alan olmadan.
     let parsedCategories: string[] = [];
-    if (["scattegories", "quiz", "bomb"].includes(setupGameMode)) {
+    if (["scattegories", "bomb"].includes(setupGameMode)) {
       parsedCategories = categories
         .split(",")
         .map((c) => c.trim())
         .filter(Boolean);
-            
+
       if (parsedCategories.length === 0) {
         showToast(t("setup.errorNoCategory", "Kategori seçiniz!"), "warning");
         return;
@@ -441,13 +450,25 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
               <div className="absolute -right-20 -top-20 w-48 h-48 bg-alaz-orange/20 rounded-full blur-[80px] pointer-events-none" />
               
               <h3 className="text-2xl font-black text-white uppercase tracking-widest mb-2 relative z-10">
-                {setupGameMode === "scattegories" ? "HENGAME ARENA" : setupGameMode === "quiz" ? "HENGAME QUIZ" : "HENGAME BOMB"}
+                {setupGameMode === "scattegories"
+                  ? "HENGAME ARENA"
+                  : setupGameMode === "quiz"
+                    ? "HENGAME QUIZ"
+                    : setupGameMode === "bomb"
+                      ? "HENGAME BOMB"
+                      : "HENGAME SENSÖR"}
               </h3>
               <p className="text-alaz-orange text-xs font-bold uppercase tracking-widest mb-8 relative z-10">{t("setup.title", "Oyun Ayarları")}</p>
 
               <div className="space-y-6 relative z-10 max-h-[60vh] overflow-y-auto pr-2">
                 
-                {["scattegories", "quiz", "bomb"].includes(setupGameMode) && (
+                {/* Kategoriler — yalnızca Arena ve Bomba room.categories'i
+                    gerçekten kullanıyor (Bomba her turda rastgele birini
+                    seçiyor, bkz. executeStartGame). Quiz kendi sabit soru
+                    havuzundan çekiyor; burada kategori seçtirmek hostu
+                    yanıltıyordu — seçtiği kategoriler sessizce hiçbir işe
+                    yaramıyordu. */}
+                {["scattegories", "bomb"].includes(setupGameMode) && (
                   <>
                     <div>
                       <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
@@ -485,59 +506,67 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                         placeholder="Şehir, Ülke, İsim..."
                       />
                     </div>
-
-                    {/* Timer */}
-                    <div>
-                      <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
-                        {t("setup.timerLabel", "Tur Süresi")}
-                      </label>
-                      <select
-                        value={timerValue}
-                        onChange={(e) => setTimerValue(e.target.value)}
-                        className="w-full bg-black/60 border-[0.5px] border-white/20 p-3 text-white focus:border-alaz-orange focus:outline-none transition-all font-sans font-black text-[12px] uppercase tracking-[0.1em] rounded-none"
-                      >
-                        <option className="bg-[#0a0a0f] text-white" value="30">{t("setup.timer30", "30 Saniye")}</option>
-                        <option className="bg-[#0a0a0f] text-white" value="45">{t("setup.timer45", "45 Saniye")}</option>
-                        <option className="bg-[#0a0a0f] text-white" value="60">{t("setup.timer60", "60 Saniye")}</option>
-                        <option className="bg-[#0a0a0f] text-white" value="90">{t("setup.timer90", "90 Saniye")}</option>
-                      </select>
-                    </div>
-
-                    {/* Game Mode — yalnızca Arena (scattegories) takım modunu
-                        gerçekten uyguluyor: puanlar takım bazında toplanıyor,
-                        katılımda takım adı soruluyor. Quiz her zaman bireysel
-                        sıralama gösteriyor, Bomba da yaşamları/hedefi hep
-                        bireysel oyuncu bazında tutuyor — ikisinde de bu seçim
-                        hiçbir şeyi değiştirmiyordu, sadece hostu yanıltıyordu. */}
-                    {setupGameMode === "scattegories" && (
-                      <div>
-                        <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
-                          {t("setup.gameModeLabel", "Oyun Modu")}
-                        </label>
-                        <div className="grid grid-cols-2 gap-4">
-                          <button
-                            onClick={() => setGameMode("individual")}
-                            className={`py-3 font-sans font-black text-xs uppercase tracking-widest transition-all border-[0.5px] rounded-none ${
-                              gameMode === "individual" ? "bg-white text-black border-white" : "bg-black/60 border-white/20 text-gray-400 hover:border-white/40"
-                            }`}
-                          >
-                            {t("setup.individual", "Bireysel")}
-                          </button>
-                          <button
-                            onClick={() => setGameMode("team")}
-                            className={`py-3 font-sans font-black text-xs uppercase tracking-widest transition-all border-[0.5px] rounded-none ${
-                              gameMode === "team" ? "bg-alaz-orange text-black border-alaz-orange" : "bg-black/60 border-white/20 text-gray-400 hover:border-alaz-orange/40"
-                            }`}
-                          >
-                            {t("setup.team", "Takım")}
-                          </button>
-                        </div>
-                      </div>
-                    )}
                   </>
                 )}
 
-                {/* Total Rounds (For all except wheel) */}
+                {/* Süre — dördü de bir şekilde süre kullanıyor: Arena/Bomba
+                    tur süresi, Quiz soru başına cevap süresi, Sensör görselin
+                    netleşme süresi (bkz. HostSensorDisplay). Sensör bu
+                    listede hiç yoktu: timerValue'nun varsayılanı (60sn)
+                    sessizce kullanılıyordu, host'un değiştirecek bir kontrolü
+                    yoktu. */}
+                {["scattegories", "quiz", "bomb", "sensor"].includes(setupGameMode) && (
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
+                      {t("setup.timerLabel", "Tur Süresi")}
+                    </label>
+                    <select
+                      value={timerValue}
+                      onChange={(e) => setTimerValue(e.target.value)}
+                      className="w-full bg-black/60 border-[0.5px] border-white/20 p-3 text-white focus:border-alaz-orange focus:outline-none transition-all font-sans font-black text-[12px] uppercase tracking-[0.1em] rounded-none"
+                    >
+                      <option className="bg-[#0a0a0f] text-white" value="30">{t("setup.timer30", "30 Saniye")}</option>
+                      <option className="bg-[#0a0a0f] text-white" value="45">{t("setup.timer45", "45 Saniye")}</option>
+                      <option className="bg-[#0a0a0f] text-white" value="60">{t("setup.timer60", "60 Saniye")}</option>
+                      <option className="bg-[#0a0a0f] text-white" value="90">{t("setup.timer90", "90 Saniye")}</option>
+                    </select>
+                  </div>
+                )}
+
+                {/* Oyun Modu — yalnızca Arena (scattegories) takım modunu
+                    gerçekten uyguluyor: puanlar takım bazında toplanıyor,
+                    katılımda takım adı soruluyor. Quiz her zaman bireysel
+                    sıralama gösteriyor, Bomba da yaşamları/hedefi hep
+                    bireysel oyuncu bazında tutuyor, Sensör de aynı şekilde —
+                    hiçbirinde bu seçim bir şeyi değiştirmiyordu, sadece
+                    hostu yanıltıyordu. */}
+                {setupGameMode === "scattegories" && (
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
+                      {t("setup.gameModeLabel", "Oyun Modu")}
+                    </label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <button
+                        onClick={() => setGameMode("individual")}
+                        className={`py-3 font-sans font-black text-xs uppercase tracking-widest transition-all border-[0.5px] rounded-none ${
+                          gameMode === "individual" ? "bg-white text-black border-white" : "bg-black/60 border-white/20 text-gray-400 hover:border-white/40"
+                        }`}
+                      >
+                        {t("setup.individual", "Bireysel")}
+                      </button>
+                      <button
+                        onClick={() => setGameMode("team")}
+                        className={`py-3 font-sans font-black text-xs uppercase tracking-widest transition-all border-[0.5px] rounded-none ${
+                          gameMode === "team" ? "bg-alaz-orange text-black border-alaz-orange" : "bg-black/60 border-white/20 text-gray-400 hover:border-alaz-orange/40"
+                        }`}
+                      >
+                        {t("setup.team", "Takım")}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tur/Soru Sayısı (Çark hariç hepsi — o zaten bu modala hiç girmiyor) */}
                 {["scattegories", "quiz", "bomb", "sensor"].includes(setupGameMode) && (
                   <div>
                     <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
