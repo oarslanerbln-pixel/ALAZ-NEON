@@ -92,11 +92,26 @@ export function HostBombDisplay({
 
       const currentLives = targetPlayer.lives !== undefined ? targetPlayer.lives : 3;
       const newLives = Math.max(0, currentLives - 1);
-      
-      // Update player lives
-      await updateDoc(doc(db, "players", playerId), {
-        lives: newLives
-      });
+
+      const playerUpdates: Record<string, number> = { lives: newLives };
+      if (newLives === 0) {
+        // Bomba modu skorla değil "hayatta kalma" ile ilerliyor — ama
+        // Podyum ekranı (HostPodium) sıralamayı total_score'a göre yapıyor.
+        // Bomba modunda total_score hiç güncellenmediği için oyun bitince
+        // TÜM oyuncular 0'da eşit kalıyor ve podyum gerçek kazananı değil,
+        // players dizisindeki RASTGELE bir sırayı gösteriyordu. Elenme
+        // anında "kaç rakibi geride bıraktığını" total_score'a yazıyoruz ki
+        // podyum gerçek sonucu yansıtsın (kazanan handleNextRoundOrWinner'da
+        // ayrıca en yüksek skoru alıyor).
+        const aliveBefore = players.filter(
+          (p) => (p.lives !== undefined ? p.lives : 3) > 0
+        ).length;
+        const outlasted = players.length - aliveBefore;
+        playerUpdates.total_score = outlasted * 100;
+      }
+
+      // Update player lives (+ elenme anındaki placement skoru)
+      await updateDoc(doc(db, "players", playerId), playerUpdates);
 
       await updateDoc(doc(db, "rooms", room.id), {
         status: "bomb_explosion"
@@ -117,6 +132,16 @@ export function HostBombDisplay({
       // hayatta kalan tek oyuncudan alıyoruz. İki oyuncu aynı anda
       // elenirse (activePlayers 0'a düşer) kimseye ödül verilmiyor.
       const survivor = activePlayers[0];
+      if (survivor) {
+        // Hayatta kalan tek oyuncu hiç elenmeden kazanıyor — podyumda 1.
+        // sırada görünmesi için ona da aynı "outlasted rakip sayısı"
+        // formülüyle herkesten yüksek skoru veriyoruz.
+        updateDoc(doc(db, "players", survivor.id), {
+          total_score: (players.length - 1) * 100,
+        }).catch((err) =>
+          console.error("[HostBombDisplay] Kazanan skoru yazılamadı:", err),
+        );
+      }
       if (survivor?.uid) {
         grantRewardToPlayers(
           [{ uid: survivor.uid, nickname: survivor.nickname }],
