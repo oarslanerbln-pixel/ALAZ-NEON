@@ -443,6 +443,50 @@ const translations = {
   },
 
   // ═══════════════════════════════════════════
+  // PHONE AUTH — eskiden bu bileşenin metinleri hiç t() kullanmıyordu, sabit
+  // İngilizce'ydi (dil TR/DE seçili olsa bile değişmiyordu).
+  // ═══════════════════════════════════════════
+  "phoneAuth.title": { tr: "Telefon Doğrulama", de: "Telefonverifizierung", en: "Phone Verification" },
+  "phoneAuth.subtitleEnterPhone": {
+    tr: "Devam etmek için numaranı doğrula",
+    de: "Bestätige deine Nummer, um fortzufahren",
+    en: "Verify your number to continue",
+  },
+  "phoneAuth.subtitleAwaiting": {
+    tr: "Kod gönderildi, onay bekleniyor",
+    de: "Code gesendet, Bestätigung ausstehend",
+    en: "Code sent, awaiting confirmation",
+  },
+  "phoneAuth.phoneLabel": { tr: "Telefon Numarası", de: "Telefonnummer", en: "Phone Number" },
+  "phoneAuth.sendSms": { tr: "Kod Gönder", de: "Code senden", en: "Send Code" },
+  "phoneAuth.sending": { tr: "Gönderiliyor...", de: "Wird gesendet...", en: "Sending..." },
+  "phoneAuth.codeLabel": { tr: "6 Haneli Kod", de: "6-stelliger Code", en: "6-Digit Code" },
+  "phoneAuth.verify": { tr: "Doğrula", de: "Bestätigen", en: "Verify" },
+  "phoneAuth.verifying": { tr: "Doğrulanıyor...", de: "Wird bestätigt...", en: "Verifying..." },
+  "phoneAuth.reenterNumber": { tr: "Numarayı değiştir", de: "Nummer ändern", en: "Change number" },
+  "phoneAuth.cancel": { tr: "Vazgeç", de: "Abbrechen", en: "Cancel" },
+  "phoneAuth.errRecaptcha": {
+    tr: "Doğrulama hazır değil, tekrar deneyin.",
+    de: "Verifizierung nicht bereit, bitte erneut versuchen.",
+    en: "Verification not ready, please try again.",
+  },
+  "phoneAuth.errSendFailed": {
+    tr: "SMS gönderilemedi. Numarayı kontrol edin.",
+    de: "SMS konnte nicht gesendet werden. Nummer überprüfen.",
+    en: "Couldn't send SMS. Please check the number.",
+  },
+  "phoneAuth.errInvalidCode": {
+    tr: "Kod hatalı, tekrar deneyin.",
+    de: "Falscher Code, bitte erneut versuchen.",
+    en: "Incorrect code, please try again.",
+  },
+  "phoneAuth.errRecaptchaExpired": {
+    tr: "Doğrulama süresi doldu, tekrar deneyin.",
+    de: "Verifizierung abgelaufen, bitte erneut versuchen.",
+    en: "Verification expired, please try again.",
+  },
+
+  // ═══════════════════════════════════════════
   // PLAYER GAME
   // ═══════════════════════════════════════════
   "game.roomClosed": { tr: "ODA KAPALI", de: "RAUM GESCHLOSSEN", en: "ROOM CLOSED" },
