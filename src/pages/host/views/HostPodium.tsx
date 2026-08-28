@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 import { useLocale } from "../../../hooks/useLocale";
 import { ShareableRecapCard } from "../components/ShareableRecapCard";
 import { SoundManager, sounds } from "../../../lib/audio";
@@ -86,7 +84,20 @@ export function HostPodium({
 
     try {
       setIsGeneratingPDF(true);
-      
+
+      // html2canvas + jsPDF sadece bu butona basılınca lazım oluyor ama
+      // eskiden dosyanın en tepesinde statik import edilmişlerdi. HostPodium
+      // üç farklı oyun modu (Klasik/Bomba/Sensör) tarafından paylaşıldığı
+      // için bu, üçünün de tek bir ~600KB'lık paylaşılan pakete (yalnızca bu
+      // iki kütüphane yüzünden) bağımlı kalmasına yol açıyordu — podyum
+      // ekranını sadece GÖRMEK için bile o paket indiriliyordu. Dinamik
+      // import ile bu ağırlık yalnızca "PDF İndir"e gerçekten basıldığında
+      // indiriliyor.
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ]);
+
       // Temporarily hide buttons to exclude from PDF
       const actionButtons = document.getElementById("podium-action-buttons");
       if (actionButtons) actionButtons.style.display = "none";

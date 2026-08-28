@@ -101,8 +101,17 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
   const digits = normalizeDigits(phoneNumber);
   const digitsValid = isValidLength(digits, country);
 
-  const handleSendCode = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // PhoneAuth, PlayerJoin'in KENDİ <form onSubmit={handleJoin}>'unun içine
+  // (telefon doğrulaması bitene kadar) yerleştiriliyor. Burada da bir <form>
+  // kullanmak HTML'de geçersiz bir iç içe form üretiyordu — tarayıcı bunu
+  // tutarsız işliyor: "SEND SMS"e basınca handleSendCode hiç çalışmadan
+  // sayfa doğrudan mevcut URL'e (GET /join?) native olarak yeniden
+  // yükleniyordu, React state sıfırlanıyordu ve signInWithPhoneNumber asla
+  // çağrılmıyordu — "numaramı yazınca SMS gelmiyor" hatasının birebir
+  // sebebi buydu. Aşağıdaki iki adım artık <form> değil düz <div>; Enter
+  // tuşuyla gönderme davranışını inputlardaki onKeyDown ile koruyoruz.
+  const handleSendCode = async (e?: React.FormEvent | React.KeyboardEvent) => {
+    e?.preventDefault();
     if (!digitsValid) return;
 
     setError("");
@@ -130,8 +139,8 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
     }
   };
 
-  const handleVerifyCode = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleVerifyCode = async (e?: React.FormEvent | React.KeyboardEvent) => {
+    e?.preventDefault();
     if (!verificationCode || !confirmationResult) return;
 
     setError("");
@@ -176,7 +185,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
       </AnimatePresence>
 
       {!confirmationResult ? (
-        <form onSubmit={handleSendCode} className="space-y-6">
+        <div className="space-y-6">
           <div className="group">
             <div className="flex items-center justify-between mb-2">
               <label className="flex items-center gap-2 text-alaz-orange/70 text-xs font-bold uppercase tracking-widest">
@@ -215,6 +224,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
                 maxLength={country.maxDigits + 1}
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ''))}
+                onKeyDown={(e) => e.key === "Enter" && handleSendCode(e)}
                 placeholder={country.iso === "DE" ? "151 2345678" : "555 123 4567"}
                 className="w-full px-4 py-4 text-xl tracking-[0.2em] font-bold focus:outline-none bg-transparent text-alaz-orange placeholder:text-alaz-orange/20"
               />
@@ -224,7 +234,8 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
           <motion.button
             whileHover={!loading ? { scale: 1.01, backgroundColor: "rgba(255, 77, 0, 0.2)" } : {}}
             whileTap={!loading ? { scale: 0.99 } : {}}
-            type="submit"
+            type="button"
+            onClick={() => handleSendCode()}
             disabled={loading || !digitsValid}
             className={`w-full py-5 border-2 transition-all font-bold tracking-[0.3em] uppercase text-sm mt-8 ${
               loading
@@ -246,9 +257,9 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
               [ CANCEL_OPERATION ]
             </button>
           )}
-        </form>
+        </div>
       ) : (
-        <form onSubmit={handleVerifyCode} className="space-y-6">
+        <div className="space-y-6">
           <div className="group">
             <label className="flex items-center gap-2 text-alaz-orange/70 text-xs font-bold uppercase tracking-widest mb-2">
               <span className="text-[#ff003c]">[KEY]</span> 6-DIGIT CODE
@@ -263,6 +274,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
                 maxLength={6}
                 value={verificationCode}
                 onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
+                onKeyDown={(e) => e.key === "Enter" && handleVerifyCode(e)}
                 placeholder="000000"
                 className="w-full px-4 py-4 text-2xl tracking-[0.5em] text-center font-bold focus:outline-none bg-transparent text-[#ff003c] placeholder:text-[#ff003c]/20"
               />
@@ -272,7 +284,8 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
           <motion.button
             whileHover={!loading ? { scale: 1.01, backgroundColor: "rgba(255, 0, 60, 0.2)" } : {}}
             whileTap={!loading ? { scale: 0.99 } : {}}
-            type="submit"
+            type="button"
+            onClick={() => handleVerifyCode()}
             disabled={loading || verificationCode.length < 6}
             className={`w-full py-5 border-2 transition-all font-bold tracking-[0.3em] uppercase text-sm mt-8 ${
               loading
@@ -296,7 +309,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
           >
             [ RE-ENTER NUMBER ]
           </button>
-        </form>
+        </div>
       )}
     </div>
   );
