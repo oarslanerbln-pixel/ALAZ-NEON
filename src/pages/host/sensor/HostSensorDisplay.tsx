@@ -121,7 +121,15 @@ export function HostSensorDisplay({
   const handleEvaluate = async (isCorrect: boolean) => {
     if (isCorrect && room.sensor_buzzer_player_id) {
       SoundManager.getInstance().playSFX(sounds.SUCCESS);
-      await updatePlayerScore(room.sensor_buzzer_player_id, 100);
+      // updatePlayerScore(playerId, score) hedef oyuncunun total_score'unu
+      // verilen değere DOĞRUDAN SET ediyor (bkz. useHostRoom.ts) — bir
+      // artış/delta değil. Burada sabit 100 geçiliyordu, yani her doğru
+      // cevap oyuncunun o ana kadar biriktirdiği TÜM puanı siliyor, tam
+      // 100'e sıfırlıyordu. Diğer bütün modlar (Klasik/Quiz) her zaman
+      // "eski toplam + kazanılan" hesaplıyor; burada da aynısını yapıyoruz.
+      const scorer = players.find((p) => p.id === room.sensor_buzzer_player_id);
+      const newTotal = (scorer?.total_score || 0) + 100;
+      await updatePlayerScore(room.sensor_buzzer_player_id, newTotal);
       await updateRoomStatus("sensor_reveal");
     } else {
       SoundManager.getInstance().playSFX(sounds.FAILURE);
