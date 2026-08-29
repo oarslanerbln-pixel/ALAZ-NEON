@@ -31,6 +31,17 @@ service cloud.firestore {
         touchesOnly(['sensor_player_answer']);
     }
 
+    // Overload mode: the current target deflects the bomb onward, which
+    // also shrinks the timer for the next round. Client writes this
+    // directly from the player's phone (HostOverloadDisplay runs status
+    // "playing", not a dedicated overload_* status), and this case was
+    // missing entirely — every deflect tap was silently permission-denied,
+    // so the target could never pass it on and just watched time run out.
+    function isOverloadDeflect() {
+      return resource.data.status == 'playing' &&
+        touchesOnly(['overload_target_id', 'overload_time_allowed']);
+    }
+
     match /rooms/{roomId} {
       // Anyone can read the room data
       allow read: if true;
@@ -49,7 +60,8 @@ service cloud.firestore {
         resource.data.host_uid == request.auth.uid ||
         isBombPass() ||
         isSensorBuzz() ||
-        isSensorAnswer()
+        isSensorAnswer() ||
+        isOverloadDeflect()
       );
 
       // Only the host can delete the room.

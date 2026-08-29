@@ -1,11 +1,14 @@
 <!doctype html>
 <!--
-  lang="tr" bilinçli bir tercih: arayüz büyük harf ağırlıklı ve CSS
-  `text-transform: uppercase` dil kuralına göre çalışıyor. lang="en" iken
-  "Giriş" → "GIRIŞ" oluyordu (noktasız I); Türkçede doğrusu "GİRİŞ".
-  Dil değiştirildiğinde useLocale bu değeri günceller.
+  lang="de": Berlin'deki asıl pazar Almanya olduğu için i18n.ts'teki
+  DEFAULT_LOCALE de "de" — bu statik öznitelik JS yüklenmeden önceki o kısa
+  an için onunla eşleşiyor (ekran okuyucu/SEO). Arayüz büyük harf ağırlıklı
+  ve CSS `text-transform: uppercase` dil kuralına göre çalışıyor — bu yüzden
+  "tr" değil spesifik bir dil kodu gerekiyor (lang="en" iken "Giriş" →
+  "GIRIŞ" oluyordu, noktasız I). Dil değiştirildiğinde useLocale/setLocale
+  bu değeri anında günceller (bkz. i18n.ts).
 -->
-<html lang="tr">
+<html lang="de">
 
 <head>
   <meta charset="UTF-8" />

@@ -230,7 +230,13 @@ export function HostQuizDisplay({
       );
 
       const unsubscribe = onSnapshot(q, (snapshot) => {
-        if (!hasEnded && snapshot.size >= players.length) {
+        // snapshot.size ham doküman sayısı — bir oyuncunun (örn. çok kötü bir
+        // ağ gecikmesinden kaynaklanan bir tekrar denemesiyle) aynı soru için
+        // iki cevap dokümanı oluşturması ihtimaline karşı benzersiz
+        // player_id sayısına bakıyoruz. Aksi hâlde tur, herkes cevaplamadan
+        // erken kapanabilirdi.
+        const distinctPlayers = new Set(snapshot.docs.map((d) => d.data().player_id));
+        if (!hasEnded && distinctPlayers.size >= players.length) {
           hasEnded = true;
           endQuestion();
         }

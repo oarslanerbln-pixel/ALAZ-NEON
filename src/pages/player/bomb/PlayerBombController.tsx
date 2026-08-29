@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { db } from "../../../lib/firebase";
@@ -23,6 +23,14 @@ export function PlayerBombController({ room, player }: Props) {
   const isMyTurn = room.bomb_target_player === player.id;
   const currentLives = player.lives !== undefined ? player.lives : 3;
 
+  // isSubmitting React state'i asenkron güncelleniyor; aynı olay döngüsü
+  // tiki içinde gelen iki gönderim (çift dokunma/çift Enter) ikisi de
+  // isSubmitting'i henüz false görüp iki farklı rastgele hedefe iki ayrı
+  // updateDoc yazabiliyordu — bomba kısa süreliğine yanlış oyuncuya geçmiş
+  // gibi görünüyordu. Senkron bir ref ile kilitliyoruz (diğer modlardaki
+  // aynı desen).
+  const isSubmittingRef = useRef(false);
+
   useEffect(() => {
     if (isMyTurn && room.status === "bomb_active") {
       // Süre dolup patladığında (kelime GÖNDERİLMEDEN) `word` state'i hiç
@@ -41,7 +49,7 @@ export function PlayerBombController({ room, player }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!word.trim() || isSubmitting) return;
+    if (!word.trim() || isSubmittingRef.current) return;
 
     const normalizedWord = word.trim().toLowerCase();
 
@@ -69,6 +77,7 @@ export function PlayerBombController({ room, player }: Props) {
       return;
     }
 
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
     try {
       // Fetch all players to find the next target
@@ -101,7 +110,10 @@ export function PlayerBombController({ room, player }: Props) {
       console.error("Error passing bomb:", error);
       showToast(t("bomb.toastError"), "error");
     } finally {
-      setTimeout(() => setIsSubmitting(false), 500);
+      setTimeout(() => {
+        isSubmittingRef.current = false;
+        setIsSubmitting(false);
+      }, 500);
     }
   };
 

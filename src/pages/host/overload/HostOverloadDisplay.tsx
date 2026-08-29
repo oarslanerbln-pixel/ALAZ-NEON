@@ -1,10 +1,12 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { HostLobby } from "../views/HostLobby";
 import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
+import { grantRewardToPlayers } from "../../../lib/rewards";
+import { useVenue } from "../../../contexts/VenueContextCore";
 
 interface HostOverloadDisplayProps {
   room: Room;
@@ -15,6 +17,8 @@ interface HostOverloadDisplayProps {
 export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOverloadDisplayProps) {
   const [timeLeft, setTimeLeft] = useState<number>(room.overload_time_allowed || 10);
   const [isExploding, setIsExploding] = useState(false);
+  const { venue } = useVenue();
+  const hasGrantedReward = useRef(false);
 
   // Active players (not eliminated)
   const activePlayers = useMemo(() => {
@@ -87,6 +91,20 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
       SoundManager.getInstance().playSFX(sounds.CLICK);
     }
   }, [room.overload_target_id, isExploding]);
+
+  // Give reward to champion
+  useEffect(() => {
+    if (activePlayers.length !== 1 || hasGrantedReward.current) return;
+    const champion = activePlayers[0];
+    if (!champion?.uid) return;
+    hasGrantedReward.current = true;
+    grantRewardToPlayers(
+      [{ uid: champion.uid, nickname: champion.nickname }],
+      venue,
+    ).catch((err) =>
+      console.error("[HostOverloadDisplay] Ödül dağıtımı başarısız:", err),
+    );
+  }, [activePlayers, venue]);
 
   // We removed the top level activePlayers.length === 1 check that returned early.
   // It is now handled inside AnimatePresence with room.status === "finished".

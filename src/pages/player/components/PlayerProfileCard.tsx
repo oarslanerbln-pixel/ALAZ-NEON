@@ -3,6 +3,7 @@ import { useUserProfile } from "../../../hooks/useUserProfile";
 import type { LeagueTier } from "../../../types/database";
 import { auth } from "../../../lib/firebase";
 import { useLocale } from "../../../hooks/useLocale";
+import { getLeagueFromScore } from "../../../lib/league";
 
 const TIER_COLORS: Record<LeagueTier, string> = {
   BRONZE: "#cd7f32",
@@ -41,7 +42,12 @@ export function PlayerProfileCard() {
 
   if (!profile) return null;
 
-  const color = TIER_COLORS[profile.current_league];
+  // profile.current_league profil oluşturulurken hep "BRONZE" olarak
+  // sabitleniyor ve bir daha hiç güncellenmiyordu (bkz. useUserProfile.ts) —
+  // ligi burada, gösterim anında, gerçek total_lifetime_score'dan CANLI
+  // hesaplıyoruz ki puan arttıkça rozet de doğru şekilde yükselsin.
+  const league = getLeagueFromScore(profile.total_lifetime_score).tier;
+  const color = TIER_COLORS[league];
 
   return (
     <motion.div
@@ -99,13 +105,13 @@ export function PlayerProfileCard() {
                   background: `linear-gradient(45deg, transparent 0%, ${color}40 50%, transparent 100%)` 
                 }} 
               />
-              {profile.current_league.charAt(0)}
+              {league.charAt(0)}
             </div>
             <span
               className="text-[9px] font-bold tracking-[0.1em] mt-2 text-center whitespace-nowrap"
               style={{ color }}
             >
-              {t(TIER_KEYS[profile.current_league])}
+              {t(TIER_KEYS[league])}
             </span>
           </div>
         </div>

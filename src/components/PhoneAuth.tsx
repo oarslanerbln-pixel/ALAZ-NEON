@@ -3,6 +3,8 @@ import { auth } from "../lib/firebase";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import type { ConfirmationResult } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocale } from "../hooks/useLocale";
+import type { Locale } from "../lib/i18n";
 
 // grecaptcha isn't part of the DOM lib types — it's injected by the reCAPTCHA
 // script Firebase Auth loads. Only the bits used here are declared.
@@ -22,7 +24,52 @@ interface PhoneAuthProps {
   onCancel?: () => void;
 }
 
+interface Country {
+  dialCode: string; // no "+"
+  iso: string;
+  flag: string;
+  label: string;
+  // Mobile national numbers aren't a fixed length everywhere — Turkish
+  // numbers are always exactly 10 digits, German ones commonly run 10 or 11.
+  minDigits: number;
+  maxDigits: number;
+}
+
+// Oyun Berlin'de pazarlanacak: yerel (+49) VE Berlin'in çok büyük Türk
+// topluluğu (+90) aynı gecede aynı barda oynayabilir.
+const COUNTRIES: Country[] = [
+  { dialCode: "49", iso: "DE", flag: "🇩🇪", label: "Deutschland", minDigits: 10, maxDigits: 11 },
+  { dialCode: "90", iso: "TR", flag: "🇹🇷", label: "Türkiye", minDigits: 10, maxDigits: 10 },
+];
+
+function defaultCountryForLocale(locale: Locale): Country {
+  return COUNTRIES.find((c) => c.iso === (locale === "tr" ? "TR" : "DE")) || COUNTRIES[0];
+}
+
+/**
+ * Kullanıcının yazdığı ham rakamlardan baştaki tek bir "0"ı (varsa) atar —
+ * hem TR hem DE'de numaralar neredeyse hep başında "0" ile yazılır/söylenir.
+ */
+function normalizeDigits(raw: string): string {
+  return raw.startsWith("0") ? raw.slice(1) : raw;
+}
+
+function isValidLength(digits: string, country: Country): boolean {
+  return digits.length >= country.minDigits && digits.length <= country.maxDigits;
+}
+
+// Ortak input stili — premium redesign'da PlayerJoin.tsx ile aynı dil
+// (yuvarlak köşe, cam panel, ince kenarlık) burada da tekrar ediyor.
+const fieldWrapClass =
+  "flex items-center rounded-2xl bg-white/[0.04] border border-white/10 focus-within:border-alaz-orange/60 focus-within:bg-white/[0.06] transition-colors overflow-hidden";
+const inputClass =
+  "w-full bg-transparent px-4 py-4 text-white text-lg font-semibold tracking-wide placeholder:text-white/20 focus:outline-none";
+const primaryButtonClass =
+  "w-full rounded-2xl bg-alaz-orange text-black font-bold py-4 text-sm tracking-wide shadow-lg shadow-alaz-orange/20 hover:shadow-alaz-orange/40 hover:brightness-105 active:scale-[0.99] transition-all disabled:opacity-40 disabled:shadow-none disabled:cursor-not-allowed";
+
 export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
+  const { t, locale } = useLocale();
+  const [country, setCountry] = useState<Country>(() => defaultCountryForLocale(locale));
   const [phoneNumber, setPhoneNumber] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
@@ -35,38 +82,51 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
         'size': 'invisible',
         'callback': () => {},
         'expired-callback': () => {
-          setError("TIMEOUT: RECAPTCHA EXPIRED.");
+          setError(t("phoneAuth.errRecaptchaExpired"));
         }
       });
     }
-    
+
     return () => {
       if (window.recaptchaVerifier) {
         window.recaptchaVerifier.clear();
         window.recaptchaVerifier = undefined;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleSendCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!phoneNumber) return;
-    
+  const digits = normalizeDigits(phoneNumber);
+  const digitsValid = isValidLength(digits, country);
+
+  // PhoneAuth, PlayerJoin'in KENDİ <form onSubmit={handleJoin}>'unun içine
+  // (telefon doğrulaması bitene kadar) yerleştiriliyor. Burada da bir <form>
+  // kullanmak HTML'de geçersiz bir iç içe form üretiyordu — tarayıcı bunu
+  // tutarsız işliyor: "SEND SMS"e basınca handleSendCode hiç çalışmadan
+  // sayfa doğrudan mevcut URL'e (GET /join?) native olarak yeniden
+  // yükleniyordu, React state sıfırlanıyordu ve signInWithPhoneNumber asla
+  // çağrılmıyordu — "numaramı yazınca SMS gelmiyor" hatasının birebir
+  // sebebi buydu. Aşağıdaki iki adım artık <form> değil düz <div>; Enter
+  // tuşuyla gönderme davranışını inputlardaki onKeyDown ile koruyoruz.
+  const handleSendCode = async (e?: React.FormEvent | React.KeyboardEvent) => {
+    e?.preventDefault();
+    if (!digitsValid) return;
+
     setError("");
     setLoading(true);
 
     try {
-      const formattedNumber = phoneNumber.startsWith("+") ? phoneNumber : `+90${phoneNumber.replace(/^0/, '')}`;
+      const formattedNumber = `+${country.dialCode}${digits}`;
       const appVerifier = window.recaptchaVerifier;
       if (!appVerifier) {
-        setError("ERR: RECAPTCHA NOT READY. TRY AGAIN.");
+        setError(t("phoneAuth.errRecaptcha"));
         return;
       }
       const confirmation = await signInWithPhoneNumber(auth, formattedNumber, appVerifier);
       setConfirmationResult(confirmation);
     } catch (err: unknown) {
       console.error(err);
-      setError("ERR: COULD NOT SEND SMS. CHECK NUMBER OR RECAPTCHA.");
+      setError(t("phoneAuth.errSendFailed"));
       if (window.recaptchaVerifier) {
         window.recaptchaVerifier.render().then((widgetId) => {
           window.grecaptcha?.reset(widgetId);
@@ -77,8 +137,8 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
     }
   };
 
-  const handleVerifyCode = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleVerifyCode = async (e?: React.FormEvent | React.KeyboardEvent) => {
+    e?.preventDefault();
     if (!verificationCode || !confirmationResult) return;
 
     setError("");
@@ -90,22 +150,22 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
       onSuccess(user.uid, user.phoneNumber || phoneNumber);
     } catch (err: unknown) {
       console.error(err);
-      setError("ERR: INVALID CODE.");
+      setError(t("phoneAuth.errInvalidCode"));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full flex flex-col gap-6">
       <div id="recaptcha-container"></div>
-      
-      <div className="text-center mb-8 flex flex-col items-center">
-        <h2 className="text-2xl md:text-3xl font-bold text-[#ff003c] uppercase tracking-widest drop-shadow-[0_0_10px_rgba(255,0,60,0.8)] flex justify-center items-center gap-2">
-          &gt; IDENTIFICATION <span className="w-3 h-8 bg-[#ff003c] animate-pulse" />
+
+      <div className="text-center">
+        <h2 className="text-lg font-bold text-white tracking-tight">
+          {t("phoneAuth.title")}
         </h2>
-        <p className="text-alaz-orange mt-4 uppercase tracking-[0.3em] text-xs">
-          {confirmationResult ? "AWAITING CONFIRMATION..." : "SECURE LOGIN REQUIRED"}
+        <p className="text-white/40 text-xs mt-1">
+          {confirmationResult ? t("phoneAuth.subtitleAwaiting") : t("phoneAuth.subtitleEnterPhone")}
         </p>
       </div>
 
@@ -115,97 +175,110 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="bg-[#ff003c]/10 border-l-2 border-[#ff003c] p-4 text-[#ff003c] text-xs uppercase tracking-wider mb-6"
+            className="rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-red-400 text-xs font-medium overflow-hidden"
           >
-            <span className="font-bold">SYSTEM ERROR:</span> {error}
+            {error}
           </motion.div>
         )}
       </AnimatePresence>
 
       {!confirmationResult ? (
-        <form onSubmit={handleSendCode} className="space-y-6">
-          <div className="group">
-            <label className="flex items-center gap-2 text-alaz-orange/70 text-xs font-bold uppercase tracking-widest mb-2">
-              <span className="text-[#ff003c]">[ID]</span> PHONE NUMBER
-            </label>
-            <div className="flex bg-alaz-orange/5 border border-alaz-orange/30 group-focus-within:border-alaz-orange transition-colors">
-              <div className="px-4 py-4 border-r border-alaz-orange/30 text-alaz-orange font-bold bg-alaz-orange/10 flex items-center justify-center">
-                +90
+        <div className="flex flex-col gap-5">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">
+                {t("phoneAuth.phoneLabel")}
+              </label>
+              {/* Ülke seçici: Berlin'de hem yerel (+49) hem çok büyük Türk
+                  topluluğu (+90) numarasıyla katılan olacak. */}
+              <div className="flex items-center gap-1">
+                {COUNTRIES.map((c) => (
+                  <button
+                    key={c.iso}
+                    type="button"
+                    onClick={() => {
+                      setCountry(c);
+                      setError("");
+                    }}
+                    aria-pressed={country.iso === c.iso}
+                    className={`px-2.5 py-1 text-[11px] font-bold rounded-full transition-colors flex items-center gap-1 ${
+                      country.iso === c.iso
+                        ? "bg-alaz-orange text-black"
+                        : "bg-white/5 text-white/40 hover:text-white hover:bg-white/10"
+                    }`}
+                  >
+                    <span>{c.flag}</span> +{c.dialCode}
+                  </button>
+                ))}
               </div>
+            </div>
+            <div className={fieldWrapClass}>
+              <span className="pl-4 text-white/40 font-semibold text-base">+{country.dialCode}</span>
               <input
                 type="tel"
                 required
-                maxLength={10}
+                maxLength={country.maxDigits + 1}
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ''))}
-                placeholder="555 123 4567"
-                className="w-full px-4 py-4 text-xl tracking-[0.2em] font-bold focus:outline-none bg-transparent text-alaz-orange placeholder:text-alaz-orange/20"
+                onKeyDown={(e) => e.key === "Enter" && handleSendCode(e)}
+                placeholder={country.iso === "DE" ? "151 2345678" : "555 123 4567"}
+                autoFocus
+                className={inputClass}
               />
             </div>
           </div>
-          
+
           <motion.button
-            whileHover={!loading ? { scale: 1.01, backgroundColor: "rgba(255, 77, 0, 0.2)" } : {}}
+            whileHover={!loading ? { scale: 1.01 } : {}}
             whileTap={!loading ? { scale: 0.99 } : {}}
-            type="submit"
-            disabled={loading || phoneNumber.length < 10}
-            className={`w-full py-5 border-2 transition-all font-bold tracking-[0.3em] uppercase text-sm mt-8 ${
-              loading
-                ? "border-gray-700 text-gray-500 cursor-not-allowed"
-                : phoneNumber.length === 10
-                  ? "border-[#ff003c] text-[#ff003c] bg-[#ff003c]/10 hover:shadow-[0_0_20px_rgba(255,0,60,0.4)]"
-                  : "border-alaz-orange/30 text-alaz-orange/50 hover:border-alaz-orange hover:text-alaz-orange"
-            }`}
+            type="button"
+            onClick={() => handleSendCode()}
+            disabled={loading || !digitsValid}
+            className={primaryButtonClass}
           >
-            {loading ? "TRANSMITTING..." : "SEND SMS"}
+            {loading ? t("phoneAuth.sending") : t("phoneAuth.sendSms")}
           </motion.button>
-          
+
           {onCancel && (
             <button
               type="button"
               onClick={onCancel}
-              className="w-full text-alaz-orange/50 hover:text-alaz-orange text-xs uppercase tracking-widest mt-4 transition-colors"
+              className="text-white/30 hover:text-white/60 text-xs font-medium transition-colors"
             >
-              [ CANCEL_OPERATION ]
+              {t("phoneAuth.cancel")}
             </button>
           )}
-        </form>
+        </div>
       ) : (
-        <form onSubmit={handleVerifyCode} className="space-y-6">
-          <div className="group">
-            <label className="flex items-center gap-2 text-alaz-orange/70 text-xs font-bold uppercase tracking-widest mb-2">
-              <span className="text-[#ff003c]">[KEY]</span> 6-DIGIT CODE
+        <div className="flex flex-col gap-5">
+          <div>
+            <label className="block text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-2">
+              {t("phoneAuth.codeLabel")}
             </label>
-            <div className="flex bg-[#ff003c]/5 border border-[#ff003c]/30 group-focus-within:border-[#ff003c] transition-colors">
-              <div className="px-4 py-4 border-r border-[#ff003c]/30 text-[#ff003c] font-bold bg-[#ff003c]/10 flex items-center justify-center">
-                &gt;
-              </div>
+            <div className={fieldWrapClass}>
               <input
                 type="text"
                 required
                 maxLength={6}
                 value={verificationCode}
                 onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
+                onKeyDown={(e) => e.key === "Enter" && handleVerifyCode(e)}
                 placeholder="000000"
-                className="w-full px-4 py-4 text-2xl tracking-[0.5em] text-center font-bold focus:outline-none bg-transparent text-[#ff003c] placeholder:text-[#ff003c]/20"
+                autoFocus
+                className={`${inputClass} text-center text-2xl tracking-[0.5em]`}
               />
             </div>
           </div>
-          
+
           <motion.button
-            whileHover={!loading ? { scale: 1.01, backgroundColor: "rgba(255, 0, 60, 0.2)" } : {}}
+            whileHover={!loading ? { scale: 1.01 } : {}}
             whileTap={!loading ? { scale: 0.99 } : {}}
-            type="submit"
+            type="button"
+            onClick={() => handleVerifyCode()}
             disabled={loading || verificationCode.length < 6}
-            className={`w-full py-5 border-2 transition-all font-bold tracking-[0.3em] uppercase text-sm mt-8 ${
-              loading
-                ? "border-gray-700 text-gray-500 cursor-not-allowed"
-                : verificationCode.length === 6
-                  ? "border-[#ff003c] text-[#ff003c] bg-[#ff003c]/10 hover:shadow-[0_0_20px_rgba(255,0,60,0.4)]"
-                  : "border-[#ff003c]/30 text-[#ff003c]/50 hover:border-[#ff003c] hover:text-[#ff003c]"
-            }`}
+            className={primaryButtonClass}
           >
-            {loading ? "VERIFYING..." : "ACCESS GRANTED"}
+            {loading ? t("phoneAuth.verifying") : t("phoneAuth.verify")}
           </motion.button>
 
           <button
@@ -215,11 +288,11 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
               setVerificationCode("");
               setError("");
             }}
-            className="w-full text-alaz-orange/50 hover:text-alaz-orange text-xs uppercase tracking-widest mt-4 transition-colors"
+            className="text-white/30 hover:text-white/60 text-xs font-medium transition-colors"
           >
-            [ RE-ENTER NUMBER ]
+            {t("phoneAuth.reenterNumber")}
           </button>
-        </form>
+        </div>
       )}
     </div>
   );

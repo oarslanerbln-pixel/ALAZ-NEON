@@ -49,20 +49,31 @@ export function useTopPlayers(range: LeaderboardRange, limit = 10) {
         const snap = await getDocs(q);
         if (cancelled) return;
 
-        const totals = new Map<string, number>();
+        // uid varsa asıl kimlik odur (telefonla giriş artık zorunlu, bkz.
+        // PlayerJoin) — puanlar nickname yerine uid'e göre toplanmalı, yoksa
+        // iki farklı kişi aynı takma adı seçtiğinde puanları yanlışlıkla
+        // birleşir; aynı kişi gece değiştikçe farklı takma ad seçerse de
+        // eskiden puanı bölünüp gerçek toplamının altında görünürdü. uid'i
+        // olmayan eski/anonim kayıtlar için takma ada geri düşülüyor.
+        const totals = new Map<string, { score: number; name: string }>();
         snap.docs.forEach((d) => {
           const p = d.data() as Player;
           const name = (p.nickname || "").trim();
           if (!name) return;
-          totals.set(name, (totals.get(name) || 0) + (p.total_score || 0));
+          const key = p.uid && p.uid !== "anonymous" ? `uid:${p.uid}` : `name:${name}`;
+          const prev = totals.get(key);
+          totals.set(key, {
+            score: (prev?.score || 0) + (p.total_score || 0),
+            name, // en son görülen kayıttaki takma ad kalır
+          });
         });
 
         setPlayers(
-          [...totals.entries()]
-            .filter(([, score]) => score > 0)
-            .sort((a, b) => b[1] - a[1])
+          [...totals.values()]
+            .filter((entry) => entry.score > 0)
+            .sort((a, b) => b.score - a.score)
             .slice(0, limit)
-            .map(([name, score], i) => ({ rank: i + 1, name, score })),
+            .map((entry, i) => ({ rank: i + 1, name: entry.name, score: entry.score })),
         );
       } catch (err) {
         console.error("[useTopPlayers] Sıralama yüklenemedi:", err);
