@@ -114,8 +114,29 @@ export function LandingPage() {
 
   return (
     <div className={`flex-1 flex flex-col items-center justify-center p-6 text-center min-h-screen relative overflow-hidden bg-black str${strategy}-bg transition-colors duration-1000`}>
+      {/* PREMIUM CINEMATIC BACKGROUND */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        {/* First Image - German Cafe 1 */}
+        <motion.div
+          className="absolute inset-0 bg-[url('/images/bg-neon.jpg')] bg-cover bg-center"
+          animate={{ scale: [1, 1.08, 1], opacity: [0.2, 0.8, 0.2] }}
+          transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
+        />
+        {/* Second Image - German Cafe 2 */}
+        <motion.div
+          className="absolute inset-0 bg-[url('/images/bg-vivid.jpg')] bg-cover bg-center"
+          animate={{ scale: [1.08, 1, 1.08], opacity: [0.8, 0.2, 0.8] }}
+          transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
+        />
+        
+        {/* Vignette, Gradient & Blur Overlays to keep content readable */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/30" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,black_85%)] opacity-90" />
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-[4px]" />
+      </div>
+
       {/* Background Slider - Hidden for specific strategies so custom CSS backgrounds show up */}
-      {strategy === 2 && <BackgroundSlider />}
+      {strategy === 2 && <div className="relative z-0 w-full h-full"><BackgroundSlider /></div>}
 
       <AnimatePresence>
         {!showIntro && (
@@ -248,8 +269,13 @@ export function LandingPage() {
             className="w-full h-full flex flex-col items-center justify-center z-10"
           >
             {/* HERO SECTION - MASSIVE WIDE TEXT */}
-            <div className="flex-1 flex flex-col items-center justify-center w-full mt-24 mb-16">
-              <div className="w-full max-w-[1400px] h-[35vh] min-h-[300px] relative pointer-events-none drop-shadow-[0_0_50px_rgba(255,215,0,0.2)]">
+            <div className="flex-1 flex flex-col items-center justify-center w-full mt-24 mb-16 relative z-10">
+              {/* Deep shadow stage behind the logo to pop it out against the vivid background */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none -z-10">
+                <div className="w-[80vw] h-[40vh] bg-black/80 blur-[80px] rounded-[100%]" />
+              </div>
+              
+              <div className="w-full max-w-[1400px] h-[35vh] min-h-[300px] relative pointer-events-none drop-shadow-[0_0_100px_rgba(0,0,0,0.9)]">
                 <KineticSpark showTagline delay={-1} text={venue.name} />
               </div>
             </div>

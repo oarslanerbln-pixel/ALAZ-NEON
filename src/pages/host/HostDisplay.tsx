@@ -32,6 +32,9 @@ import { HostBombDisplay } from "./bomb/HostBombDisplay";
 import { HostSensorDisplay } from "./sensor/HostSensorDisplay";
 import { HostWheelDisplay } from "./wheel/HostWheelDisplay";
 import { HostOverloadDisplay } from "./overload/HostOverloadDisplay";
+import { HostEchoDisplay } from "./echo/HostEchoDisplay";
+import { HostPulseDisplay } from "./pulse/HostPulseDisplay";
+import { HostSpectrumDisplay } from "./spectrum/HostSpectrumDisplay";
 import { HostDashboard } from "./dashboard/HostDashboard";
 import { HostTutorial } from "./components/HostTutorial";
 import { DatabaseStatus } from "../../components/DatabaseStatus";
@@ -108,6 +111,36 @@ export function HostDisplay() {
   if (room.active_game === "overload") {
     return (
       <HostOverloadDisplay
+        room={room}
+        players={hostRoom.players}
+        updateRoomStatus={hostRoom.updateRoomStatus}
+      />
+    );
+  }
+
+  if (room.active_game === "echo") {
+    return (
+      <HostEchoDisplay
+        room={room}
+        players={hostRoom.players}
+        updateRoomStatus={hostRoom.updateRoomStatus}
+      />
+    );
+  }
+
+  if (room.active_game === "pulse") {
+    return (
+      <HostPulseDisplay
+        room={room}
+        players={hostRoom.players}
+        updateRoomStatus={hostRoom.updateRoomStatus}
+      />
+    );
+  }
+
+  if (room.active_game === "spectrum") {
+    return (
+      <HostSpectrumDisplay
         room={room}
         players={hostRoom.players}
         updateRoomStatus={hostRoom.updateRoomStatus}

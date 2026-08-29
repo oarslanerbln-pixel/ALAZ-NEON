@@ -34,6 +34,19 @@ Projenin estetiği, nargile kafeler ve gece kulüpleri gibi loş ve hareketli me
   * Kullanıcı dostu, büyük dokunmatik butonlar (iOS/Android uyumlu).
   * Titreşim geri bildirimi (`window.navigator.vibrate`) ve Emoji tepkileri gibi etkileşimi artıran mikro-etkileşimler.
 
+## 2.1. Görsel Geri Bildirim ve Tension (Gerilim) Sistemi
+
+Oyuncu etkileşimlerini güçlendirmek ve atmosferik gerilimi yönetmek için özel bir Tension sistemi ve animasyon standartları kullanılmalıdır:
+
+* **Zamana Dayalı Gerilim (Tension System):**
+  * Oyunlarda süre 10 saniyenin altına düştüğünde ana sarmalayıcı (wrapper) bileşenlere (örn: `PlayerGame.tsx`, `HostPlaying.tsx`) `data-tension="high"` özelliği (attribute) eklenir.
+  * Bu özellik, `index.css`'te tanımlı CSS değişkenlerini (`--color-neon-blue`, `--color-dark-bg` vb.) global olarak ezerek ekranı alarm tonlarına (kırmızı) çevirir ve alt bileşenleri anında etkiler.
+* **Kritik Geri Bildirimler (Feedback Animations):**
+  * Oyuncunun etkileşimlerinde (cevap gönderme) durum kontrolü için `submitStatus` ("success" | "error") state'i kullanılmalıdır.
+  * `framer-motion`'ın `<AnimatePresence>` bileşeni ile başarılı durumlarda ekrana kısa süreli mix-blend overlay (neon flaş), hatalı durumlarda glitch/shake sarsıntı efektleri eklenmelidir.
+* **Zamanın Bitmesi (Time Up / Cinematic Transitions):**
+  * Host (TV) ekranlarında süre bittiğinde (`timeLeft === 0`), Firestore state'i `review` statüsüne geçmeden hemen önceki o kısa (0-2 saniyelik) aralıkta, ekranı sarsan ve "SÜRE BİTTİ" yazan devasa bir görsel patlama (`scale bounce`) gösterilmelidir. Oyunlar arası geçişler her zaman sinematik ve abartılı olmalıdır.
+
 ## 3. Oyun İçi Modülerlik (Mini Oyunlar Ekleme)
 
 Eğer sisteme yeni bir mini-oyun (Örn: Şarkı Tahmin, Hafıza Oyunu vs.) eklenecekse şu adımlar izlenir:

@@ -60,91 +60,99 @@ export function PlayerLobby({ room, roomId }: PlayerLobbyProps) {
 
       <div className="relative z-10 flex flex-col items-center w-full max-w-sm">
 
-        <LanguageSwitcher className="mb-6" />
+        <LanguageSwitcher className="mb-6 opacity-70 hover:opacity-100 transition-opacity" />
 
-        {/* Animated waiting icon */}
-        <div className="relative w-20 h-20 flex items-center justify-center mb-8">
+        {/* Premium Waiting Indicator */}
+        <div className="relative w-32 h-32 flex items-center justify-center mb-8">
+          {/* Subtle Outer Glow */}
+          <div className="absolute inset-0 bg-alaz-orange/5 rounded-full blur-2xl" />
+          
+          {/* Smooth rings */}
           <motion.div
             animate={{ rotate: 360 }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-0 rounded-full border-[0.5px] border-white/5 border-t-white/30 border-b-white/30"
+            transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-0 rounded-full border border-white/5 border-t-white/30"
           />
           <motion.div
             animate={{ rotate: -360 }}
-            transition={{ duration: 13, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-3 rounded-full border-[0.5px] border-white/10 border-l-white/40"
+            transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-4 rounded-full border border-white/5 border-b-alaz-orange/40"
           />
+          
+          {/* Pulsing Core */}
           <motion.div
-            animate={{ scale: [1, 1.6, 1], opacity: [0.4, 1, 0.4] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="w-2 h-2 bg-alaz-orange rounded-full shadow-[0_0_15px_rgba(255,77,0,0.8)]"
+            animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="w-4 h-4 bg-white rounded-full shadow-[0_0_20px_rgba(255,255,255,1)]"
           />
         </div>
 
-        {/* Status */}
         <motion.h2
-          animate={{ opacity: [0.5, 1, 0.5] }}
-          transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-          className="text-base font-light text-white tracking-[0.4em] mb-2 uppercase"
+          animate={{ opacity: [0.7, 1, 0.7] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          className="text-sm font-medium text-white/90 tracking-[0.5em] mb-3 uppercase"
         >
           {t("lobby.networkConnected")}
         </motion.h2>
 
-        {/* Player count */}
         <motion.div
           key={playerCount}
-          initial={{ scale: 1.2, color: "#ff5500" }}
-          animate={{ scale: 1, color: "#6b7280" }}
-          className="flex items-center gap-2 mb-8"
+          initial={{ scale: 1.1, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="flex items-center gap-3 mb-10 bg-white/5 px-4 py-2 rounded-full backdrop-blur-md border border-white/10"
         >
-          <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-          <span className="text-xs font-mono text-gray-500 tracking-widest uppercase">
+          <div className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+          </div>
+          <span className="text-[10px] font-bold text-white/70 tracking-widest uppercase">
             {t("waitingRoom.playersConnected", playerCount)}
           </span>
         </motion.div>
 
-        {/* Room info */}
         {room && room.categories?.length > 0 && (
-          <div className="w-full mb-8 bg-zinc-900/60 border border-zinc-800 p-4 relative">
-            <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-alaz-orange/50" />
-            <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-alaz-orange/50" />
-            <p className="text-xs text-alaz-orange/60 uppercase tracking-[0.3em] font-mono mb-3">
+          <div className="w-full mb-10 bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-3xl p-6 relative shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+            <p className="text-[9px] text-white/40 uppercase tracking-[0.4em] font-black mb-4">
               {t("waitingRoom.categoriesTitle")}
             </p>
             <div className="flex flex-wrap gap-2 justify-center">
               {room.categories.map((cat) => (
                 <span
                   key={cat}
-                  className="text-xs text-white/70 font-mono border border-zinc-700 px-2 py-1 bg-zinc-800/50"
+                  className="text-[10px] text-white/90 font-medium tracking-widest uppercase border border-white/10 px-3 py-1.5 rounded-xl bg-white/[0.05]"
                 >
                   {cat}
                 </span>
               ))}
             </div>
-            <div className="flex items-center justify-center gap-4 mt-4 pt-3 border-t border-zinc-800">
-              <span className="text-[10px] text-zinc-500 font-mono uppercase tracking-wide">
+            <div className="flex items-center justify-center gap-6 mt-6 pt-5 border-t border-white/5">
+              <span className="text-[10px] text-white/50 font-medium uppercase tracking-[0.2em] flex items-center gap-2">
+                <span className="w-1 h-1 bg-white/30 rounded-full" />
                 {t("waitingRoom.timerLabel", String(room.timer_setting))}
               </span>
-              <span className="text-[10px] text-zinc-500 font-mono uppercase tracking-wide">
+              <span className="text-[10px] text-white/50 font-medium uppercase tracking-[0.2em] flex items-center gap-2">
+                <span className="w-1 h-1 bg-white/30 rounded-full" />
                 {t("waitingRoom.roundsLabel", String(room.total_rounds))}
               </span>
             </div>
           </div>
         )}
 
-        {/* Rotating tips */}
-        <div className="w-full h-16 flex items-center justify-center overflow-hidden">
+        <div className="w-full relative h-24 flex items-center justify-center perspective-[1000px]">
           <AnimatePresence mode="wait">
             <motion.div
               key={tipIdx}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.4 }}
-              className="flex items-start gap-3 bg-zinc-900/40 border border-zinc-800/60 px-4 py-3 w-full"
+              initial={{ opacity: 0, rotateX: -20, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, rotateX: 0, y: 0, scale: 1 }}
+              exit={{ opacity: 0, rotateX: 20, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.6, type: "spring", bounce: 0.4 }}
+              className="absolute w-full bg-gradient-to-br from-white/10 to-transparent border border-white/10 rounded-2xl p-5 backdrop-blur-xl shadow-[0_10px_20px_rgba(0,0,0,0.3)] flex items-center gap-4"
             >
-              <span className="text-lg shrink-0 mt-0.5">{TIPS[tipIdx].icon}</span>
-              <p className="text-xs text-zinc-400 font-light leading-relaxed text-left">
+              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center shrink-0 border border-white/20 shadow-inner">
+                <span className="text-xl">{TIPS[tipIdx].icon}</span>
+              </div>
+              <p className="text-xs text-white/80 font-medium leading-relaxed text-left">
                 {t(TIPS[tipIdx].key)}
               </p>
             </motion.div>

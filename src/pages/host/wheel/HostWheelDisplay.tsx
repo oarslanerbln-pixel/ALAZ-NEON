@@ -3,6 +3,7 @@ import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
+import { HostLobby } from "../views/HostLobby";
 import { useVenue } from "../../../contexts/VenueContextCore";
 import { DEFAULT_VENUE_CONFIG, type Room, type Player, type RoomStatus } from "../../../types/database";
 
@@ -83,6 +84,30 @@ export function HostWheelDisplay({ room, players, updateRoomStatus }: Props) {
 
         <div className="flex-1 flex items-center justify-center relative">
           
+          <AnimatePresence>
+            {room.status === "lobby" && (
+              <motion.div
+                key="lobby"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 z-50 bg-black/90 backdrop-blur-sm"
+              >
+                <HostLobby
+                  room={room}
+                  players={players}
+                  onStartGame={async () => {
+                    await updateRoomStatus("wheel_active", {
+                      wheel_spinner_id: null,
+                      wheel_result_index: null
+                    });
+                  }}
+                  onUpdateCategories={async () => {}}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Wheel Container */}
           <div className="relative flex items-center justify-center w-[600px] h-[600px]">
             {/* The Arrow */}

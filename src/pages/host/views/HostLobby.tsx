@@ -255,48 +255,56 @@ export function HostLobby({
             </div>
           </div>
 
-          <div className="w-full xl:w-96 space-y-6">
-            <div className="flex items-center justify-between pl-2">
-              <span className="text-white/50 uppercase tracking-[0.3em] text-[10px] font-medium">
-                {t("lobby.categories")}
-              </span>
-              <span className="text-white/80 text-[10px] font-medium tracking-widest uppercase bg-white/10 px-3 py-1 rounded-full">
-                {currentCategories.length} {t("lobby.active")}
-              </span>
+          <div className="w-full xl:w-96 space-y-8 bg-black/40 p-8 rounded-3xl border border-white/5 shadow-[inset_0_0_20px_rgba(255,255,255,0.02)] backdrop-blur-md">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="text-white/40 uppercase tracking-[0.4em] text-[10px] font-black mb-1">
+                  {t("lobby.categories")}
+                </span>
+                <span className="text-white/80 text-xs font-medium tracking-widest uppercase flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-alaz-orange animate-pulse" />
+                  {currentCategories.length} {t("lobby.active")}
+                </span>
+              </div>
             </div>
 
             {requiresCategories && (
-              <div className="flex flex-wrap gap-2">
-                {Object.keys(presets).map((name) => (
-                  <button
-                    key={name}
-                    onClick={() => applyPreset(name)}
-                    className={`px-4 py-1.5 font-sans font-medium text-[10px] uppercase tracking-widest transition-all border-[0.5px] rounded-full ${
-                      activePreset === name
-                        ? "bg-white border-white text-black shadow-[0_0_15px_rgba(255,255,255,0.4)]"
-                        : "bg-white/[0.02] border-white/20 text-white/50 hover:border-white/50 hover:text-white"
-                    }`}
-                  >
-                    {name}
-                  </button>
-                ))}
+              <div className="space-y-3">
+                <span className="text-white/30 uppercase tracking-[0.3em] text-[9px] font-bold ml-1">Presets</span>
+                <div className="flex flex-wrap gap-2">
+                  {Object.keys(presets).map((name) => (
+                    <button
+                      key={name}
+                      onClick={() => applyPreset(name)}
+                      className={`px-4 py-2 font-sans font-medium text-[10px] uppercase tracking-[0.2em] transition-all rounded-xl ${
+                        activePreset === name
+                          ? "bg-alaz-orange/20 border border-alaz-orange/50 text-alaz-orange shadow-[0_0_15px_rgba(255,77,0,0.2)]"
+                          : "bg-white/[0.02] border border-white/10 text-white/40 hover:border-white/30 hover:text-white/80 hover:bg-white/[0.05]"
+                      }`}
+                    >
+                      {name}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
-            <div className="flex flex-wrap gap-3 min-h-[160px] p-6 bg-white/[0.02] rounded-2xl border border-white/5 shadow-inner content-start">
+            <div className="flex flex-col gap-3 min-h-[160px] p-5 bg-black/50 rounded-2xl border border-white/[0.03] shadow-inner relative overflow-hidden">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.03)_0%,transparent_70%)] pointer-events-none" />
+              
               <AnimatePresence>
                 {currentCategories.map((cat, idx) => (
                   <motion.div
                     key={`${cat}-${idx}`}
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.8, opacity: 0 }}
-                    className="bg-white/[0.1] text-white px-5 py-2 rounded-full text-xs font-medium border border-white/10 flex items-center gap-3 uppercase tracking-widest shadow-sm hover:bg-white/[0.15] transition-colors"
+                    initial={{ x: -10, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: 10, opacity: 0 }}
+                    className="group bg-white/[0.04] text-white/90 px-5 py-3 rounded-xl text-xs font-medium border border-white/[0.05] flex items-center justify-between uppercase tracking-widest transition-all hover:bg-white/[0.08] hover:border-white/10"
                   >
-                    {cat}
+                    <span className="truncate pr-4">{cat}</span>
                     <button
                       onClick={() => handleRemoveCategory(idx)}
-                      className="text-white/40 hover:text-white transition-colors text-lg leading-none mt-[-2px]"
+                      className="text-white/20 hover:text-[#ff003c] transition-colors text-lg leading-none shrink-0"
                     >
                       ×
                     </button>
@@ -304,25 +312,27 @@ export function HostLobby({
                 ))}
               </AnimatePresence>
               {currentCategories.length === 0 && (
-                <p className="text-white/30 text-xs italic p-2 w-full text-center mt-8">
-                  {t("lobby.noCategories")}
-                </p>
+                <div className="flex-1 flex items-center justify-center">
+                  <p className="text-white/20 text-[10px] uppercase tracking-[0.3em] font-medium text-center">
+                    {t("lobby.noCategories")}
+                  </p>
+                </div>
               )}
             </div>
 
-            <div className="flex gap-2 p-1.5 bg-white/[0.03] border border-white/10 rounded-full focus-within:border-white/30 transition-all shadow-inner">
+            <div className="flex gap-2 p-1 bg-white/[0.02] border border-white/10 rounded-2xl focus-within:border-alaz-orange/50 focus-within:bg-white/[0.04] transition-all shadow-inner">
               <input
                 type="text"
                 placeholder={t("lobby.newCategory")}
                 value={newCategory}
                 onChange={(e) => setNewCategory(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAddCategory()}
-                className="flex-1 bg-transparent px-5 py-3 text-sm focus:outline-none placeholder:text-white/30 font-medium text-white uppercase tracking-widest"
+                className="flex-1 bg-transparent px-5 py-3 text-xs focus:outline-none placeholder:text-white/20 font-medium text-white uppercase tracking-[0.2em]"
               />
               <button
                 type="button"
                 onClick={handleAddCategory}
-                className="bg-white/10 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-light cursor-pointer hover:bg-white hover:text-black transition-all"
+                className="bg-white/[0.05] border border-white/10 text-white/60 w-12 h-12 rounded-xl flex items-center justify-center text-xl font-light hover:bg-alaz-orange hover:text-white hover:border-alaz-orange transition-all"
               >
                 +
               </button>
@@ -359,12 +369,15 @@ export function HostLobby({
           <button
             onClick={onStartGame}
             disabled={!canStart}
-            className={`w-full py-5 font-medium uppercase tracking-[0.3em] text-sm transition-all ${
+            className={`w-full py-6 font-black uppercase tracking-[0.4em] text-sm transition-all relative overflow-hidden group ${
               !canStart
-                ? "bg-white/[0.05] text-white/30 border border-white/10 cursor-not-allowed rounded-full"
-                : "bg-white text-black border border-white hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] rounded-full shadow-[0_0_20px_rgba(255,255,255,0.3)]"
+                ? "bg-white/[0.02] text-white/20 border border-white/5 cursor-not-allowed rounded-2xl"
+                : "bg-alaz-orange/10 text-alaz-orange border border-alaz-orange/50 hover:bg-alaz-orange hover:text-white rounded-2xl shadow-[0_0_30px_rgba(255,85,0,0.3)] hover:shadow-[0_0_50px_rgba(255,85,0,0.5)] hover:scale-[1.02] active:scale-[0.98]"
             }`}
           >
+            {canStart && (
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] translate-x-[-100%] group-hover:animate-[shimmer_1.5s_infinite]" />
+            )}
             <span className="relative z-10">{t("lobby.startGame")}</span>
           </button>
           
@@ -372,14 +385,14 @@ export function HostLobby({
              <button
                 onClick={() => startCountdown(5)}
                 disabled={!canStart}
-                className="flex-1 py-3 bg-white/[0.05] border border-white/10 rounded-full text-white hover:bg-white/20 text-[10px] font-medium uppercase tracking-widest disabled:opacity-30 transition-all"
+                className="flex-1 py-3 bg-white/[0.02] border border-white/10 rounded-xl text-white/50 hover:bg-white/[0.08] hover:text-white hover:border-white/30 text-[9px] font-bold uppercase tracking-widest disabled:opacity-30 transition-all"
              >
                 5 Dk Bekle
              </button>
              <button
                 onClick={() => startCountdown(10)}
                 disabled={!canStart}
-                className="flex-1 py-3 bg-white/[0.05] border border-white/10 rounded-full text-white hover:bg-white/20 text-[10px] font-medium uppercase tracking-widest disabled:opacity-30 transition-all"
+                className="flex-1 py-3 bg-white/[0.02] border border-white/10 rounded-xl text-white/50 hover:bg-white/[0.08] hover:text-white hover:border-white/30 text-[9px] font-bold uppercase tracking-widest disabled:opacity-30 transition-all"
              >
                 10 Dk Bekle
              </button>

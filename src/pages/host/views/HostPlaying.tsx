@@ -38,12 +38,17 @@ export function HostPlaying({
       exit={{ opacity: 0, scale: 1.05 }}
       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
       className={`w-full h-full flex flex-col items-center justify-between py-12 relative transition-colors duration-500 ${
-        timeLeft <= 5 ? "bg-red-950/20" : ""
+        timeLeft <= 10 && timeLeft > 0 ? "str1-bg bg-red-950/20" : ""
       }`}
+      data-tension={timeLeft <= 10 && timeLeft > 0 ? "high" : undefined}
     >
-      {timeLeft <= 5 && (
-        <div className="absolute inset-0 border-[3px] border-red-500/30 animate-pulse pointer-events-none z-30" />
+      {timeLeft <= 10 && timeLeft > 0 && (
+        <div className="danger-overlay absolute inset-0 pointer-events-none z-30" />
       )}
+      {timeLeft <= 5 && timeLeft > 0 && (
+        <div className="absolute inset-0 border-[4px] border-red-500/50 animate-pulse pointer-events-none z-30" />
+      )}
+      <div className="animate-scanline" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.04)_0%,transparent_70%)] pointer-events-none" />
 
       <IntelligenceWidget
@@ -152,7 +157,7 @@ export function HostPlaying({
                         timeLeft <= 10
                           ? "text-red-400 drop-shadow-[0_0_20px_rgba(255,0,0,0.3)]"
                           : "text-white/90 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]"
-                      }`}
+                      } ${timeLeft <= 5 && timeLeft > 0 ? "animate-shake text-glow-premium-alaz" : ""}`}
                     >
                       {timeLeft.toString().padStart(2, "0")}
                     </motion.span>
@@ -244,6 +249,34 @@ export function HostPlaying({
           </div>
         </motion.div>
       </div>
+
+      {/* TIME UP SPLASH */}
+      <AnimatePresence>
+        {timeLeft === 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5, y: 50 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 1.5, filter: "blur(20px)" }}
+            transition={{ type: "spring", bounce: 0.6 }}
+            className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm pointer-events-none"
+          >
+            <div className="relative flex items-center justify-center">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 10, opacity: 0 }}
+                transition={{ duration: 1.5 }}
+                className="absolute w-20 h-20 bg-red-600 rounded-full"
+              />
+              <h1 
+                className="text-[150px] font-black text-red-500 uppercase tracking-tighter drop-shadow-[0_0_50px_rgba(255,0,0,1)] animate-shake"
+                style={{ textShadow: "4px 4px 0px rgba(0,243,255,0.5), -4px -4px 0px rgba(255,0,255,0.5)" }}
+              >
+                SÜRE BİTTİ
+              </h1>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

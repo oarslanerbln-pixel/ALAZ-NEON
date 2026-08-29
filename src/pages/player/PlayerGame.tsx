@@ -26,6 +26,9 @@ import { PlayerBombController } from "./bomb/PlayerBombController";
 import { PlayerSensorController } from "./sensor/PlayerSensorController";
 import { PlayerWheelController } from "./wheel/PlayerWheelController";
 import { PlayerOverloadGame } from "./overload/PlayerOverloadGame";
+import { PlayerEchoController } from "./echo/PlayerEchoController";
+import { PlayerPulseController } from "./pulse/PlayerPulseController";
+import { PlayerSpectrumController } from "./spectrum/PlayerSpectrumController";
 import { BackgroundSlider } from "../../components/BackgroundSlider";
 import { PlayerTutorial } from "./components/PlayerTutorial";
 
@@ -207,6 +210,18 @@ export function PlayerGame() {
     return <PlayerOverloadGame room={room} player={player} />;
   }
 
+  if (room?.active_game === "echo" && player && room.status !== "tutorial" && room.status !== "ad_break") {
+    return <PlayerEchoController room={room} player={player} />;
+  }
+
+  if (room?.active_game === "pulse" && player && room.status !== "tutorial" && room.status !== "ad_break") {
+    return <PlayerPulseController room={room} player={player} />;
+  }
+
+  if (room?.active_game === "spectrum" && player && room.status !== "tutorial" && room.status !== "ad_break") {
+    return <PlayerSpectrumController room={room} player={player} />;
+  }
+
   // Render tutorial for all game modes if status is tutorial
   if (room?.status === "tutorial") {
     return <PlayerTutorial room={room} />;
@@ -231,7 +246,34 @@ export function PlayerGame() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-black/60 flex flex-col text-white relative overflow-hidden font-inter">
+    <div 
+      className="min-h-[100dvh] bg-black/60 flex flex-col text-white relative overflow-hidden font-inter transition-colors duration-500"
+      data-tension={timeLeft <= 10 && timeLeft > 0 && gameState === "playing" ? "high" : undefined}
+    >
+      {timeLeft <= 10 && timeLeft > 0 && gameState === "playing" && (
+        <div className="danger-overlay absolute inset-0 pointer-events-none z-30" />
+      )}
+      <AnimatePresence>
+        {submitStatus === "success" && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="absolute inset-0 bg-neon-blue/20 mix-blend-screen pointer-events-none z-50 flex items-center justify-center"
+          >
+            <div className="absolute inset-0 border-8 border-neon-blue/40 shadow-[inset_0_0_100px_rgba(0,243,255,0.4)]" />
+          </motion.div>
+        )}
+        {submitStatus === "error" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-red-600/30 mix-blend-overlay pointer-events-none z-50 animate-glitch"
+          />
+        )}
+      </AnimatePresence>
       <BackgroundSlider className="fixed inset-0 z-0 opacity-40 pointer-events-none overflow-hidden" />
       <PlayerHeader
         playerName={player?.nickname || t("game.player")}

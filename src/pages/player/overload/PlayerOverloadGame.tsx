@@ -43,6 +43,33 @@ export function PlayerOverloadGame({ room, player }: PlayerOverloadGameProps) {
   }, [isTarget, isEliminated, isDeflecting, room.id, room.overload_time_allowed]);
 
 
+  if (room.status === "lobby") {
+    return (
+      <div className="w-full h-[100dvh] flex flex-col items-center justify-center bg-[#050505] text-white p-6 text-center font-sans">
+        <div className="w-16 h-16 rounded-full border-4 border-cyan-400 border-t-transparent animate-spin mb-8" />
+        <h2 className="text-2xl font-black text-cyan-400 mb-2 uppercase tracking-[0.3em]">
+          NEON OVERLOAD
+        </h2>
+        <p className="text-cyan-400/50 font-medium tracking-widest text-sm uppercase">Ana ekranı takip edin</p>
+      </div>
+    );
+  }
+
+  if (room.status === "finished") {
+    const isWinner = !isEliminated;
+    return (
+      <div className={`w-full h-[100dvh] flex flex-col items-center justify-center font-sans text-center px-6 transition-colors duration-500 ${isWinner ? 'bg-green-900' : 'bg-red-900'}`}>
+        <h2 className={`text-5xl font-black mb-4 uppercase tracking-[0.3em] ${isWinner ? 'text-green-400 drop-shadow-[0_0_20px_rgba(74,222,128,0.8)]' : 'text-red-400 drop-shadow-[0_0_20px_rgba(248,113,113,0.8)]'}`}>
+          {isWinner ? "ŞAMPİYON!" : "OYUN BİTTİ"}
+        </h2>
+        <p className="text-white/80 font-bold tracking-widest text-sm uppercase">
+          Sonuçlar ekranda!
+        </p>
+      </div>
+    );
+  }
+
+
   if (isEliminated) {
     return (
       <div className="w-full h-screen bg-red-900 flex flex-col items-center justify-center font-sans">

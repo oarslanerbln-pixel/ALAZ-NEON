@@ -15,6 +15,9 @@ const GAME_LABEL: Record<GameType, string> = {
   sensor: "Alaz Sensör",
   wheel: "Alaz Çark",
   overload: "Neon Overload",
+  echo: "Alaz Echo",
+  pulse: "Alaz Pulse",
+  spectrum: "Neon Spectrum",
 };
 
 function rangeFor(preset: RangePreset): { start: number; end: number } {

@@ -6,17 +6,16 @@ import { motion } from "framer-motion";
 import { NeonIcon } from "../../components/NeonIcon";
 import { KineticSpark } from "../../components/KineticSpark";
 import { LanguageSwitcher } from "../../components/LanguageSwitcher";
-import { ParticleBackground } from "../../components/ParticleBackground";
 import { useLocale } from "../../hooks/useLocale";
 import { useToast } from "../../contexts/ToastContextCore";
 import { errorMessage } from "../../lib/errors";
 import { useVenue } from "../../contexts/VenueContextCore";
 
-// Premium Glass Panel with Looping Neon Animation
+// Premium Dynamic Glass Panel with Spinning Neon Core
 function GlassPanel({ 
   children, 
   className = "", 
-  neonColor = "rgba(255,215,0,0.8)",
+  neonColor = "rgba(255,85,0,1)", // Default to alaz-orange
   delay = "0s"
 }: { 
   children: React.ReactNode; 
@@ -26,17 +25,21 @@ function GlassPanel({
 }) {
   return (
     <div 
-      className={`relative overflow-hidden rounded-none border-[0.5px] border-white/20 group shadow-[0_10px_30px_rgba(0,0,0,0.8)] ${className}`}
+      className={`relative overflow-hidden group shadow-[0_0_30px_rgba(0,0,0,0.9)] ${className}`}
     >
-      <div className="absolute inset-0 z-0">
-        <div 
-          className="absolute inset-0 bg-[linear-gradient(45deg,transparent_35%,var(--neon-color)_50%,transparent_65%)] bg-[length:300%_300%] animate-shine opacity-20" 
-          style={{ '--neon-color': neonColor, animationDelay: delay } as React.CSSProperties}
-        />
-        <div 
-          className="absolute inset-[1px] bg-black/80 backdrop-blur-2xl rounded-none z-10 transition-colors duration-500 group-hover:bg-black/90" 
-        />
-      </div>
+      <div className="absolute inset-0 z-0 bg-black/40 backdrop-blur-2xl border border-white/10 group-hover:border-transparent transition-all duration-500 rounded-sm" />
+      
+      {/* Animated glowing border background */}
+      <div 
+        className="absolute inset-[-50%] z-0 animate-[spin_3s_linear_infinite] opacity-0 group-hover:opacity-100 transition-opacity duration-500" 
+        style={{ 
+          background: `conic-gradient(from 0deg, transparent 0 270deg, ${neonColor} 360deg)`,
+          animationDelay: delay 
+        }} 
+      />
+      <div className="absolute inset-[2px] bg-black/90 backdrop-blur-xl z-10 rounded-sm" />
+      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none z-10 rounded-sm" />
+
       <div className="relative z-20 h-full">
         {children}
       </div>
@@ -100,9 +103,16 @@ export function HostSetup() {
 
   return (
     <div className="flex-1 w-full min-h-screen relative overflow-hidden bg-black">
-      {/* Deep Cinematic Background */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,77,0,0.15),transparent_50%),radial-gradient(ellipse_at_bottom_left,rgba(0,243,255,0.1),transparent_50%)] pointer-events-none" />
-      <ParticleBackground speedMultiplier={0.3} />
+      {/* PREMIUM CINEMATIC BACKGROUND */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <motion.div
+          className="absolute inset-0 bg-[url('/images/bg-neon.jpg')] bg-cover bg-center"
+          animate={{ scale: [1, 1.08, 1], opacity: [0.15, 0.4, 0.15] }}
+          transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/50" />
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-[10px]" />
+      </div>
 
       <div className="p-10 max-w-5xl mx-auto w-full relative z-10">
         <motion.div
@@ -130,20 +140,20 @@ export function HostSetup() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 auto-rows-[minmax(220px,auto)]">
             {/* Main Settings Panel */}
-            <GlassPanel className="md:col-span-3 md:row-span-2" neonColor="rgba(255,215,0,0.8)">
-              <div className="p-10 flex flex-col h-full relative">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-neon-blue/10 blur-[100px] -mr-32 -mt-32 pointer-events-none" />
+            <GlassPanel className="md:col-span-3 md:row-span-2" neonColor="rgba(255,85,0,1)">
+              <div className="p-8 sm:p-12 flex flex-col h-full relative">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-alaz-orange/10 blur-[100px] -mr-32 -mt-32 pointer-events-none group-hover:bg-alaz-orange/20 transition-colors" />
+                <div className="absolute bottom-0 left-0 w-64 h-64 bg-neon-blue/10 blur-[100px] -ml-32 -mb-32 pointer-events-none group-hover:bg-neon-blue/20 transition-colors" />
 
-              <div className="flex justify-between items-start mb-10 relative z-10">
-                <div>
-                  <h2 className="text-3xl font-sans font-black text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-alaz-orange tracking-tighter uppercase">
-                    {t("setup.title")}
-                  </h2>
-                  <p className="text-gray-400 font-bold text-xs mt-1 uppercase tracking-widest">{t("setup.subtitle")}</p>
-                </div>
+              <div className="flex flex-col items-center justify-center mb-12 relative z-10 text-center">
+                <NeonIcon type="settings" color="orange" className="w-16 h-16 mb-4 opacity-80" />
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-sans font-black text-transparent bg-clip-text bg-gradient-to-r from-alaz-orange to-yellow-500 tracking-tighter uppercase drop-shadow-[0_0_20px_rgba(255,85,0,0.5)]">
+                  {t("setup.title")}
+                </h2>
+                <p className="text-gray-400 font-bold text-xs mt-3 uppercase tracking-[0.3em]">{t("setup.subtitle")}</p>
               </div>
 
-              <div className="flex-1 relative z-10 w-full max-w-md mx-auto">
+              <div className="flex-1 relative z-10 w-full max-w-md mx-auto flex flex-col justify-center">
                 {/* Language Selector */}
                 <div>
                   <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
@@ -156,32 +166,51 @@ export function HostSetup() {
                 </div>
               </div>
 
-              <div className="mt-10 relative z-10">
+              <div className="mt-12 relative z-10 w-full max-w-md mx-auto">
                 <button
                   onClick={startLobby}
                   disabled={isCreating}
-                  className="w-full py-6 bg-gradient-to-r from-neon-blue to-teal-400 text-black font-black text-lg uppercase tracking-[0.2em] transition-all hover:scale-[1.01] hover:shadow-[0_0_40px_rgba(0,229,255,0.4)] disabled:opacity-50 disabled:hover:scale-100 rounded-none shadow-[0_0_20px_rgba(0,0,0,0.5)]"
+                  className="relative w-full py-5 sm:py-7 bg-black hover:bg-[#001014] border-2 border-[#00f3ff]/70 hover:border-[#00f3ff] transition-all text-lg sm:text-2xl font-sans font-black uppercase tracking-[0.18em] group shadow-[0_0_40px_rgba(0,243,255,0.45)] hover:shadow-[0_0_60px_rgba(0,243,255,0.7)] hover:scale-[1.02] active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none"
+                  style={{ clipPath: "polygon(22px 0, calc(100% - 22px) 0, 100% 22px, 100% calc(100% - 22px), calc(100% - 22px) 100%, 22px 100%, 0 calc(100% - 22px), 0 22px)" }}
                 >
-                  {isCreating
-                    ? t("setup.starting")
-                    : "GECEYİ BAŞLAT →"}
+                  <motion.span
+                    className="whitespace-nowrap text-white block"
+                    animate={isCreating ? {} : {
+                      textShadow: [
+                        "0 0 2px #fff, 0 0 6px #fff, 0 0 14px rgba(0,243,255,0.9), 0 0 28px rgba(0,243,255,0.55)",
+                        "0 0 2px #fff, 0 0 6px #fff, 0 0 14px rgba(0,243,255,0.9), 0 0 28px rgba(0,243,255,0.55)",
+                        "0 0 1px rgba(0,243,255,0.3), 0 0 2px rgba(0,243,255,0.2)",
+                        "0 0 2px #fff, 0 0 6px #fff, 0 0 14px rgba(0,243,255,0.9), 0 0 28px rgba(0,243,255,0.55)",
+                      ],
+                    }}
+                    transition={{
+                      duration: 2.8,
+                      times: [0, 0.32, 0.36, 1],
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  >
+                    {isCreating ? t("setup.starting", "BAŞLATILIYOR...") : "GECEYİ BAŞLAT →"}
+                  </motion.span>
                 </button>
               </div>
             </div>
             </GlassPanel>
 
             {/* Status Bento */}
-            <GlassPanel neonColor="rgba(255,0,60,0.8)" delay="-1s">
+            <GlassPanel neonColor="rgba(255,0,60,1)" delay="-1s">
               <div className="p-8 flex flex-col justify-center h-full relative">
-                <div className="absolute -bottom-4 -right-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#ff003c]/10 blur-[50px] pointer-events-none group-hover:bg-[#ff003c]/20 transition-colors" />
+                <div className="absolute -bottom-4 -right-4 opacity-10 group-hover:opacity-20 transition-opacity">
                   <NeonIcon type="crown" color="pink" className="w-24 h-24" />
                 </div>
               <div className="flex items-center gap-3 mb-6 relative z-10">
-                <span className="text-[#ff003c] text-[10px] font-semibold tracking-widest uppercase">
+                <span className="text-[#ff003c] text-[10px] font-black tracking-[0.2em] uppercase flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-[#ff003c] rounded-none animate-pulse" />
                   {t("setup.statusTitle")}
                 </span>
               </div>
-              <h3 className="text-2xl font-sans font-semibold mb-3 text-white tracking-tight uppercase">
+              <h3 className="text-2xl font-sans font-black mb-3 text-white tracking-widest uppercase">
                 {t("setup.statusWaiting")}
               </h3>
               <p className="text-gray-400 text-xs leading-relaxed font-medium">
@@ -191,27 +220,29 @@ export function HostSetup() {
             </GlassPanel>
 
             {/* Games Info Bento */}
-            <GlassPanel neonColor="rgba(0,243,255,0.8)" delay="-2s">
+            <GlassPanel neonColor="rgba(0,243,255,1)" delay="-2s">
               <div className="p-8 flex flex-col h-full relative">
-              <h3 className="text-lg font-sans font-semibold mb-5 text-white uppercase tracking-tight relative z-10">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-neon-blue/10 blur-[50px] pointer-events-none group-hover:bg-neon-blue/20 transition-colors" />
+              <h3 className="text-[10px] font-black mb-5 text-neon-blue uppercase tracking-[0.2em] relative z-10 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 bg-neon-blue rounded-none animate-pulse" />
                 {t("setup.gamesTitle", "OYUN KATALOĞU")}
               </h3>
-              <div className="space-y-3 relative z-10">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-gray-400 font-bold">HENGAME QUIZ</span>
-                  <span className="text-neon-blue font-black border border-neon-blue/30 px-2 py-0.5 rounded-full text-[9px]">KELİME</span>
+              <div className="space-y-4 relative z-10">
+                <div className="flex items-center justify-between text-[11px] group/item">
+                  <span className="text-white font-bold tracking-wider group-hover/item:text-neon-blue transition-colors">HENGAME <span className="opacity-70 text-cyan-400">QUIZ</span></span>
+                  <span className="text-neon-blue font-black border border-neon-blue/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(0,243,255,0.2)]">KELİME</span>
                 </div>
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-gray-400 font-bold">HENGAME BOMB</span>
-                  <span className="text-neon-pink font-black border border-neon-pink/30 px-2 py-0.5 rounded-full text-[9px]">ZAMAN</span>
+                <div className="flex items-center justify-between text-[11px] group/item">
+                  <span className="text-white font-bold tracking-wider group-hover/item:text-red-500 transition-colors">HENGAME <span className="opacity-70 text-orange-500">BOMB</span></span>
+                  <span className="text-red-500 font-black border border-red-500/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(255,0,0,0.2)]">ZAMAN</span>
                 </div>
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-gray-400 font-bold">HENGAME SENSÖR</span>
-                  <span className="text-purple-400 font-black border border-purple-500/30 px-2 py-0.5 rounded-full text-[9px]">HAREKET</span>
+                <div className="flex items-center justify-between text-[11px] group/item">
+                  <span className="text-white font-bold tracking-wider group-hover/item:text-neon-pink transition-colors">HENGAME <span className="opacity-70 text-purple-400">SENSÖR</span></span>
+                  <span className="text-neon-pink font-black border border-neon-pink/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(255,0,255,0.2)]">HAREKET</span>
                 </div>
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-gray-400 font-bold">HENGAME ÇARK</span>
-                  <span className="text-cyber-yellow font-black border border-cyber-yellow/30 px-2 py-0.5 rounded-full text-[9px]">ŞANS</span>
+                <div className="flex items-center justify-between text-[11px] group/item">
+                  <span className="text-white font-bold tracking-wider group-hover/item:text-cyber-yellow transition-colors">HENGAME <span className="opacity-70 text-yellow-500">ÇARK</span></span>
+                  <span className="text-cyber-yellow font-black border border-cyber-yellow/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(255,215,0,0.2)]">ŞANS</span>
                 </div>
               </div>
                 <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-neon-blue/5 blur-3xl rounded-full" />

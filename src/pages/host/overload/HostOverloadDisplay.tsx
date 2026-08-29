@@ -2,6 +2,9 @@ import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { SoundManager, sounds } from "../../../lib/audio";
+import { HostLobby } from "../views/HostLobby";
+import { HostHeader } from "../components/HostHeader";
+import { TVScaleFrame } from "../../../components/TVScaleFrame";
 
 interface HostOverloadDisplayProps {
   room: Room;
@@ -37,12 +40,9 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
     }
 
     // Check if the game is won (only 1 player left)
-    if (activePlayers.length === 1 && (room.overload_eliminated_ids?.length || 0) > 0) {
+    if (activePlayers.length === 1 && (room.overload_eliminated_ids?.length || 0) > 0 && room.status !== "finished") {
       // We have a winner!
-      // In a real app we might route to podium, but for now let's just go to standings
-      setTimeout(() => {
-        updateRoomStatus("standings", { active_game: "none" });
-      }, 5000);
+      updateRoomStatus("finished");
       return;
     }
 
@@ -88,26 +88,23 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
     }
   }, [room.overload_target_id, isExploding]);
 
-  if (activePlayers.length === 1 && (room.overload_eliminated_ids?.length || 0) > 0) {
-    return (
-      <div className="w-full h-full flex flex-col items-center justify-center bg-[#050505]">
-        <h1 className="text-6xl text-cyan-400 font-black uppercase tracking-widest animate-pulse">ŞAMPİYON</h1>
-        <h2 className="text-8xl text-white font-black mt-4 uppercase">{activePlayers[0].nickname}</h2>
-      </div>
-    );
-  }
+  // We removed the top level activePlayers.length === 1 check that returned early.
+  // It is now handled inside AnimatePresence with room.status === "finished".
 
   return (
+    <TVScaleFrame>
     <div className="relative w-full h-full bg-[#050505] overflow-hidden flex flex-col items-center justify-center font-sans">
+      <HostHeader room={room} onEndGameEarly={() => updateRoomStatus("finished")} />
       {/* Strategy 5: Neon Grid Background */}
       <div className="absolute inset-0 pointer-events-none opacity-30 bg-[linear-gradient(rgba(0,255,255,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.2)_1px,transparent_1px)] bg-[size:40px_40px] [transform:perspective(1000px)_rotateX(60deg)_translateY(-100px)_translateZ(-200px)]" />
       <div className="absolute top-0 w-full h-full bg-gradient-to-t from-transparent via-[#050505]/80 to-[#050505] pointer-events-none" />
 
       {/* Header Info */}
-      <div className="absolute top-8 left-8 right-8 flex justify-between items-center z-20">
-        <div className="text-cyan-400 font-black tracking-[0.3em] uppercase text-xl">
-          NEON OVERLOAD
-        </div>
+      {room.status !== "lobby" && room.status !== "finished" && (
+        <div className="absolute top-24 left-8 right-8 flex justify-between items-center z-20">
+          <div className="text-cyan-400 font-black tracking-[0.3em] uppercase text-xl">
+            NEON OVERLOAD
+          </div>
         <div className="flex gap-2">
           {players.map(p => {
             const isEliminated = (room.overload_eliminated_ids || []).includes(p.id);
@@ -121,10 +118,51 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
             );
           })}
         </div>
-      </div>
+        </div>
+      )}
 
       <AnimatePresence mode="wait">
-        {isExploding ? (
+        {room.status === "lobby" ? (
+          <motion.div
+            key="lobby"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 bg-black/90 backdrop-blur-sm"
+          >
+            <HostLobby
+              room={room}
+              players={players}
+              onStartGame={async () => {
+                const nextTarget = players[Math.floor(Math.random() * players.length)];
+                await updateRoomStatus("playing", {
+                  overload_target_id: nextTarget?.id || null,
+                  overload_start_time: Date.now(),
+                  overload_eliminated_ids: []
+                });
+              }}
+              onUpdateCategories={async () => {}}
+            />
+          </motion.div>
+        ) : room.status === "finished" ? (
+          <motion.div
+            key="finished"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="z-10 flex flex-col items-center justify-center"
+          >
+            <h1 className="text-6xl text-cyan-400 font-black uppercase tracking-widest animate-pulse">ŞAMPİYON</h1>
+            <h2 className="text-8xl text-white font-black mt-4 uppercase drop-shadow-[0_0_30px_rgba(0,255,255,0.8)] mb-12">
+              {activePlayers[0]?.nickname || "BİLİNMİYOR"}
+            </h2>
+            <button
+              onClick={() => updateRoomStatus("lobby", { active_game: "none", overload_eliminated_ids: [], overload_target_id: null })}
+              className="px-10 py-5 bg-cyan-500 hover:bg-cyan-400 text-black font-black uppercase tracking-widest text-xl rounded-xl transition-colors shadow-[0_0_30px_rgba(0,255,255,0.4)]"
+            >
+              OYUNU BİTİR VE LOBİYE DÖN
+            </button>
+          </motion.div>
+        ) : isExploding ? (
           <motion.div
             key="explosion"
             initial={{ scale: 0.5, opacity: 0 }}
@@ -185,5 +223,6 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
         )}
       </AnimatePresence>
     </div>
+    </TVScaleFrame>
   );
 }

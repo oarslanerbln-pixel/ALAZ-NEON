@@ -29,10 +29,19 @@ export type RoomStatus =
   | "ad_break"
   | "wheel_active"
   | "wheel_spinning"
-  | "wheel_result";
+  | "wheel_result"
+  | "echo_intro"
+  | "echo_active"
+  | "echo_reveal"
+  | "pulse_intro"
+  | "pulse_active"
+  | "pulse_reveal"
+  | "spectrum_intro"
+  | "spectrum_active"
+  | "spectrum_reveal";
 
 export type GameMode = "individual" | "team";
-export type GameType = "scattegories" | "quiz" | "bomb" | "sensor" | "wheel" | "overload";
+export type GameType = "scattegories" | "quiz" | "bomb" | "sensor" | "wheel" | "overload" | "echo" | "pulse" | "spectrum";
 
 export interface QuizQuestion {
   id: string;
@@ -85,6 +94,17 @@ export interface Room {
   overload_time_allowed?: number;
   overload_start_time?: number;
   overload_eliminated_ids?: string[];
+  // Echo Game Fields
+  echo_question?: string;
+  echo_votes?: Record<string, string>;
+  // Pulse Game Fields
+  pulse_target_time?: number;
+  pulse_clicks?: Record<string, number>;
+  pulse_result?: number;
+  // Spectrum Game Fields
+  spectrum_teams?: Record<string, "red" | "blue">; // playerId -> team
+  spectrum_scores?: Record<"red" | "blue", number>;
+  spectrum_end_time?: number;
   // Ad Break Flow Control
   ad_break_next_state?: RoomStatus;
   // Mekan markalaması — oda açılırken o anki aktif mekan profilinden

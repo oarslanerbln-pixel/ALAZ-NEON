@@ -115,26 +115,23 @@ export function KineticSpark({
           style={{ transformStyle: "preserve-3d" }}
         >
           {/*
-            Arka hâle: eski leylak/mor (#C8A2C8 → #E0B0FF) sıcak altın yazının
-            altında çamurlu bir mor-sarı karışımı üretiyordu. Artık markanın
-            kendi paletinden derin indigo → turkuaz: sıcak korun karşısına
-            soğuk bir zemin koyuyor, tamamlayıcı kontrast yazıyı öne itiyor.
+            Arka hâle: Premium Cyberpunk/Neon konsepti. Deep purple, neon pink ve
+            turkuazın birleşimi, karanlık bir arka planda müthiş bir contrast yaratır.
           */}
           <motion.div
-            animate={{ opacity: [0.45, 0.8, 0.45], scale: [1, 1.12, 1] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_55%,#1b1f6b_0%,#0a2f5e_45%,#00131f_75%,transparent_100%)] blur-[110px] rounded-[100%] mix-blend-screen -z-20"
+            animate={{ opacity: [0.6, 1, 0.6], scale: [1, 1.15, 1] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_55%,#ff00ff_0%,#4a00e0_35%,#00e5ff_75%,transparent_100%)] blur-[120px] rounded-[100%] mix-blend-screen -z-20"
             style={{ transform: "translateZ(-120px)" }}
           />
           {/*
-            İkinci, dar hâle: yazının hemen arkasında sıcak bir kor.
-            Derinlikte daha ileride durduğu için yazı döndükçe arkasından
-            kayıyor — tek katmanlı hâlede olmayan bir paralaks veriyor.
+            İkinci, dar hâle: Yazının hemen arkasından vuran çok parlak sıcak bir kor.
+            Alaz-orange ile neon pink karışımı.
           */}
           <motion.div
-            animate={{ opacity: [0.5, 0.85, 0.5] }}
-            transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute inset-x-[15%] inset-y-[25%] bg-[radial-gradient(ellipse_at_center,#ff6b1a_0%,#c0300a_50%,transparent_78%)] blur-[80px] rounded-[100%] mix-blend-screen -z-10"
+            animate={{ opacity: [0.7, 1, 0.7] }}
+            transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute inset-x-[15%] inset-y-[25%] bg-[radial-gradient(ellipse_at_center,#ff5500_0%,#ff00ff_45%,transparent_80%)] blur-[90px] rounded-[100%] mix-blend-screen -z-10"
             style={{ transform: "translateZ(-40px)" }}
           />
 
@@ -159,23 +156,22 @@ export function KineticSpark({
             })}
 
             {/*
-              Ön yüz: düz altın (#FFD700 → #FFF8DC) yerine kor→şeftali→sıcak
-              beyaz. Altın tek başına ucuz/kumarhane çağrışımı yapıyordu;
-              turuncu-kırmızı uçlar markanın alaz-orange'ıyla aynı ailede,
-              tepe noktasındaki sıcak beyaz ise metalik parlamayı veriyor.
+              Ön yüz: Metalik beyaz/şeftali zemin üzerine neon parlamalar.
+              Premium "Glass/Neon" hissi vermek için daha beyaz ve keskin
+              ışık yansımaları içeren bir degrade.
             */}
             <motion.div
               className="relative font-black uppercase tracking-tighter bg-clip-text text-transparent"
               animate={{ backgroundPosition: ["0% center", "-200% center"] }}
-              transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
+              transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
               style={{
                 fontSize,
                 backgroundImage:
-                  "linear-gradient(100deg, #FF5500 0%, #FF9A3C 14%, #FFE7B8 26%, #FFF6E8 32%, #FFC15E 44%, #FF6B1A 58%, #FFD98A 72%, #FFF2D6 80%, #FF7A22 92%, #FF5500 100%)",
+                  "linear-gradient(100deg, #FFFFFF 0%, #FFE7B8 15%, #FF00FF 30%, #FFFFFF 45%, #00E5FF 60%, #FFFFFF 75%, #FF5500 90%, #FFFFFF 100%)",
                 backgroundSize: "200% auto",
                 textShadow:
-                  "0 0 18px rgba(255,120,30,0.55), 0 0 46px rgba(255,85,0,0.35), 0 2px 2px rgba(60,14,0,0.6)",
-                WebkitTextStroke: "1px rgba(255,190,110,0.7)",
+                  "0 0 20px rgba(255,255,255,0.6), 0 0 50px rgba(255,0,255,0.5), 0 2px 5px rgba(0,0,0,0.8)",
+                WebkitTextStroke: "1px rgba(255,255,255,0.9)",
                 transform: "translateZ(0px)",
               }}
             >
@@ -188,14 +184,21 @@ export function KineticSpark({
                 <defs>
                   <linearGradient id="dragonGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" stopColor="#00e5ff" stopOpacity="0" />
-                    <stop offset="20%" stopColor="#00e5ff" />
+                    <stop offset="15%" stopColor="#00e5ff" />
+                    <stop offset="35%" stopColor="#ffffff" />
                     <stop offset="50%" stopColor="#ff00ff" />
-                    <stop offset="80%" stopColor="#ff5500" />
+                    <stop offset="70%" stopColor="#ffffff" />
+                    <stop offset="85%" stopColor="#ff5500" />
                     <stop offset="100%" stopColor="#ff5500" stopOpacity="0" />
                   </linearGradient>
-                  <filter id="dragonGlow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="6" result="blur" />
-                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  <filter id="dragonGlow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="8" result="blur1" />
+                    <feGaussianBlur stdDeviation="24" result="blur2" />
+                    <feMerge>
+                      <feMergeNode in="blur2" />
+                      <feMergeNode in="blur1" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
                   </filter>
                 </defs>
                 
@@ -213,7 +216,7 @@ export function KineticSpark({
                   style={{ fontSize }}
                   fill="transparent"
                   stroke="url(#dragonGradient)"
-                  strokeWidth="3"
+                  strokeWidth="4"
                   filter="url(#dragonGlow)"
                   initial={{ strokeDasharray: "150 1500", strokeDashoffset: 1500 }}
                   animate={{ strokeDashoffset: 0 }}
