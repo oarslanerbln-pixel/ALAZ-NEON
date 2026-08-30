@@ -196,6 +196,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
                   <button
                     key={c.iso}
                     type="button"
+                    aria-label={`Select ${c.iso} country code`}
                     onClick={() => {
                       setCountry(c);
                       setError("");
