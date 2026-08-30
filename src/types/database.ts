@@ -38,10 +38,13 @@ export type RoomStatus =
   | "pulse_reveal"
   | "spectrum_intro"
   | "spectrum_active"
-  | "spectrum_reveal";
+  | "spectrum_reveal"
+  | "colors_intro"
+  | "colors_active"
+  | "colors_reveal";
 
 export type GameMode = "individual" | "team";
-export type GameType = "scattegories" | "quiz" | "bomb" | "sensor" | "wheel" | "overload" | "echo" | "pulse" | "spectrum";
+export type GameType = "scattegories" | "quiz" | "bomb" | "sensor" | "wheel" | "overload" | "echo" | "pulse" | "spectrum" | "colors";
 
 export interface QuizQuestion {
   id: string;
@@ -107,6 +110,12 @@ export interface Room {
   spectrum_end_time?: number;
   // Ad Break Flow Control
   ad_break_next_state?: RoomStatus;
+  // Colors Game Fields (Neon Wars)
+  colors_target_clicks?: number;
+  colors_red_score?: number;
+  colors_blue_score?: number;
+  colors_team_assignments?: Record<string, "red" | "blue">;
+  colors_end_time?: number;
   // Mekan markalaması — oda açılırken o anki aktif mekan profilinden
   // KOPYALANIR (canlı referans değil). Böylece bir mekana satış sonrası
   // marka değiştirilse bile geçmiş odaların/demoların markası değişmez.
@@ -126,6 +135,8 @@ export interface Player {
   night_score?: number;
   created_at: number;
   lives?: number;
+  last_active?: number;
+  colors_clicks?: number;
 }
 
 export interface Answer {

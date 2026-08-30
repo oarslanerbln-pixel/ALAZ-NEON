@@ -18,6 +18,7 @@ const GAME_LABEL: Record<GameType, string> = {
   echo: "Alaz Echo",
   pulse: "Alaz Pulse",
   spectrum: "Neon Spectrum",
+  colors: "Neon Savaşları",
 };
 
 function rangeFor(preset: RangePreset): { start: number; end: number } {

@@ -146,7 +146,7 @@ export function HostLobby({
             animate={{ y: 0, opacity: 1 }}
             className="text-4xl md:text-6xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-br from-alaz-orange to-yellow-300 uppercase tracking-[0.2em] drop-shadow-[0_0_20px_rgba(255,215,0,0.5)] mb-8 font-premium"
           >
-            Oyun Birazdan Başlıyor
+            {t("hostLobby.countdownTitle")}
           </motion.h1>
 
           <motion.div
@@ -166,7 +166,7 @@ export function HostLobby({
           >
              <div className="bg-black/50 backdrop-blur-xl px-10 py-5 rounded-[2rem] border border-white/20 flex items-center gap-6">
                 <div className="text-right">
-                  <p className="text-gray-400 text-xs md:text-sm uppercase tracking-widest font-black mb-1">Kodla Katıl</p>
+                  <p className="text-gray-400 text-xs md:text-sm uppercase tracking-widest font-black mb-1">{t("hostLobby.joinWithCode")}</p>
                   <p className="text-3xl md:text-5xl font-mono text-cyber-yellow font-black tracking-widest">{room?.code}</p>
                 </div>
                 <div className="w-px h-16 bg-white/20" />
@@ -387,14 +387,14 @@ export function HostLobby({
                 disabled={!canStart}
                 className="flex-1 py-3 bg-white/[0.02] border border-white/10 rounded-xl text-white/50 hover:bg-white/[0.08] hover:text-white hover:border-white/30 text-[9px] font-bold uppercase tracking-widest disabled:opacity-30 transition-all"
              >
-                5 Dk Bekle
+                {t("hostLobby.wait5min")}
              </button>
              <button
                 onClick={() => startCountdown(10)}
                 disabled={!canStart}
                 className="flex-1 py-3 bg-white/[0.02] border border-white/10 rounded-xl text-white/50 hover:bg-white/[0.08] hover:text-white hover:border-white/30 text-[9px] font-bold uppercase tracking-widest disabled:opacity-30 transition-all"
              >
-                10 Dk Bekle
+                {t("hostLobby.wait10min")}
              </button>
           </div>
 

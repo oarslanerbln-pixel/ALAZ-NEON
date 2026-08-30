@@ -89,7 +89,12 @@ export function PlayerBombController({ room, player }: Props) {
         allPlayers.push({ id: doc.id, ...doc.data() } as Player);
       });
 
-      const activePlayers = allPlayers.filter(p => p.id !== player.id && (p.lives === undefined || p.lives > 0));
+      const now = Date.now();
+      const activePlayers = allPlayers.filter(p => 
+        p.id !== player.id && 
+        (p.lives === undefined || p.lives > 0) &&
+        (p.last_active ? (now - p.last_active < 30000) : true) // Exclude ghosts
+      );
       
       let nextPlayerId = player.id; // fallback to self if somehow alone
       if (activePlayers.length > 0) {

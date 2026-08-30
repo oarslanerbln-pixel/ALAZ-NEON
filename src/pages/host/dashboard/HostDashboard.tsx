@@ -6,6 +6,7 @@ import { SoundManager, sounds } from "../../../lib/audio";
 import { BackgroundSlider } from "../../../components/BackgroundSlider";
 import { NeonIcon } from "../../../components/NeonIcon";
 import { HostHeader } from "../components/HostHeader";
+import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import type { Room, Player, GameType } from "../../../types/database";
 
 import { getRandomSensorImage } from "../../../data/sensorImages";
@@ -161,6 +162,12 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
         overload_eliminated_ids: []
       };
     }
+    if (game === "colors") {
+      initialStatus = "colors_intro";
+      extraUpdates = {
+        active_game: game,
+      };
+    }
 
     await updateRoomStatus(initialStatus, extraUpdates);
   };
@@ -168,9 +175,10 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
   const joinUrl = `${window.location.protocol}//${window.location.host}/join?code=${room.code}`;
 
   return (
-    <div className="flex-1 w-full min-h-screen relative overflow-hidden bg-black font-sans selection:bg-alaz-orange selection:text-black">
-      <BackgroundSlider className="fixed inset-0 z-0 opacity-40 pointer-events-none" />
-      <div className="fixed inset-0 pointer-events-none z-50 opacity-[0.03] bg-[linear-gradient(rgba(255,255,255,0)_50%,rgba(0,0,0,1)_50%)] bg-[length:100%_4px]" />
+    <TVScaleFrame>
+    <div className="w-full h-full relative overflow-hidden bg-black font-sans selection:bg-alaz-orange selection:text-black">
+      <BackgroundSlider className="absolute inset-0 z-0 opacity-40 pointer-events-none" />
+      <div className="absolute inset-0 pointer-events-none z-50 opacity-[0.03] bg-[linear-gradient(rgba(255,255,255,0)_50%,rgba(0,0,0,1)_50%)] bg-[length:100%_4px]" />
 
       <div className="p-6 md:p-10 flex flex-col h-full relative z-10">
         <HostHeader
@@ -354,6 +362,27 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                   
                   <div className="mt-3 flex items-center gap-3 text-cyan-400 text-xs font-black tracking-[0.2em] uppercase opacity-60 group-hover:opacity-100 transition-all duration-300">
                     Oturumu Başlat <span className="text-lg leading-none group-hover:translate-x-2 transition-transform">→</span>
+                  </div>
+                </div>
+              </button>
+
+              {/* NEON SAVAŞLARI (COLORS) Card */}
+              <button
+                onClick={() => handleStartGame("colors")}
+                className="relative group overflow-hidden bg-black/60 backdrop-blur-2xl border-[1.5px] border-purple-500/30 hover:border-purple-500 p-5 rounded-2xl text-left transition-all duration-500 hover:-translate-y-1 shadow-[0_10px_30px_rgba(0,0,0,0.8)] hover:shadow-[0_0_50px_rgba(168,85,247,0.3)]"
+              >
+                <div className="absolute -right-20 -top-20 w-32 h-32 bg-purple-500/20 rounded-full blur-[50px] group-hover:bg-purple-500/40 transition-colors duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none" />
+                
+                <div className="relative z-10 flex flex-col h-full">
+                  <div className="w-10 h-10 bg-purple-500/10 border-[1.5px] border-purple-500/40 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-125 transition-transform duration-500 shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+                    <NeonIcon type="dashboard" color="pink" className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-xl font-black text-white mb-1 tracking-widest group-hover:text-purple-400 transition-colors">NEON <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 drop-shadow-[0_0_10px_rgba(168,85,247,0.3)]">SAVAŞLARI</span></h3>
+                  <p className="text-gray-400 text-[10px] leading-snug mt-1 flex-1 font-medium">Kırmızı ve Mavi takımların TV ekranını ele geçirmek için kapıştığı dev halat çekme (Tug of War) şovu!</p>
+                  
+                  <div className="mt-3 flex items-center gap-3 text-purple-400 text-xs font-black tracking-[0.2em] uppercase opacity-60 group-hover:opacity-100 transition-all duration-300">
+                    Savaşı Başlat <span className="text-lg leading-none group-hover:translate-x-2 transition-transform">→</span>
                   </div>
                 </div>
               </button>
@@ -570,5 +599,6 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
         )}
       </AnimatePresence>
     </div>
+    </TVScaleFrame>
   );
 }

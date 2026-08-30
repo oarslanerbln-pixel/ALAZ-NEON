@@ -14,6 +14,7 @@ import { useVenue } from "../../contexts/VenueContextCore";
 
 // Hooks
 import { useHostRoom } from "../../hooks/useHostRoom";
+import { useLocale } from "../../hooks/useLocale";
 
 // Types
 import type { RoundResultInfo, Answer, RoomStatus } from "../../types/database";
@@ -35,6 +36,7 @@ import { HostOverloadDisplay } from "./overload/HostOverloadDisplay";
 import { HostEchoDisplay } from "./echo/HostEchoDisplay";
 import { HostPulseDisplay } from "./pulse/HostPulseDisplay";
 import { HostSpectrumDisplay } from "./spectrum/HostSpectrumDisplay";
+import { HostColorsDisplay } from "./colors/HostColorsDisplay";
 import { HostDashboard } from "./dashboard/HostDashboard";
 import { HostTutorial } from "./components/HostTutorial";
 import { DatabaseStatus } from "../../components/DatabaseStatus";
@@ -49,6 +51,7 @@ import {
 } from "../../lib/intelligence";
 
 export function HostDisplay() {
+  const { t } = useLocale();
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get("roomId");
   const hostRoom = useHostRoom(roomId);
@@ -148,6 +151,16 @@ export function HostDisplay() {
     );
   }
 
+  if (room.active_game === "colors") {
+    return (
+      <HostColorsDisplay
+        room={room}
+        players={hostRoom.players}
+        updateRoomStatus={hostRoom.updateRoomStatus}
+      />
+    );
+  }
+
   if (room.status === "night_lobby" || room.active_game === "none") {
     return (
       <HostDashboard
@@ -169,6 +182,7 @@ function HostDisplayGame({
   updateRoomStatus,
   updatePlayerScore,
 }: { roomId: string | null } & ReturnType<typeof useHostRoom>) {
+  const { t } = useLocale();
   const { venue } = useVenue();
   // Local UI States
   const [gameState, setGameState] = useState<RoomStatus>(() => {
@@ -557,7 +571,7 @@ function HostDisplayGame({
 
   const handleEndGameEarly = async () => {
     if (!roomId || !room) return;
-    const confirmEnd = window.confirm("Oyunu şimdi bitirmek istediğinize emin misiniz? (Tüm sonuçlar toplanıp şampiyon ekranına geçilecek)");
+    const confirmEnd = window.confirm(t("host.confirmEndGame"));
     if (confirmEnd) {
       const finalAwards = evaluateBestOfNight(gameHistory);
       setAwards(finalAwards);

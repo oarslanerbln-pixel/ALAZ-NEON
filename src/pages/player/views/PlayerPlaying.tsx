@@ -75,7 +75,7 @@ export function PlayerPlaying({
                 `}
               >
                 <div className={`w-2 h-2 ${jokerCategory === cat ? 'bg-alaz-orange animate-pulse' : 'bg-gray-600'}`} />
-                JOKER (x2)
+                {t("game.jokerLabel")}
               </button>
             </div>
             <div className="relative group">
@@ -85,7 +85,7 @@ export function PlayerPlaying({
                 value={answers[cat] || ""}
                 onChange={(e) => onAnswerChange(cat, e.target.value)}
                 disabled={isLocked}
-                placeholder={`${activeLetter} ile başlayan...`}
+                placeholder={t("game.inputPlaceholder", activeLetter)}
                 className={`w-full bg-black/80 border-2 rounded-sm px-4 py-3.5 md:px-8 md:py-5 font-mono font-bold transition-all disabled:opacity-50 text-lg md:text-xl cyber-panel focus:outline-none
                   ${
                     jokerCategory === cat 

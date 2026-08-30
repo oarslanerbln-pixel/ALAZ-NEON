@@ -13,6 +13,7 @@ import { useVenue } from "../../contexts/VenueContextCore";
 
 // Hooks
 import { useHostRoom } from "../../hooks/useHostRoom";
+import { useLocale } from "../../hooks/useLocale";
 
 // Types
 import type { RoundResultInfo, Answer, RoomStatus } from "../../types/database";
@@ -54,6 +55,7 @@ export function HostDisplayClassic({
   updatePlayerScore,
 }: { roomId: string | null } & ReturnType<typeof useHostRoom>) {
   const { venue } = useVenue();
+  const { t } = useLocale();
   // Local UI States
   const [gameState, setGameState] = useState<RoomStatus>(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -455,7 +457,7 @@ export function HostDisplayClassic({
 
   const handleEndGameEarly = async () => {
     if (!roomId || !room) return;
-    const confirmEnd = window.confirm("Oyunu şimdi bitirmek istediğinize emin misiniz? (Tüm sonuçlar toplanıp şampiyon ekranına geçilecek)");
+    const confirmEnd = window.confirm(t("host.confirmEndGame"));
     if (confirmEnd) {
       const finalAwards = evaluateBestOfNight(gameHistory);
       setAwards(finalAwards);

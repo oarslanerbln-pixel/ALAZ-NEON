@@ -181,6 +181,19 @@ export function PlayerWheelController({ room, player }: Props) {
               )}
             </motion.div>
           )}
+
+          {!["lobby", "night_lobby", "finished", "wheel_active", "wheel_spinning", "wheel_result"].includes(room.status) && (
+            <motion.div
+              key="fallback"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center justify-center text-center"
+            >
+              <div className="w-12 h-12 border-4 border-cyber-yellow border-t-transparent rounded-full animate-spin mb-4 mx-auto" />
+              <p className="text-gray-400 uppercase tracking-widest">YÜKLENİYOR...</p>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
     </div>

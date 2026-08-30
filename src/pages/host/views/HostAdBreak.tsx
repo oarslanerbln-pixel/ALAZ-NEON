@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useVenue } from "../../../contexts/VenueContextCore";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface HostAdBreakProps {
   onComplete: () => void;
@@ -9,6 +10,7 @@ interface HostAdBreakProps {
 
 export function HostAdBreak({ onComplete }: HostAdBreakProps) {
   const { venue } = useVenue();
+  const { t } = useLocale();
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
   const ads = venue.sponsor_ads || [];
   
@@ -82,7 +84,7 @@ export function HostAdBreak({ onComplete }: HostAdBreakProps) {
       )}
       
       <div className="absolute top-8 right-8 bg-black/60 backdrop-blur-md px-6 py-3 rounded-full border border-white/20 flex items-center gap-3">
-        <span className="text-white/50 text-xs font-black uppercase tracking-widest">Sponsor</span>
+        <span className="text-white/50 text-xs font-black uppercase tracking-widest">{t("adBreak.sponsor")}</span>
         <span className="text-cyber-yellow font-black uppercase tracking-widest">{currentAd.sponsor_name}</span>
       </div>
 
@@ -91,7 +93,7 @@ export function HostAdBreak({ onComplete }: HostAdBreakProps) {
         className="absolute bottom-8 right-8 bg-white/10 hover:bg-white/20 backdrop-blur-md px-6 py-3 rounded-full text-white/50 text-xs font-black uppercase tracking-widest transition-colors z-50 relative cursor-pointer"
         style={{ pointerEvents: "auto" }}
       >
-        Geç (Skip)
+        {t("adBreak.skip")}
       </button>
     </motion.div>
   );

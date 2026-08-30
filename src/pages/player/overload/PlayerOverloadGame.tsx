@@ -92,48 +92,61 @@ export function PlayerOverloadGame({ room, player }: PlayerOverloadGameProps) {
       }`} />
 
       <AnimatePresence mode="wait">
-        {isTarget ? (
-          <motion.div
-            key="target"
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            className="relative z-10 flex flex-col items-center justify-center w-full h-full px-6"
-          >
-            <h2 className="text-white font-black text-4xl mb-8 tracking-[0.5em] animate-pulse text-center">
-              SENDE!
-            </h2>
-
-            <button
-              onClick={handleDeflect}
-              disabled={isDeflecting}
-              className="w-64 h-64 rounded-full bg-white text-red-600 font-black text-3xl uppercase tracking-widest shadow-[0_0_50px_rgba(255,255,255,0.8)] active:scale-95 transition-transform flex items-center justify-center disabled:opacity-50"
+        {room.status === "playing" ? (
+          isTarget ? (
+            <motion.div
+              key="target"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative z-10 flex flex-col items-center justify-center w-full h-full px-6"
             >
-              SAVUŞTUR
-            </button>
-            
-            <p className="mt-12 text-white/80 font-medium text-xs tracking-[0.2em] uppercase">
-              Hızlıca butona bas!
-            </p>
-          </motion.div>
+              <h2 className="text-white font-black text-4xl mb-8 tracking-[0.5em] animate-pulse text-center">
+                SENDE!
+              </h2>
+
+              <button
+                onClick={handleDeflect}
+                disabled={isDeflecting}
+                className="w-64 h-64 rounded-full bg-white text-red-600 font-black text-3xl uppercase tracking-widest shadow-[0_0_50px_rgba(255,255,255,0.8)] active:scale-95 transition-transform flex items-center justify-center disabled:opacity-50"
+              >
+                SAVUŞTUR
+              </button>
+              
+              <p className="mt-12 text-white/80 font-medium text-xs tracking-[0.2em] uppercase">
+                Hızlıca butona bas!
+              </p>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="safe"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="relative z-10 flex flex-col items-center justify-center w-full h-full"
+            >
+              <div className="w-32 h-32 rounded-full border-4 border-cyan-400/30 flex items-center justify-center mb-8">
+                <div className="w-24 h-24 rounded-full bg-cyan-400/10 animate-pulse" />
+              </div>
+              
+              <h2 className="text-cyan-400 font-bold text-2xl tracking-[0.3em] mb-2 uppercase">
+                GÜVENDESİN
+              </h2>
+              <p className="text-cyan-400/50 text-xs font-medium tracking-[0.2em] uppercase">
+                Beklemede kal
+              </p>
+            </motion.div>
+          )
         ) : (
           <motion.div
-            key="safe"
+            key="fallback"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="relative z-10 flex flex-col items-center justify-center w-full h-full"
           >
-            <div className="w-32 h-32 rounded-full border-4 border-cyan-400/30 flex items-center justify-center mb-8">
-              <div className="w-24 h-24 rounded-full bg-cyan-400/10 animate-pulse" />
-            </div>
-            
-            <h2 className="text-cyan-400 font-bold text-2xl tracking-[0.3em] mb-2 uppercase">
-              GÜVENDESİN
-            </h2>
-            <p className="text-cyan-400/50 text-xs font-medium tracking-[0.2em] uppercase">
-              Beklemede kal
-            </p>
+            <div className="w-12 h-12 rounded-full border-4 border-cyan-400 border-t-transparent animate-spin mb-4" />
+            <p className="text-cyan-400/50 uppercase tracking-widest">YÜKLENİYOR...</p>
           </motion.div>
         )}
       </AnimatePresence>

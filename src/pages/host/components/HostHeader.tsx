@@ -47,7 +47,7 @@ export function HostHeader({ room, onEndGameEarly, onTriggerAdBreak }: HostHeade
             onClick={onTriggerAdBreak}
             className="text-[10px] text-white/70 hover:text-white border border-white/20 hover:bg-white/10 px-4 py-2 rounded-full uppercase tracking-[0.2em] font-medium transition-all"
           >
-            Reklam Arası
+            {t("hostHeader.adBreak")}
           </button>
         )}
         <LanguageSwitcher />

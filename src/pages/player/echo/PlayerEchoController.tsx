@@ -32,7 +32,12 @@ export function PlayerEchoController({ room, player }: Props) {
         const q = query(collection(db, "players"), where("room_id", "==", room.id));
         const snap = await getDocs(q);
         const pList = snap.docs.map(d => d.data() as Player);
-        setPlayers(pList.filter(p => p.id !== player.id)); // Exclude self
+        
+        const now = Date.now();
+        setPlayers(pList.filter(p => 
+          p.id !== player.id &&
+          (p.last_active ? (now - p.last_active < 30000) : true)
+        )); // Exclude self and ghosts
       } catch (err) {
         console.error("Error fetching players:", err);
       }

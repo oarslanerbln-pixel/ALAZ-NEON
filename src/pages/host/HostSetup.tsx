@@ -177,10 +177,10 @@ export function HostSetup() {
                     className="whitespace-nowrap text-white block"
                     animate={isCreating ? {} : {
                       textShadow: [
-                        "0 0 2px #fff, 0 0 6px #fff, 0 0 14px rgba(0,243,255,0.9), 0 0 28px rgba(0,243,255,0.55)",
-                        "0 0 2px #fff, 0 0 6px #fff, 0 0 14px rgba(0,243,255,0.9), 0 0 28px rgba(0,243,255,0.55)",
-                        "0 0 1px rgba(0,243,255,0.3), 0 0 2px rgba(0,243,255,0.2)",
-                        "0 0 2px #fff, 0 0 6px #fff, 0 0 14px rgba(0,243,255,0.9), 0 0 28px rgba(0,243,255,0.55)",
+                        "0 0 4px rgba(0,243,255,0.8), 0 0 10px rgba(0,243,255,0.4)",
+                        "0 0 4px rgba(0,243,255,0.8), 0 0 10px rgba(0,243,255,0.4)",
+                        "0 0 1px rgba(0,243,255,0.2)",
+                        "0 0 4px rgba(0,243,255,0.8), 0 0 10px rgba(0,243,255,0.4)",
                       ],
                     }}
                     transition={{
@@ -243,6 +243,10 @@ export function HostSetup() {
                 <div className="flex items-center justify-between text-[11px] group/item">
                   <span className="text-white font-bold tracking-wider group-hover/item:text-cyber-yellow transition-colors">HENGAME <span className="opacity-70 text-yellow-500">ÇARK</span></span>
                   <span className="text-cyber-yellow font-black border border-cyber-yellow/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(255,215,0,0.2)]">ŞANS</span>
+                </div>
+                <div className="flex items-center justify-between text-[11px] group/item">
+                  <span className="text-white font-bold tracking-wider group-hover/item:text-purple-400 transition-colors">NEON <span className="opacity-70 text-pink-500">SAVAŞLARI</span></span>
+                  <span className="text-purple-400 font-black border border-purple-400/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(168,85,247,0.2)]">TAKIM</span>
                 </div>
               </div>
                 <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-neon-blue/5 blur-3xl rounded-full" />

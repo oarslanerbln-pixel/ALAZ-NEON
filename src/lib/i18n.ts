@@ -1174,6 +1174,71 @@ const translations = {
     de: "Bitte den Hauptbildschirm im Blick behalten.",
     en: "Please keep an eye on the main screen.",
   },
+
+  // ═══════════════════════════════════════════
+  // PLAYER STANDINGS (mobil sıralama ekranı)
+  // ═══════════════════════════════════════════
+  "playerStandings.ranking": { tr: "SIRA", de: "RANG", en: "RANKING" },
+  "playerStandings.score": { tr: "PUAN", de: "PUNKTE", en: "SCORE" },
+  "playerStandings.leaderboard": { tr: "LİDERLİK TABLOSU", de: "RANGLISTE", en: "LEADERBOARD" },
+  "playerStandings.watchMainScreen": {
+    tr: "Lütfen ana ekranı takip ediniz.",
+    de: "Bitte den Hauptbildschirm im Blick behalten.",
+    en: "Please keep an eye on the main screen.",
+  },
+
+  // ═══════════════════════════════════════════
+  // PLAYER PLAYING (cevap giriş ekranı ek metinler)
+  // ═══════════════════════════════════════════
+  "game.inputPlaceholder": {
+    tr: (letter: string) => `${letter} ile başlayan...`,
+    de: (letter: string) => `Beginnt mit ${letter}...`,
+    en: (letter: string) => `Starting with ${letter}...`,
+  },
+  "game.jokerLabel": { tr: "JOKER (x2)", de: "JOKER (x2)", en: "JOKER (x2)" },
+  "game.adBreakTitle": { tr: "REKLAM ARASI", de: "WERBEPAUSE", en: "AD BREAK" },
+  "game.adBreakDesc": {
+    tr: "Sponsorumuzdan kısa bir mesaj, lütfen ana ekrana bakın",
+    de: "Kurze Nachricht von unserem Sponsor, bitte schauen Sie auf den Hauptbildschirm",
+    en: "A short message from our sponsor, please look at the main screen",
+  },
+
+  // ═══════════════════════════════════════════
+  // HOST PLAYING (TV süre bitiş ve grid ek metinler)
+  // ═══════════════════════════════════════════
+  "playing.timeUp": { tr: "SÜRE BİTTİ", de: "ZEIT ABGELAUFEN", en: "TIME'S UP" },
+
+  // ═══════════════════════════════════════════
+  // HOST LOBBY (countdown ekranı metinleri)
+  // ═══════════════════════════════════════════
+  "hostLobby.countdownTitle": {
+    tr: "Oyun Birazdan Başlıyor",
+    de: "Das Spiel beginnt gleich",
+    en: "Game Starting Soon",
+  },
+  "hostLobby.joinWithCode": { tr: "Kodla Katıl", de: "Mit Code beitreten", en: "Join with Code" },
+  "hostLobby.wait5min": { tr: "5 Dk Bekle", de: "5 Min warten", en: "Wait 5 Min" },
+  "hostLobby.wait10min": { tr: "10 Dk Bekle", de: "10 Min warten", en: "Wait 10 Min" },
+
+  // ═══════════════════════════════════════════
+  // HOST HEADER (reklam arası butonu)
+  // ═══════════════════════════════════════════
+  "hostHeader.adBreak": { tr: "Reklam Arası", de: "Werbepause", en: "Ad Break" },
+
+  // ═══════════════════════════════════════════
+  // HOST AD BREAK (sponsor ve skip butonları)
+  // ═══════════════════════════════════════════
+  "adBreak.sponsor": { tr: "Sponsor", de: "Sponsor", en: "Sponsor" },
+  "adBreak.skip": { tr: "Geç (Skip)", de: "Überspringen (Skip)", en: "Skip" },
+
+  // ═══════════════════════════════════════════
+  // HOST DISPLAY (oyun bitirme onay diyaloğu)
+  // ═══════════════════════════════════════════
+  "host.confirmEndGame": {
+    tr: "Oyunu şimdi bitirmek istediğinize emin misiniz? (Tüm sonuçlar toplanıp şampiyon ekranına geçilecek)",
+    de: "Möchten Sie das Spiel wirklich jetzt beenden? (Alle Ergebnisse werden gesammelt und der Champion-Bildschirm wird angezeigt)",
+    en: "Are you sure you want to end the game now? (All results will be tallied and the champion screen will be shown)",
+  },
 } as const;
 
 type TranslationKey = keyof typeof translations;

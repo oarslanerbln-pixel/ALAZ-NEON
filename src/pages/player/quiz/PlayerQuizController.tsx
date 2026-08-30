@@ -153,7 +153,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
             </motion.div>
           )}
 
-          {gameState === "question_intro" && (
+          {(gameState === "question_intro" || gameState === "quiz_intro") && (
             <motion.div
               key="intro"
               initial={{ opacity: 0, scale: 0.9 }}
@@ -303,6 +303,19 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
                 <p className="text-gray-400 mb-2">{t("quiz.finalScore")}</p>
                 <div className="text-5xl font-black text-alaz-orange">{player.total_score}</div>
               </div>
+            </motion.div>
+          )}
+
+          {!["lobby", "quiz_lobby", "question_intro", "quiz_intro", "question_active", "question_reveal", "quiz_leaderboard", "finished"].includes(gameState) && (
+            <motion.div
+              key="fallback"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center justify-center text-center"
+            >
+              <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4" />
+              <p className="text-gray-400 uppercase tracking-widest">{t("game.loading" as never) || "YÜKLENİYOR..."}</p>
             </motion.div>
           )}
           

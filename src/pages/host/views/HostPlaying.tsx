@@ -170,7 +170,7 @@ export function HostPlaying({
       </div>
 
       <div className="w-full max-w-[100rem] px-16 flex flex-col items-center gap-12">
-        <div className="grid grid-cols-5 gap-8 w-full">
+        <div className={`grid gap-8 w-full ${categories.length <= 3 ? 'grid-cols-3' : categories.length <= 5 ? 'grid-cols-5' : 'grid-cols-4'}`}>
           {categories.map((cat, idx) => (
             <motion.div
               key={cat}
@@ -271,7 +271,7 @@ export function HostPlaying({
                 className="text-[150px] font-black text-red-500 uppercase tracking-tighter drop-shadow-[0_0_50px_rgba(255,0,0,1)] animate-shake"
                 style={{ textShadow: "4px 4px 0px rgba(0,243,255,0.5), -4px -4px 0px rgba(255,0,255,0.5)" }}
               >
-                SÜRE BİTTİ
+                {t("playing.timeUp")}
               </h1>
             </div>
           </motion.div>

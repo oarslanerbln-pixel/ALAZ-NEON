@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { PlayerBackground } from "../../../components/PlayerBackground";
+import { useLocale } from "../../../hooks/useLocale";
 import type { Player } from "../../../types/database";
 
 interface PlayerStandingsProps {
@@ -17,6 +18,7 @@ interface RankedPlayer {
 }
 
 export function PlayerStandings({ currentPlayer }: PlayerStandingsProps) {
+  const { t } = useLocale();
   const [rankedPlayers, setRankedPlayers] = useState<RankedPlayer[]>([]);
   const [myRank, setMyRank] = useState<number | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -81,7 +83,7 @@ export function PlayerStandings({ currentPlayer }: PlayerStandingsProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-[10px] text-white/50 font-mono uppercase tracking-[0.3em] mb-1">
-                  RANKING
+                  {t("playerStandings.ranking")}
                 </p>
                 <motion.div
                   initial={{ scale: 0.5, opacity: 0 }}
@@ -99,7 +101,7 @@ export function PlayerStandings({ currentPlayer }: PlayerStandingsProps) {
 
               <div className="text-right border-l border-white/20 pl-6">
                 <p className="text-[10px] text-white/50 font-mono uppercase tracking-[0.3em] mb-1">
-                  SCORE
+                  {t("playerStandings.score")}
                 </p>
                 <motion.span
                   initial={{ opacity: 0 }}
@@ -129,7 +131,7 @@ export function PlayerStandings({ currentPlayer }: PlayerStandingsProps) {
             className="w-full max-w-sm space-y-2"
           >
             <p className="text-[10px] text-white/50 uppercase tracking-[0.4em] mb-4 font-mono text-left pl-2">
-          LEADERBOARD
+          {t("playerStandings.leaderboard")}
             </p>
             {rankedPlayers.map((p, i) => {
               const style = rankLabel(p.rank);
@@ -170,7 +172,7 @@ export function PlayerStandings({ currentPlayer }: PlayerStandingsProps) {
         transition={{ delay: 1, duration: 3, repeat: Infinity, ease: "easeInOut" }}
         className="mt-8 text-zinc-400 font-light text-sm tracking-widest uppercase text-center"
       >
-        Lütfen ana ekranı takip ediniz.
+        {t("playerStandings.watchMainScreen")}
       </motion.p>
     </motion.div>
   );

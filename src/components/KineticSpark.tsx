@@ -155,28 +155,66 @@ export function KineticSpark({
               );
             })}
 
-            {/*
-              Ön yüz: Metalik beyaz/şeftali zemin üzerine neon parlamalar.
-              Premium "Glass/Neon" hissi vermek için daha beyaz ve keskin
-              ışık yansımaları içeren bir degrade.
-            */}
-            <motion.div
-              className="relative font-black uppercase tracking-tighter bg-clip-text text-transparent"
-              animate={{ backgroundPosition: ["0% center", "-200% center"] }}
-              transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+            {/* Ön yüz: Siyah zemin ve Kıvılcımlar */}
+            <div
+              className="relative font-black uppercase tracking-tighter"
               style={{
                 fontSize,
-                backgroundImage:
-                  "linear-gradient(100deg, #FFFFFF 0%, #FFE7B8 15%, #FF00FF 30%, #FFFFFF 45%, #00E5FF 60%, #FFFFFF 75%, #FF5500 90%, #FFFFFF 100%)",
-                backgroundSize: "200% auto",
-                textShadow:
-                  "0 0 20px rgba(255,255,255,0.6), 0 0 50px rgba(255,0,255,0.5), 0 2px 5px rgba(0,0,0,0.8)",
-                WebkitTextStroke: "1px rgba(255,255,255,0.9)",
+                color: "#000",
+                WebkitTextStroke: "1px rgba(255,255,255,0.2)",
                 transform: "translateZ(0px)",
               }}
             >
               {text}
-            </motion.div>
+
+              {/* Spark (Kıvılcım) Partikülleri */}
+              <div className="absolute inset-0 pointer-events-none" style={{ WebkitTextStroke: "0" }}>
+                {[...Array(20)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="absolute bg-yellow-400 rounded-full shadow-[0_0_10px_#ffeb3b,0_0_20px_#ffeb3b] w-1 h-1 md:w-1.5 md:h-1.5"
+                    style={{
+                      left: `${Math.random() * 100}%`,
+                      top: `${Math.random() * 100}%`,
+                      animation: `spark-flicker ${0.3 + Math.random()}s infinite alternate`,
+                      animationDelay: `${Math.random()}s`,
+                    }}
+                    animate={{ opacity: [1, 1, 0] }}
+                    transition={{ duration: 3, times: [0, 0.7, 1], delay: delay + 1.5 }}
+                  />
+                ))}
+              </div>
+
+              {/* Sıvı Dolum Katmanı (Soldan) */}
+              <motion.div
+                className="absolute inset-0 liquid-clip-text font-black uppercase tracking-tighter mix-blend-screen"
+                style={{
+                  backgroundImage: "linear-gradient(90deg, #ffeb3b 0%, #ffffff 50%, transparent 50%)",
+                  backgroundSize: "200% 100%",
+                  WebkitTextStroke: "0",
+                  backgroundPosition: "100% 0%",
+                }}
+                animate={{ backgroundPosition: ["100% 0%", "0% 0%"] }}
+                transition={{ duration: 2.5, ease: "easeOut", delay: delay + 1.5 }}
+              >
+                {text}
+              </motion.div>
+
+              {/* Sıvı Dolum Katmanı (Sağdan) */}
+              <motion.div
+                className="absolute inset-0 liquid-clip-text font-black uppercase tracking-tighter mix-blend-screen"
+                style={{
+                  backgroundImage: "linear-gradient(-90deg, #ffeb3b 0%, #ffffff 50%, transparent 50%)",
+                  backgroundSize: "200% 100%",
+                  WebkitTextStroke: "0",
+                  backgroundPosition: "0% 0%",
+                }}
+                animate={{ backgroundPosition: ["0% 0%", "100% 0%"] }}
+                transition={{ duration: 2.5, ease: "easeOut", delay: delay + 1.5 }}
+              >
+                {text}
+              </motion.div>
+            </div>
 
             {/* DRAGON NEON STROKE */}
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-visible z-50" style={{ transform: "translateZ(10px)" }}>
