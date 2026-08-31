@@ -1,0 +1,3 @@
+## 2024-08-29 - Missing ID linking for labels
+**Learning:** React labels correctly use `htmlFor` but there are places in the codebase where labels are just used as decorative elements without being properly associated with their corresponding form inputs. In `PlayerPlaying.tsx`, the category `<label>` is not linked to the category `<input>`, meaning screen readers won't announce the category when the input receives focus.
+**Action:** Add `htmlFor` to the `<label>` and a matching `id` to the `<input>` inside the `PlayerPlaying` component to ensure proper accessibility association, using the loop index to create unique valid IDs as per the guidelines.
