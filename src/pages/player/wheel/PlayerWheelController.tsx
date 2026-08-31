@@ -6,6 +6,7 @@ import { NeonIcon } from "../../../components/NeonIcon";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useVenue } from "../../../contexts/VenueContextCore";
 import { DEFAULT_VENUE_CONFIG, type Room, type Player } from "../../../types/database";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface Props {
   room: Room;
@@ -14,6 +15,7 @@ interface Props {
 
 export function PlayerWheelController({ room, player }: Props) {
   const { venue } = useVenue();
+  const { t } = useLocale();
   const slices = venue.wheel_slices?.length ? venue.wheel_slices : DEFAULT_VENUE_CONFIG.wheel_slices!;
   const [isSpinning, setIsSpinning] = useState(false);
   // isSpinning React state'i asenkron; aynı tik içinde gelen çift dokunma
@@ -141,7 +143,7 @@ export function PlayerWheelController({ room, player }: Props) {
                 className="w-48 h-48 rounded-full bg-gradient-to-tr from-cyber-yellow to-alaz-orange flex items-center justify-center border-[6px] border-white/20 shadow-[0_0_50px_rgba(255,215,0,0.6)] active:scale-95 transition-transform"
               >
                 <span className="text-black font-black text-4xl uppercase tracking-tighter drop-shadow-md">
-                  ÇEVİR
+                  {t("wheel.spin", "ÇEVİR")}
                 </span>
               </button>
             </motion.div>
@@ -191,7 +193,7 @@ export function PlayerWheelController({ room, player }: Props) {
               className="flex flex-col items-center justify-center text-center"
             >
               <div className="w-12 h-12 border-4 border-cyber-yellow border-t-transparent rounded-full animate-spin mb-4 mx-auto" />
-              <p className="text-gray-400 uppercase tracking-widest">YÜKLENİYOR...</p>
+              <p className="text-gray-400 uppercase tracking-widest">{t("common.loading", "YÜKLENİYOR...")}</p>
             </motion.div>
           )}
         </AnimatePresence>

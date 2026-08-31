@@ -197,10 +197,10 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
                     key={opt}
                     onClick={() => !hasSubmitted && handleSubmit(opt)}
                     disabled={hasSubmitted}
-                    className={`w-full p-6 text-left border-2 transition-all duration-300 flex items-center gap-4 ${
+                    className={`w-full p-6 text-left border-2 transition-all duration-300 flex items-center gap-4 touch-ripple-effect ${
                       isSelected 
                         ? "bg-blue-600/30 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.5)]" 
-                        : "bg-black/60 border-white/20 hover:border-white/50"
+                        : "bg-black/60 border-white/20 hover:border-white/50 active:scale-[0.98]"
                     } ${hasSubmitted && !isSelected ? "opacity-50" : ""}`}
                   >
                     <div className={`w-12 h-12 flex items-center justify-center text-xl font-black ${

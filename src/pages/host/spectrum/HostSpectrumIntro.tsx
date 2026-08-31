@@ -1,6 +1,6 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useEffect } from "react";
-
+import { useLocale } from "../../../hooks/useLocale";
 import type { Room } from "../../../types/database";
 
 interface Props {
@@ -8,7 +8,8 @@ interface Props {
   onNext: () => void;
 }
 
-export function HostSpectrumIntro({ room, onNext }: Props) {
+export function HostSpectrumIntro({ onNext }: Props) {
+  const { t } = useLocale();
   useEffect(() => {
     // Show intro for 8 seconds
     const timer = setTimeout(() => {
@@ -58,7 +59,7 @@ export function HostSpectrumIntro({ room, onNext }: Props) {
             <div className="w-24 h-24 rounded-full bg-[#ff003c]/20 border-4 border-[#ff003c] flex items-center justify-center shadow-[0_0_50px_rgba(255,0,60,0.5)] mb-4">
               <span className="text-4xl">🔥</span>
             </div>
-            <span className="text-[#ff003c] font-black tracking-widest uppercase">Kırmızı Takım</span>
+            <span className="text-[#ff003c] font-black tracking-widest uppercase">{t("host.redTeam", "Kırmızı Takım")}</span>
           </motion.div>
 
           <span className="text-white/30 text-4xl font-black italic">VS</span>
@@ -71,7 +72,7 @@ export function HostSpectrumIntro({ room, onNext }: Props) {
             <div className="w-24 h-24 rounded-full bg-neon-blue/20 border-4 border-neon-blue flex items-center justify-center shadow-[0_0_50px_rgba(0,243,255,0.5)] mb-4">
               <span className="text-4xl">⚡</span>
             </div>
-            <span className="text-neon-blue font-black tracking-widest uppercase">Mavi Takım</span>
+            <span className="text-neon-blue font-black tracking-widest uppercase">{t("host.blueTeam", "Mavi Takım")}</span>
           </motion.div>
         </div>
 

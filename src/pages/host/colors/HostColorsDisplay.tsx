@@ -1,13 +1,14 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player, RoomStatus } from "../../../types/database";
 import { SoundManager, sounds } from "../../../lib/audio";
+import { useLocale } from "../../../hooks/useLocale";
 import { HostLobby } from "../views/HostLobby";
 import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { grantRewardToPlayers } from "../../../lib/rewards";
 import { useVenue } from "../../../contexts/VenueContextCore";
-import { updateDoc, doc } from "firebase/firestore";
+import { doc, writeBatch } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 
 interface Props {
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
+  const { t } = useLocale();
   const { venue } = useVenue();
   const hasGrantedReward = useRef(false);
 
@@ -37,18 +39,17 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
     try {
       SoundManager.getInstance().playSFX(sounds.START);
       
-      // Reset all players' colors_clicks before starting (Batch Write)
-      import("firebase/firestore").then(async ({ writeBatch }) => {
-        const batch = writeBatch(db);
-        activePlayers.forEach(p => {
-          const pRef = doc(db, "players", p.id);
-          batch.update(pRef, { colors_clicks: 0 });
-        });
-        await batch.commit();
+      // Reset all players' colors_clicks before starting — must complete
+      // BEFORE the status update, otherwise players start with stale scores.
+      const batch = writeBatch(db);
+      activePlayers.forEach(p => {
+        const pRef = doc(db, "players", p.id);
+        batch.update(pRef, { colors_clicks: 0 });
       });
+      await batch.commit();
 
       await updateRoomStatus("colors_intro", {
-        colors_target_clicks: activePlayers.length * 50, // 50 clicks per player average to win (can be tuned)
+        colors_target_clicks: activePlayers.length * 30, // 30 clicks per player average to win (faster)
         colors_team_assignments: assignments,
       });
     } catch (err) {
@@ -112,14 +113,14 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
           }
 
           // Update their total_score (bonus points)
-          import("firebase/firestore").then(async ({ writeBatch }) => {
-            const batch = writeBatch(db);
-            winners.forEach(p => {
-              const pRef = doc(db, "players", p.id);
-              batch.update(pRef, { total_score: p.total_score + 100 });
-            });
-            await batch.commit();
+          const rewardBatch = writeBatch(db);
+          winners.forEach(p => {
+            const pRef = doc(db, "players", p.id);
+            rewardBatch.update(pRef, { total_score: p.total_score + 100 });
           });
+          rewardBatch.commit().catch(err =>
+            console.error("Error updating winner scores:", err)
+          );
         }
 
         updateRoomStatus("colors_reveal");
@@ -150,7 +151,6 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                   room={room}
                   players={players}
                   onStartGame={handleStartGame}
-                  onUpdateCategories={() => {}}
                 />
               </motion.div>
             )}
@@ -164,7 +164,7 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                 className="text-center z-10"
               >
                 <h1 className="text-7xl font-black uppercase tracking-[0.3em] mb-8 drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]">
-                  NEON SAVAŞLARI
+                  {t("colors.title")}
                 </h1>
                 <p className="text-3xl text-gray-400 font-bold tracking-widest mb-12">
                   Takımlar Belirlendi. Hazır Olun!
@@ -172,11 +172,11 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                 <div className="flex justify-center gap-20">
                   <div className="text-center">
                     <div className="w-32 h-32 rounded-full bg-red-600 shadow-[0_0_50px_rgba(255,0,0,0.8)] mb-4 animate-pulse" />
-                    <h2 className="text-2xl font-black text-red-500 uppercase tracking-widest">KIRMIZI</h2>
+                    <h2 className="text-2xl font-black text-red-500 uppercase tracking-widest">{t("colors.red")}</h2>
                   </div>
                   <div className="text-center">
                     <div className="w-32 h-32 rounded-full bg-blue-600 shadow-[0_0_50px_rgba(0,100,255,0.8)] mb-4 animate-pulse" style={{ animationDelay: "0.5s" }} />
-                    <h2 className="text-2xl font-black text-blue-500 uppercase tracking-widest">MAVİ</h2>
+                    <h2 className="text-2xl font-black text-blue-500 uppercase tracking-widest">{t("colors.blue")}</h2>
                   </div>
                 </div>
                 
@@ -184,7 +184,7 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                   onClick={handleIntroComplete}
                   className="mt-16 px-12 py-6 bg-white text-black font-black text-3xl uppercase tracking-widest rounded-2xl hover:scale-105 transition-transform"
                 >
-                  SAVAŞI BAŞLAT
+                  {t("colors.startGame")}
                 </button>
               </motion.div>
             )}
@@ -205,9 +205,17 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                 >
                   <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:40px_40px] opacity-20" />
                   <h2 className="text-6xl font-black text-white mix-blend-overlay uppercase tracking-[0.5em] z-10 whitespace-nowrap">
-                    KIRMIZI
+                    {t("colors.red")}
                   </h2>
-                  <div className="text-8xl font-black text-white/50 mt-4 z-10">{redScore}</div>
+                  <motion.div 
+                    key={redScore}
+                    initial={{ scale: 1.5, opacity: 1, textShadow: "0 0 50px rgba(255,255,255,1)" }}
+                    animate={{ scale: 1, opacity: 0.5, textShadow: "0 0 0px rgba(255,255,255,0)" }}
+                    transition={{ duration: 0.3 }}
+                    className="text-8xl font-black text-white mt-4 z-10"
+                  >
+                    {redScore}
+                  </motion.div>
                 </motion.div>
 
                 {/* Central Dividing Line (Laser) */}
@@ -221,9 +229,17 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                 >
                   <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:40px_40px] opacity-20" />
                   <h2 className="text-6xl font-black text-white mix-blend-overlay uppercase tracking-[0.5em] z-10 whitespace-nowrap">
-                    MAVİ
+                    {t("colors.blue")}
                   </h2>
-                  <div className="text-8xl font-black text-white/50 mt-4 z-10">{blueScore}</div>
+                  <motion.div 
+                    key={blueScore}
+                    initial={{ scale: 1.5, opacity: 1, textShadow: "0 0 50px rgba(255,255,255,1)" }}
+                    animate={{ scale: 1, opacity: 0.5, textShadow: "0 0 0px rgba(255,255,255,0)" }}
+                    transition={{ duration: 0.3 }}
+                    className="text-8xl font-black text-white mt-4 z-10"
+                  >
+                    {blueScore}
+                  </motion.div>
                 </motion.div>
               </motion.div>
             )}
@@ -239,9 +255,9 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                   initial={{ scale: 0.5 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", bounce: 0.5 }}
-                  className="text-8xl font-black text-white uppercase tracking-[0.3em] drop-shadow-[0_0_50px_rgba(255,255,255,0.8)] mb-8"
+                  className="text-8xl font-black text-white uppercase tracking-[0.3em] drop-shadow-[0_0_50px_rgba(255,255,255,0.8)] mb-8 text-center"
                 >
-                  {redPercentage >= 100 ? "KIRMIZI" : "MAVİ"} KAZANDI!
+                  {redPercentage >= 100 ? t("colors.red") : t("colors.blue")} KAZANDI!
                 </motion.h1>
                 <p className="text-3xl text-white/80 font-bold uppercase tracking-widest mb-16">
                   Tebrikler Şampiyonlar!
@@ -251,7 +267,7 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                   onClick={handleEndGameEarly}
                   className="px-10 py-5 bg-white text-black font-black uppercase tracking-widest text-xl rounded-xl transition-transform hover:scale-105 shadow-[0_0_30px_rgba(255,255,255,0.5)]"
                 >
-                  OYUNU BİTİR VE LOBİYE DÖN
+                  {t("colors.endGame")}
                 </button>
               </motion.div>
             )}

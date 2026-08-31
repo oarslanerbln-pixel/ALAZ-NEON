@@ -4,6 +4,7 @@ import type { Room, Player } from "../../../types/database";
 import { db } from "../../../lib/firebase";
 import { doc, increment, updateDoc } from "firebase/firestore";
 import { haptics } from "../../../lib/haptics";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface Props {
   room: Room;
@@ -13,6 +14,8 @@ interface Props {
 export function PlayerColorsController({ room, player }: Props) {
   const [localClicks, setLocalClicks] = useState(0);
   const pendingClicksRef = useRef(0);
+  const isFlushingRef = useRef(false);
+  const { t } = useLocale();
   
   // Eğer oyuncu oyun başladıktan sonra girmişse, fallback olarak ID'sinin son harfine göre takım ata
   const fallbackTeam = player.id.charCodeAt(player.id.length - 1) % 2 === 0 ? "red" : "blue";
@@ -34,7 +37,8 @@ export function PlayerColorsController({ room, player }: Props) {
 
     const interval = setInterval(() => {
       const clicksToFlush = pendingClicksRef.current;
-      if (clicksToFlush > 0) {
+      if (clicksToFlush > 0 && !isFlushingRef.current) {
+        isFlushingRef.current = true;
         pendingClicksRef.current = 0; // Reset immediately
         
         // KRİTİK DÜZELTME: Tüm oyuncuların aynı "rooms/id" dokümanına yazması
@@ -48,9 +52,11 @@ export function PlayerColorsController({ room, player }: Props) {
           console.error("Failed to flush clicks to Firestore:", err);
           // If it fails, add them back so we don't lose them
           pendingClicksRef.current += clicksToFlush;
+        }).finally(() => {
+          isFlushingRef.current = false;
         });
       }
-    }, 500);
+    }, 1000);
 
     return () => clearInterval(interval);
   }, [room.status, player.id, team]);
@@ -145,7 +151,7 @@ export function PlayerColorsController({ room, player }: Props) {
             className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-black"
           >
             <div className="w-12 h-12 rounded-full border-4 border-white border-t-transparent animate-spin mb-4 mx-auto" />
-            <p className="text-white/50 uppercase tracking-widest">YÜKLENİYOR...</p>
+            <p className="text-white/50 uppercase tracking-widest">{t("common.loading", "YÜKLENİYOR...")}</p>
           </motion.div>
         )}
       </AnimatePresence>

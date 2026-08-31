@@ -20,27 +20,22 @@ export function PlayerOverloadGame({ room, player }: PlayerOverloadGameProps) {
     setIsDeflecting(true);
 
     try {
-      // Decrement the timer allowance by 1 (minimum 1 second)
-      const currentAllowed = room.overload_time_allowed || 10;
-      const newAllowed = Math.max(1, currentAllowed - 1);
-
-      // Trigger the host to pick a new target by setting target to null
+      // Trigger the host to pick a new target by setting target to 'passing'
       const roomRef = doc(db, "rooms", room.id);
       await updateDoc(roomRef, {
-        overload_target_id: null,
-        overload_time_allowed: newAllowed
+        overload_target_id: "passing",
+        overload_last_target_id: player.id
       });
       
-      // Vibrate if supported
+      // Vibrate if supported (stronger haptic feedback)
       if (navigator.vibrate) {
-        navigator.vibrate(100);
+        navigator.vibrate([100, 50, 100]);
       }
     } catch (err) {
       console.error("Deflect failed:", err);
-    } finally {
       setIsDeflecting(false);
     }
-  }, [isTarget, isEliminated, isDeflecting, room.id, room.overload_time_allowed]);
+  }, [isTarget, isEliminated, isDeflecting, room.id, player.id]);
 
 
   if (room.status === "lobby") {
@@ -97,7 +92,14 @@ export function PlayerOverloadGame({ room, player }: PlayerOverloadGameProps) {
             <motion.div
               key="target"
               initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
+              animate={{ 
+                scale: 1, 
+                opacity: 1,
+                x: [-3, 3, -3, 3, 0] // subtle continuous shake
+              }}
+              transition={{
+                x: { repeat: Infinity, duration: 0.3, ease: "linear" }
+              }}
               exit={{ scale: 0.9, opacity: 0 }}
               className="relative z-10 flex flex-col items-center justify-center w-full h-full px-6"
             >

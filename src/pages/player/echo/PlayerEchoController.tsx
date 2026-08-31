@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { db } from "../../../lib/firebase";
@@ -15,7 +15,9 @@ export function PlayerEchoController({ room, player }: Props) {
   const [players, setPlayers] = useState<Player[]>([]);
   const [hasVoted, setHasVoted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
   const { showToast } = useToast();
+  const { t } = useLocale();
   
 
   // Reset local state when round changes
@@ -23,6 +25,8 @@ export function PlayerEchoController({ room, player }: Props) {
     if (room.status === "echo_intro" || room.status === "echo_active") {
       const myVote = room.echo_votes?.[player.id];
       setHasVoted(!!myVote);
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
     }
   }, [room.status, room.echo_votes, player.id]);
 
@@ -46,7 +50,8 @@ export function PlayerEchoController({ room, player }: Props) {
   }, [room.id, player.id]);
 
   const handleVote = async (targetId: string) => {
-    if (hasVoted || isSubmitting || room.status !== "echo_active") return;
+    if (hasVoted || isSubmittingRef.current || room.status !== "echo_active") return;
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
     
     if (navigator.vibrate) {
@@ -61,8 +66,9 @@ export function PlayerEchoController({ room, player }: Props) {
       setHasVoted(true);
     } catch (err) {
       console.error(err);
-      showToast("Oy gönderilemedi!", "error");
+      showToast(t("game.submitError", "Oy gönderilemedi!"), "error");
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -147,5 +153,11 @@ export function PlayerEchoController({ room, player }: Props) {
     );
   }
 
-  return null;
+  // Fallback for transitional states (e.g., lobby)
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center bg-black p-6 text-center">
+      <div className="w-12 h-12 rounded-full border-4 border-white/20 border-t-white animate-spin mx-auto mb-4" />
+      <p className="text-white/50 font-bold uppercase tracking-widest">{t("common.loading", "Yükleniyor...")}</p>
+    </div>
+  );
 }

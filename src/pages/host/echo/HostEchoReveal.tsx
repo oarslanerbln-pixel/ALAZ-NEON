@@ -1,9 +1,8 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useMemo, useEffect, useState } from "react";
 
 import type { Room, Player } from "../../../types/database";
-import { KineticSpark } from "../../../components/KineticSpark";
-import { useLocale } from "../../../hooks/useLocale";
+import { SoundManager, sounds } from "../../../lib/audio";
 
 interface Props {
   room: Room;
@@ -40,6 +39,7 @@ export function HostEchoReveal({ room, players, onFinish }: Props) {
     // Cinematic delay before revealing winner
     const timer = setTimeout(() => {
       setShowWinner(true);
+      SoundManager.getInstance().playSFX(sounds.FAILURE);
     }, 3000);
     return () => clearTimeout(timer);
   }, []);
@@ -66,13 +66,17 @@ export function HostEchoReveal({ room, players, onFinish }: Props) {
           className="relative z-10 flex flex-col items-center"
         >
           <span className="text-white/50 uppercase tracking-[0.5em] text-xl font-bold mb-8">
-            En Çok Oy Alan
+            GÜNAH KEÇİSİ
           </span>
           {topVotedPlayer ? (
             <>
-              <h1 className="text-7xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-[#ff003c] uppercase tracking-widest drop-shadow-[0_0_50px_rgba(255,0,60,0.4)] mb-4">
+              <motion.h1 
+                animate={{ x: [-10, 10, -10, 10, 0] }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="text-7xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-[#ff003c] uppercase tracking-widest drop-shadow-[0_0_50px_rgba(255,0,60,0.8)] mb-4"
+              >
                 {topVotedPlayer.nickname}
-              </h1>
+              </motion.h1>
               <p className="text-alaz-orange font-mono text-3xl mt-4 tracking-[0.2em] font-bold">
                 {Object.values(room.echo_votes || {}).filter(v => v === topVotedPlayer.id).length} OY
               </p>

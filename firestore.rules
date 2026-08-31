@@ -74,14 +74,36 @@ service cloud.firestore {
       
       // Authenticated users can join a room (create their player profile)
       allow create: if isAuth() && request.resource.data.uid == request.auth.uid;
-      
+
+      // A player's own game counters (Kablo, Colors, Spectrum, Bar) are
+      // updated via increment() directly from the player's device. These
+      // fields don't affect core scoring (total_score), which only the host
+      // writes. Without this rule, every mini-game tap was silently
+      // permission-denied and scores were never persisted.
+      // last_active is the heartbeat ping that prevents ghost-player targeting.
+      // Anti-Cheat: Saniyede en fazla 30 tıklama (batch) veya 1 skor artışı yapılabilir.
+      function isValidIncrement() {
+        return (request.resource.data.get('kablo_score', 0) - resource.data.get('kablo_score', 0)) <= 1 &&
+               (request.resource.data.get('bar_score', 0) - resource.data.get('bar_score', 0)) <= 1 &&
+               (request.resource.data.get('colors_clicks', 0) - resource.data.get('colors_clicks', 0)) <= 30 &&
+               (request.resource.data.get('spectrum_clicks', 0) - resource.data.get('spectrum_clicks', 0)) <= 30;
+      }
+
+      function isPlayerSelfUpdate() {
+        return resource.data.uid == request.auth.uid &&
+          touchesOnly(['kablo_score', 'colors_clicks', 'spectrum_clicks', 'bar_score', 'last_active']) &&
+          isValidIncrement();
+      }
+
       // Scores and lives are awarded by the host only. Letting a player write
       // their own document meant they could simply set total_score to whatever
       // they liked — and nothing in the app needs it: every write to a player
       // doc comes from the host (score updates, bomb lives, round resets),
       // while the player only ever creates their own doc on join.
-      allow update: if isAuth() &&
-        get(/databases/$(database)/documents/rooms/$(resource.data.room_id)).data.host_uid == request.auth.uid;
+      allow update: if isAuth() && (
+        get(/databases/$(database)/documents/rooms/$(resource.data.room_id)).data.host_uid == request.auth.uid ||
+        isPlayerSelfUpdate()
+      );
       
       // Only host or the player themselves can delete the player profile
       allow delete: if isAuth() && (

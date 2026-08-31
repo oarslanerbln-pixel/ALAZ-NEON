@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { db } from "../../../lib/firebase";
@@ -15,19 +15,22 @@ interface Props {
 export function PlayerSensorController({ room, player }: Props) {
   const [answer, setAnswer] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
   const { showToast } = useToast();
   const { t } = useLocale();
 
   useEffect(() => {
     if (room.status === "sensor_active") {
       setAnswer("");
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   }, [room.status]);
 
   const handleBuzz = async () => {
-    if (room.status !== "sensor_active" || isSubmitting) return;
+    if (room.status !== "sensor_active" || isSubmittingRef.current) return;
     
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
     
     // Optimistic UI vibration - Heavy impact
@@ -62,14 +65,18 @@ export function PlayerSensorController({ room, player }: Props) {
         if (navigator.vibrate) navigator.vibrate([50]);
       }
     } finally {
-      setTimeout(() => setIsSubmitting(false), 500);
+      setTimeout(() => {
+        isSubmittingRef.current = false;
+        setIsSubmitting(false);
+      }, 500);
     }
   };
 
   const handleSubmitAnswer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!answer.trim() || isSubmitting) return;
+    if (!answer.trim() || isSubmittingRef.current) return;
 
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
     try {
       const roomRef = doc(db, "rooms", room.id);
@@ -81,6 +88,7 @@ export function PlayerSensorController({ room, player }: Props) {
       console.error(err);
       showToast(t("sensor.toastSubmitFailed"), "error");
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };

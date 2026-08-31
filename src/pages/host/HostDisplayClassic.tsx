@@ -122,6 +122,12 @@ export function HostDisplayClassic({
       sound.stopSound(sounds.GAME_PULSE);
       sound.stopAmbientDrone();
     }
+
+    return () => {
+      sound.stopSound(sounds.LOBBY_AMBIENT);
+      sound.stopSound(sounds.GAME_PULSE);
+      sound.stopAmbientDrone();
+    };
   }, [gameState, roomId]);
 
   // Sync Game State with Room Status

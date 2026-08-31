@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { db } from "../../../lib/firebase";
 import { doc, updateDoc, increment } from "firebase/firestore";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface Props {
   room: Room;
@@ -15,30 +16,38 @@ export function PlayerSpectrumController({ room, player }: Props) {
   
   // We use local batching to avoid spamming Firestore with too many rapid clicks
   const [clickCount, setClickCount] = useState(0);
+  const isFlushingRef = useRef(false);
+  const { t } = useLocale();
 
   const flushClicks = useCallback(async () => {
-    if (clickCount === 0 || room.status !== "spectrum_active") return;
+    if (clickCount === 0 || room.status !== "spectrum_active" || isFlushingRef.current) return;
     
+    isFlushingRef.current = true;
     const countToFlush = clickCount;
     setClickCount(0); // Reset early for responsiveness
 
     try {
-      const roomRef = doc(db, "rooms", room.id);
-      await updateDoc(roomRef, {
-        [`spectrum_scores.${team}`]: increment(countToFlush)
+      // KRİTİK DÜZELTME: Tüm oyuncuların aynı "rooms/id" dokümanına yazması
+      // "Contention" kilitlenmesine neden oluyordu.
+      // Artık her oyuncu kendi dokümanına yazıyor.
+      const playerRef = doc(db, "players", player.id);
+      await updateDoc(playerRef, {
+        spectrum_clicks: increment(countToFlush)
       });
     } catch (err) {
       console.error("Failed to flush spectrum clicks", err);
       // Put them back if failed (simplified, might lose some if they kept clicking but okay for this game)
       setClickCount(prev => prev + countToFlush);
+    } finally {
+      isFlushingRef.current = false;
     }
-  }, [clickCount, room.id, room.status, team]);
+  }, [clickCount, player.id, room.status]);
 
   // Flush clicks every 500ms
   useEffect(() => {
     const interval = setInterval(() => {
       flushClicks();
-    }, 500);
+    }, 1000);
     return () => {
       clearInterval(interval);
       flushClicks(); // Flush on unmount
@@ -118,37 +127,47 @@ export function PlayerSpectrumController({ room, player }: Props) {
     );
   }
 
-  // Active state
-  return (
-    <div className={`flex-1 flex flex-col relative overflow-hidden
-      ${isRed ? "bg-[#33000c]" : "bg-[#001a26]"}
-    `}>
-      <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay pointer-events-none" />
-      
-      {/* Huge tap target */}
-      <button 
-        onClick={handleTap}
-        className="absolute inset-0 w-full h-full flex flex-col items-center justify-center z-10 touch-manipulation active:bg-white/10 transition-colors"
-      >
-        <AnimatePresence>
-          {/* Ripple effect per tap - optimization: maybe skip real ripple elements for performance if tapping 10 times a sec, just scaling the text is better */}
-        </AnimatePresence>
-        <motion.div
-          animate={{ scale: clickCount > 0 ? 1.1 : 1 }}
-          transition={{ type: "spring", bounce: 0.5 }}
-          className={`w-48 h-48 rounded-full border-4 flex items-center justify-center shadow-[0_0_50px_rgba(255,255,255,0.2)]
-            ${isRed ? "border-[#ff003c] bg-[#ff003c]/20" : "border-neon-blue bg-neon-blue/20"}
-          `}
-        >
-          <span className="text-4xl font-black text-white uppercase tracking-widest">
-            BAS!
-          </span>
-        </motion.div>
+  if (room.status === "spectrum_active") {
+    // Active state
+    return (
+      <div className={`flex-1 flex flex-col relative overflow-hidden
+        ${isRed ? "bg-[#33000c]" : "bg-[#001a26]"}
+      `}>
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay pointer-events-none" />
         
-        <p className="mt-12 text-white/30 font-mono text-xl tracking-widest">
-          +{clickCount} güç
-        </p>
-      </button>
+        {/* Huge tap target */}
+        <button 
+          onClick={handleTap}
+          className="absolute inset-0 w-full h-full flex flex-col items-center justify-center z-10 touch-manipulation active:bg-white/10 transition-colors"
+        >
+          <AnimatePresence>
+            {/* Ripple effect per tap - optimization: maybe skip real ripple elements for performance if tapping 10 times a sec, just scaling the text is better */}
+          </AnimatePresence>
+          <motion.div
+            animate={{ scale: clickCount > 0 ? 1.1 : 1 }}
+            transition={{ type: "spring", bounce: 0.5 }}
+            className={`w-48 h-48 rounded-full border-4 flex items-center justify-center shadow-[0_0_50px_rgba(255,255,255,0.2)]
+              ${isRed ? "border-[#ff003c] bg-[#ff003c]/20" : "border-neon-blue bg-neon-blue/20"}
+            `}
+          >
+            <span className="text-4xl font-black text-white uppercase tracking-widest">
+              BAS!
+            </span>
+          </motion.div>
+          
+          <p className="mt-12 text-white/30 font-mono text-xl tracking-widest">
+            +{clickCount} güç
+          </p>
+        </button>
+      </div>
+    );
+  }
+
+  // Fallback for transitional states (e.g., lobby)
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center bg-black p-6 text-center">
+      <div className="w-12 h-12 rounded-full border-4 border-white/20 border-t-white animate-spin mx-auto mb-4" />
+      <p className="text-white/50 font-bold uppercase tracking-widest">{t("common.loading", "Yükleniyor...")}</p>
     </div>
   );
 }

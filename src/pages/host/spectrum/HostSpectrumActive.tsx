@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import type { Room } from "../../../types/database";
+import type { Room, Player } from "../../../types/database";
 
 interface Props {
   room: Room;
+  players: Player[];
   onNext: () => void;
 }
 
-export function HostSpectrumActive({ room, onNext }: Props) {
+export function HostSpectrumActive({ room, players, onNext }: Props) {
   const [timeLeft, setTimeLeft] = useState(30);
 
   useEffect(() => {
@@ -25,11 +26,24 @@ export function HostSpectrumActive({ room, onNext }: Props) {
     }
   }, [room.spectrum_end_time, onNext]);
 
-  const scores = room.spectrum_scores || { red: 50, blue: 50 };
-  const total = (scores.red + scores.blue) || 100;
+  let redScore = 0;
+  let blueScore = 0;
   
+  players.forEach(p => {
+    const team = room.spectrum_teams?.[p.id];
+    if (team === "red") {
+      redScore += (p.spectrum_clicks || 0);
+    } else if (team === "blue") {
+      blueScore += (p.spectrum_clicks || 0);
+    }
+  });
+
   // Calculate percentage of screen for Red (Blue takes the rest)
-  const redPercentage = (scores.red / total) * 100;
+  let redPercentage = 50;
+  if (redScore > 0 || blueScore > 0) {
+    const total = redScore + blueScore;
+    redPercentage = (redScore / total) * 100;
+  }
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center bg-black relative overflow-hidden min-h-screen">
@@ -75,14 +89,26 @@ export function HostSpectrumActive({ room, onNext }: Props) {
 
       {/* Score Overlay (Optional, but good for feedback) */}
       <div className="absolute bottom-12 left-12 z-30">
-        <span className="text-white/80 font-black text-6xl drop-shadow-md">
+        <motion.div 
+          key={redScore}
+          initial={{ scale: 1.5, textShadow: "0 0 50px rgba(255,255,255,1)" }}
+          animate={{ scale: 1, textShadow: "0 0 0px rgba(255,255,255,0)" }}
+          transition={{ duration: 0.3 }}
+          className="text-white/80 font-black text-6xl drop-shadow-md"
+        >
           {Math.round(redPercentage)}%
-        </span>
+        </motion.div>
       </div>
       <div className="absolute bottom-12 right-12 z-30">
-        <span className="text-white/80 font-black text-6xl drop-shadow-md">
+        <motion.div 
+          key={blueScore}
+          initial={{ scale: 1.5, textShadow: "0 0 50px rgba(255,255,255,1)" }}
+          animate={{ scale: 1, textShadow: "0 0 0px rgba(255,255,255,0)" }}
+          transition={{ duration: 0.3 }}
+          className="text-white/80 font-black text-6xl drop-shadow-md"
+        >
           {Math.round(100 - redPercentage)}%
-        </span>
+        </motion.div>
       </div>
     </div>
   );

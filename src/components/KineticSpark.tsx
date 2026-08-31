@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { playCinematicWhoosh } from "../lib/soundSynth";
 import { SoundManager, sounds } from "../lib/audio";
@@ -53,6 +53,16 @@ export function KineticSpark({
   // Ekstrüzyon katmanları ve ön yüz BİREBİR aynı boyutta olmak zorunda —
   // tek yerde hesaplanıp ikisine de veriliyor.
   const fontSize = titleFontSize(text);
+  // useState ile rastgele değerleri render sırasında sürekli hesaplanmaktan kurtarıyoruz.
+  const [sparks] = useState(() => {
+    return [...Array(20)].map((_, i) => ({
+      id: i,
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`,
+      animationDuration: `${0.3 + Math.random()}s`,
+      animationDelay: `${Math.random()}s`,
+    }));
+  });
 
   useEffect(() => {
     if (!playAudio) return;
@@ -78,14 +88,22 @@ export function KineticSpark({
       // üretiyor, yani 3B etkisi belirginleşiyor.
       style={{ perspective: "820px" }}
     >
-      {/* Giriş animasyonu — yalnızca bir kez çalışır */}
+      {/* Giriş animasyonu — yalnızca bir kez çalışır. Cinematic Power-up (Flicker) eklendi */}
       <motion.div
-        initial={{ rotateX: 60, scale: 0.5, opacity: 0, z: -500 }}
-        animate={{ rotateX: 0, scale: 1, opacity: 1, z: 0 }}
+        initial={{ rotateX: 60, scale: 0.5, opacity: 0, z: -500, filter: "brightness(0) blur(20px)" }}
+        animate={{ 
+          rotateX: 0, 
+          scale: 1, 
+          // Power-up flicker sequence: kapalı -> hafif yanar -> söner -> tam güce ulaşır
+          opacity: [0, 0.4, 0, 1, 0.8, 1],
+          filter: ["brightness(0) blur(20px)", "brightness(2) blur(5px)", "brightness(0) blur(10px)", "brightness(1.5) blur(2px)", "brightness(1) blur(0px)"],
+          z: 0 
+        }}
         transition={{
-          rotateX: { delay: delay + 0.2, duration: 2, ease: "easeOut" },
-          scale: { delay: delay + 0.2, duration: 2, ease: "easeOut" },
-          opacity: { delay: delay + 0.2, duration: 1.5, ease: "easeIn" },
+          rotateX: { delay: delay + 0.5, duration: 2.5, ease: "easeOut" },
+          scale: { delay: delay + 0.5, duration: 2.5, ease: "easeOut" },
+          opacity: { delay: delay + 0.5, duration: 2, times: [0, 0.1, 0.15, 0.4, 0.6, 1], ease: "linear" },
+          filter: { delay: delay + 0.5, duration: 2, times: [0, 0.1, 0.15, 0.4, 0.6, 1], ease: "linear" },
         }}
         className="relative w-full flex items-center justify-center"
         style={{ transformStyle: "preserve-3d" }}
@@ -169,15 +187,15 @@ export function KineticSpark({
 
               {/* Spark (Kıvılcım) Partikülleri */}
               <div className="absolute inset-0 pointer-events-none" style={{ WebkitTextStroke: "0" }}>
-                {[...Array(20)].map((_, i) => (
+                {sparks.map((spark) => (
                   <motion.div
-                    key={i}
+                    key={spark.id}
                     className="absolute bg-yellow-400 rounded-full shadow-[0_0_10px_#ffeb3b,0_0_20px_#ffeb3b] w-1 h-1 md:w-1.5 md:h-1.5"
                     style={{
-                      left: `${Math.random() * 100}%`,
-                      top: `${Math.random() * 100}%`,
-                      animation: `spark-flicker ${0.3 + Math.random()}s infinite alternate`,
-                      animationDelay: `${Math.random()}s`,
+                      left: spark.left,
+                      top: spark.top,
+                      animation: `spark-flicker ${spark.animationDuration} infinite alternate`,
+                      animationDelay: spark.animationDelay,
                     }}
                     animate={{ opacity: [1, 1, 0] }}
                     transition={{ duration: 3, times: [0, 0.7, 1], delay: delay + 1.5 }}
@@ -185,88 +203,30 @@ export function KineticSpark({
                 ))}
               </div>
 
-              {/* Sıvı Dolum Katmanı (Soldan) */}
+              {/* 
+                ULTRA-PREMIUM COSMIC FLARE (Hologram Sweep)
+                SVG stroke yerine CSS tabanlı, sonsuz çözünürlüklü ışık seli.
+                Daha ağırbaşlı, lüks ve jilet gibi keskin bir "Wow Effect".
+              */}
               <motion.div
                 className="absolute inset-0 liquid-clip-text font-black uppercase tracking-tighter mix-blend-screen"
                 style={{
-                  backgroundImage: "linear-gradient(90deg, #ffeb3b 0%, #ffffff 50%, transparent 50%)",
-                  backgroundSize: "200% 100%",
-                  WebkitTextStroke: "0",
-                  backgroundPosition: "100% 0%",
+                  // Cyberpunk/Neon renk paletinden oluşan çok geniş bir ışık huzmesi
+                  backgroundImage: "linear-gradient(110deg, transparent 0%, rgba(0, 229, 255, 0.4) 35%, rgba(255, 255, 255, 1) 50%, rgba(255, 0, 255, 0.6) 65%, rgba(255, 85, 0, 0.3) 75%, transparent 100%)",
+                  backgroundSize: "300% 100%",
+                  WebkitTextStroke: "0", // Işık selinde stroke yok, pürüzsüz akacak
+                  backgroundPosition: "200% 0%",
                 }}
-                animate={{ backgroundPosition: ["100% 0%", "0% 0%"] }}
-                transition={{ duration: 2.5, ease: "easeOut", delay: delay + 1.5 }}
+                animate={{ backgroundPosition: ["300% 0%", "-100% 0%"] }}
+                transition={{ 
+                  duration: 6, 
+                  repeat: Infinity, 
+                  ease: "linear",
+                  delay: delay + 1.5 // Giriş animasyonundan sonra başlar
+                }}
               >
                 {text}
               </motion.div>
-
-              {/* Sıvı Dolum Katmanı (Sağdan) */}
-              <motion.div
-                className="absolute inset-0 liquid-clip-text font-black uppercase tracking-tighter mix-blend-screen"
-                style={{
-                  backgroundImage: "linear-gradient(-90deg, #ffeb3b 0%, #ffffff 50%, transparent 50%)",
-                  backgroundSize: "200% 100%",
-                  WebkitTextStroke: "0",
-                  backgroundPosition: "0% 0%",
-                }}
-                animate={{ backgroundPosition: ["0% 0%", "100% 0%"] }}
-                transition={{ duration: 2.5, ease: "easeOut", delay: delay + 1.5 }}
-              >
-                {text}
-              </motion.div>
-            </div>
-
-            {/* DRAGON NEON STROKE */}
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-visible z-50" style={{ transform: "translateZ(10px)" }}>
-              <svg width="100%" height="100%" className="absolute overflow-visible" style={{ left: "50%", top: "50%", transform: "translate(-50%, -50%)" }}>
-                <defs>
-                  <linearGradient id="dragonGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#00e5ff" stopOpacity="0" />
-                    <stop offset="15%" stopColor="#00e5ff" />
-                    <stop offset="35%" stopColor="#ffffff" />
-                    <stop offset="50%" stopColor="#ff00ff" />
-                    <stop offset="70%" stopColor="#ffffff" />
-                    <stop offset="85%" stopColor="#ff5500" />
-                    <stop offset="100%" stopColor="#ff5500" stopOpacity="0" />
-                  </linearGradient>
-                  <filter id="dragonGlow" x="-30%" y="-30%" width="160%" height="160%">
-                    <feGaussianBlur stdDeviation="8" result="blur1" />
-                    <feGaussianBlur stdDeviation="24" result="blur2" />
-                    <feMerge>
-                      <feMergeNode in="blur2" />
-                      <feMergeNode in="blur1" />
-                      <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                  </filter>
-                </defs>
-                
-                {/* 
-                  Using SVG text for the stroke. 
-                  dy="0.35em" is a common hack to vertically center dominant-baseline in varying browsers,
-                  but here we match the HTML text positioning as close as possible.
-                */}
-                <motion.text
-                  x="50%"
-                  y="50%"
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  className="font-black uppercase tracking-tighter"
-                  style={{ fontSize }}
-                  fill="transparent"
-                  stroke="url(#dragonGradient)"
-                  strokeWidth="4"
-                  filter="url(#dragonGlow)"
-                  initial={{ strokeDasharray: "150 1500", strokeDashoffset: 1500 }}
-                  animate={{ strokeDashoffset: 0 }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "linear",
-                  }}
-                >
-                  {text}
-                </motion.text>
-              </svg>
             </div>
           </div>
         </motion.div>

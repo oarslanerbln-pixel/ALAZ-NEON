@@ -1,15 +1,17 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useEffect, useState } from "react";
+import { useLocale } from "../../../hooks/useLocale";
 
-import type { Room } from "../../../types/database";
-import { KineticSpark } from "../../../components/KineticSpark";
+import type { Room, Player } from "../../../types/database";
 
 interface Props {
   room: Room;
+  players: Player[];
   onFinish: () => void;
 }
 
-export function HostSpectrumReveal({ room, onFinish }: Props) {
+export function HostSpectrumReveal({ room, players, onFinish }: Props) {
+  const { t } = useLocale();
   const [showWinner, setShowWinner] = useState(false);
 
   useEffect(() => {
@@ -19,20 +21,27 @@ export function HostSpectrumReveal({ room, onFinish }: Props) {
     return () => clearTimeout(timer);
   }, []);
 
-  const scores = room.spectrum_scores || { red: 50, blue: 50 };
+  let redScore = 0;
+  let blueScore = 0;
   
-  let winner = "TIE";
-  let winnerColor = "white";
-  let winnerName = "BERABERE";
+  players.forEach(p => {
+    const team = room.spectrum_teams?.[p.id];
+    if (team === "red") {
+      redScore += (p.spectrum_clicks || 0);
+    } else if (team === "blue") {
+      blueScore += (p.spectrum_clicks || 0);
+    }
+  });
 
-  if (scores.red > scores.blue) {
-    winner = "red";
+  let winnerColor = "white";
+  let winnerName = t("spectrum.tie");
+
+  if (redScore > blueScore) {
     winnerColor = "#ff003c";
-    winnerName = "KIRMIZI TAKIM";
-  } else if (scores.blue > scores.red) {
-    winner = "blue";
+    winnerName = t("spectrum.redTeam");
+  } else if (blueScore > redScore) {
     winnerColor = "#00f3ff";
-    winnerName = "MAVİ TAKIM";
+    winnerName = t("spectrum.blueTeam");
   }
 
   return (
@@ -54,7 +63,7 @@ export function HostSpectrumReveal({ room, onFinish }: Props) {
           transition={{ duration: 0.8, repeat: Infinity }}
           className="text-white/50 text-3xl font-black uppercase tracking-[1em] z-10"
         >
-          Sonuçlar...
+          {t("spectrum.results")}
         </motion.div>
       ) : (
         <motion.div
@@ -64,7 +73,7 @@ export function HostSpectrumReveal({ room, onFinish }: Props) {
           className="relative z-10 flex flex-col items-center"
         >
           <span className="text-white/50 uppercase tracking-[0.5em] text-2xl font-bold mb-4">
-            KAZANAN
+            {t("host.champion", "ŞAMPİYON")}
           </span>
           <h1 
             className="text-7xl md:text-9xl font-black uppercase tracking-widest mb-12 drop-shadow-2xl"
@@ -79,12 +88,12 @@ export function HostSpectrumReveal({ room, onFinish }: Props) {
           
           <div className="flex gap-16 bg-white/[0.03] border border-white/10 p-8 rounded-3xl backdrop-blur-md">
             <div className="text-center">
-              <p className="text-[#ff003c] text-sm uppercase tracking-widest mb-2 font-bold">KIRMIZI</p>
-              <p className="text-4xl font-black text-white">{scores.red}</p>
+              <p className="text-[#ff003c] text-sm uppercase tracking-widest mb-2 font-bold">{t("host.red", "KIRMIZI")}</p>
+              <p className="text-4xl font-black text-white">{redScore}</p>
             </div>
             <div className="text-center border-l border-white/10 pl-16">
-              <p className="text-neon-blue text-sm uppercase tracking-widest mb-2 font-bold">MAVİ</p>
-              <p className="text-4xl font-black text-white">{scores.blue}</p>
+              <p className="text-neon-blue text-sm uppercase tracking-widest mb-2 font-bold">{t("host.blue", "MAVİ")}</p>
+              <p className="text-4xl font-black text-white">{blueScore}</p>
             </div>
           </div>
 
@@ -95,7 +104,7 @@ export function HostSpectrumReveal({ room, onFinish }: Props) {
             onClick={onFinish}
             className="mt-16 px-12 py-4 bg-white/5 border border-white/20 text-white/70 rounded-full uppercase tracking-[0.3em] font-bold hover:bg-white/10 hover:text-white transition-all"
           >
-            Lobiye Dön
+            {t("common.back", "ANA SAYFA")}
           </motion.button>
         </motion.div>
       )}

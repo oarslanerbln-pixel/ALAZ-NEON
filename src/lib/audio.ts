@@ -410,17 +410,23 @@ export class SoundManager {
     }
   }
 
-  public toggleMute() {
-    this.isMuted = !this.isMuted;
-    localStorage.setItem("alaz_neon_muted", String(this.isMuted));
-
-    if (this.isMuted) {
-      this.sounds.forEach((sound) => sound.pause());
-      this.stopPad();
-    }
+  public getIsMuted(): boolean {
+    return this.isMuted;
   }
 
-  public isMutedStatus(): boolean {
+  public toggleMute(): boolean {
+    this.isMuted = !this.isMuted;
+    if (typeof window !== "undefined") {
+      localStorage.setItem("alaz_neon_muted", String(this.isMuted));
+    }
+
+    if (this.isMuted) {
+      this.sounds.forEach((sound) => {
+        sound.pause();
+        sound.currentTime = 0;
+      });
+      this.stopPad();
+    }
     return this.isMuted;
   }
 

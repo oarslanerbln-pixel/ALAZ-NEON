@@ -30,6 +30,13 @@ export function PlayerLobby({ room, roomId }: PlayerLobbyProps) {
   const [playerCount, setPlayerCount] = useState(0);
   const [tipIdx, setTipIdx] = useState(0);
 
+  const [barcodeLines] = useState(() => {
+    return [...Array(40)].map(() => ({
+      widthClass: Math.random() > 0.5 ? 'w-0.5' : 'w-1',
+      marginClass: Math.random() > 0.7 ? 'mx-1' : 'mx-0.5'
+    }));
+  });
+
   // Live player count
   useEffect(() => {
     if (!roomId) return;
@@ -85,8 +92,8 @@ export function PlayerLobby({ room, roomId }: PlayerLobbyProps) {
           <div className="mt-5 w-full h-10 bg-black/60 border border-white/10 rounded flex relative overflow-hidden">
              {/* Simple vertical lines for barcode */}
              <div className="flex items-end w-full h-full opacity-60 px-1 py-1">
-                {[...Array(40)].map((_, i) => (
-                  <div key={i} className={`h-full bg-white ${Math.random() > 0.5 ? 'w-0.5' : 'w-1'} ${Math.random() > 0.7 ? 'mx-1' : 'mx-0.5'}`} />
+                {barcodeLines.map((line, i) => (
+                  <div key={i} className={`h-full bg-white ${line.widthClass} ${line.marginClass}`} />
                 ))}
              </div>
              {/* Scanning laser */}

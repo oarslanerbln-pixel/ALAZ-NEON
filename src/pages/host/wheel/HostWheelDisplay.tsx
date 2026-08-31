@@ -5,6 +5,7 @@ import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { HostLobby } from "../views/HostLobby";
 import { useVenue } from "../../../contexts/VenueContextCore";
+import { useLocale } from "../../../hooks/useLocale";
 import { DEFAULT_VENUE_CONFIG, type Room, type Player, type RoomStatus } from "../../../types/database";
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function HostWheelDisplay({ room, players, updateRoomStatus }: Props) {
+  const { t } = useLocale();
   const { venue } = useVenue();
   const slices = venue.wheel_slices?.length ? venue.wheel_slices : DEFAULT_VENUE_CONFIG.wheel_slices!;
   const controls = useAnimation();
@@ -216,7 +218,7 @@ export function HostWheelDisplay({ room, players, updateRoomStatus }: Props) {
                 >
                   <div className="absolute inset-0 bg-cyber-yellow/10 animate-pulse pointer-events-none" />
                   <div className="relative z-10">
-                    <div className="text-white font-black uppercase tracking-[0.3em] text-sm mb-4">KAZANAN ÖDÜL</div>
+                    <div className="text-white font-black uppercase tracking-[0.3em] text-sm mb-4">{t("host.winnerPrize", "KAZANAN ÖDÜL")}</div>
                     <div className="text-6xl font-black text-cyber-yellow uppercase tracking-tighter drop-shadow-[0_0_20px_rgba(255,215,0,0.5)]">
                       {room.wheel_result_index !== null && room.wheel_result_index !== undefined ? slices[room.wheel_result_index].text : ""}
                     </div>

@@ -41,10 +41,22 @@ export type RoomStatus =
   | "spectrum_reveal"
   | "colors_intro"
   | "colors_active"
-  | "colors_reveal";
+  | "colors_reveal"
+  | "vault_intro"
+  | "vault_active"
+  | "vault_reveal"
+  | "unity_intro"
+  | "unity_active"
+  | "unity_reveal"
+  | "bar_intro"
+  | "bar_active"
+  | "bar_reveal"
+  | "kablo_intro"
+  | "kablo_active"
+  | "kablo_reveal";
 
 export type GameMode = "individual" | "team";
-export type GameType = "scattegories" | "quiz" | "bomb" | "sensor" | "wheel" | "overload" | "echo" | "pulse" | "spectrum" | "colors";
+export type GameType = "scattegories" | "quiz" | "bomb" | "sensor" | "wheel" | "overload" | "echo" | "pulse" | "spectrum" | "colors" | "vault" | "unity" | "bar" | "kablo";
 
 export interface QuizQuestion {
   id: string;
@@ -94,6 +106,7 @@ export interface Room {
   wheel_result_index?: number | null;
   // Overload Game Fields
   overload_target_id?: string | null;
+  overload_last_target_id?: string | null;
   overload_time_allowed?: number;
   overload_start_time?: number;
   overload_eliminated_ids?: string[];
@@ -116,6 +129,18 @@ export interface Room {
   colors_blue_score?: number;
   colors_team_assignments?: Record<string, "red" | "blue">;
   colors_end_time?: number;
+  // Vault Game Fields
+  vault_code?: string;
+  vault_winner_id?: string | null;
+  // Unity Game Fields
+  unity_target?: number;
+  unity_current?: number;
+  unity_end_time?: number;
+  // Bar Game Fields
+  bar_active_recipe?: string[];
+  bar_end_time?: number;
+  // Kablo Game Fields
+  kablo_winner_id?: string | null;
   // Mekan markalaması — oda açılırken o anki aktif mekan profilinden
   // KOPYALANIR (canlı referans değil). Böylece bir mekana satış sonrası
   // marka değiştirilse bile geçmiş odaların/demoların markası değişmez.
@@ -137,6 +162,9 @@ export interface Player {
   lives?: number;
   last_active?: number;
   colors_clicks?: number;
+  spectrum_clicks?: number;
+  bar_score?: number;
+  kablo_score?: number;
 }
 
 export interface Answer {

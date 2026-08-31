@@ -142,9 +142,13 @@ export function PlayerBombController({ room, player }: Props) {
 
   if (room.status === "bomb_explosion") {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-[#ff003c] text-white p-6 text-center">
-        <h1 className="text-5xl font-black text-black tracking-widest uppercase drop-shadow-lg">{t("bomb.explodedShort")}</h1>
-        <p className="mt-4 font-bold text-xl">{t("bomb.watchMainScreen")}</p>
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-[#ff003c] text-white p-6 text-center animate-screen-shake-violent relative overflow-hidden">
+        <div className="absolute inset-0 bg-white/40 animate-impact-shock pointer-events-none" />
+        <span className="text-8xl mb-6 animate-bounce">💥</span>
+        <h1 className="text-6xl font-black text-black tracking-widest uppercase drop-shadow-[0_0_30px_rgba(0,0,0,0.8)]">
+          {t("bomb.explodedShort")}
+        </h1>
+        <p className="mt-6 font-bold text-2xl tracking-widest uppercase text-black/80">{t("bomb.watchMainScreen")}</p>
       </div>
     );
   }

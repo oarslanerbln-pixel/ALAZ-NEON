@@ -201,7 +201,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                 </div>
                 
                 <h3 className="text-white font-black text-xl mb-1 uppercase tracking-widest text-center leading-tight">
-                  SİSTEME <span className="text-transparent bg-clip-text bg-gradient-to-r from-alaz-orange to-yellow-500">GİRİŞ YAP</span>
+                  SİSTEME <span className="text-transparent bg-clip-text bg-gradient-to-r from-alaz-orange to-yellow-500">{t("host.login", "GİRİŞ YAP")}</span>
                 </h3>
                 
                 <p className="text-gray-400 text-[10px] font-medium text-center px-2 mb-4 leading-relaxed">
@@ -256,7 +256,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
 
           {/* Game Selection Column */}
           <div className="lg:col-span-3 flex flex-col gap-3">
-            <h2 className="text-lg font-black text-white/50 uppercase tracking-[0.3em] pl-2 m-0">ADIM 2: <span className="text-white">OYUN SEÇ</span></h2>
+            <h2 className="text-lg font-black text-white/50 uppercase tracking-[0.3em] pl-2 m-0">{t("host.step2", "ADIM 2: ")}<span className="text-white">{t("host.selectGame", "OYUN SEÇ")}</span></h2>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               
               {/* ALAZ ARENA Card */}
@@ -408,6 +408,48 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                 </div>
               </button>
 
+              {/* NEON ŞİFRE (VAULT) Card */}
+              <button
+                onClick={() => handleStartGame("vault")}
+                className="relative group overflow-hidden bg-black/60 backdrop-blur-2xl border-[1.5px] border-emerald-500/30 hover:border-emerald-500 p-5 rounded-2xl text-left transition-all duration-500 hover:-translate-y-1 shadow-[0_10px_30px_rgba(0,0,0,0.8)] hover:shadow-[0_0_50px_rgba(16,185,129,0.3)]"
+              >
+                <div className="absolute -right-20 -top-20 w-32 h-32 bg-emerald-500/20 rounded-full blur-[50px] group-hover:bg-emerald-500/40 transition-colors duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none" />
+                
+                <div className="relative z-10 flex flex-col h-full">
+                  <div className="w-10 h-10 bg-emerald-500/10 border-[1.5px] border-emerald-500/40 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-125 transition-transform duration-500 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                    <NeonIcon type="flame" color="green" className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-xl font-black text-white mb-1 tracking-widest group-hover:text-emerald-400 transition-colors">NEON <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-500 drop-shadow-[0_0_10px_rgba(16,185,129,0.3)]">ŞİFRE</span></h3>
+                  <p className="text-gray-400 text-[10px] leading-snug mt-1 flex-1 font-medium">Gizli neon kasayı açmak için şifreyi ilk tahmin eden olmak için yarış!</p>
+                  
+                  <div className="mt-3 flex items-center gap-3 text-emerald-400 text-xs font-black tracking-[0.2em] uppercase opacity-60 group-hover:opacity-100 transition-all duration-300">
+                    Soygunu Başlat <span className="text-lg leading-none group-hover:translate-x-2 transition-transform">→</span>
+                  </div>
+                </div>
+              </button>
+
+              {/* NEON BİRLİK (UNITY) Card */}
+              <button
+                onClick={() => handleStartGame("unity")}
+                className="relative group overflow-hidden bg-black/60 backdrop-blur-2xl border-[1.5px] border-amber-500/30 hover:border-amber-500 p-5 rounded-2xl text-left transition-all duration-500 hover:-translate-y-1 shadow-[0_10px_30px_rgba(0,0,0,0.8)] hover:shadow-[0_0_50px_rgba(245,158,11,0.3)]"
+              >
+                <div className="absolute -right-20 -top-20 w-32 h-32 bg-amber-500/20 rounded-full blur-[50px] group-hover:bg-amber-500/40 transition-colors duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none" />
+                
+                <div className="relative z-10 flex flex-col h-full">
+                  <div className="w-10 h-10 bg-amber-500/10 border-[1.5px] border-amber-500/40 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-125 transition-transform duration-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                    <NeonIcon type="flame" color="orange" className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-xl font-black text-white mb-1 tracking-widest group-hover:text-amber-400 transition-colors">NEON <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.3)]">BİRLİK</span></h3>
+                  <p className="text-gray-400 text-[10px] leading-snug mt-1 flex-1 font-medium">Bütün mekan güçlerini birleştirip dev neon bataryayı patlatmaya çalışıyor!</p>
+                  
+                  <div className="mt-3 flex items-center gap-3 text-amber-400 text-xs font-black tracking-[0.2em] uppercase opacity-60 group-hover:opacity-100 transition-all duration-300">
+                    Enerjiyi Başlat <span className="text-lg leading-none group-hover:translate-x-2 transition-transform">→</span>
+                  </div>
+                </div>
+              </button>
+
             </div>
           </div>
         </div>
@@ -440,7 +482,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
             
             {/* Show QR code subtly in corner during kiosk mode */}
             <div className="absolute bottom-8 right-8 bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/20 flex flex-col items-center">
-              <span className="text-white font-bold uppercase tracking-widest text-[10px] mb-2">Oyuna Katıl</span>
+              <span className="text-white font-bold uppercase tracking-widest text-[10px] mb-2">{t("host.joinGame", "Oyuna Katıl")}</span>
               <div className="bg-white p-2 rounded-lg">
                 <QRCodeSVG value={joinUrl} size={80} bgColor="#ffffff" fgColor="#000000" level="H" />
               </div>

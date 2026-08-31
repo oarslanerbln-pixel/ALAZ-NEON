@@ -21,7 +21,7 @@ interface HostLobbyProps {
   room: Room | null;
   players: Player[];
   onStartGame: () => void;
-  onUpdateCategories: (newCategories: string[]) => void;
+  onUpdateCategories?: (newCategories: string[]) => void;
 }
 
 export function HostLobby({
@@ -36,14 +36,14 @@ export function HostLobby({
   const [activePreset, setActivePreset] = useState<string | null>(null);
 
   const applyPreset = (name: string) => {
-    onUpdateCategories(presets[name]);
+    onUpdateCategories?.(presets[name]);
     setActivePreset(name);
   };
 
   const handleAddCategory = () => {
     if (!newCategory.trim() || !room) return;
     const updated = [...(room.categories || []), newCategory.trim()];
-    onUpdateCategories(updated);
+    onUpdateCategories?.(updated);
     setNewCategory("");
     setActivePreset(null);
   };
@@ -51,7 +51,7 @@ export function HostLobby({
   const handleRemoveCategory = (index: number) => {
     if (!room) return;
     const updated = room.categories.filter((_, i) => i !== index);
-    onUpdateCategories(updated);
+    onUpdateCategories?.(updated);
     setActivePreset(null);
   };
 

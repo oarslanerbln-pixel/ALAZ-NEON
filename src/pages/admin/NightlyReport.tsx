@@ -9,16 +9,20 @@ import { errorMessage } from "../../lib/errors";
 type RangePreset = "today" | "week" | "month";
 
 const GAME_LABEL: Record<GameType, string> = {
-  scattegories: "Hengame Arena",
-  quiz: "Alaz Quiz",
-  bomb: "Alaz Bomb",
-  sensor: "Alaz Sensör",
-  wheel: "Alaz Çark",
+  scattegories: "Hengame Klasik",
+  quiz: "Quiz",
+  bomb: "Bomba",
+  sensor: "Hengame Sensör",
+  wheel: "Çarkıfelek",
   overload: "Neon Overload",
-  echo: "Alaz Echo",
-  pulse: "Alaz Pulse",
-  spectrum: "Neon Spectrum",
-  colors: "Neon Savaşları",
+  echo: "Hengame Yankı",
+  pulse: "Neon Nabız",
+  spectrum: "Spectrum (Neon Savaşları)",
+  colors: "Colors (Neon Savaşları)",
+  vault: "Neon Şifre",
+  unity: "Neon Birlik",
+  bar: "Neon Bar",
+  kablo: "Neon Kablo"
 };
 
 function rangeFor(preset: RangePreset): { start: number; end: number } {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, addDoc } from "firebase/firestore";
 import { db, auth } from "../../lib/firebase";
@@ -63,8 +63,11 @@ export function HostSetup() {
   const { showToast } = useToast();
   const { venue } = useVenue();
   const [isCreating, setIsCreating] = useState(false);
+  const isCreatingRef = useRef(false);
 
   const startLobby = async () => {
+    if (isCreatingRef.current) return;
+    isCreatingRef.current = true;
     setIsCreating(true);
     // Defaults for the room, to be overridden by individual games
     localStorage.setItem("cafe_game_timer", "60");
@@ -97,6 +100,7 @@ export function HostSetup() {
       } catch (err) {
         console.error("Error creating room:", err);
         showToast(t("setup.errorCreate") + errorMessage(err), "error");
+        isCreatingRef.current = false;
         setIsCreating(false);
       }
   };

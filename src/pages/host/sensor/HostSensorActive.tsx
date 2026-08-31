@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useLocale } from "../../../hooks/useLocale";
-import type { Room, Player } from "../../../types/database";
+import type { Room } from "../../../types/database";
 import type { SensorImage } from "../../../data/sensorImages";
 import { safeForDisplay } from "../../../lib/profanity";
 
@@ -27,10 +27,10 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
           <motion.img 
             key={currentImage.url} // Critical: Force re-mount for animation to trigger
             src={currentImage.url}
-            initial={{ filter: "blur(50px)", scale: 1.1, opacity: 0 }}
+            initial={{ filter: "blur(30px)", scale: 1.1, opacity: 0 }}
             animate={{ filter: "blur(0px)", scale: 1, opacity: 1 }}
             transition={{ 
-              opacity: { duration: 1 },
+              opacity: { duration: 0.5 },
               filter: { duration: 30, ease: "linear" },
               scale: { duration: 30, ease: "linear" }
             }}

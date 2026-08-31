@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useVenue } from "../../../contexts/VenueContextCore";
@@ -12,7 +12,7 @@ export function HostAdBreak({ onComplete }: HostAdBreakProps) {
   const { venue } = useVenue();
   const { t } = useLocale();
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
-  const ads = venue.sponsor_ads || [];
+  const ads = useMemo(() => venue.sponsor_ads || [], [venue.sponsor_ads]);
   
   useEffect(() => {
     SoundManager.getInstance().stopSound(sounds.LOBBY_AMBIENT);

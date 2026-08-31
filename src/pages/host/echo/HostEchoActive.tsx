@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { useLocale } from "../../../hooks/useLocale";
@@ -10,7 +10,7 @@ interface Props {
 }
 
 export function HostEchoActive({ room, players, onNext }: Props) {
-  
+  const { t } = useLocale();
   const [timeLeft, setTimeLeft] = useState(20);
 
   useEffect(() => {
@@ -28,18 +28,6 @@ export function HostEchoActive({ room, players, onNext }: Props) {
     }
   }, [room.round_end_time, onNext]);
 
-  const voteCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    players.forEach(p => counts[p.id] = 0);
-    if (room.echo_votes) {
-      Object.values(room.echo_votes).forEach((votedId: string) => {
-        if (counts[votedId] !== undefined) {
-          counts[votedId]++;
-        }
-      });
-    }
-    return counts;
-  }, [room.echo_votes, players]);
 
   const totalVotes = Object.keys(room.echo_votes || {}).length;
 
@@ -66,51 +54,34 @@ export function HostEchoActive({ room, players, onNext }: Props) {
       <div className="relative z-10 w-full max-w-6xl grid grid-cols-2 gap-x-12 gap-y-6">
         <AnimatePresence>
           {players.map(player => {
-            const count = voteCounts[player.id] || 0;
-            const percentage = totalVotes > 0 ? (count / totalVotes) * 100 : 0;
+            const hasVoted = Object.keys(room.echo_votes || {}).includes(player.id);
             return (
               <motion.div
                 key={player.id}
                 layout
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden backdrop-blur-sm"
+                className={`border rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden backdrop-blur-sm transition-colors duration-500
+                  ${hasVoted ? 'bg-green-500/10 border-green-500/30' : 'bg-white/[0.02] border-white/5'}
+                `}
               >
                 <div className="flex justify-between items-center z-10">
-                  <span className="text-white/90 font-bold uppercase tracking-widest text-lg">
+                  <span className={`font-bold uppercase tracking-widest text-lg transition-colors ${hasVoted ? 'text-green-400' : 'text-white/50'}`}>
                     {player.nickname}
                   </span>
-                  <span className="text-white/40 font-black text-xl">
-                    {count}
+                  <span className="text-2xl">
+                    {hasVoted ? "✅" : "⏳"}
                   </span>
                 </div>
-                {/* Progress Bar Background */}
-                <div className="w-full h-2 bg-black/50 rounded-full overflow-hidden z-10">
-                  <motion.div
-                    className="h-full bg-gradient-to-r from-alaz-orange to-[#ff003c] rounded-full"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${percentage}%` }}
-                    transition={{ type: "spring", bounce: 0.2 }}
-                  />
-                </div>
-                
-                {/* Subtle highlight if they have votes */}
-                {count > 0 && (
-                  <motion.div
-                    layoutId="highlight"
-                    className="absolute inset-0 bg-white/[0.02] pointer-events-none"
-                  />
-                )}
               </motion.div>
             );
           })}
         </AnimatePresence>
       </div>
       
-      {/* Total Votes Counter */}
       <div className="absolute bottom-12 left-1/2 -translate-x-1/2 text-center">
         <p className="text-white/30 uppercase tracking-[0.4em] text-xs font-bold mb-2">
-          Kullanılan Oy
+          {t("host.totalVotes", "Kullanılan Oy")}
         </p>
         <p className="text-4xl font-black text-white/50 tracking-widest">
           {totalVotes} / {players.length}

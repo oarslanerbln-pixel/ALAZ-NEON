@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { SoundManager, sounds } from "../../../lib/audio";
+import { useLocale } from "../../../hooks/useLocale";
 import { HostLobby } from "../views/HostLobby";
 import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
@@ -15,6 +16,7 @@ interface HostOverloadDisplayProps {
 }
 
 export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOverloadDisplayProps) {
+  const { t } = useLocale();
   const [timeLeft, setTimeLeft] = useState<number>(room.overload_time_allowed || 10);
   const [isExploding, setIsExploding] = useState(false);
   const { venue } = useVenue();
@@ -33,11 +35,27 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
   useEffect(() => {
     if (activePlayers.length === 0) return; // Game over or no players
 
-    // If there is no target, or the target has left/disconnected, pick one randomly (only the host should do this to avoid race conditions, but since host is rendering this, it's fine)
-    if (!room.overload_target_id || !activePlayers.find(p => p.id === room.overload_target_id)) {
-      const nextTarget = activePlayers[Math.floor(Math.random() * activePlayers.length)];
+    // If there is no target, or it's 'passing', or target is missing/invalid
+    if (!room.overload_target_id || room.overload_target_id === "passing" || !activePlayers.find(p => p.id === room.overload_target_id)) {
+      // Find valid candidates (excluding the last target so they don't get it back immediately)
+      const candidates = activePlayers.filter(p => p.id !== room.overload_last_target_id);
+      
+      // If no valid candidates (e.g., only 1 player left and they were the last target), fallback to all active
+      const pool = candidates.length > 0 ? candidates : activePlayers;
+      const nextTarget = pool[Math.floor(Math.random() * pool.length)];
+
+      // If this was a pass, decrease time allowed by 15% (min 1.5s)
+      let newTimeAllowed = room.overload_time_allowed || 10;
+      if (room.overload_target_id === "passing") {
+        newTimeAllowed = Math.max(1.5, newTimeAllowed * 0.85);
+      } else if (!room.overload_target_id) {
+        // Initial setup
+        newTimeAllowed = 10;
+      }
+
       updateRoomStatus("playing", {
         overload_target_id: nextTarget.id,
+        overload_time_allowed: newTimeAllowed,
         overload_start_time: Date.now()
       });
       return;
@@ -72,6 +90,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
         setTimeout(() => {
           updateRoomStatus("playing", {
             overload_target_id: null, // Clear target to pick a new one
+            overload_last_target_id: null,
             overload_eliminated_ids: newEliminated,
             overload_time_allowed: 10, // Reset to 10s for the next round
             overload_start_time: 0
@@ -82,7 +101,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
     }, 100);
 
     return () => clearInterval(interval);
-  }, [room.overload_target_id, room.overload_start_time, room.overload_time_allowed, activePlayers, isExploding, updateRoomStatus, room.overload_eliminated_ids]);
+  }, [room.overload_target_id, room.overload_last_target_id, room.status, room.overload_start_time, room.overload_time_allowed, activePlayers, isExploding, updateRoomStatus, room.overload_eliminated_ids]);
 
 
   // Sound for target change
@@ -116,6 +135,15 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
       {/* Strategy 5: Neon Grid Background */}
       <div className="absolute inset-0 pointer-events-none opacity-30 bg-[linear-gradient(rgba(0,255,255,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.2)_1px,transparent_1px)] bg-[size:40px_40px] [transform:perspective(1000px)_rotateX(60deg)_translateY(-100px)_translateZ(-200px)]" />
       <div className="absolute top-0 w-full h-full bg-gradient-to-t from-transparent via-[#050505]/80 to-[#050505] pointer-events-none" />
+
+      {/* Warning State Overlay */}
+      {timeLeft <= 3 && room.status === "playing" && !isExploding && (
+        <motion.div 
+          animate={{ opacity: [0, 0.4, 0] }} 
+          transition={{ repeat: Infinity, duration: timeLeft <= 1.5 ? 0.3 : 0.6 }} 
+          className="absolute inset-0 bg-red-600 pointer-events-none z-10 mix-blend-overlay"
+        />
+      )}
 
       {/* Header Info */}
       {room.status !== "lobby" && room.status !== "finished" && (
@@ -169,7 +197,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
             animate={{ opacity: 1 }}
             className="z-10 flex flex-col items-center justify-center"
           >
-            <h1 className="text-6xl text-cyan-400 font-black uppercase tracking-widest animate-pulse">ŞAMPİYON</h1>
+            <h1 className="text-6xl text-cyan-400 font-black uppercase tracking-widest animate-pulse">{t("host.champion", "ŞAMPİYON")}</h1>
             <h2 className="text-8xl text-white font-black mt-4 uppercase drop-shadow-[0_0_30px_rgba(0,255,255,0.8)] mb-12">
               {activePlayers[0]?.nickname || "BİLİNMİYOR"}
             </h2>
@@ -177,7 +205,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
               onClick={() => updateRoomStatus("lobby", { active_game: "none", overload_eliminated_ids: [], overload_target_id: null })}
               className="px-10 py-5 bg-cyan-500 hover:bg-cyan-400 text-black font-black uppercase tracking-widest text-xl rounded-xl transition-colors shadow-[0_0_30px_rgba(0,255,255,0.4)]"
             >
-              OYUNU BİTİR VE LOBİYE DÖN
+              {t("quiz.finishGame", "OYUNU BİTİR")}
             </button>
           </motion.div>
         ) : isExploding ? (
@@ -202,7 +230,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
             className="relative z-10 flex flex-col items-center justify-center"
           >
             {/* The Target Name */}
-            {targetPlayer && (
+            {targetPlayer ? (
               <motion.div 
                 initial={{ y: -50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -213,7 +241,15 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
                   {targetPlayer.nickname}
                 </h1>
               </motion.div>
-            )}
+            ) : room.overload_target_id === "passing" ? (
+              <motion.div 
+                className="absolute -top-40 flex flex-col items-center w-[80vw] text-center"
+              >
+                <h1 className="text-7xl md:text-[100px] font-black text-yellow-400 uppercase tracking-widest drop-shadow-[0_0_30px_rgba(255,255,0,0.8)] leading-none animate-pulse">
+                  AKTARIYOR...
+                </h1>
+              </motion.div>
+            ) : null}
 
             {/* The Energy Core (Timer) */}
             <div className="relative w-64 h-64 md:w-96 md:h-96 mt-20 flex items-center justify-center">
@@ -235,7 +271,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
             </div>
             
             <div className="mt-20 text-white/50 font-medium tracking-[0.2em] uppercase text-xl">
-              HIZ: {room.overload_time_allowed}S
+              HIZ: {room.overload_time_allowed?.toFixed(1)}S
             </div>
           </motion.div>
         )}

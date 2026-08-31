@@ -9,8 +9,8 @@
   --color-alaz-red: #ff0000;
   --color-cyber-yellow: #ffe600;
   --color-hacker-green: #00ff2a;
-  --color-dark-bg: #030305;
-  --color-dark-panel: #050508;
+  --color-dark-bg: #000000;
+  --color-dark-panel: #000000;
 }
 
 @layer base {
@@ -723,8 +723,8 @@
 }
 
 .liquid-clip-text {
-  background-clip: text;
   -webkit-background-clip: text;
+  background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
 }
@@ -748,3 +748,106 @@
   60% { transform: translate(-1px, -1px); opacity: 0.8; }
   80% { transform: translate(1px, 1px); opacity: 0.9; }
 }
+
+/* ===================================================
+   ALAZ NEON - GAME JUICE & POLISH ANIMATIONS
+   =================================================== */
+
+/* 1. Ekran Sarsıntısı (Screen Shake) */
+@keyframes screen-shake {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  10% { transform: translate(-5px, -3px) rotate(-0.5deg); }
+  20% { transform: translate(4px, 5px) rotate(0.5deg); }
+  30% { transform: translate(-6px, 2px) rotate(-1deg); }
+  40% { transform: translate(5px, -4px) rotate(1deg); }
+  50% { transform: translate(-3px, 3px) rotate(-0.5deg); }
+  60% { transform: translate(4px, 1px) rotate(0.5deg); }
+  70% { transform: translate(-2px, -2px) rotate(0deg); }
+  80% { transform: translate(2px, 2px) rotate(0deg); }
+  90% { transform: translate(-1px, 0px) rotate(0deg); }
+}
+
+.animate-screen-shake {
+  animation: screen-shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes screen-shake-violent {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  10% { transform: translate(-12px, -8px) scale(1.03) rotate(-1.5deg); }
+  20% { transform: translate(14px, 10px) scale(0.98) rotate(1.5deg); }
+  30% { transform: translate(-15px, 6px) scale(1.04) rotate(-2deg); }
+  40% { transform: translate(12px, -10px) scale(0.97) rotate(2deg); }
+  50% { transform: translate(-8px, 8px) scale(1.02) rotate(-1deg); }
+  60% { transform: translate(9px, 4px) scale(0.99) rotate(1deg); }
+  70% { transform: translate(-5px, -5px) scale(1.01); }
+  80% { transform: translate(4px, 4px) scale(1); }
+}
+
+.animate-screen-shake-violent {
+  animation: screen-shake-violent 0.7s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* 2. Darbe & Şok Dalgası (Impact Flash) */
+@keyframes impact-shock {
+  0% { transform: scale(1); filter: brightness(1); }
+  15% { transform: scale(1.05); filter: brightness(2.2) contrast(1.4); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+.animate-impact-shock {
+  animation: impact-shock 0.4s ease-out both;
+}
+
+/* 3. Son 5 Saniye Kalp Atışı (Tension Heartbeat) */
+@keyframes tension-heartbeat {
+  0%, 100% { transform: scale(1); box-shadow: inset 0 0 40px rgba(255, 0, 0, 0.2); }
+  15% { transform: scale(1.015); box-shadow: inset 0 0 100px rgba(255, 0, 0, 0.6); }
+  30% { transform: scale(1); box-shadow: inset 0 0 40px rgba(255, 0, 0, 0.2); }
+  45% { transform: scale(1.025); box-shadow: inset 0 0 140px rgba(255, 0, 0, 0.8); }
+  60% { transform: scale(1); box-shadow: inset 0 0 40px rgba(255, 0, 0, 0.2); }
+}
+
+.tension-heartbeat-glow {
+  animation: tension-heartbeat 0.9s ease-in-out infinite;
+}
+
+/* 4. Dokunmatik Neon Ripple */
+.touch-ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.touch-ripple-effect:active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 10%, transparent 70%);
+  animation: ripple-fade 0.4s ease-out;
+  pointer-events: none;
+}
+
+@keyframes ripple-fade {
+  from { transform: scale(0.5); opacity: 1; }
+  to { transform: scale(2.5); opacity: 0; }
+}
+
+/* 5. TV Cyberpunk Vignette & CRT Dokusu */
+.tv-cyber-vignette {
+  background: radial-gradient(circle at center, transparent 45%, rgba(0, 0, 0, 0.75) 100%);
+  pointer-events: none;
+}
+
+.tv-scanlines {
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.25) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.03),
+    rgba(0, 255, 0, 0.01),
+    rgba(0, 0, 255, 0.03)
+  );
+  background-size: 100% 4px, 6px 100%;
+  pointer-events: none;
+}
+

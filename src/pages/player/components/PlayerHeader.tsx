@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ExperienceBar } from "../../../components/ExperienceBar";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useLocale } from "../../../hooks/useLocale";
+import { Volume2, VolumeX } from "lucide-react";
+import { useState } from "react";
+import { haptics } from "../../../lib/haptics";
 
 interface PlayerHeaderProps {
   playerName: string;
@@ -32,12 +35,22 @@ export function PlayerHeader({
   const isPlaying = gameState === "playing";
   const isCritical = isPlaying && timeLeft <= 10 && timeLeft > 0;
   const lastTimeRef = useRef(timeLeft);
+  const [isMuted, setIsMuted] = useState(() => SoundManager.getInstance().getIsMuted());
+
+  const handleToggleMute = () => {
+    setIsMuted(SoundManager.getInstance().toggleMute());
+  };
 
   useEffect(() => {
     if (isPlaying && timeLeft <= 10 && timeLeft > 0 && lastTimeRef.current !== timeLeft) {
-      SoundManager.getInstance().playSFX(sounds.CLICK, 0.8);
-      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-        try { navigator.vibrate(100); } catch { /* titreşim desteklenmiyor */ }
+      if (timeLeft <= 5) {
+        // Acil son 5 saniye kalp atışı & tik-tak
+        SoundManager.getInstance().playSFX("synth:tick_urgent", 1.0);
+        haptics.impact();
+      } else {
+        // Normal geri sayım
+        SoundManager.getInstance().playSFX(sounds.CLICK, 0.8);
+        haptics.warning();
       }
     }
     lastTimeRef.current = timeLeft;
@@ -125,6 +138,15 @@ export function PlayerHeader({
             </AnimatePresence>
           </div>
         </div>
+        
+        {/* Mute Button */}
+        <button
+          onClick={handleToggleMute}
+          className="shrink-0 text-white/50 hover:text-white transition-colors ml-2"
+          title={isMuted ? "Unmute" : "Mute"}
+        >
+          {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+        </button>
       </div>
 
       {/* Submitting indicator */}

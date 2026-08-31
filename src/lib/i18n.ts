@@ -11,6 +11,7 @@ const translations = {
   // ═══════════════════════════════════════════
   "common.back": { tr: "ANA SAYFA", de: "ZURÜCK ZUR STARTSEITE", en: "HOME" },
   "common.cancel": { tr: "İPTAL", de: "ABBRECHEN", en: "CANCEL" },
+  "common.offline": { tr: "BAĞLANTI KOPTU, YENİDEN BAĞLANILIYOR...", de: "VERBINDUNG VERLOREN, VERBINDE NEU...", en: "CONNECTION LOST, RECONNECTING..." },
   "landing.hostLabel": { tr: "Yayıncı / Kurucu", de: "Moderator / Gastgeber", en: "Broadcaster / Host" },
   "join.hostOffline": { tr: "HOST ÇEVRİMDIŞI", de: "HOST OFFLINE", en: "HOST OFFLINE" },
   "join.title": { tr: "SAVAŞA KATIL", de: "TRITT DEM KAMPF BEI", en: "JOIN THE BATTLE" },
@@ -527,6 +528,10 @@ const translations = {
   // COMMON / SHELL
   // ═══════════════════════════════════════════
   "common.loading": { tr: "YÜKLENİYOR...", de: "WIRD GELADEN...", en: "LOADING..." },
+  "wheel.spin": { tr: "ÇEVİR", de: "DREHEN", en: "SPIN" },
+  "pulse.connectionError": { tr: "Bağlantı hatası!", de: "Verbindungsfehler!", en: "Connection error!" },
+  "pulse.waiting": { tr: "BEKLENİYOR", de: "WARTEN", en: "WAITING" },
+
 
   // ═══════════════════════════════════════════
   // ROOM STATUS (siyah ekran yerine oda yükleme/hata durumları)
@@ -1054,6 +1059,20 @@ const translations = {
   "quiz.finishGame": { tr: "OYUNU BİTİR", de: "SPIEL BEENDEN", en: "FINISH GAME" },
   "quiz.nextQuestion": { tr: "SONRAKİ SORU", de: "NÄCHSTE FRAGE", en: "NEXT QUESTION" },
   "quiz.champion": { tr: "ŞAMPİYON", de: "CHAMPION", en: "CHAMPION" },
+  "host.champion": { tr: "ŞAMPİYON", de: "CHAMPION", en: "CHAMPION" },
+  "host.totalVotes": { tr: "Kullanılan Oy", de: "Stimmen", en: "Votes Cast" },
+  "host.winnerPrize": { tr: "KAZANAN ÖDÜL", de: "GEWINN", en: "WINNER PRIZE" },
+  "host.redTeam": { tr: "Kırmızı Takım", de: "Team Rot", en: "Red Team" },
+  "host.blueTeam": { tr: "Mavi Takım", de: "Team Blau", en: "Blue Team" },
+  "host.participation": { tr: "Katılım", de: "Teilnahme", en: "Participation" },
+  "host.step2": { tr: "ADIM 2: ", de: "SCHRITT 2: ", en: "STEP 2: " },
+  "host.selectGame": { tr: "OYUN SEÇ", de: "SPIEL WÄHLEN", en: "SELECT GAME" },
+  "host.joinGame": { tr: "Oyuna Katıl", de: "Spiel Beitreten", en: "Join Game" },
+  "host.login": { tr: "GİRİŞ YAP", de: "ANMELDEN", en: "LOGIN" },
+  "host.word": { tr: "KELİME", de: "WORT", en: "WORD" },
+  "host.luck": { tr: "ŞANS", de: "GLÜCK", en: "LUCK" },
+  "host.red": { tr: "KIRMIZI", de: "ROT", en: "RED" },
+  "host.blue": { tr: "MAVİ", de: "BLAU", en: "BLUE" },
   "quiz.newGame": { tr: "YENİ OYUN BAŞLAT", de: "NEUES SPIEL STARTEN", en: "START NEW GAME" },
   "quiz.pts": { tr: "PTS", de: "PKT", en: "PTS" },
   "quiz.yourScore": { tr: "Puanınız:", de: "Deine Punkte:", en: "Your score:" },
@@ -1239,6 +1258,42 @@ const translations = {
     de: "Möchten Sie das Spiel wirklich jetzt beenden? (Alle Ergebnisse werden gesammelt und der Champion-Bildschirm wird angezeigt)",
     en: "Are you sure you want to end the game now? (All results will be tallied and the champion screen will be shown)",
   },
+
+  // ═══════════════════════════════════════════
+  // NEON ŞİFRE & NEON BİRLİK (Vault & Unity)
+  // ═══════════════════════════════════════════
+  "host.unityIntroTitle": { tr: "NEON BİRLİK", de: "NEON EINHEIT", en: "NEON UNITY" },
+  "host.unityIntroDesc": { tr: "MEKANIN TÜM ENERJİSİNİ KULLANARAK BATARYAYI PATLATIN!", de: "NUTZE DIE GESAMTE ENERGIE DES RAUMES, UM DIE BATTERIE ZU SPRENGEN!", en: "USE ALL THE ENERGY OF THE VENUE TO OVERCHARGE THE BATTERY!" },
+  "host.vaultIntroTitle": { tr: "NEON ŞİFRE", de: "NEON CODE", en: "NEON VAULT" },
+  "host.vaultIntroDesc": { tr: "KASAYI İLK AÇAN KAZANIR", de: "DER ERSTE, DER DEN TRESOR ÖFFNET, GEWINNT", en: "THE FIRST TO OPEN THE VAULT WINS" },
+  "host.barIntroTitle": { tr: "NEON BAR", de: "NEON BAR", en: "NEON BAR" },
+  "host.barIntroDesc": { tr: "EN HIZLI KOKTEYLİ KİM YAPACAK?", de: "WER MACHT DEN SCHNELLSTEN COCKTAIL?", en: "WHO WILL MAKE THE FASTEST COCKTAIL?" },
+  "host.kabloIntroTitle": { tr: "NEON KABLO", de: "NEON KABEL", en: "NEON WIRE" },
+  "host.kabloIntroDesc": { tr: "SİSTEMİ YENİDEN BAŞLATMAK İÇİN KABLOLARI BAĞLA", de: "VERBINDE DIE KABEL, UM DAS SYSTEM NEU ZU STARTEN", en: "CONNECT THE WIRES TO REBOOT THE SYSTEM" },
+  "player.unityTitle": { tr: "NEON BİRLİK", de: "NEON EINHEIT", en: "NEON UNITY" },
+  "player.vaultTitle": { tr: "ŞİFREYİ ÇÖZ", de: "KNACKE DEN CODE", en: "CRACK THE VAULT" },
+  "player.vaultSubmit": { tr: "ONAYLA", de: "BESTÄTIGEN", en: "SUBMIT" },
+  "player.barTitle": { tr: "KOKTEYLİ HAZIRLA", de: "COCKTAIL ZUBEREITEN", en: "MIX THE DRINK" },
+  "player.kabloTitle": { tr: "DEVREYİ TAMAMLA", de: "SCHALTKREIS SCHLIESSEN", en: "COMPLETE THE CIRCUIT" },
+  
+  // KABLO
+  "kablo.connectCircuit": { tr: "DEVREYİ BAĞLA", de: "SCHALTKREIS VERBINDEN", en: "CONNECT CIRCUIT" },
+  "kablo.powerTransferred": { tr: "GÜÇ AKTARILDI", de: "ENERGIE ÜBERTRAGEN", en: "POWER TRANSFERRED" },
+  "kablo.totalSolved": { tr: "Toplam Çözülen:", de: "Gesamt gelöst:", en: "Total Solved:" },
+  "kablo.lookAtTV": { tr: "TV'ye bak!", de: "Schau auf den TV!", en: "Look at the TV!" },
+  
+  // COLORS
+  "colors.title": { tr: "NEON SAVAŞLARI", de: "NEON KRIEGE", en: "NEON WARS" },
+  "colors.red": { tr: "KIRMIZI", de: "ROT", en: "RED" },
+  "colors.blue": { tr: "MAVİ", de: "BLAU", en: "BLUE" },
+  "colors.startGame": { tr: "SAVAŞI BAŞLAT", de: "KRIEG STARTEN", en: "START WAR" },
+  "colors.endGame": { tr: "OYUNU BİTİR VE LOBİYE DÖN", de: "SPIEL BEENDEN & ZUR LOBBY", en: "END GAME & RETURN TO LOBBY" },
+  
+  // SPECTRUM
+  "spectrum.results": { tr: "Sonuçlar...", de: "Ergebnisse...", en: "Results..." },
+  "spectrum.redTeam": { tr: "KIRMIZI TAKIM", de: "TEAM ROT", en: "RED TEAM" },
+  "spectrum.blueTeam": { tr: "MAVİ TAKIM", de: "TEAM BLAU", en: "BLUE TEAM" },
+  "spectrum.tie": { tr: "BERABERE", de: "UNENTSCHIEDEN", en: "TIE" }
 } as const;
 
 type TranslationKey = keyof typeof translations;

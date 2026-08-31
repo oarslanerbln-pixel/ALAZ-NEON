@@ -1,8 +1,7 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useEffect } from "react";
 
 import type { Room } from "../../../types/database";
-import { useLocale } from "../../../hooks/useLocale";
 
 interface Props {
   room: Room;

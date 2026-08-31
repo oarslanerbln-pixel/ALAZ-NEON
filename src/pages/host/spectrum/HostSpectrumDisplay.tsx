@@ -25,9 +25,20 @@ export function HostSpectrumDisplay({ room, players, updateRoomStatus }: Props) 
           teams[p.id] = index % 2 === 0 ? "red" : "blue";
         });
         
+        // Reset all players' spectrum_clicks before starting (Batch Write)
+        import("firebase/firestore").then(async ({ writeBatch, doc }) => {
+          const { db } = await import("../../../lib/firebase");
+          const batch = writeBatch(db);
+          players.forEach(p => {
+            const pRef = doc(db, "players", p.id);
+            batch.update(pRef, { spectrum_clicks: 0 });
+          });
+          await batch.commit();
+        });
+
         updateRoomStatus("spectrum_intro", { 
           spectrum_teams: teams,
-          spectrum_scores: { red: 50, blue: 50 } // Start tied at 50% each
+          spectrum_scores: { red: 50, blue: 50 } // Legacy, we now use players array, but keeping for compatibility
         });
       } else if (room.status !== "spectrum_intro") {
         updateRoomStatus("spectrum_intro");
@@ -40,11 +51,11 @@ export function HostSpectrumDisplay({ room, players, updateRoomStatus }: Props) 
   }
 
   if (room.status === "spectrum_active") {
-    return <HostSpectrumActive room={room} onNext={() => updateRoomStatus("spectrum_reveal")} />;
+    return <HostSpectrumActive room={room} players={players} onNext={() => updateRoomStatus("spectrum_reveal")} />;
   }
 
   if (room.status === "spectrum_reveal") {
-    return <HostSpectrumReveal room={room} onFinish={() => updateRoomStatus("lobby", { active_game: "none" })} />;
+    return <HostSpectrumReveal room={room} players={players} onFinish={() => updateRoomStatus("lobby", { active_game: "none" })} />;
   }
 
   // Fallback loading

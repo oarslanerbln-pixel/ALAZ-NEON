@@ -1,6 +1,9 @@
 import { NeonIcon } from "../../../components/NeonIcon";
 import { LanguageSwitcher } from "../../../components/LanguageSwitcher";
 import { useLocale } from "../../../hooks/useLocale";
+import { Volume2, VolumeX } from "lucide-react";
+import { SoundManager } from "../../../lib/audio";
+import { useState } from "react";
 
 interface HostHeaderProps {
   room: {
@@ -18,6 +21,11 @@ export function HostHeader({ room, onEndGameEarly, onTriggerAdBreak }: HostHeade
   // Hook, erken `return null`'dan ÖNCE çağrılmak zorunda — koşullu hook
   // çağrısı React'in hook sırası kuralını bozardı.
   const { t } = useLocale();
+  const [isMuted, setIsMuted] = useState(() => SoundManager.getInstance().getIsMuted());
+
+  const handleToggleMute = () => {
+    setIsMuted(SoundManager.getInstance().toggleMute());
+  };
 
   if (!room) return null;
 
@@ -51,6 +59,13 @@ export function HostHeader({ room, onEndGameEarly, onTriggerAdBreak }: HostHeade
           </button>
         )}
         <LanguageSwitcher />
+        <button
+          onClick={handleToggleMute}
+          className="text-white/70 hover:text-white transition-colors"
+          title={isMuted ? "Unmute" : "Mute"}
+        >
+          {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+        </button>
         {onEndGameEarly && (
           <button
             onClick={onEndGameEarly}

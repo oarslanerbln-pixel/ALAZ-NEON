@@ -281,7 +281,7 @@ export function HostBombDisplay({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="w-full h-full"
+            className="w-full h-full animate-screen-shake-violent"
           >
             <HostBombExplosion room={room} players={players} onComplete={handleNextRoundOrWinner} />
           </motion.div>

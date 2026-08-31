@@ -3,6 +3,7 @@ import { motion, animate, useMotionValue, useTransform } from "framer-motion";
 import { useLocale } from "../../../hooks/useLocale";
 import { upperTL } from "../../../lib/stringUtils";
 import type { Player, RoundResultInfo, Room } from "../../../types/database";
+import { ConfettiCanvas } from "../../../components/ConfettiCanvas";
 
 interface HostStandingsProps {
   room: Room | null;
@@ -69,13 +70,12 @@ export function HostStandings({
 
 
   return (
-    <motion.div
-      key="standings"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="w-full max-w-5xl flex flex-col items-center py-6 h-full max-h-full overflow-hidden"
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="flex-1 flex flex-col items-center justify-between py-6 max-w-5xl mx-auto w-full relative z-10"
     >
+      <ConfettiCanvas trigger={true} autoCannon={true} />
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}

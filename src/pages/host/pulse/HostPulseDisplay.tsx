@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import type { Room, Player } from "../../../types/database";
-import { KineticSpark } from "../../../components/KineticSpark";
+import { motion } from "framer-motion";
 import { useLocale } from "../../../hooks/useLocale";
+import type { Room, Player } from "../../../types/database";
 
 interface Props {
   room: Room;
@@ -11,7 +10,7 @@ interface Props {
 }
 
 export function HostPulseDisplay({ room, players, updateRoomStatus }: Props) {
-  
+  const { t } = useLocale();
   const [timeLeft, setTimeLeft] = useState(10);
   const [scale, setScale] = useState(1);
   const [isExploding, setIsExploding] = useState(false);
@@ -101,8 +100,8 @@ export function HostPulseDisplay({ room, players, updateRoomStatus }: Props) {
                 className="w-48 h-48 rounded-full bg-neon-blue/20 border-4 border-neon-blue shadow-[0_0_100px_rgba(0,243,255,0.5)] flex items-center justify-center relative"
               >
                 <div className="absolute inset-0 bg-white/10 rounded-full animate-ping" />
-                <span className="text-5xl font-black text-white mix-blend-overlay">
-                  {timeLeft}
+                <span className={`text-5xl font-black text-white mix-blend-overlay ${timeLeft <= 3 ? "animate-pulse text-neon-blue drop-shadow-[0_0_20px_rgba(0,243,255,1)]" : "opacity-100"}`}>
+                  {timeLeft <= 3 ? "?" : timeLeft}
                 </span>
               </motion.div>
             )}
@@ -144,7 +143,7 @@ export function HostPulseDisplay({ room, players, updateRoomStatus }: Props) {
               </p>
             </div>
             <div>
-              <p className="text-white/30 text-xs uppercase tracking-widest mb-2">Katılım</p>
+              <p className="text-white/30 text-xs uppercase tracking-widest mb-2">{t("host.participation", "Katılım")}</p>
               <p className="text-3xl font-black text-white">
                 %{Math.round(syncResult.participation)}
               </p>
@@ -158,7 +157,7 @@ export function HostPulseDisplay({ room, players, updateRoomStatus }: Props) {
             onClick={() => updateRoomStatus("lobby", { active_game: "none" })}
             className="mt-16 px-12 py-4 bg-white/5 border border-white/20 text-white/70 rounded-full uppercase tracking-[0.3em] font-bold hover:bg-white/10 hover:text-white transition-all"
           >
-            Lobiye Dön
+            {t("common.back", "ANA SAYFA")}
           </motion.button>
         </motion.div>
       )}

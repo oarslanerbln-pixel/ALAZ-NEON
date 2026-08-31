@@ -37,6 +37,10 @@ import { HostEchoDisplay } from "./echo/HostEchoDisplay";
 import { HostPulseDisplay } from "./pulse/HostPulseDisplay";
 import { HostSpectrumDisplay } from "./spectrum/HostSpectrumDisplay";
 import { HostColorsDisplay } from "./colors/HostColorsDisplay";
+import { HostVaultDisplay } from "./vault/HostVaultDisplay";
+import { HostUnityDisplay } from "./unity/HostUnityDisplay";
+import { HostBarDisplay } from "./bar/HostBarDisplay";
+import { HostKabloDisplay } from "./kablo/HostKabloDisplay";
 import { HostDashboard } from "./dashboard/HostDashboard";
 import { HostTutorial } from "./components/HostTutorial";
 import { DatabaseStatus } from "../../components/DatabaseStatus";
@@ -51,7 +55,6 @@ import {
 } from "../../lib/intelligence";
 
 export function HostDisplay() {
-  const { t } = useLocale();
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get("roomId");
   const hostRoom = useHostRoom(roomId);
@@ -154,6 +157,46 @@ export function HostDisplay() {
   if (room.active_game === "colors") {
     return (
       <HostColorsDisplay
+        room={room}
+        players={hostRoom.players}
+        updateRoomStatus={hostRoom.updateRoomStatus}
+      />
+    );
+  }
+
+  if (room.active_game === "vault") {
+    return (
+      <HostVaultDisplay
+        room={room}
+        players={hostRoom.players}
+        updateRoomStatus={hostRoom.updateRoomStatus}
+      />
+    );
+  }
+
+  if (room.active_game === "unity") {
+    return (
+      <HostUnityDisplay
+        room={room}
+        players={hostRoom.players}
+        updateRoomStatus={hostRoom.updateRoomStatus}
+      />
+    );
+  }
+
+  if (room.active_game === "bar") {
+    return (
+      <HostBarDisplay
+        room={room}
+        players={hostRoom.players}
+        updateRoomStatus={hostRoom.updateRoomStatus}
+      />
+    );
+  }
+
+  if (room.active_game === "kablo") {
+    return (
+      <HostKabloDisplay
         room={room}
         players={hostRoom.players}
         updateRoomStatus={hostRoom.updateRoomStatus}
@@ -654,6 +697,9 @@ function HostDisplayGame({
       <ParticleBackground
         speedMultiplier={gameState === "playing" && timeLeft <= 10 ? 5 : 1}
       />
+      {/* TV Cyberpunk Vignette & Scanlines */}
+      <div className="tv-cyber-vignette fixed inset-0 z-40 pointer-events-none" />
+      <div className="tv-scanlines fixed inset-0 z-40 pointer-events-none opacity-25" />
       {gameState === "playing" && timeLeft <= 10 && (
         <div className="danger-overlay" />
       )}

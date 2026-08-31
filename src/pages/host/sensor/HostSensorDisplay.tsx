@@ -109,7 +109,10 @@ export function HostSensorDisplay({
   const handleEvaluate = async (isCorrect: boolean) => {
     if (isCorrect && room.sensor_buzzer_player_id) {
       SoundManager.getInstance().playSFX(sounds.SUCCESS);
-      await updatePlayerScore(room.sensor_buzzer_player_id, 100);
+      // Add 100 points to the buzzer player's EXISTING total, not overwrite it
+      const buzzerPlayer = players.find(p => p.id === room.sensor_buzzer_player_id);
+      const currentScore = buzzerPlayer?.total_score ?? 0;
+      await updatePlayerScore(room.sensor_buzzer_player_id, currentScore + 100);
       await updateRoomStatus("sensor_reveal");
     } else {
       SoundManager.getInstance().playSFX(sounds.FAILURE);
@@ -173,7 +176,6 @@ export function HostSensorDisplay({
               room={room}
               players={players}
               onStartGame={startGame}
-              onUpdateCategories={async () => {}}
             />
           </div>
         </div>

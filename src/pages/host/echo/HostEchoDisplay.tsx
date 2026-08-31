@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 
 import type { Room, Player } from "../../../types/database";
 import { HostEchoIntro } from "./HostEchoIntro";

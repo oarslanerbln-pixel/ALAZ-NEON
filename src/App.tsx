@@ -1,6 +1,7 @@
 import { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastProvider } from "./contexts/ToastContext";
 import { VenueProvider } from "./contexts/VenueContext";
 import { LandingPage } from "./pages/LandingPage";
@@ -60,6 +61,7 @@ function App() {
   useAuth(); // Initialize anonymous auth
 
   return (
+    <ErrorBoundary>
     <BrowserRouter>
       <VenueProvider>
         <ToastProvider>
@@ -92,6 +94,7 @@ function App() {
         </ToastProvider>
       </VenueProvider>
     </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

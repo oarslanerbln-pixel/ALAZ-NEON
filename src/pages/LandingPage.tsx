@@ -12,7 +12,6 @@ import { SoundManager, sounds } from "../lib/audio";
 import { useLocale } from "../hooks/useLocale";
 import { useVenue } from "../contexts/VenueContextCore";
 import { AttractMode } from "../components/AttractMode";
-import { BackgroundSlider } from "../components/BackgroundSlider";
 
 
 function TiltCard({
@@ -80,7 +79,13 @@ export function LandingPage() {
   const { t } = useLocale();
   const { venue } = useVenue();
   const [isIdle, setIsIdle] = useState(false);
-  const [strategy, setStrategy] = useState(1);
+
+  // Initial cinematic animation timer
+  useEffect(() => {
+    const timer = setTimeout(() => {/* cinematic intro finished */}, 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Idle Timer logic
   useEffect(() => {
     let idleTimeout: number;
@@ -113,30 +118,22 @@ export function LandingPage() {
   }, [isIdle]);
 
   return (
-    <div className={`flex-1 flex flex-col items-center justify-center p-6 text-center min-h-screen relative overflow-hidden bg-black str${strategy}-bg transition-colors duration-1000`}>
-      {/* PREMIUM CINEMATIC BACKGROUND */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        {/* First Image - German Cafe 1 */}
-        <motion.div
-          className="absolute inset-0 bg-[url('/images/bg-neon.jpg')] bg-cover bg-center"
-          animate={{ scale: [1, 1.08, 1], opacity: [0.2, 0.8, 0.2] }}
-          transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
-        />
-        {/* Second Image - German Cafe 2 */}
-        <motion.div
-          className="absolute inset-0 bg-[url('/images/bg-vivid.jpg')] bg-cover bg-center"
-          animate={{ scale: [1.08, 1, 1.08], opacity: [0.8, 0.2, 0.8] }}
-          transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
-        />
-        
-        {/* Vignette, Gradient & Blur Overlays to keep content readable */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/30" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,black_85%)] opacity-90" />
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-[4px]" />
-      </div>
-
-      {/* Background Slider - Hidden for specific strategies so custom CSS backgrounds show up */}
-      {strategy === 2 && <div className="relative z-0 w-full h-full"><BackgroundSlider /></div>}
+    <div className="w-full min-h-screen bg-blue-950 overflow-hidden relative" style={{ perspective: "1400px" }}>
+      {/* Cinematic Container */}
+      <motion.div
+        className="w-full min-h-screen flex flex-col items-center justify-center p-6 text-center relative"
+        initial={{ scale: 1.05, opacity: 0, filter: "blur(10px)" }}
+        animate={{
+          scale: isIdle ? 1.02 : 1,
+          opacity: 1,
+          filter: "blur(0px)",
+        }}
+        transition={{ duration: 1.5, ease: "easeOut" }}
+        style={{ transformStyle: "preserve-3d" }}
+      >
+        {/* PREMIUM CINEMATIC BACKGROUND */}
+        {/* PREMIUM CINEMATIC BACKGROUND - OLED BLACK */}
+        <div className="fixed inset-0 z-0 bg-black pointer-events-none" />
 
       <AnimatePresence>
         {!showIntro && (
@@ -147,7 +144,7 @@ export function LandingPage() {
             // arkasında perde olmayınca içeriğin üstüne binip okunmaz hâle
             // getiriyordu. Aşağı doğru sönen degrade, butonları içerikten
             // ayırıyor ve geçişi kasıtlı gösteriyor.
-            className="fixed top-0 left-0 right-0 z-50 w-full px-4 sm:px-6 pt-4 sm:pt-6 pb-8 flex justify-between items-center gap-3 bg-gradient-to-b from-black via-black/70 to-transparent pointer-events-none [&>*]:pointer-events-auto"
+            className="fixed top-0 left-0 right-0 z-50 w-full px-4 sm:px-6 pt-4 sm:pt-6 pb-8 flex justify-between items-center gap-3 bg-gradient-to-b from-[rgba(0,0,0,1)] via-[rgba(0,0,0,0.8)] to-transparent pointer-events-none [&>*]:pointer-events-auto"
           >
             {/*
               Telefonda bu iki buton yan yana sığmıyordu: 11px yazı + 0.2em harf
@@ -286,24 +283,22 @@ export function LandingPage() {
                   SoundManager.getInstance().playSFX(sounds.CLICK);
                   navigate("/host/setup");
                 }}
-                className={`group relative overflow-hidden p-10 transition-all bg-black/40 backdrop-blur-xl border border-alaz-orange/30 hover:border-alaz-orange cursor-pointer str${strategy}-card`}
-                style={strategy === 5 ? {} : { clipPath: "polygon(25px 0, calc(100% - 25px) 0, 100% 25px, 100% calc(100% - 25px), calc(100% - 25px) 100%, 25px 100%, 0 calc(100% - 25px), 0 25px)" }}
+                className="group relative overflow-hidden p-10 transition-all bg-black/40 backdrop-blur-xl border border-alaz-orange/30 hover:border-alaz-orange cursor-pointer"
+                style={{ clipPath: "polygon(25px 0, calc(100% - 25px) 0, 100% 25px, 100% calc(100% - 25px), calc(100% - 25px) 100%, 25px 100%, 0 calc(100% - 25px), 0 25px)" }}
               >
                 {/* Gold Glow Border Animation */}
-                {(strategy === 1 || strategy === 2) && (
-                  <div className="absolute inset-0 z-0">
-                    <div className="absolute top-0 left-0 w-[200%] h-[200%] -translate-x-1/2 -translate-y-1/2 bg-[conic-gradient(from_0deg,transparent_0_180deg,rgba(255,215,0,0.2)_360deg)] animate-[spin_6s_linear_infinite]" />
-                    <div className="absolute inset-[2px] bg-black/90 backdrop-blur-3xl z-10" style={{ clipPath: "polygon(24px 0, calc(100% - 24px) 0, 100% 24px, 100% calc(100% - 24px), calc(100% - 24px) 100%, 24px 100%, 0 calc(100% - 24px), 0 24px)" }} />
-                  </div>
-                )}
+                <div className="absolute inset-0 z-0 opacity-100">
+                  <div className="absolute top-0 left-0 w-[200%] h-[200%] -translate-x-1/2 -translate-y-1/2 bg-[conic-gradient(from_0deg,transparent_0_180deg,rgba(255,215,0,0.2)_360deg)] animate-[spin_6s_linear_infinite]" />
+                  <div className="absolute inset-[2px] bg-black/90 backdrop-blur-3xl z-10" style={{ clipPath: "polygon(24px 0, calc(100% - 24px) 0, 100% 24px, 100% calc(100% - 24px), calc(100% - 24px) 100%, 24px 100%, 0 calc(100% - 24px), 0 24px)" }} />
+                </div>
                 
                 <div className="relative z-20 text-center flex flex-col items-center justify-center min-h-[160px]">
-                  <span className={`text-white/60 text-[10px] uppercase tracking-[0.4em] font-black mb-4 group-hover:text-alaz-orange transition-colors flex items-center justify-center gap-3 ${strategy === 3 ? "str3-text-gold" : ""}`}>
+                  <span className="text-white/60 text-[10px] uppercase tracking-[0.4em] font-black mb-4 group-hover:text-alaz-orange transition-colors flex items-center justify-center gap-3">
                     <span className="w-1.5 h-1.5 bg-alaz-orange rounded-none animate-pulse"></span>
                     {t("landing.hostSectionLabel")}
                   </span>
-                  <h2 className={`text-3xl md:text-5xl font-black text-white mb-4 tracking-tight uppercase ${strategy === 3 ? "str3-text-gold" : ""}`}>
-                    {strategy === 3 ? "MEKANI YÖNET" : t("landing.hostSectionTitle")}
+                  <h2 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight uppercase">
+                    {t("landing.hostSectionTitle")}
                   </h2>
                   <p className="text-gray-400 text-sm leading-relaxed font-medium">
                     {t("landing.hostSectionDesc")}
@@ -317,25 +312,23 @@ export function LandingPage() {
                   SoundManager.getInstance().playSFX(sounds.CLICK);
                   navigate("/join");
                 }}
-                className={`group relative overflow-hidden p-10 transition-all bg-black/40 backdrop-blur-xl border border-[#ff003c]/30 hover:border-[#ff003c] cursor-pointer str${strategy}-card`}
-                style={strategy === 5 ? {} : { clipPath: "polygon(25px 0, calc(100% - 25px) 0, 100% 25px, 100% calc(100% - 25px), calc(100% - 25px) 100%, 25px 100%, 0 calc(100% - 25px), 0 25px)" }}
+                className="group relative overflow-hidden p-10 transition-all bg-black/40 backdrop-blur-xl border border-[#ff003c]/30 hover:border-[#ff003c] cursor-pointer"
+                style={{ clipPath: "polygon(25px 0, calc(100% - 25px) 0, 100% 25px, 100% calc(100% - 25px), calc(100% - 25px) 100%, 25px 100%, 0 calc(100% - 25px), 0 25px)" }}
               >
                 {/* Wine Red Glow Border Animation */}
-                {(strategy === 1 || strategy === 2) && (
-                  <div className="absolute inset-0 z-0 animate-pulse" style={{ animationDuration: "4s" }}>
-                    <div className="absolute top-0 left-0 w-[200%] h-[200%] -translate-x-1/2 -translate-y-1/2 bg-[conic-gradient(from_0deg,transparent_0_180deg,rgba(255,0,60,0.3)_360deg)] animate-[spin_5s_linear_infinite] opacity-80 blur-[10px]" style={{ animationDelay: "-2s" }} />
-                    <div className="absolute top-0 left-0 w-[200%] h-[200%] -translate-x-1/2 -translate-y-1/2 bg-[conic-gradient(from_0deg,transparent_0_300deg,rgba(255,0,60,0.4)_360deg)] animate-[spin_5s_linear_infinite]" style={{ animationDelay: "-2s" }} />
-                    <div className="absolute inset-[2px] bg-black/90 backdrop-blur-3xl z-10" style={{ clipPath: "polygon(24px 0, calc(100% - 24px) 0, 100% 24px, 100% calc(100% - 24px), calc(100% - 24px) 100%, 24px 100%, 0 calc(100% - 24px), 0 24px)" }} />
-                  </div>
-                )}
+                <div className="absolute inset-0 z-0 animate-pulse opacity-100" style={{ animationDuration: "4s" }}>
+                  <div className="absolute top-0 left-0 w-[200%] h-[200%] -translate-x-1/2 -translate-y-1/2 bg-[conic-gradient(from_0deg,transparent_0_180deg,rgba(255,0,60,0.3)_360deg)] animate-[spin_5s_linear_infinite] opacity-80 blur-[10px]" style={{ animationDelay: "-2s" }} />
+                  <div className="absolute top-0 left-0 w-[200%] h-[200%] -translate-x-1/2 -translate-y-1/2 bg-[conic-gradient(from_0deg,transparent_0_300deg,rgba(255,0,60,0.4)_360deg)] animate-[spin_5s_linear_infinite]" style={{ animationDelay: "-2s" }} />
+                  <div className="absolute inset-[2px] bg-black/90 backdrop-blur-3xl z-10" style={{ clipPath: "polygon(24px 0, calc(100% - 24px) 0, 100% 24px, 100% calc(100% - 24px), calc(100% - 24px) 100%, 24px 100%, 0 calc(100% - 24px), 0 24px)" }} />
+                </div>
 
                 <div className="relative z-20 text-center flex flex-col items-center justify-center min-h-[160px]">
-                  <span className={`text-white/60 text-[10px] uppercase tracking-[0.4em] font-black mb-4 group-hover:text-[#ff003c] transition-colors flex items-center justify-center gap-3 ${strategy === 3 ? "str3-text-gold" : ""}`}>
+                  <span className="text-white/60 text-[10px] uppercase tracking-[0.4em] font-black mb-4 group-hover:text-[#ff003c] transition-colors flex items-center justify-center gap-3">
                     {t("landing.playerLabel")}
                     <span className="w-1.5 h-1.5 bg-[#ff003c] rounded-none animate-pulse"></span>
                   </span>
-                  <h2 className={`text-3xl md:text-5xl font-black text-white mb-4 tracking-tight uppercase ${strategy === 3 ? "str3-text-gold" : ""}`}>
-                    {strategy === 3 ? "PARTİYE KATIL" : t("landing.playerTitle")}
+                  <h2 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight uppercase">
+                    {t("landing.playerTitle")}
                   </h2>
                   <p className="text-gray-400 text-sm leading-relaxed font-medium">
                     {t("landing.playerDesc")}
@@ -345,9 +338,8 @@ export function LandingPage() {
               </TiltCard>
             </div>
 
-            {/* Game Modes Showcase Section (Hidden in Strategy 1 for Minimalism) */}
-            {strategy !== 1 && (
-            <div className="w-full max-w-6xl mx-auto pb-24 px-6 flex flex-col items-center">
+            {/* Game Modes Showcase Section */}
+            <div className="w-full max-w-6xl mx-auto pb-24 px-6 flex flex-col items-center relative z-20">
               <h3 className="text-white/50 text-sm font-black uppercase tracking-[0.5em] mb-12">Oyun Modları</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
                 
@@ -360,15 +352,21 @@ export function LandingPage() {
                   className="relative group overflow-hidden bg-black/40 backdrop-blur-xl border border-white/10 hover:border-transparent p-8 rounded-sm text-left transition-all duration-500 shadow-[0_0_20px_rgba(0,0,0,0.5)]"
                 >
                   {/* Animated glowing border background */}
-                  <div className="absolute inset-[-50%] z-0 bg-[conic-gradient(from_0deg,transparent_0_270deg,rgba(255,85,0,1)_360deg)] animate-[spin_3s_linear_infinite] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  <div className="absolute inset-[2px] bg-black/90 backdrop-blur-xl z-10 rounded-sm" />
+                  <div className="absolute inset-[-50%] z-0 bg-[conic-gradient(from_0deg,transparent_0_180deg,rgba(255,85,0,1)_270deg,rgba(255,85,0,1)_360deg)] animate-[spin_8s_linear_infinite] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="absolute inset-[-50%] z-0 bg-[conic-gradient(from_0deg,transparent_0_180deg,rgba(255,85,0,1)_270deg,rgba(255,85,0,1)_360deg)] animate-[spin_8s_linear_infinite] opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-md" />
+                  <div className="absolute inset-[3px] bg-black/90 backdrop-blur-xl z-10 rounded-sm" />
                   
                   <div className="absolute -right-20 -top-20 w-48 h-48 bg-alaz-orange/10 rounded-full blur-[80px] group-hover:bg-alaz-orange/30 transition-colors duration-500 z-10" />
                   <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none z-10" />
                   
                   <div className="relative z-20 flex flex-col h-full">
-                    <h3 className="text-2xl font-black text-white mb-2 tracking-widest group-hover:text-alaz-orange transition-colors">
-                      HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-alaz-orange to-yellow-500">ARENA</span>
+                    {/* VARYANT 1: Stroke & Fill (İçi boş yazının dolması) */}
+                    <div className="text-[10px] text-alaz-orange/50 mb-1 font-mono uppercase hidden">Varyant 1: Stroke Fill</div>
+                    <h3 className="text-xl font-black mb-2 tracking-widest relative flex flex-col">
+                      <span className="text-white group-hover:text-alaz-orange transition-all duration-500 group-hover:drop-shadow-[0_0_12px_rgba(255,85,0,1)]">
+                        HENGAME
+                      </span>
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-alaz-orange to-yellow-500 text-3xl mt-1">ARENA</span>
                     </h3>
                     <p className="text-gray-400 text-xs leading-relaxed mt-2 flex-1">{t("landing.modeArenaDesc")}</p>
                   </div>
@@ -383,15 +381,21 @@ export function LandingPage() {
                   className="relative group overflow-hidden bg-black/40 backdrop-blur-xl border border-white/10 hover:border-transparent p-8 rounded-sm text-left transition-all duration-500 shadow-[0_0_20px_rgba(0,0,0,0.5)]"
                 >
                   {/* Animated glowing border background */}
-                  <div className="absolute inset-[-50%] z-0 bg-[conic-gradient(from_0deg,transparent_0_270deg,rgba(0,229,255,1)_360deg)] animate-[spin_3s_linear_infinite] opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ animationDelay: "-0.5s" }} />
-                  <div className="absolute inset-[2px] bg-black/90 backdrop-blur-xl z-10 rounded-sm" />
+                  <div className="absolute inset-[-50%] z-0 bg-[conic-gradient(from_0deg,transparent_0_180deg,rgba(0,229,255,1)_270deg,rgba(0,229,255,1)_360deg)] animate-[spin_8s_linear_infinite] opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ animationDelay: "-1s" }} />
+                  <div className="absolute inset-[-50%] z-0 bg-[conic-gradient(from_0deg,transparent_0_180deg,rgba(0,229,255,1)_270deg,rgba(0,229,255,1)_360deg)] animate-[spin_8s_linear_infinite] opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-md" style={{ animationDelay: "-1s" }} />
+                  <div className="absolute inset-[3px] bg-black/90 backdrop-blur-xl z-10 rounded-sm" />
                   
                   <div className="absolute -right-20 -top-20 w-48 h-48 bg-neon-blue/10 rounded-full blur-[80px] group-hover:bg-neon-blue/30 transition-colors duration-500 z-10" />
                   <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none z-10" />
                   
                   <div className="relative z-20 flex flex-col h-full">
-                    <h3 className="text-2xl font-black text-white mb-2 tracking-widest group-hover:text-neon-blue transition-colors">
-                      HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-blue-400">QUIZ</span>
+                    {/* VARYANT 2: Breathing Glow (Yumuşak ve derin parlama) */}
+                    <div className="text-[10px] text-neon-blue/50 mb-1 font-mono uppercase hidden">Varyant 2: Liquid Glow</div>
+                    <h3 className="text-xl font-black mb-2 tracking-widest flex flex-col">
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-neon-blue to-white bg-[length:200%_100%] bg-left group-hover:bg-right transition-all duration-700 ease-in-out group-hover:drop-shadow-[0_0_10px_rgba(0,229,255,0.8)]">
+                        HENGAME
+                      </span>
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-blue-400 text-3xl mt-1">QUIZ</span>
                     </h3>
                     <p className="text-gray-400 text-xs leading-relaxed mt-2 flex-1">{t("landing.modeQuizDesc")}</p>
                   </div>
@@ -406,15 +410,21 @@ export function LandingPage() {
                   className="relative group overflow-hidden bg-black/40 backdrop-blur-xl border border-white/10 hover:border-transparent p-8 rounded-sm text-left transition-all duration-500 shadow-[0_0_20px_rgba(0,0,0,0.5)]"
                 >
                   {/* Animated glowing border background */}
-                  <div className="absolute inset-[-50%] z-0 bg-[conic-gradient(from_0deg,transparent_0_270deg,rgba(255,0,0,1)_360deg)] animate-[spin_3s_linear_infinite] opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ animationDelay: "-1s" }} />
-                  <div className="absolute inset-[2px] bg-black/90 backdrop-blur-xl z-10 rounded-sm" />
+                  <div className="absolute inset-[-50%] z-0 bg-[conic-gradient(from_0deg,transparent_0_180deg,rgba(255,0,0,1)_270deg,rgba(255,0,0,1)_360deg)] animate-[spin_8s_linear_infinite] opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ animationDelay: "-2s" }} />
+                  <div className="absolute inset-[-50%] z-0 bg-[conic-gradient(from_0deg,transparent_0_180deg,rgba(255,0,0,1)_270deg,rgba(255,0,0,1)_360deg)] animate-[spin_8s_linear_infinite] opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-md" style={{ animationDelay: "-2s" }} />
+                  <div className="absolute inset-[3px] bg-black/90 backdrop-blur-xl z-10 rounded-sm" />
 
                   <div className="absolute -right-20 -top-20 w-48 h-48 bg-red-500/10 rounded-full blur-[80px] group-hover:bg-red-500/30 transition-colors duration-500 z-10" />
                   <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none z-10" />
                   
                   <div className="relative z-20 flex flex-col h-full">
-                    <h3 className="text-2xl font-black text-white mb-2 tracking-widest group-hover:text-red-500 transition-colors">
-                      HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">BOMB</span>
+                    {/* VARYANT 3: Sweeping Gradient (Soldan sağa ışık süzülmesi) */}
+                    <div className="text-[10px] text-red-500/50 mb-1 font-mono uppercase hidden">Varyant 3: Light Sweep</div>
+                    <h3 className="text-xl font-black mb-2 flex flex-col">
+                      <span className="text-white group-hover:text-red-500 tracking-[0.1em] group-hover:tracking-[0.25em] transition-all duration-500 ease-out group-hover:drop-shadow-[0_0_8px_rgba(255,0,0,0.8)]">
+                        HENGAME
+                      </span>
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500 text-3xl mt-1 tracking-widest">BOMB</span>
                     </h3>
                     <p className="text-gray-400 text-xs leading-relaxed mt-2 flex-1">{t("landing.modeBombDesc")}</p>
                   </div>
@@ -429,15 +439,17 @@ export function LandingPage() {
                   className="relative group overflow-hidden bg-black/40 backdrop-blur-xl border border-white/10 hover:border-transparent p-8 rounded-sm text-left transition-all duration-500 shadow-[0_0_20px_rgba(0,0,0,0.5)]"
                 >
                   {/* Animated glowing border background */}
-                  <div className="absolute inset-[-50%] z-0 bg-[conic-gradient(from_0deg,transparent_0_270deg,rgba(255,0,255,1)_360deg)] animate-[spin_3s_linear_infinite] opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ animationDelay: "-1.5s" }} />
-                  <div className="absolute inset-[2px] bg-black/90 backdrop-blur-xl z-10 rounded-sm" />
+                  <div className="absolute inset-[-50%] z-0 bg-[conic-gradient(from_0deg,transparent_0_180deg,rgba(255,0,255,1)_270deg,rgba(255,0,255,1)_360deg)] animate-[spin_8s_linear_infinite] opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ animationDelay: "-3s" }} />
+                  <div className="absolute inset-[-50%] z-0 bg-[conic-gradient(from_0deg,transparent_0_180deg,rgba(255,0,255,1)_270deg,rgba(255,0,255,1)_360deg)] animate-[spin_8s_linear_infinite] opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-md" style={{ animationDelay: "-3s" }} />
+                  <div className="absolute inset-[3px] bg-black/90 backdrop-blur-xl z-10 rounded-sm" />
 
                   <div className="absolute -right-20 -top-20 w-48 h-48 bg-neon-pink/10 rounded-full blur-[80px] group-hover:bg-neon-pink/30 transition-colors duration-500 z-10" />
                   <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none z-10" />
                   
                   <div className="relative z-20 flex flex-col h-full">
-                    <h3 className="text-2xl font-black text-white mb-2 tracking-widest group-hover:text-neon-pink transition-colors">
-                      HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-pink to-purple-500">SENSÖR</span>
+                    <h3 className="text-xl font-black text-white mb-2 tracking-widest group-hover:text-neon-pink transition-colors flex flex-col">
+                      <span>HENGAME</span>
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-pink to-purple-500 text-3xl mt-1">SENSÖR</span>
                     </h3>
                     <p className="text-gray-400 text-xs leading-relaxed mt-2 flex-1">{t("landing.modeSensorDesc")}</p>
                   </div>
@@ -445,7 +457,6 @@ export function LandingPage() {
 
               </div>
             </div>
-            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -453,22 +464,7 @@ export function LandingPage() {
       <AnimatePresence>
         {isIdle && <AttractMode onClose={() => setIsIdle(false)} />}
       </AnimatePresence>
-
-      {/* Strategy Switcher (Test UI) */}
-      <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 bg-black/80 backdrop-blur-md p-3 border border-white/20 rounded-xl">
-        <div className="text-[9px] text-white/50 uppercase tracking-widest text-center mb-1">Theme Tester</div>
-        <div className="flex gap-2">
-          {[1, 2, 3, 4, 5].map(i => (
-            <button
-              key={i}
-              onClick={() => setStrategy(i)}
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${strategy === i ? 'bg-alaz-orange text-white scale-110' : 'bg-white/10 text-white/50 hover:bg-white/20'}`}
-            >
-              {i}
-            </button>
-          ))}
-        </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
