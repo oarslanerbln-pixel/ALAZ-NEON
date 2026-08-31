@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+:root {
+  --background: #000000;
+  --foreground: #ffff00;
+  --primary: #00ffff;
+  --secondary: #333333;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 18px; /* High Contrast Mode Minimum */
+}
+
+/* High Contrast Adjustments */
+input, button, textarea, select {
+  font-size: 18px;
+  border-color: var(--primary) !important;
+}
+
+button {
+  background-color: var(--primary);
+  color: #000000;
+  font-weight: bold;
+}
+button:hover, button:focus-visible {
+  background-color: #00cccc;
+  outline: none;
+  ring: 4px;
+  ring-color: #ffff00;
+}
