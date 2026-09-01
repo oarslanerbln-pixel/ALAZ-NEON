@@ -565,6 +565,9 @@ const translations = {
   "playerHeader.critical": { tr: "⚡ KRİTİK", de: "⚡ KRITISCH", en: "⚡ CRITICAL" },
   "playerHeader.active": { tr: "◉ AKTİF", de: "◉ AKTIV", en: "◉ ACTIVE" },
   "playerHeader.points": { tr: "PUAN", de: "PUNKTE", en: "POINTS" },
+  "playerHeader.mute": { tr: "Sesi Kapat", de: "Stummschalten", en: "Mute" },
+  "playerHeader.unmute": { tr: "Sesi Aç", de: "Stummschaltung aufheben", en: "Unmute" },
+
   "playerHeader.submittingAnswers": {
     tr: "Cevaplar Gönderiliyor...",
     de: "Antworten werden gesendet...",

@@ -143,7 +143,8 @@ export function PlayerHeader({
         <button
           onClick={handleToggleMute}
           className="shrink-0 text-white/50 hover:text-white transition-colors ml-2"
-          title={isMuted ? "Unmute" : "Mute"}
+          title={isMuted ? t("playerHeader.unmute") : t("playerHeader.mute")}
+          aria-label={isMuted ? t("playerHeader.unmute") : t("playerHeader.mute")}
         >
           {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
         </button>
