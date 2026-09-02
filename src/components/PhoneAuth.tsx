@@ -186,7 +186,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
         <div className="flex flex-col gap-5">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">
+              <label htmlFor="phone-input" className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">
                 {t("phoneAuth.phoneLabel")}
               </label>
               {/* Ülke seçici: Berlin'de hem yerel (+49) hem çok büyük Türk
@@ -200,6 +200,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
                       setCountry(c);
                       setError("");
                     }}
+                    aria-label={c.label}
                     aria-pressed={country.iso === c.iso}
                     className={`px-2.5 py-1 text-[11px] font-bold rounded-full transition-colors flex items-center gap-1 ${
                       country.iso === c.iso
@@ -215,6 +216,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
             <div className={fieldWrapClass}>
               <span className="pl-4 text-white/40 font-semibold text-base">+{country.dialCode}</span>
               <input
+                id="phone-input"
                 type="tel"
                 required
                 maxLength={country.maxDigits + 1}
@@ -252,11 +254,12 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
       ) : (
         <div className="flex flex-col gap-5">
           <div>
-            <label className="block text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-2">
+            <label htmlFor="code-input" className="block text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-2">
               {t("phoneAuth.codeLabel")}
             </label>
             <div className={fieldWrapClass}>
               <input
+                id="code-input"
                 type="text"
                 required
                 maxLength={6}
