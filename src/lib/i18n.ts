@@ -1359,15 +1359,20 @@ type TranslationValue = string | ((...args: (string | number)[]) => string);
 // tercihi localStorage'dan (varsa) önceliklidir.
 const DEFAULT_LOCALE: Locale = "de";
 
-let currentLocale: Locale =
-  typeof window !== "undefined"
-    ? (localStorage.getItem("alaz_neon_locale") as Locale) || DEFAULT_LOCALE
-    : DEFAULT_LOCALE;
+let currentLocale: Locale = DEFAULT_LOCALE;
+try {
+  if (typeof window !== "undefined" && typeof localStorage !== "undefined" && typeof localStorage.getItem === "function") {
+    const saved = localStorage.getItem("alaz_neon_locale") as Locale | null;
+    if (saved) currentLocale = saved;
+  }
+} catch {
+  // localStorage access may fail in restricted/test environments
+}
 
 // index.html varsayılan olarak lang="tr" ile geliyor; açılış dili farklıysa
 // (artık Almanca) burada anında düzeltiyoruz. Kullanıcı daha önce başka bir
 // dil seçtiyse açılışta onu yansıtır (bkz. setLocale'deki not).
-if (typeof window !== "undefined") {
+if (typeof window !== "undefined" && typeof document !== "undefined") {
   document.documentElement.lang = currentLocale;
 }
 
@@ -1394,12 +1399,18 @@ export function subscribeLocale(callback: () => void): () => void {
 
 export function setLocale(locale: Locale): void {
   currentLocale = locale;
-  if (typeof window !== "undefined") {
-    localStorage.setItem("alaz_neon_locale", locale);
-    // <html lang> arayüz için kozmetik değil: CSS `text-transform: uppercase`
-    // dile göre çalışıyor ve arayüz büyük harf ağırlıklı. Yanlış dilde
-    // "Giriş" → "GIRIŞ" (noktasız I) çıkıyor, Türkçede doğrusu "GİRİŞ".
-    document.documentElement.lang = locale;
+  try {
+    if (typeof window !== "undefined" && typeof localStorage !== "undefined" && typeof localStorage.setItem === "function") {
+      localStorage.setItem("alaz_neon_locale", locale);
+    }
+    if (typeof document !== "undefined") {
+      // <html lang> arayüz için kozmetik değil: CSS `text-transform: uppercase`
+      // dile göre çalışıyor ve arayüz büyük harf ağırlıklı. Yanlış dilde
+      // "Giriş" → "GIRIŞ" (noktasız I) çıkıyor, Türkçede doğrusu "GİRİŞ".
+      document.documentElement.lang = locale;
+    }
+  } catch {
+    // Ignore storage errors
   }
   listeners.forEach((callback) => callback());
 }
