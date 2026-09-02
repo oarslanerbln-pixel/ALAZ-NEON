@@ -1,11 +1,12 @@
-import { useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence, useAnimate } from "framer-motion";
 import { ExperienceBar } from "../../../components/ExperienceBar";
+import { AnimatedNumber } from "../../../components/AnimatedNumber";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useLocale } from "../../../hooks/useLocale";
 import { Volume2, VolumeX } from "lucide-react";
-import { useState } from "react";
 import { haptics } from "../../../lib/haptics";
+import { DURATION, EASE, SPRING } from "../../../lib/motion";
 
 interface PlayerHeaderProps {
   playerName: string;
@@ -36,6 +37,22 @@ export function PlayerHeader({
   const isCritical = isPlaying && timeLeft <= 10 && timeLeft > 0;
   const lastTimeRef = useRef(timeLeft);
   const [isMuted, setIsMuted] = useState(() => SoundManager.getInstance().getIsMuted());
+
+  // Skor değişince sayaç "sayar" (AnimatedNumber) ve kapsayıcı tek bir
+  // ölçek/renk darbesi atar. Elemanı yeniden mount etmiyoruz (key yok);
+  // aksi hâlde sayaç sıfırdan başlardı.
+  const [scoreScope, animateScore] = useAnimate();
+  const prevScoreRef = useRef(totalScore);
+  useEffect(() => {
+    if (prevScoreRef.current === totalScore) return;
+    prevScoreRef.current = totalScore;
+    if (!scoreScope.current) return;
+    animateScore(
+      scoreScope.current,
+      { scale: [1.35, 1], color: ["#ff4d00", "#ffffff"] },
+      { duration: DURATION.slow, ease: EASE.out },
+    );
+  }, [totalScore, animateScore, scoreScope]);
 
   const handleToggleMute = () => {
     setIsMuted(SoundManager.getInstance().toggleMute());
@@ -74,9 +91,9 @@ export function PlayerHeader({
       <div className="px-4 py-3 flex items-center gap-3">
         {/* Active Letter Badge — compact */}
         <div
-          className={`shrink-0 w-11 h-11 rounded-sm border-2 flex items-center justify-center text-xl font-black text-white shadow-lg transition-all duration-300 ${
+          className={`shrink-0 w-11 h-11 rounded-sm border-2 flex items-center justify-center text-xl font-black text-white shadow-lg transition-[border-color,box-shadow] duration-300 ${
             isCritical
-              ? "border-red-500 shadow-[0_0_15px_rgba(255,0,0,0.4)] animate-pulse"
+              ? "border-red-500 shadow-[0_0_15px_rgba(255,0,0,0.4)] animate-heartbeat"
               : "border-alaz-orange shadow-[0_0_12px_rgba(255,77,0,0.25)]"
           }`}
         >
@@ -86,7 +103,7 @@ export function PlayerHeader({
         {/* Player info — center */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-0.5">
-            <span className="bg-white/10 font-black text-[11px] px-1.5 py-0.5 text-gray-400 uppercase tracking-tight shrink-0">
+            <span className="bg-white/10 font-black text-[11px] px-1.5 py-0.5 text-gray-400 uppercase tracking-tight shrink-0 tabular-nums">
               T{currentRound}
             </span>
             <span className="text-sm font-black text-white font-premium tracking-tight truncate">
@@ -99,10 +116,11 @@ export function PlayerHeader({
             )}
           </div>
 
-          {/* Timer bar — slim */}
+          {/* Timer bar — slim; geri sayımda doğrusal akış (kesintisiz) */}
           <ExperienceBar
             progress={timeProgress}
             label=""
+            mode={isPlaying ? "linear" : "spring"}
             color={isCritical ? "var(--color-alaz-red)" : "var(--color-alaz-orange)"}
           />
         </div>
@@ -114,23 +132,20 @@ export function PlayerHeader({
           </span>
           <div className="flex items-baseline gap-1">
             <motion.span
-              key={totalScore}
-              initial={{ scale: 1.3, color: "#ff4d00" }}
-              animate={{ scale: 1, color: "#ffffff" }}
-              transition={{ duration: 0.3 }}
-              className="text-2xl font-black font-premium leading-none"
+              ref={scoreScope}
+              className="text-2xl font-black font-premium leading-none inline-block origin-right text-white"
             >
-              {totalScore}
+              <AnimatedNumber value={totalScore} duration={0.8} />
             </motion.span>
             <AnimatePresence>
               {roundPoints !== null && (
                 <motion.span
                   key={roundPoints}
-                  initial={{ opacity: 0, y: 8, scale: 0.8 }}
+                  initial={{ opacity: 0, y: 8, scale: 0.6 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.4 }}
-                  className="text-xs font-black text-green-400 leading-none"
+                  transition={SPRING.bouncy}
+                  className="text-xs font-black text-green-400 leading-none tabular-nums"
                 >
                   +{roundPoints}
                 </motion.span>
@@ -138,7 +153,7 @@ export function PlayerHeader({
             </AnimatePresence>
           </div>
         </div>
-        
+
         {/* Mute Button */}
         <button
           onClick={handleToggleMute}
@@ -156,6 +171,7 @@ export function PlayerHeader({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: DURATION.fast, ease: EASE.out }}
             className="overflow-hidden"
           >
             <div className="px-4 pb-2 flex items-center justify-center gap-2 text-alaz-orange">

@@ -1,22 +1,51 @@
 /**
- * ALAZ NEON - Zero-Dependency Cyberpunk Canvas Confetti Engine
- * Yüksek performanslı, 60fps çalışan neon konfeti ve kıvılcım patlama motoru.
+ * ALAZ NEON — Sıfır bağımlılıklı neon konfeti motoru (Canvas 2D)
+ *
+ * Profesyonel kalite için uygulanan kurallar:
+ *  1. DPR farkındalığı: tuval `devicePixelRatio` ile ölçekleniyor. Eskiden
+ *     4K TV'de ve Retina telefonda her parçacık bulanık çiziliyordu.
+ *  2. Delta-time fizik: hız/yerçekimi kare süresine göre ölçekleniyor. 120Hz
+ *     bir telefonda konfeti iki kat hızlı düşmüyor; sekme arka plana alınıp
+ *     dönünce "patlama" olmuyor (dt tavanı: bkz. normalizeFrameDelta).
+ *  3. `shadowBlur` YOK: canvas'ın en pahalı işlemidir (her parçacık için
+ *     ayrı bir bulanıklaştırma geçişi). Parlaklık additive blending
+ *     (`lighter`) ve iki katmanlı çizimle taklit ediliyor — 60fps'i TV
+ *     kutusunda da koruyor.
+ *  4. `save/restore` YOK: her parçacık için `setTransform` ile tek matris.
+ *  5. Parçacık tavanı: üst üste patlamalarda bellek/CPU sınırlı kalıyor.
+ *  6. Sayfa görünmezken döngü duruyor; "hareketi azalt" tercihinde motor
+ *     hiç parçacık üretmiyor (dekoratif hareket, WCAG 2.3.3).
+ *  7. Kağıt gerçekçiliği: her parçacığın "wobble" (yatay eksende dönüş)
+ *     ve "tilt" (düzlem içi dönüş) fazı var; arka yüzü koyu — havada
+ *     takla atan kağıt gibi okunuyor, düz dikdörtgen gibi değil.
  */
+import { normalizeFrameDelta, prefersReducedMotion } from "./motion";
+
+type Shape = "rect" | "circle" | "spark";
 
 interface Particle {
   x: number;
   y: number;
+  /** px / kare (60fps birimi) */
   vx: number;
   vy: number;
   size: number;
   color: string;
-  rotation: number;
-  rotationSpeed: number;
-  shape: "rect" | "circle" | "spark";
-  alpha: number;
-  decay: number;
+  /** Kağıdın arka yüzü — flip sırasında görünür */
+  colorBack: string;
+  shape: Shape;
+  /** Düzlem içi dönüş (radyan) */
+  tilt: number;
+  tiltSpeed: number;
+  /** Yatay eksen etrafında takla (radyan) — genişliği cos ile ölçekler */
   wobble: number;
   wobbleSpeed: number;
+  alpha: number;
+  /** alpha azalması / kare */
+  decay: number;
+  gravity: number;
+  /** hız çarpanı / kare (0..1) */
+  drag: number;
 }
 
 const NEON_COLORS = [
@@ -28,190 +57,296 @@ const NEON_COLORS = [
   "#ffffff", // Diamond White
 ];
 
+/** Renk → arka yüz (yaklaşık %55 parlaklık). Hesap bir kez, cache'li. */
+const BACK_COLOR_CACHE = new Map<string, string>();
+function backColor(hex: string): string {
+  const cached = BACK_COLOR_CACHE.get(hex);
+  if (cached) return cached;
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.round(((n >> 16) & 255) * 0.55);
+  const g = Math.round(((n >> 8) & 255) * 0.55);
+  const b = Math.round((n & 255) * 0.55);
+  const out = `rgb(${r},${g},${b})`;
+  BACK_COLOR_CACHE.set(hex, out);
+  return out;
+}
+
+/** Aynı anda ekranda tutulacak en fazla parçacık. Aşımda en eskiler düşer. */
+export const MAX_PARTICLES = 700;
+/** 4K TV'de 4x piksel gereksiz; 2x görsel olarak ayırt edilemez, maliyet yarı. */
+const MAX_DPR = 2;
+const SHAPES: readonly Shape[] = ["rect", "rect", "circle", "spark"];
+
+export interface CannonOptions {
+  /** CSS px */
+  x: number;
+  y: number;
+  /** Radyan; -PI/2 = tam yukarı */
+  angle: number;
+  /** Radyan cinsinden toplam yayılma */
+  spread?: number;
+  count?: number;
+  /** px / kare */
+  speedMin?: number;
+  speedMax?: number;
+}
+
 export class ConfettiEngine {
   private canvas: HTMLCanvasElement | null = null;
   private ctx: CanvasRenderingContext2D | null = null;
   private particles: Particle[] = [];
   private animationFrameId: number | null = null;
-  private isRunning: boolean = false;
+  private isRunning = false;
+  private width = 0;
+  private height = 0;
+  private dpr = 1;
+  private lastTime = 0;
+  private reducedMotion = false;
 
   constructor(canvas?: HTMLCanvasElement) {
-    if (canvas) {
-      this.attachCanvas(canvas);
-    }
+    if (canvas) this.attachCanvas(canvas);
   }
 
   public attachCanvas(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
+    this.reducedMotion = prefersReducedMotion();
     this.resize();
-  }
-
-  public resize() {
-    if (!this.canvas) return;
-    this.canvas.width = window.innerWidth;
-    this.canvas.height = window.innerHeight;
-  }
-
-  public burst(originX?: number, originY?: number, particleCount = 80) {
-    if (!this.canvas || !this.ctx) return;
-
-    const startX = originX ?? this.canvas.width / 2;
-    const startY = originY ?? this.canvas.height / 2;
-
-    for (let i = 0; i < particleCount; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 4 + Math.random() * 12;
-      const shapes: Array<"rect" | "circle" | "spark"> = ["rect", "circle", "spark"];
-
-      this.particles.push({
-        x: startX,
-        y: startY,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - (startY > this.canvas.height * 0.7 ? 6 : 0), // Cannon lift if fired from bottom
-        size: 4 + Math.random() * 8,
-        color: NEON_COLORS[Math.floor(Math.random() * NEON_COLORS.length)],
-        rotation: Math.random() * 360,
-        rotationSpeed: (Math.random() - 0.5) * 12,
-        shape: shapes[Math.floor(Math.random() * shapes.length)],
-        alpha: 1,
-        decay: 0.008 + Math.random() * 0.012,
-        wobble: Math.random() * 10,
-        wobbleSpeed: 0.1 + Math.random() * 0.1,
-      });
-    }
-
-    if (!this.isRunning) {
-      this.isRunning = true;
-      this.loop();
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", this.handleVisibility);
     }
   }
 
   /**
-   * Alt köşelerden çifte zafer volkanı patlatır
+   * Tuvali CSS piksel boyutuna göre (DPR ile çarpılmış) yeniden boyutlandırır.
+   * Boyut verilmezse canvas'ın kendi kutusu, o da yoksa pencere kullanılır —
+   * TVScaleFrame gibi ölçeklenmiş bir kapsayıcı içinde pencere boyutu yanlıştır.
    */
-  public celebrationCannon() {
+  public resize(cssWidth?: number, cssHeight?: number) {
     if (!this.canvas) return;
-    const w = this.canvas.width;
-    const h = this.canvas.height;
-
-    // Sol volkan
-    for (let i = 0; i < 60; i++) {
-      const angle = -Math.PI / 4 + (Math.random() - 0.5) * 0.5; // Yukarı sağa doğru 45 derece
-      const speed = 12 + Math.random() * 14;
-      this.particles.push({
-        x: 0,
-        y: h,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        size: 5 + Math.random() * 9,
-        color: NEON_COLORS[Math.floor(Math.random() * NEON_COLORS.length)],
-        rotation: Math.random() * 360,
-        rotationSpeed: (Math.random() - 0.5) * 15,
-        shape: "rect",
-        alpha: 1,
-        decay: 0.007 + Math.random() * 0.008,
-        wobble: 0,
-        wobbleSpeed: 0.15,
-      });
-    }
-
-    // Sağ volkan
-    for (let i = 0; i < 60; i++) {
-      const angle = (-3 * Math.PI) / 4 + (Math.random() - 0.5) * 0.5; // Yukarı sola doğru 135 derece
-      const speed = 12 + Math.random() * 14;
-      this.particles.push({
-        x: w,
-        y: h,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        size: 5 + Math.random() * 9,
-        color: NEON_COLORS[Math.floor(Math.random() * NEON_COLORS.length)],
-        rotation: Math.random() * 360,
-        rotationSpeed: (Math.random() - 0.5) * 15,
-        shape: "rect",
-        alpha: 1,
-        decay: 0.007 + Math.random() * 0.008,
-        wobble: 0,
-        wobbleSpeed: 0.15,
-      });
-    }
-
-    if (!this.isRunning) {
-      this.isRunning = true;
-      this.loop();
-    }
+    const fallbackW = typeof window !== "undefined" ? window.innerWidth : 0;
+    const fallbackH = typeof window !== "undefined" ? window.innerHeight : 0;
+    const w = Math.max(1, Math.round(cssWidth ?? (this.canvas.clientWidth || fallbackW)));
+    const h = Math.max(1, Math.round(cssHeight ?? (this.canvas.clientHeight || fallbackH)));
+    const ratio = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+    this.dpr = Math.min(Math.max(ratio, 1), MAX_DPR);
+    this.width = w;
+    this.height = h;
+    this.canvas.width = Math.round(w * this.dpr);
+    this.canvas.height = Math.round(h * this.dpr);
   }
 
-  private loop = () => {
-    if (!this.ctx || !this.canvas) return;
+  public get particleCount(): number {
+    return this.particles.length;
+  }
 
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  /** Merkezden (veya verilen noktadan) her yöne patlama. Koordinatlar CSS px. */
+  public burst(originX?: number, originY?: number, particleCount = 80) {
+    if (!this.canvas || !this.ctx || this.reducedMotion) return;
+    const startX = originX ?? this.width / 2;
+    const startY = originY ?? this.height / 2;
+    // Alt %30'dan ateşlenirse "top" gibi yukarı kaldır
+    const lift = startY > this.height * 0.7 ? 6 : 0;
 
-    for (let i = this.particles.length - 1; i >= 0; i--) {
-      const p = this.particles[i];
-
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += 0.25; // Yerçekimi
-      p.vx *= 0.985; // Hava sürtünmesi
-      p.vy *= 0.985;
-      p.rotation += p.rotationSpeed;
-      p.alpha -= p.decay;
-      p.wobble += p.wobbleSpeed;
-
-      if (p.alpha <= 0 || p.y > this.canvas.height + 50) {
-        this.particles.splice(i, 1);
-        continue;
-      }
-
-      this.ctx.save();
-      this.ctx.globalAlpha = Math.max(0, p.alpha);
-      this.ctx.translate(p.x, p.y);
-      this.ctx.rotate((p.rotation * Math.PI) / 180);
-
-      // Neon glow
-      this.ctx.shadowBlur = 10;
-      this.ctx.shadowColor = p.color;
-      this.ctx.fillStyle = p.color;
-
-      if (p.shape === "rect") {
-        const width = p.size * Math.cos(p.wobble);
-        this.ctx.fillRect(-width / 2, -p.size / 2, width, p.size);
-      } else if (p.shape === "circle") {
-        this.ctx.beginPath();
-        this.ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
-        this.ctx.fill();
-      } else if (p.shape === "spark") {
-        this.ctx.beginPath();
-        this.ctx.moveTo(0, -p.size);
-        this.ctx.lineTo(p.size / 3, -p.size / 3);
-        this.ctx.lineTo(p.size, 0);
-        this.ctx.lineTo(p.size / 3, p.size / 3);
-        this.ctx.lineTo(0, p.size);
-        this.ctx.lineTo(-p.size / 3, p.size / 3);
-        this.ctx.lineTo(-p.size, 0);
-        this.ctx.lineTo(-p.size / 3, -p.size / 3);
-        this.ctx.closePath();
-        this.ctx.fill();
-      }
-
-      this.ctx.restore();
+    for (let i = 0; i < particleCount; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 4 + Math.random() * 12;
+      this.spawn(
+        startX,
+        startY,
+        Math.cos(angle) * speed,
+        Math.sin(angle) * speed - lift,
+        SHAPES[Math.floor(Math.random() * SHAPES.length)],
+      );
     }
+    this.start();
+  }
+
+  /** Belirli bir noktadan, belirli bir açıyla koni şeklinde püskürtme. */
+  public cannon({
+    x,
+    y,
+    angle,
+    spread = 0.5,
+    count = 60,
+    speedMin = 12,
+    speedMax = 26,
+  }: CannonOptions) {
+    if (!this.canvas || !this.ctx || this.reducedMotion) return;
+    for (let i = 0; i < count; i++) {
+      const a = angle + (Math.random() - 0.5) * spread;
+      const speed = speedMin + Math.random() * (speedMax - speedMin);
+      this.spawn(x, y, Math.cos(a) * speed, Math.sin(a) * speed, "rect");
+    }
+    this.start();
+  }
+
+  /** Alt köşelerden çifte zafer volkanı. */
+  public celebrationCannon() {
+    if (!this.canvas) return;
+    const w = this.width;
+    const h = this.height;
+    this.cannon({ x: 0, y: h, angle: -Math.PI / 4, spread: 0.55, count: 60 });
+    this.cannon({ x: w, y: h, angle: (-3 * Math.PI) / 4, spread: 0.55, count: 60 });
+  }
+
+  private spawn(x: number, y: number, vx: number, vy: number, shape: Shape) {
+    if (this.particles.length >= MAX_PARTICLES) {
+      this.particles.splice(0, this.particles.length - MAX_PARTICLES + 1);
+    }
+    const color = NEON_COLORS[Math.floor(Math.random() * NEON_COLORS.length)];
+    this.particles.push({
+      x,
+      y,
+      vx,
+      vy,
+      size: shape === "spark" ? 3 + Math.random() * 4 : 5 + Math.random() * 8,
+      color,
+      colorBack: backColor(color),
+      shape,
+      tilt: Math.random() * Math.PI * 2,
+      tiltSpeed: (Math.random() - 0.5) * 0.35,
+      wobble: Math.random() * Math.PI * 2,
+      wobbleSpeed: 0.12 + Math.random() * 0.14,
+      alpha: 1,
+      decay: shape === "spark" ? 0.02 + Math.random() * 0.015 : 0.006 + Math.random() * 0.008,
+      gravity: shape === "spark" ? 0.12 : 0.22 + Math.random() * 0.08,
+      drag: shape === "spark" ? 0.96 : 0.985,
+    });
+  }
+
+  private start() {
+    if (this.isRunning) return;
+    this.isRunning = true;
+    this.lastTime = 0;
+    this.animationFrameId = requestAnimationFrame(this.frame);
+  }
+
+  private frame = (now: number) => {
+    const dt = this.lastTime === 0 ? 1 : normalizeFrameDelta(now - this.lastTime);
+    this.lastTime = now;
+    this.step(dt);
+    this.render();
 
     if (this.particles.length > 0) {
-      this.animationFrameId = requestAnimationFrame(this.loop);
+      this.animationFrameId = requestAnimationFrame(this.frame);
     } else {
       this.isRunning = false;
       this.animationFrameId = null;
     }
   };
 
-  public destroy() {
-    if (this.animationFrameId !== null) {
-      cancelAnimationFrame(this.animationFrameId);
+  /**
+   * Simülasyonu `dt` kare (60fps birimi; 1 = 16.67ms) ilerletir. Kare
+   * hızından bağımsız: dt=2 ile 30 adım, dt=1 ile 60 adımla aynı yere gelir.
+   * Public: testler ve harici zamanlayıcılar doğrudan sürebilsin.
+   */
+  public step(dt: number) {
+    const floor = this.height + 60;
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      const drag = Math.pow(p.drag, dt);
+      p.vx *= drag;
+      p.vy = p.vy * drag + p.gravity * dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.tilt += p.tiltSpeed * dt;
+      p.wobble += p.wobbleSpeed * dt;
+      p.alpha -= p.decay * dt;
+
+      if (p.alpha <= 0 || p.y > floor) {
+        // Sırasız silme: son elemanı buraya taşı (splice O(n) yerine O(1))
+        const last = this.particles.pop()!;
+        if (i < this.particles.length) this.particles[i] = last;
+      }
     }
+  }
+
+  private render() {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const dpr = this.dpr;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, this.width, this.height);
+
+    for (let i = 0; i < this.particles.length; i++) {
+      const p = this.particles[i];
+      const cos = Math.cos(p.tilt);
+      const sin = Math.sin(p.tilt);
+      ctx.setTransform(dpr * cos, dpr * sin, -dpr * sin, dpr * cos, p.x * dpr, p.y * dpr);
+      ctx.globalAlpha = p.alpha < 1 ? Math.max(0, p.alpha) : 1;
+
+      if (p.shape === "rect") {
+        // Takla: genişlik cos(wobble) ile daralıp genişler, arka yüz koyu
+        const flip = Math.cos(p.wobble);
+        const w = p.size * Math.max(0.12, Math.abs(flip));
+        const h = p.size * 0.62;
+        ctx.fillStyle = flip >= 0 ? p.color : p.colorBack;
+        ctx.fillRect(-w / 2, -h / 2, w, h);
+      } else if (p.shape === "circle") {
+        const flip = Math.cos(p.wobble);
+        const rx = (p.size / 2) * Math.max(0.15, Math.abs(flip));
+        ctx.fillStyle = flip >= 0 ? p.color : p.colorBack;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, rx, p.size / 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Kıvılcım: additive blending ile ucuz "neon" parlaması
+        ctx.globalCompositeOperation = "lighter";
+        ctx.fillStyle = p.color;
+        this.star(ctx, p.size * 2.2, 0.28);
+        ctx.fillStyle = "#ffffff";
+        this.star(ctx, p.size, 1);
+        ctx.globalCompositeOperation = "source-over";
+      }
+    }
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 1;
+  }
+
+  /** Dört uçlu yıldız; `alphaMul` dış hâle için düşük opaklık. */
+  private star(ctx: CanvasRenderingContext2D, s: number, alphaMul: number) {
+    const base = ctx.globalAlpha;
+    ctx.globalAlpha = base * alphaMul;
+    const t = s / 3;
+    ctx.beginPath();
+    ctx.moveTo(0, -s);
+    ctx.lineTo(t, -t);
+    ctx.lineTo(s, 0);
+    ctx.lineTo(t, t);
+    ctx.lineTo(0, s);
+    ctx.lineTo(-t, t);
+    ctx.lineTo(-s, 0);
+    ctx.lineTo(-t, -t);
+    ctx.closePath();
+    ctx.fill();
+    ctx.globalAlpha = base;
+  }
+
+  private handleVisibility = () => {
+    if (typeof document === "undefined") return;
+    if (document.hidden) {
+      if (this.animationFrameId !== null) cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+      this.isRunning = false;
+    } else if (this.particles.length > 0) {
+      this.start();
+    }
+  };
+
+  public destroy() {
+    if (this.animationFrameId !== null) cancelAnimationFrame(this.animationFrameId);
+    if (typeof document !== "undefined") {
+      document.removeEventListener("visibilitychange", this.handleVisibility);
+    }
+    this.animationFrameId = null;
     this.particles = [];
     this.isRunning = false;
+    if (this.ctx && this.canvas) {
+      this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
   }
 }

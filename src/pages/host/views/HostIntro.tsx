@@ -4,6 +4,7 @@ import { SoundManager, sounds } from "../../../lib/audio";
 import { MatrixRain, HackerTerminal } from "../../../components/HackerBoot";
 import type { Player } from "../../../types/database";
 import { useLocale } from "../../../hooks/useLocale";
+import { DURATION, EASE, SPRING } from "../../../lib/motion";
 
 interface HostIntroProps {
   players: Player[];
@@ -105,7 +106,8 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
             key="boot"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 1.5, filter: "blur(10px)" }}
+            exit={{ opacity: 0, scale: 1.5 }}
+            transition={{ duration: DURATION.base, ease: EASE.out }}
             className="flex flex-col items-center gap-4 text-[#00ff00]"
           >
             <h2 className="text-3xl md:text-5xl lg:text-6xl font-black uppercase tracking-widest flex items-center gap-2">
@@ -150,9 +152,12 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
           <motion.div
             key={`player-${currentPlayerIdx}`}
             initial={{ opacity: 0, x: -100, skewX: -20 }}
-            animate={{ opacity: 1, x: 0, skewX: 0, textShadow: "4px 4px 0px rgba(0,255,0,0.5), -4px -4px 0px rgba(255,0,255,0.5)" }}
+            animate={{ opacity: 1, x: 0, skewX: 0 }}
             exit={{ opacity: 0, x: 100, skewX: 20 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: DURATION.fast, ease: EASE.out }}
+            // text-shadow animasyonu compositor'da çalışmaz (her kare paint);
+            // kromatik glitch gölgesi statik, hareket transform ile.
+            style={{ textShadow: "4px 4px 0px rgba(0,255,0,0.5), -4px -4px 0px rgba(255,0,255,0.5)" }}
             className="text-center z-20"
           >
             <div className="text-xl text-[#00ff00] mb-4 opacity-50 uppercase tracking-widest">
@@ -167,12 +172,21 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
         {phase === "countdown" && countdown > 0 && (
           <motion.div
             key={`cd-${countdown}`}
-            initial={{ opacity: 0, scale: 2 }}
-            animate={{ opacity: 1, scale: 1, textShadow: "0 0 50px rgba(0,255,0,1)" }}
-            exit={{ opacity: 0, scale: 0.5 }}
-            transition={{ duration: 0.3 }}
-            className="text-[250px] font-black text-[#00ff00] leading-none z-20"
+            initial={{ opacity: 0, scale: 2.2 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.6 }}
+            transition={SPRING.bouncy}
+            style={{ textShadow: "0 0 50px rgba(0,255,0,1)" }}
+            className="relative text-[250px] font-black text-[#00ff00] leading-none z-20 flex items-center justify-center"
           >
+            {/* Her sayıda dışa yayılan halka: sadece scale + opacity */}
+            <motion.div
+              aria-hidden="true"
+              initial={{ scale: 0.4, opacity: 0.8 }}
+              animate={{ scale: 2.4, opacity: 0 }}
+              transition={{ duration: 0.9, ease: EASE.out }}
+              className="absolute w-[420px] h-[420px] rounded-full border-4 border-[#00ff00]/70 will-change-transform"
+            />
             {countdown}
           </motion.div>
         )}
@@ -182,8 +196,8 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
             key="wow"
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.5, filter: "blur(20px)" }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
+            exit={{ opacity: 0, scale: 1.5 }}
+            transition={{ duration: DURATION.slow, ease: EASE.out }}
             className="relative flex flex-col items-center justify-center z-50 w-full h-full"
           >
             {/* Blinding Flash */}
@@ -227,7 +241,7 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
               <motion.h1 
                 initial={{ y: 50, opacity: 0, scale: 0.8 }}
                 animate={{ y: 0, opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", bounce: 0.7 }}
+                transition={{ ...SPRING.bouncy, delay: 0.2 }}
                 className="text-[120px] md:text-[180px] font-black text-white tracking-tighter uppercase mb-4 text-center leading-none"
                 style={{ textShadow: "0 0 100px rgba(255,77,0,1), 0 0 40px rgba(255,255,255,0.8)" }}
               >
@@ -237,7 +251,7 @@ export function HostIntro({ players, onComplete }: HostIntroProps) {
               <motion.h2
                 initial={{ y: -50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.5, type: "spring", bounce: 0.5 }}
+                transition={{ ...SPRING.bouncy, delay: 0.5 }}
                 className="text-4xl md:text-6xl font-black text-[#00ff00] tracking-[0.5em] uppercase text-center"
                 style={{ textShadow: "0 0 50px rgba(0,255,0,0.8)" }}
               >

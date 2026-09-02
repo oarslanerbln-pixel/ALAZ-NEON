@@ -1,4 +1,5 @@
 import { Suspense, lazy } from "react";
+import { MotionConfig } from "framer-motion";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -62,6 +63,13 @@ function App() {
 
   return (
     <ErrorBoundary>
+    {/*
+      reducedMotion="user": işletim sistemi "hareketi azalt" diyorsa framer
+      transform/layout animasyonlarını atlar, opaklık geçişlerini korur.
+      Tek satırla 80+ dosyadaki tüm motion bileşenleri erişilebilir oluyor
+      (WCAG 2.3.3). CSS keyframe tarafı index.css'teki media query'de.
+    */}
+    <MotionConfig reducedMotion="user">
     <BrowserRouter>
       <VenueProvider>
         <ToastProvider>
@@ -94,6 +102,7 @@ function App() {
         </ToastProvider>
       </VenueProvider>
     </BrowserRouter>
+    </MotionConfig>
     </ErrorBoundary>
   );
 }
