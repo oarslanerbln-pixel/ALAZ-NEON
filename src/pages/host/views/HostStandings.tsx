@@ -113,56 +113,72 @@ export function HostStandings({ room, players, roundResults, onNextStep }: HostS
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={TWEEN.screen}
-      className="flex-1 flex flex-col items-center justify-between py-6 max-w-5xl mx-auto w-full relative z-10"
+      className="h-full flex-1 flex flex-col items-center justify-between py-2 max-w-5xl mx-auto w-full relative z-10 overflow-hidden"
     >
       <ConfettiCanvas ref={confettiRef} autoCannon={false} />
 
+      {/* Header */}
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ ...SPRING.gentle, delay: 0.1 }}
-        className="w-full flex items-center justify-between px-8 py-6 bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-3xl mb-8 shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
+        className="w-full flex items-center justify-between px-8 py-3.5 bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-2xl mb-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)] flex-shrink-0"
       >
-        <div className="flex items-center gap-4">
-          <h2 className="text-3xl font-light text-white uppercase tracking-[0.2em]">
+        <div className="flex items-center gap-3">
+          <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_10px_#00f3ff] animate-pulse" />
+          <h2 className="text-2xl font-bold text-white uppercase tracking-[0.25em]">
             {t("standings.title")}
           </h2>
         </div>
         <div className="flex items-center gap-4 border-l border-white/10 pl-6">
-          <span className="text-white/40 text-sm tracking-widest uppercase">Round</span>
-          <span className="text-white font-light text-3xl tabular-nums">
+          <span className="text-white/40 text-xs tracking-widest uppercase font-bold">Round</span>
+          <span className="text-white font-black text-2xl tabular-nums">
             {room?.current_round}
-            <span className="text-white/20 mx-2">/</span>
+            <span className="text-white/20 mx-1.5">/</span>
             <span className="text-white/60">{room?.total_rounds}</span>
           </span>
         </div>
       </motion.div>
 
+      {/* Leaderboard Rows */}
       <motion.div
         variants={LIST_VARIANTS}
         initial="hidden"
         animate="visible"
-        className="flex-1 w-full flex flex-col overflow-y-auto pr-4 pb-10 space-y-4"
-        style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.2) transparent" }}
+        className="flex-1 w-full flex flex-col overflow-y-auto pr-2 pb-2 space-y-2.5 min-h-0 custom-scrollbar"
       >
         <LayoutGroup>
           {rows.map((item, index) => {
             const isFirst = revealed && index === 0;
+            const isSecond = revealed && index === 1;
+            const isThird = revealed && index === 2;
             const prevIdx = previousIndex.get(item.id) ?? index;
             const delta = revealed ? prevIdx - index : 0; // + : yükseldi
 
-            let rowBg = "bg-white/[0.02] backdrop-blur-2xl border border-white/5 shadow-lg";
+            let rowBg = "bg-white/[0.02] backdrop-blur-2xl border border-white/5 shadow-md";
             let textStyle = "text-white/90";
             let scoreStyle = "text-white/80 font-light";
             let badgeBg = "bg-white/5 text-white/70";
             let rankText = "text-white/30";
 
             if (isFirst) {
-              rowBg = "bg-white/[0.08] backdrop-blur-3xl border border-white/20 shadow-[0_0_40px_rgba(255,255,255,0.1)]";
-              textStyle = "text-white font-medium";
-              scoreStyle = "text-white font-normal";
-              badgeBg = "bg-white/20 text-white font-medium";
-              rankText = "text-white/80";
+              rowBg = "bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-white/[0.02] backdrop-blur-3xl border border-amber-400/50 shadow-[0_0_35px_rgba(251,191,36,0.25)]";
+              textStyle = "text-white font-bold text-glow-gold";
+              scoreStyle = "text-amber-300 font-black text-glow-gold";
+              badgeBg = "bg-gradient-to-br from-amber-400 to-yellow-600 text-black font-black shadow-[0_0_15px_rgba(251,191,36,0.5)]";
+              rankText = "text-amber-400 font-black";
+            } else if (isSecond) {
+              rowBg = "bg-gradient-to-r from-slate-300/15 via-white/5 to-white/[0.02] backdrop-blur-3xl border border-slate-300/40 shadow-[0_0_20px_rgba(255,255,255,0.15)]";
+              textStyle = "text-white font-semibold";
+              scoreStyle = "text-slate-200 font-black";
+              badgeBg = "bg-gradient-to-br from-slate-200 to-slate-400 text-black font-black shadow-[0_0_10px_rgba(255,255,255,0.3)]";
+              rankText = "text-slate-300 font-black";
+            } else if (isThird) {
+              rowBg = "bg-gradient-to-r from-amber-700/15 via-orange-600/5 to-white/[0.02] backdrop-blur-3xl border border-amber-600/30 shadow-[0_0_15px_rgba(217,119,6,0.15)]";
+              textStyle = "text-white/95 font-medium";
+              scoreStyle = "text-amber-400/90 font-bold";
+              badgeBg = "bg-gradient-to-br from-amber-600 to-orange-700 text-white font-bold";
+              rankText = "text-amber-600 font-black";
             }
 
             return (
@@ -171,18 +187,18 @@ export function HostStandings({ room, players, roundResults, onNextStep }: HostS
                 layout
                 variants={ROW_VARIANTS}
                 transition={SPRING.layout}
-                className={`relative w-full flex items-center h-20 shrink-0 overflow-hidden rounded-2xl transition-[background-color,border-color,box-shadow] duration-500 ${rowBg}`}
+                className={`relative w-full flex items-center h-16 md:h-18 shrink-0 overflow-hidden rounded-2xl transition-[background-color,border-color,box-shadow] duration-500 ${rowBg}`}
               >
                 {/* Lider parıltısı: transform-only shimmer */}
                 {isFirst && (
                   <div
                     aria-hidden="true"
-                    className="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer pointer-events-none"
+                    className="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-amber-300/15 to-transparent animate-shimmer pointer-events-none"
                   />
                 )}
 
                 {/* Sıra */}
-                <div className="w-20 h-full flex items-center justify-center border-r border-white/5 relative overflow-hidden">
+                <div className="w-16 h-full flex items-center justify-center border-r border-white/5 relative overflow-hidden">
                   <AnimatePresence mode="popLayout" initial={false}>
                     <motion.span
                       key={index}
@@ -190,16 +206,16 @@ export function HostStandings({ room, players, roundResults, onNextStep }: HostS
                       animate={{ y: 0, opacity: 1 }}
                       exit={{ y: -18, opacity: 0 }}
                       transition={SPRING.snappy}
-                      className={`text-3xl font-light tracking-tighter tabular-nums block ${rankText}`}
+                      className={`text-2xl font-black tracking-tighter tabular-nums block ${rankText}`}
                     >
-                      {index + 1}
+                      {index === 0 && revealed ? "👑" : index + 1}
                     </motion.span>
                   </AnimatePresence>
                 </div>
 
                 {/* Rozet */}
-                <div className="w-20 h-full flex items-center justify-center border-r border-white/5">
-                  <div className={`w-12 h-12 flex items-center justify-center rounded-full text-sm tracking-widest ${badgeBg}`}>
+                <div className="w-16 h-full flex items-center justify-center border-r border-white/5">
+                  <div className={`w-10 h-10 flex items-center justify-center rounded-full text-xs font-mono tracking-wider ${badgeBg}`}>
                     {upperTL(item.name.substring(0, 3))}
                   </div>
                 </div>
@@ -207,11 +223,11 @@ export function HostStandings({ room, players, roundResults, onNextStep }: HostS
                 {/* İsim + tur puanı + sıra değişimi */}
                 <div className="flex-1 flex flex-col justify-center px-6 h-full">
                   <div className="flex items-center gap-4">
-                    <h3 className={`text-2xl tracking-widest uppercase ${textStyle}`}>{item.name}</h3>
+                    <h3 className={`text-xl tracking-wider uppercase truncate ${textStyle}`}>{item.name}</h3>
                     {item.roundScore > 0 && (
                       <motion.span
                         variants={ROUND_CHIP_VARIANTS}
-                        className="text-sm font-medium text-white/80 bg-white/10 px-3 py-1 rounded-full border border-white/20 tabular-nums"
+                        className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/30 tabular-nums shadow-[0_0_8px_rgba(52,211,153,0.3)]"
                       >
                         +{item.roundScore}
                       </motion.span>
@@ -224,11 +240,11 @@ export function HostStandings({ room, players, roundResults, onNextStep }: HostS
                           initial="hidden"
                           animate="visible"
                           exit="exit"
-                          className={`text-xs font-bold tracking-widest px-2 py-1 rounded-full tabular-nums ${
-                            delta > 0 ? "text-emerald-300 bg-emerald-500/15" : "text-rose-300/80 bg-rose-500/10"
+                          className={`text-xs font-bold tracking-widest px-2 py-0.5 rounded-full tabular-nums ${
+                            delta > 0 ? "text-emerald-300 bg-emerald-500/20 shadow-[0_0_8px_rgba(52,211,153,0.3)]" : "text-rose-300/80 bg-rose-500/15"
                           }`}
                         >
-                          {delta > 0 ? `▲ ${delta}` : `▼ ${-delta}`}
+                          {delta > 0 ? `▲ +${delta}` : `▼ ${delta}`}
                         </motion.span>
                       )}
                     </AnimatePresence>
@@ -236,8 +252,8 @@ export function HostStandings({ room, players, roundResults, onNextStep }: HostS
                 </div>
 
                 {/* Skor */}
-                <div className="w-40 h-full flex items-center justify-center border-l border-white/5">
-                  <div className={`text-4xl tracking-tighter ${scoreStyle}`}>
+                <div className="w-36 h-full flex items-center justify-center border-l border-white/5">
+                  <div className={`text-3xl tracking-tighter tabular-nums ${scoreStyle}`}>
                     <AnimatedNumber
                       from={item.score - item.roundScore}
                       value={item.score}
@@ -252,16 +268,18 @@ export function HostStandings({ room, players, roundResults, onNextStep }: HostS
         </LayoutGroup>
       </motion.div>
 
+      {/* Docked Next Button */}
       <motion.button
         onClick={onNextStep}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ ...TWEEN.enter, delay: 1.5 }}
-        whileHover={{ scale: 1.04 }}
-        whileTap={{ scale: 0.96 }}
-        className="mt-6 w-full max-w-sm py-5 bg-white text-black hover:bg-gray-100 rounded-full font-medium uppercase tracking-[0.2em] text-lg shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-colors"
+        whileHover={{ scale: 1.03 }}
+        whileTap={{ scale: 0.97 }}
+        className="mt-3 w-full max-w-md py-4 bg-gradient-to-r from-white via-gray-100 to-gray-200 text-black hover:brightness-105 rounded-full font-black uppercase tracking-[0.25em] text-lg shadow-[0_0_35px_rgba(255,255,255,0.3)] transition-all flex-shrink-0 flex items-center justify-center gap-3"
       >
-        {room?.current_round === room?.total_rounds ? t("standings.finishGame") : t("standings.nextRound")}
+        <span>{room?.current_round === room?.total_rounds ? t("standings.finishGame") : t("standings.nextRound")}</span>
+        <span className="text-xl">➔</span>
       </motion.button>
     </motion.div>
   );

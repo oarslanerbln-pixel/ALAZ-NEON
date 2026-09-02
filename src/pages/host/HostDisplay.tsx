@@ -715,7 +715,7 @@ function HostDisplayGame({
         />
       )}
 
-      <div className={`flex-1 flex justify-center relative w-full ${gameState === "standings" || gameState === "finished" ? "items-start pt-8" : "items-center"}`}>
+      <div className="flex-1 flex justify-center items-center relative w-full h-full min-h-0 overflow-hidden">
         <AnimatePresence mode="wait">
           {gameState === "intro" && (
             <motion.div

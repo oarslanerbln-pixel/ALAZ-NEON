@@ -242,30 +242,31 @@ export function HostPodium({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={TWEEN.screen}
-      className="flex flex-col items-center justify-center min-h-full w-full py-20 overflow-y-auto bg-black"
+      className="flex flex-col items-center justify-between h-full w-full py-4 px-8 overflow-hidden bg-black relative select-none"
     >
       <ConfettiCanvas ref={confettiRef} autoCannon={false} />
 
       <motion.h2
-        initial={{ y: -40, opacity: 0, scale: 0.92 }}
+        initial={{ y: -30, opacity: 0, scale: 0.95 }}
         animate={{ y: 0, opacity: 1, scale: 1 }}
         transition={{ ...SPRING.gentle, delay: 0.2 }}
-        className="text-4xl md:text-5xl lg:text-6xl font-light text-white mb-20 uppercase tracking-[0.3em]"
+        className="text-3xl md:text-5xl font-black text-white mb-2 uppercase tracking-[0.3em] text-glow-gold flex-shrink-0"
       >
         {t("podium.title")}
       </motion.h2>
 
-      <div className="flex items-end justify-center w-full max-w-4xl gap-4 h-[450px] border-b-2 border-white/10 relative">
-        <div className="absolute inset-0 bg-gradient-to-t from-alaz-orange/5 to-transparent pointer-events-none" />
+      {/* Podyum Sahnesi */}
+      <div className="flex items-end justify-center w-full max-w-4xl gap-4 h-[330px] border-b-2 border-white/10 relative flex-shrink-0">
+        <div className="absolute inset-0 bg-gradient-to-t from-amber-500/10 via-transparent to-transparent pointer-events-none" />
 
-        {/* Şampiyon spot ışığı: dönen konik gradyan, 1. sıra yükselince belirir */}
+        {/* Şampiyon spot ışığı: dönen konik gradyan */}
         {first && (
           <motion.div
             aria-hidden="true"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: DURATION.cinematic, delay: REVEAL_DELAY[1] + 0.3 }}
-            className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 w-[1100px] h-[1100px] rounded-full podium-spotlight pointer-events-none z-0"
+            className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 w-[900px] h-[900px] rounded-full podium-spotlight pointer-events-none z-0"
           />
         )}
 
@@ -274,13 +275,13 @@ export function HostPodium({
         {third && <Pillar place={3} name={third.name} score={third.score} />}
       </div>
 
-      {/* RECAP CARD MOVED OUT OF PODIUM TO PREVENT OVERLAP */}
+      {/* RECAP CARD (varsa) */}
       {awards && (awards.creative || awards.funny) && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...TWEEN.enter, delay: 3 }}
-          className="mt-12 w-full max-w-md flex justify-center"
+          className="mt-2 w-full max-w-md flex justify-center flex-shrink-0"
         >
           <ShareableRecapCard awards={awards} roomCode={room?.code} />
         </motion.div>
@@ -288,56 +289,57 @@ export function HostPodium({
 
       {/* OYUNUN ENLERI (AWARDS) */}
       <motion.div
-        initial={{ opacity: 0, y: 50 }}
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ ...TWEEN.enter, delay: 3.4 }}
-        className="mt-16 w-full max-w-4xl"
+        className="mt-3 w-full max-w-4xl flex-shrink-0"
       >
-        <h3 className="text-center text-xs font-light text-white/40 uppercase tracking-[0.4em] mb-8">
+        <h3 className="text-center text-[11px] font-bold text-white/50 uppercase tracking-[0.35em] mb-2">
           {t("podium.awardsTitle")}
         </h3>
         <motion.div
           variants={{ hidden: {}, visible: { transition: { staggerChildren: STAGGER.base, delayChildren: 3.6 } } }}
           initial="hidden"
           animate="visible"
-          className="grid grid-cols-1 md:grid-cols-3 gap-8"
+          className="grid grid-cols-1 md:grid-cols-3 gap-4"
         >
           {awardCards.map((card) => (
             <motion.div
               key={card.title}
               variants={listItem}
-              className="bg-white/[0.02] backdrop-blur-2xl border border-white/5 rounded-3xl p-8 flex flex-col items-center justify-center text-center transition-colors hover:bg-white/[0.04]"
+              className="bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-2xl p-3.5 flex flex-col items-center justify-center text-center transition-colors hover:bg-white/[0.06] shadow-lg"
             >
-              <h4 className="text-white font-medium text-sm uppercase tracking-widest mb-1">{card.title}</h4>
-              <p className="text-white/40 text-[10px] font-light uppercase tracking-widest mb-6">{card.desc}</p>
+              <h4 className="text-white font-bold text-xs uppercase tracking-wider mb-0.5">{card.title}</h4>
+              <p className="text-white/40 text-[9px] font-medium uppercase tracking-widest mb-2">{card.desc}</p>
               {card.winner ? (
                 <>
-                  <div className="text-2xl font-light text-white truncate w-full px-2 mx-auto tracking-wider">
+                  <div className="text-lg font-black text-amber-300 truncate w-full px-2 mx-auto tracking-wider">
                     {card.winner.name}
                   </div>
-                  <div className="text-white/60 font-light text-xs mt-2 uppercase tracking-widest tabular-nums">
+                  <div className="text-white/60 font-medium text-[10px] uppercase tracking-widest tabular-nums">
                     {card.winner.count} {card.countLabel}
                   </div>
                 </>
               ) : (
-                <div className="text-white/30 font-light italic text-sm">{card.none}</div>
+                <div className="text-white/30 italic text-xs">{card.none}</div>
               )}
             </motion.div>
           ))}
         </motion.div>
       </motion.div>
 
+      {/* Action Buttons */}
       <motion.div
         id="podium-action-buttons"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: DURATION.slow, delay: 4.6 }}
-        className="mt-16 flex items-center justify-center gap-6 mb-20 relative z-20"
+        className="mt-3 mb-1 flex items-center justify-center gap-5 relative z-20 flex-shrink-0"
       >
         <button
           onClick={handleDownloadPDF}
           disabled={isGeneratingPDF}
-          className="px-8 py-4 border border-white/20 hover:bg-white/5 text-white/80 font-medium rounded-full transition-colors uppercase tracking-widest disabled:opacity-50 flex items-center gap-2"
+          className="px-6 py-3 border border-white/20 hover:bg-white/10 text-white font-semibold rounded-full transition-colors uppercase tracking-widest text-xs disabled:opacity-50 flex items-center gap-2"
         >
           {isGeneratingPDF ? "PDF HAZIRLANIYOR..." : "PDF İNDİR"}
         </button>
@@ -346,9 +348,10 @@ export function HostPodium({
           whileHover={{ scale: 1.04 }}
           whileTap={{ scale: 0.96 }}
           transition={SPRING.stiff}
-          className="px-12 py-4 bg-white hover:bg-gray-200 text-black font-medium rounded-full transition-colors uppercase tracking-[0.2em] shadow-[0_0_30px_rgba(255,255,255,0.2)]"
+          className="px-10 py-3.5 bg-gradient-to-r from-white to-gray-200 hover:brightness-105 text-black font-black rounded-full transition-all uppercase tracking-[0.2em] text-sm shadow-[0_0_35px_rgba(255,255,255,0.3)] flex items-center gap-2"
         >
-          {t("podium.newGame")}
+          <span>{t("podium.newGame")}</span>
+          <span className="text-lg">➔</span>
         </motion.button>
       </motion.div>
     </motion.div>

@@ -34,7 +34,7 @@ function autoRejectLabel(
   }
 }
 
-function CognitiveAnalytics({ results }: { results: RoundResultInfo[] }) {
+function CognitiveAnalyticsStrip({ results }: { results: RoundResultInfo[] }) {
   const { t } = useLocale();
   const avgAccuracy =
     results.length > 0
@@ -64,51 +64,47 @@ function CognitiveAnalytics({ results }: { results: RoundResultInfo[] }) {
         ) / 10
       : 0;
 
+  const mentalScore = Math.min(100, Math.round((avgAccuracy + uniqueDensity * 20) / 1.5));
+
   return (
-    <div className="grid grid-cols-3 gap-6 mb-10">
-      <div className="bg-black/80 p-6 border-t-2 border-alaz-orange relative overflow-hidden group rounded-none shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
-        <div className="absolute inset-0 bg-gradient-to-b from-alaz-orange/20 to-transparent -z-10" />
-        <span className="text-[11px] text-alaz-orange font-black uppercase tracking-[0.3em] block mb-2 opacity-80">
+    <div className="flex items-center justify-between w-full max-w-6xl mx-auto px-6 py-2.5 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-2xl shadow-[0_4px_20px_rgba(0,0,0,0.5)] mb-4">
+      {/* İsabet */}
+      <div className="flex items-center gap-3">
+        <span className="w-2 h-2 rounded-full bg-alaz-orange shadow-[0_0_8px_#ff4d00] animate-pulse" />
+        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">
           {t("review.cognitiveAccuracy")}
         </span>
-        <div className="flex items-baseline gap-2">
-          <span className="text-4xl md:text-5xl font-black text-white tracking-tighter">%{avgAccuracy}</span>
-          <span className="text-[10px] text-gray-400 font-bold tracking-widest uppercase">
-            {t("review.groupAverage")}
-          </span>
-        </div>
+        <span className="text-xl font-black text-white tabular-nums">
+          %{avgAccuracy}
+        </span>
       </div>
-      <div className="bg-black/80 p-6 border-t-2 border-neon-blue relative overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)] rounded-none">
-        <div className="absolute inset-0 bg-gradient-to-b from-neon-blue/20 to-transparent -z-10" />
-        <span className="text-[11px] text-neon-blue font-black uppercase tracking-[0.3em] block mb-2 opacity-80">
+
+      <div className="h-4 w-px bg-white/10" />
+
+      {/* Özgünlük */}
+      <div className="flex items-center gap-3">
+        <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#00f3ff] animate-pulse" />
+        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">
           {t("review.originalityDensity")}
         </span>
-        <div className="flex items-baseline gap-2">
-          <span className="text-4xl md:text-5xl font-black text-white tracking-tighter">
-            {uniqueDensity}
-          </span>
-          <span className="text-[10px] text-gray-400 font-bold tracking-widest uppercase">
-            {t("review.uniquePerPlayer")}
-          </span>
-        </div>
+        <span className="text-xl font-black text-cyan-400 tabular-nums">
+          {uniqueDensity} <span className="text-xs text-white/40 font-normal">{t("review.uniquePerPlayer")}</span>
+        </span>
       </div>
-      <div className="bg-black/80 p-6 border-t-2 border-white/40 relative overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)] rounded-none">
-        <span className="text-[11px] text-gray-400 font-black uppercase tracking-[0.3em] block mb-2 opacity-80">
+
+      <div className="h-4 w-px bg-white/10" />
+
+      {/* Zihinsel Performans */}
+      <div className="flex items-center gap-3">
+        <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse" />
+        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">
           {t("review.mentalPerformance")}
         </span>
-        <div className="flex items-center gap-4 mt-2">
-          <span className="text-4xl md:text-5xl font-black text-white tracking-tighter">
-            %{Math.round((avgAccuracy + uniqueDensity * 20) / 1.5)}
-          </span>
-          <div className="flex-1 h-1 bg-white/10 rounded-none overflow-hidden mt-1">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{
-                width: `${Math.min(100, (avgAccuracy + uniqueDensity * 20) / 1.5)}%`,
-              }}
-              className="h-full bg-white shadow-[0_0_15px_#fff]"
-            />
-          </div>
+        <span className="text-xl font-black text-emerald-400 tabular-nums">
+          %{mentalScore}
+        </span>
+        <div className="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden ml-1">
+          <div style={{ width: `${mentalScore}%` }} className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 shadow-[0_0_10px_#34d399]" />
         </div>
       </div>
     </div>
@@ -164,20 +160,20 @@ export function HostReview({
       animate={{ opacity: 1 }}
       className="w-full h-full flex flex-col"
     >
-      <div className="text-center mb-8">
-        <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-[0.2em] text-glow-ultra-alaz mb-2">
+      <div className="text-center mb-2">
+        <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-[0.2em] text-glow-ultra-alaz">
           {t("review.roundSummary", room?.current_round || 1)}
         </h2>
-        <p className="text-gray-400 text-lg uppercase font-black tracking-widest">
+        <p className="text-gray-400 text-xs uppercase font-bold tracking-widest">
           {t("review.systemAnalyzed")}
         </p>
       </div>
 
       <div className="w-full max-w-7xl mx-auto px-6">
-        <CognitiveAnalytics results={roundResults} />
+        <CognitiveAnalyticsStrip results={roundResults} />
       </div>
 
-      <div className="flex-1 flex gap-8 overflow-hidden w-full max-w-7xl mx-auto pb-10">
+      <div className="flex-1 flex gap-6 overflow-hidden w-full max-w-7xl mx-auto min-h-0 pb-2 px-4">
         {/* Leaderboard */}
         <div className="w-1/3 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar">
           <h3 className="text-sm font-black text-gray-500 uppercase tracking-widest mb-2 sticky top-0 bg-dark-bg/80 backdrop-blur-md py-2 z-10 w-full">
@@ -472,20 +468,24 @@ export function HostReview({
               </div>
             )}
           </div>
-
-          <div className="mt-8 relative z-10 flex justify-end">
-            <motion.button
-              onClick={onNextStep}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full py-6 bg-alaz-orange text-black font-black text-2xl rounded-none uppercase tracking-[0.2em] shadow-[0_0_40px_rgba(255,77,0,0.4)] transition-all hover:bg-white hover:shadow-[0_0_40px_rgba(255,255,255,0.4)]"
-            >
-              {room!.current_round >= room!.total_rounds
-                ? t("review.seeResults")
-                : t("review.nextRound")}
-            </motion.button>
-          </div>
         </div>
+      </div>
+
+      {/* Docked TV Action Bar */}
+      <div className="relative z-20 flex justify-center w-full max-w-xl mx-auto pt-3 pb-2 flex-shrink-0">
+        <motion.button
+          onClick={onNextStep}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="w-full py-4 bg-gradient-to-r from-alaz-orange to-amber-500 text-black font-black text-xl rounded-full uppercase tracking-[0.25em] shadow-[0_0_35px_rgba(255,77,0,0.4)] transition-all hover:brightness-110 flex items-center justify-center gap-3"
+        >
+          <span>
+            {room!.current_round >= room!.total_rounds
+              ? t("review.seeResults")
+              : t("review.nextRound")}
+          </span>
+          <span className="text-2xl">➔</span>
+        </motion.button>
       </div>
     </motion.div>
   );
