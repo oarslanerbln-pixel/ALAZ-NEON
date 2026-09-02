@@ -2,6 +2,7 @@ import type { Locale } from "../lib/i18n";
 import type { FieldValue, Timestamp } from "firebase/firestore";
 
 export type RoomStatus =
+  | "night_lobby"
   | "lobby"
   | "playing"
   | "review"
@@ -61,9 +62,11 @@ export type GameType = "scattegories" | "quiz" | "bomb" | "sensor" | "wheel" | "
 export interface QuizQuestion {
   id: string;
   text: string;
+  category?: string;
   options: { A: string; B: string; C: string; D: string };
   correctOption: "A" | "B" | "C" | "D";
   difficulty: 1 | 2 | 3;
+  funFact?: string;
 }
 
 export interface Room {

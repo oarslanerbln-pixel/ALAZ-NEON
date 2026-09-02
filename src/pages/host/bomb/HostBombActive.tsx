@@ -19,26 +19,17 @@ export function HostBombActive({ room, players, onExplode }: Props) {
   const onExplodeRef = useRef(onExplode);
   const bombControls = useAnimation();
   const containerControls = useAnimation();
+
+  function remainingInterval(time: number) {
+    if (time <= 3) return 400;
+    if (time <= 6) return 600;
+    return 1000;
+  }
   
   useEffect(() => {
     onExplodeRef.current = onExplode;
   }, [onExplode]);
 
-  useEffect(() => {
-    // Sound loop for ticking
-    const ticker = setInterval(() => {
-      SoundManager.getInstance().playSFX(sounds.VOTE_TICK);
-    }, 1000); // gets faster in a real advanced implementation, but simple tick for now
-    return () => clearInterval(ticker);
-  }, []);
-
-  // Bomba el değiştirdiğinde (targetPlayer değişince) Firestore'daki
-  // round_end_time bir an için ESKİ oyuncuya ait kalıyor — asıl güncelleme
-  // aşağıdaki "bomb passing" effect'inden ayrı bir ağ isteğiyle geliyor.
-  // O kısa pencerede bu effect yeniden başlıyor ama hâlâ eski (süresi
-  // dolmuş) round_end_time'ı görüyor; korumasız bırakılırsa bombayı yeni
-  // devralan oyuncuda anında patlatıyordu. targetJustHandedOff bayrağı bu
-  // ilk (bayat) tick'i görmezden gelip taze round_end_time'ı bekliyor.
   const lastAppliedTargetIdRef = useRef<string | undefined>(targetPlayer?.id);
 
   useEffect(() => {
@@ -52,31 +43,35 @@ export function HostBombActive({ room, players, onExplode }: Props) {
       const remaining = Math.max(0, Math.ceil((room.round_end_time! - now) / 1000));
       setTimeLeft(remaining);
 
-      // Intensity based on time left
+      // Sound and intensity based on time left
       if (remaining <= 5 && remaining > 0) {
+        SoundManager.getInstance().playSFX(sounds.TICK_URGENT);
         bombControls.start({
-          scale: [1, 1.1, 1],
-          transition: { duration: 0.3, repeat: Infinity }
+          scale: [1, 1.15, 1],
+          rotate: [0, -5, 5, -5, 0],
+          transition: { duration: 0.25, repeat: Infinity }
         });
         containerControls.start({
-          x: [0, -10, 10, -10, 10, 0],
-          y: [0, 10, -10, 10, -10, 0],
+          x: [0, -12, 12, -12, 12, 0],
+          y: [0, 12, -12, 12, -12, 0],
           transition: { duration: 0.2, repeat: Infinity }
         });
-      } else if (remaining === 0) {
+      } else {
+        SoundManager.getInstance().playSFX(sounds.VOTE_TICK);
+      }
+
+      if (remaining === 0) {
         if (targetJustHandedOff) {
-          // Give the fresh round_end_time write one more tick to land instead
-          // of exploding the player who just received the bomb.
           targetJustHandedOff = false;
           return;
         }
         clearInterval(interval);
         onExplodeRef.current(targetPlayer.id);
       }
-    }, 100); // 100ms for smooth updates
+    }, remainingInterval(timeLeft));
 
     return () => clearInterval(interval);
-  }, [room.round_end_time, targetPlayer, bombControls, containerControls]);
+  }, [room.round_end_time, targetPlayer, bombControls, containerControls, timeLeft]);
 
   // Handle bomb passing animation (when bomb_target_player changes)
   const prevTargetPlayer = useRef(room.bomb_target_player);
@@ -84,15 +79,15 @@ export function HostBombActive({ room, players, onExplode }: Props) {
     if (prevTargetPlayer.current !== room.bomb_target_player) {
       SoundManager.getInstance().playSFX(sounds.SUCCESS);
       bombControls.start({
-        x: [0, 500, -500, 0], // Swoosh effect
+        x: [0, 500, -500, 0],
         opacity: [1, 0, 0, 1],
-        transition: { duration: 0.4 }
+        transition: { duration: 0.35 }
       });
       prevTargetPlayer.current = room.bomb_target_player;
 
-      // Update timer and multiplier on the HOST side (Single Source of Truth)
-      const speedMultiplier = Math.max(0.3, (room.bomb_speed_multiplier || 1.0) * 0.95);
-      const newTime = 15000 * speedMultiplier;
+      // Update timer and multiplier on the HOST side
+      const speedMultiplier = Math.max(0.35, (room.bomb_speed_multiplier || 1.0) * 0.95);
+      const newTime = 14000 * speedMultiplier;
       updateDoc(doc(db, "rooms", room.id), {
         bomb_speed_multiplier: speedMultiplier,
         round_end_time: Date.now() + newTime
@@ -104,162 +99,219 @@ export function HostBombActive({ room, players, onExplode }: Props) {
   const handleReject = async () => {
     if (!room.previous_bomb_target_player) return;
     
-    // Penalize the player who wrote the nonsense word by sending the bomb back with just 3 seconds!
-    SoundManager.getInstance().playSFX(sounds.FAILURE); // Play buzzer
+    SoundManager.getInstance().playSFX(sounds.FAILURE);
     try {
       await updateDoc(doc(db, "rooms", room.id), {
         bomb_target_player: room.previous_bomb_target_player,
-        round_end_time: Date.now() + 3000, // 3 seconds penalty fuse!
-        previous_bomb_target_player: null // Prevent spamming reject
+        round_end_time: Date.now() + 3500,
+        previous_bomb_target_player: null
       });
     } catch (err) {
       console.error("Failed to reject word:", err);
     }
   };
 
-
   if (!targetPlayer) return null;
 
   const currentLives = targetPlayer.lives !== undefined ? targetPlayer.lives : 3;
+  const usedWords = room.used_words || [];
 
   return (
     <motion.div 
       animate={containerControls}
-      className={`flex-1 flex flex-col items-center justify-center min-h-screen relative overflow-hidden transition-colors duration-300 ${timeLeft <= 3 ? 'bg-[#1a0005]' : 'bg-[#030000]'}`}
+      className={`flex-1 flex flex-col items-center justify-between min-h-screen p-8 relative overflow-hidden transition-colors duration-300 ${
+        timeLeft <= 4 ? 'bg-[#200008]' : 'bg-[#050002]'
+      }`}
     >
-      {/* Dynamic Background Pulse */}
+      {/* Background Pulse Effect */}
       <motion.div 
         animate={{ 
-          scale: timeLeft <= 5 ? [1, 1.2, 1] : [1, 1.05, 1],
-          opacity: timeLeft <= 5 ? [0.4, 0.8, 0.4] : [0.2, 0.4, 0.2]
+          scale: timeLeft <= 5 ? [1, 1.25, 1] : [1, 1.05, 1],
+          opacity: timeLeft <= 5 ? [0.5, 0.9, 0.5] : [0.2, 0.4, 0.2]
         }}
         transition={{ duration: Math.max(0.2, timeLeft / 10), repeat: Infinity }}
-        className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,0,60,0.15),transparent_70%)] pointer-events-none mix-blend-screen" 
+        className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,0,60,0.2),transparent_70%)] pointer-events-none mix-blend-screen" 
       />
       
-      {/* Scanlines */}
-      <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.2)_50%)] bg-[length:100%_4px] pointer-events-none opacity-50" />
-      
-      {/* Top Header */}
-      <div className="absolute top-10 w-full flex flex-col items-center justify-center z-20">
-        <h2 className="text-2xl font-bold text-gray-500 uppercase tracking-[0.5em] mb-2">{t("bomb.category")}</h2>
-        <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]">
-          {room.active_letter}
+      {/* Scanlines & Grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.3)_50%)] bg-[length:100%_4px] pointer-events-none opacity-40" />
+
+      {/* TOP: Category Header */}
+      <div className="w-full flex flex-col items-center justify-center z-20 pt-4">
+        <span className="px-6 py-1.5 rounded-full border border-red-500/40 bg-red-500/10 text-red-400 font-mono tracking-widest text-sm uppercase font-bold mb-2">
+          💣 {t("bomb.category")} 💣
+        </span>
+        <h1 className="text-5xl md:text-6xl font-black text-white uppercase tracking-wider drop-shadow-[0_0_25px_rgba(255,0,60,0.9)]">
+          {room.active_letter || "GENEL"}
         </h1>
       </div>
 
-      {/* Main Bomb Area */}
-      <div className="flex flex-col items-center justify-center z-10 w-full max-w-4xl px-4 mt-8">
-        <motion.div
-          animate={bombControls}
-          className="relative flex items-center justify-center"
-        >
-          {/* Bomb SVG */}
-          <div className="relative">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: Math.max(0.5, timeLeft / 2), repeat: Infinity, ease: "linear" }}
-              className="absolute inset-0 rounded-full border-4 border-dashed border-[#ff003c]/30"
-            />
-            <svg 
-              width="350" 
-              height="350" 
-              viewBox="0 0 24 24" 
-              fill={timeLeft <= 3 ? "rgba(255,0,60,0.2)" : "none"} 
-              stroke={timeLeft <= 5 ? "#ff003c" : "#ff4d00"} 
-              strokeWidth="1" 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              style={{ filter: `drop-shadow(0px 0px ${timeLeft <= 5 ? '40px' : '20px'} rgba(255,0,60,0.8))` }}
-              className="transition-all duration-300"
-            >
-              <circle cx="11.5" cy="11.5" r="9"/>
-              <path d="m19.5 4.5 1.5 1.5"/>
-              <path d="m21.5 1.5-1.5 1.5"/>
-              <path d="M19.5 1.5c-1 1-2 2-3 2s-3-2-5-2-4 2-5 2"/>
-              <path d="M19 8h2"/>
-            </svg>
+      {/* MIDDLE: Left (Players Status) + Center (Bomb) + Right (Stats) */}
+      <div className="w-full max-w-7xl flex items-center justify-between z-10 px-6 gap-8">
+        
+        {/* Left Side: Players Roster & Lives */}
+        <div className="w-72 bg-black/60 border border-white/10 p-5 rounded-2xl backdrop-blur-md hidden lg:flex flex-col gap-3 shadow-[0_0_30px_rgba(0,0,0,0.6)]">
+          <h3 className="text-xs font-mono uppercase tracking-widest text-gray-400 font-bold mb-1">
+            ⚡ OYUNCULAR ({players.length})
+          </h3>
+          <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
+            {players.map((p) => {
+              const pLives = p.lives !== undefined ? p.lives : 3;
+              const isTurn = p.id === targetPlayer.id;
+              const isEliminated = pLives <= 0;
 
-            {/* Timer Display inside the Bomb */}
-            <div className="absolute inset-0 flex items-center justify-center pt-2">
-              <motion.span 
-                key={timeLeft}
-                initial={{ scale: 1.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className={`text-8xl md:text-9xl font-black tabular-nums tracking-tighter ${timeLeft <= 3 ? 'text-white' : 'text-transparent bg-clip-text bg-gradient-to-b from-[#ff4d00] to-[#ff003c]'}`}
-                style={timeLeft <= 3 ? { textShadow: "0 0 40px rgba(255,0,60,1)" } : {}}
+              return (
+                <div 
+                  key={p.id}
+                  className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                    isTurn 
+                      ? "bg-red-600/30 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.6)] scale-105" 
+                      : isEliminated
+                      ? "bg-black/30 border-white/5 opacity-30 grayscale"
+                      : "bg-white/5 border-white/10"
+                  }`}
+                >
+                  <span className={`font-bold text-base truncate max-w-[120px] ${isTurn ? "text-white font-black" : "text-gray-300"}`}>
+                    {p.nickname}
+                  </span>
+                  <div className="flex gap-1">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <span key={i} className="text-sm">
+                        {i < pLives ? "❤️" : "🖤"}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Center: Glowing Bomb with Urgency Countdown */}
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <motion.div
+            animate={bombControls}
+            className="relative flex items-center justify-center"
+          >
+            <div className="relative">
+              {/* Spinning Fuse Ring */}
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: Math.max(0.4, timeLeft / 2), repeat: Infinity, ease: "linear" }}
+                className="absolute -inset-6 rounded-full border-4 border-dashed border-red-500/40"
+              />
+
+              {/* Bomb Icon */}
+              <svg 
+                width="340" 
+                height="340" 
+                viewBox="0 0 24 24" 
+                fill={timeLeft <= 4 ? "rgba(255,0,60,0.25)" : "none"} 
+                stroke={timeLeft <= 4 ? "#ff003c" : "#ff4d00"} 
+                strokeWidth="1.2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                style={{ filter: `drop-shadow(0px 0px ${timeLeft <= 4 ? '50px' : '25px'} rgba(255,0,60,0.9))` }}
+                className="transition-all duration-200"
               >
-                {timeLeft}
-              </motion.span>
+                <circle cx="11.5" cy="11.5" r="9"/>
+                <path d="m19.5 4.5 1.5 1.5"/>
+                <path d="m21.5 1.5-1.5 1.5"/>
+                <path d="M19.5 1.5c-1 1-2 2-3 2s-3-2-5-2-4 2-5 2"/>
+                <path d="M19 8h2"/>
+              </svg>
+
+              {/* Timer Text inside the Bomb */}
+              <div className="absolute inset-0 flex items-center justify-center pt-2">
+                <motion.span 
+                  key={timeLeft}
+                  initial={{ scale: 1.4, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className={`text-8xl md:text-9xl font-black tabular-nums tracking-tighter ${
+                    timeLeft <= 4 ? 'text-white animate-pulse drop-shadow-[0_0_40px_rgba(255,0,60,1)]' : 'text-transparent bg-clip-text bg-gradient-to-b from-[#ff7700] to-[#ff003c]'
+                  }`}
+                >
+                  {timeLeft}
+                </motion.span>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Current Target Player Card */}
+          <div className="mt-8 text-center bg-black/60 px-10 py-6 rounded-3xl backdrop-blur-md border-2 border-red-500/50 shadow-[0_0_50px_rgba(255,0,60,0.25)] relative w-full max-w-md">
+            <span className="text-xs font-mono font-bold text-[#ff4d00] uppercase tracking-[0.4em] block mb-2">
+              {t("bomb.whoseTurn")}
+            </span>
+            <motion.h2 
+              key={targetPlayer.id}
+              initial={{ scale: 0.7, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", bounce: 0.5 }}
+              className="text-4xl md:text-5xl font-black text-white uppercase tracking-tight drop-shadow-[0_0_20px_rgba(255,255,255,0.7)]"
+            >
+              {targetPlayer.nickname}
+            </motion.h2>
+            
+            <div className="flex gap-2 justify-center mt-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <span key={i} className="text-2xl">
+                  {i < currentLives ? "❤️" : "🖤"}
+                </span>
+              ))}
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Target Player Display */}
-        <div className="mt-12 text-center bg-black/40 p-8 rounded-3xl backdrop-blur-md border border-[#ff003c]/20 shadow-[0_0_50px_rgba(255,0,60,0.1)] relative w-full max-w-lg">
-          {/* Corner borders */}
-          <div className="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-[#ff003c]" />
-          <div className="absolute -top-2 -right-2 w-4 h-4 border-t-2 border-r-2 border-[#ff003c]" />
-          <div className="absolute -bottom-2 -left-2 w-4 h-4 border-b-2 border-l-2 border-[#ff003c]" />
-          <div className="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-[#ff003c]" />
-
-          <p className="text-sm font-bold text-[#ff4d00] uppercase tracking-[0.4em] mb-4">{t("bomb.whoseTurn")}</p>
-          <motion.h2 
-            key={targetPlayer.id}
-            initial={{ scale: 0.5, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            transition={{ type: "spring", bounce: 0.6 }}
-            className="text-5xl md:text-6xl font-black text-white uppercase tracking-tighter drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]"
-          >
-            {targetPlayer.nickname}
-          </motion.h2>
-          
-          <div className="flex gap-2 justify-center mt-6">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <svg 
-                key={i}
-                xmlns="http://www.w3.org/2000/svg" 
-                width="32" 
-                height="32" 
-                viewBox="0 0 24 24" 
-                fill={i < currentLives ? "#ff003c" : "transparent"} 
-                stroke={i < currentLives ? "#ff003c" : "#333"} 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
-                className={i < currentLives ? "drop-shadow-[0_0_10px_rgba(255,0,60,0.8)]" : ""}
+        {/* Right Side: Host Actions & Reject Tool */}
+        <div className="w-72 hidden lg:flex flex-col items-center justify-center">
+          <AnimatePresence>
+            {room.previous_bomb_target_player && (
+              <motion.button
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                onClick={handleReject}
+                className="w-full py-5 px-6 bg-red-950/90 hover:bg-red-900 border-2 border-red-500 rounded-2xl backdrop-blur-md flex flex-col items-center gap-2 shadow-[0_0_30px_rgba(239,68,68,0.5)] transition-all transform hover:scale-105 active:scale-95 group"
               >
-                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-              </svg>
-            ))}
-          </div>
+                <span className="text-3xl animate-bounce">❌</span>
+                <span className="text-red-400 font-black tracking-widest text-sm uppercase text-center">
+                  {t("bomb.rejectWord")}
+                </span>
+                <span className="text-[10px] text-gray-400 font-mono">
+                  (Bombayı geri gönderir - 3.5s)
+                </span>
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
-      {/* Host Reject Button (Anti-Spam / Verification) */}
-      <AnimatePresence>
-        {room.previous_bomb_target_player && (
-          <motion.div
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 50, opacity: 0 }}
-            className="absolute bottom-8 z-30"
-          >
-            <button
-              onClick={handleReject}
-              className="group relative px-8 py-4 bg-red-950/80 hover:bg-red-900 border border-red-500 rounded-full backdrop-blur-md flex items-center gap-3 overflow-hidden transition-all duration-300"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-red-500/0 via-red-500/20 to-red-500/0 opacity-0 group-hover:opacity-100 group-hover:animate-shine" />
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff003c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-pulse">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="15" y1="9" x2="9" y2="15"/>
-                <line x1="9" y1="9" x2="15" y2="15"/>
-              </svg>
-              <span className="text-red-500 font-black tracking-widest">{t("bomb.rejectWord")}</span>
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* BOTTOM: Live Horizontal Word Chain */}
+      <div className="w-full max-w-6xl z-20 mt-4">
+        <div className="bg-black/70 border border-white/15 p-4 rounded-2xl backdrop-blur-md">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-xs font-mono font-bold text-amber-400 uppercase tracking-widest">
+              🔥 KELİME ZİNCİRİ ({usedWords.length})
+            </span>
+          </div>
+          <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none">
+            {usedWords.length === 0 ? (
+              <span className="text-sm text-gray-500 font-mono">İlk kelime bekleniyor...</span>
+            ) : (
+              usedWords.slice(-8).map((w, idx) => (
+                <div key={idx} className="flex items-center gap-2 shrink-0">
+                  <span className="px-3.5 py-1.5 rounded-lg bg-red-600/20 border border-red-500/40 text-white font-bold text-sm">
+                    {w}
+                  </span>
+                  {idx < Math.min(usedWords.length - 1, 7) && (
+                    <span className="text-gray-600 text-xs">➔</span>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
     </motion.div>
   );
 }

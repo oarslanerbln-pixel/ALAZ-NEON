@@ -536,6 +536,18 @@
   opacity: 0.4;
 }
 
+/* Luxury flowing gradient animation */
+@keyframes gradient-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-gradient-flow {
+  background-size: 250% 250%;
+  animation: gradient-flow 6s ease infinite;
+}
+
 /* custom-scrollbar: Dark premium styled scrollbar */
 .custom-scrollbar {
   scrollbar-width: thin;

@@ -4,8 +4,9 @@ import type { Room, Player } from "../../../types/database";
 import { db } from "../../../lib/firebase";
 import { doc, updateDoc, runTransaction } from "firebase/firestore";
 import { useToast } from "../../../contexts/ToastContextCore";
-import { NeonIcon } from "../../../components/NeonIcon";
 import { useLocale } from "../../../hooks/useLocale";
+import { haptics } from "../../../lib/haptics";
+import { SoundManager, sounds } from "../../../lib/audio";
 
 interface Props {
   room: Room;
@@ -32,11 +33,8 @@ export function PlayerSensorController({ room, player }: Props) {
     
     isSubmittingRef.current = true;
     setIsSubmitting(true);
-    
-    // Optimistic UI vibration - Heavy impact
-    if (navigator.vibrate) {
-      navigator.vibrate([200, 100, 200]);
-    }
+    haptics.impact();
+    SoundManager.getInstance().playSFX(sounds.SIREN);
     
     try {
       const roomRef = doc(db, "rooms", room.id);
@@ -47,7 +45,7 @@ export function PlayerSensorController({ room, player }: Props) {
 
         const data = roomDoc.data();
         if (data.status !== "sensor_active") {
-          throw new Error("Geç kaldın!"); // Someone else buzzed first
+          throw new Error("Geç kaldın!");
         }
 
         transaction.update(roomRef, {
@@ -60,15 +58,14 @@ export function PlayerSensorController({ room, player }: Props) {
       console.error(err);
       if (err instanceof Error && err.message !== "Geç kaldın!") {
         showToast(t("sensor.toastError"), "error");
-      } else if (err instanceof Error && err.message === "Geç kaldın!") {
-        // Light buzz to signify failure to be first
-        if (navigator.vibrate) navigator.vibrate([50]);
+      } else {
+        haptics.tap();
       }
     } finally {
       setTimeout(() => {
         isSubmittingRef.current = false;
         setIsSubmitting(false);
-      }, 500);
+      }, 400);
     }
   };
 
@@ -78,6 +75,9 @@ export function PlayerSensorController({ room, player }: Props) {
 
     isSubmittingRef.current = true;
     setIsSubmitting(true);
+    haptics.tap();
+    SoundManager.getInstance().playSFX(sounds.SUCCESS);
+
     try {
       const roomRef = doc(db, "rooms", room.id);
       await updateDoc(roomRef, {
@@ -96,81 +96,59 @@ export function PlayerSensorController({ room, player }: Props) {
   const renderContent = () => {
     if (room.status === "lobby") {
       return (
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex-1 flex flex-col items-center justify-center p-8 text-center z-10 relative"
-        >
-          <div className="bg-white/5 border border-white/10 p-12 rounded-3xl backdrop-blur-xl">
-            <NeonIcon type="rocket" color="pink" className="w-24 h-24 mb-8 opacity-50 mx-auto" />
-            <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 mb-4 uppercase tracking-widest">
-              {t("sensor.title" as never) || "SENSÖR"}
-            </h2>
-            <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">
-              {t("sensor.watchMainScreen" as never) || "Ana Ekranı Takip Edin"}
-            </p>
-          </div>
-        </motion.div>
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center z-10">
+          <div className="text-7xl mb-4 animate-bounce">👁️</div>
+          <h2 className="text-3xl font-black text-purple-400 mb-2 uppercase tracking-widest">
+            SENSÖR
+          </h2>
+          <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">
+            {t("sensor.watchMainScreen" as never) || "Ana Ekranı Takip Edin"}
+          </p>
+        </div>
       );
     }
 
     if (room.status === "sensor_intro") {
       return (
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex-1 flex flex-col items-center justify-center p-8 text-center z-10 relative"
-        >
-          <NeonIcon type="rocket" color="pink" className="w-24 h-24 mb-8 animate-pulse mx-auto shadow-[0_0_50px_rgba(168,85,247,0.5)] rounded-full" />
-          <h2 className="text-4xl font-black text-white mb-4 uppercase tracking-[0.2em] drop-shadow-[0_0_15px_rgba(168,85,247,0.8)]">
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center z-10">
+          <div className="text-7xl mb-4 animate-pulse">⚡</div>
+          <h2 className="text-4xl font-black text-white mb-2 uppercase tracking-wider">
             {t("sensor.getReady")}
           </h2>
-          <p className="text-purple-300 font-bold uppercase tracking-widest text-lg">
+          <p className="text-purple-300 font-mono text-sm uppercase tracking-widest">
             {t("sensor.beFirst")}
           </p>
-        </motion.div>
+        </div>
       );
     }
 
     if (room.status === "sensor_active") {
       return (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex-1 flex flex-col items-center justify-center p-6 z-10 relative"
-        >
-          {/* Animated rings around the button */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="flex-1 flex flex-col items-center justify-center p-6 z-10 w-full max-w-sm mx-auto">
+          {/* Animated Pulsating Neon Buzzer */}
+          <div className="relative flex items-center justify-center my-6">
             <motion.div
-              animate={{ scale: [1, 1.5, 2], opacity: [0.8, 0.3, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
-              className="absolute w-64 h-64 rounded-full border border-red-500/50"
+              animate={{ scale: [1, 1.35, 1], opacity: [0.6, 0, 0.6] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
+              className="absolute -inset-10 rounded-full border-2 border-red-500/60 pointer-events-none"
             />
+            
+            <motion.button
+              whileTap={{ scale: 0.92 }}
+              onClick={handleBuzz}
+              className="w-64 h-64 rounded-full bg-gradient-to-b from-red-500 to-red-800 border-4 border-red-400 shadow-[0_0_60px_rgba(239,68,68,0.8)] flex flex-col items-center justify-center active:brightness-125 transition-all"
+            >
+              <span className="text-5xl mb-2">🚨</span>
+              <span className="text-4xl font-black text-white uppercase tracking-widest drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)]">
+                BUZZER!
+              </span>
+            </motion.button>
           </div>
-
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.9, backgroundColor: "#991b1b" }}
-            onClick={handleBuzz}
-            className="relative z-10 w-64 h-64 rounded-full bg-red-600 border-8 border-red-800 shadow-[0_0_100px_rgba(220,38,38,0.8)] flex flex-col items-center justify-center group overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.2)_0%,transparent_60%)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <span className="text-5xl font-black text-white uppercase tracking-widest drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)]">
-              {t("sensor.buzz")}
-            </span>
-          </motion.button>
           
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="mt-16 bg-white/5 px-6 py-3 rounded-full border border-white/10 backdrop-blur-md"
-          >
-            <p className="text-red-400 font-bold uppercase tracking-widest animate-pulse">
-              {t("sensor.pressIfYouKnow")}
-            </p>
-          </motion.div>
-        </motion.div>
+          <p className="text-red-400 text-xs font-mono font-bold uppercase tracking-widest text-center mt-6 animate-pulse">
+            {t("sensor.pressIfYouKnow")}
+          </p>
+        </div>
       );
     }
 
@@ -179,136 +157,117 @@ export function PlayerSensorController({ room, player }: Props) {
 
       if (isMe) {
         return (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex-1 flex flex-col items-center justify-center p-6 z-10 relative w-full max-w-md mx-auto"
-          >
-            <div className="bg-green-500/10 border border-green-500/30 p-8 rounded-3xl w-full backdrop-blur-xl flex flex-col items-center">
-              <h2 className="text-4xl font-black text-green-400 mb-4 uppercase tracking-[0.2em] drop-shadow-[0_0_15px_rgba(74,222,128,0.5)] text-center">
+          <div className="flex-1 flex flex-col items-center justify-center p-6 z-10 w-full max-w-sm mx-auto">
+            <div className="bg-emerald-950/80 border-2 border-emerald-500 p-6 rounded-3xl w-full backdrop-blur-xl flex flex-col items-center shadow-[0_0_40px_rgba(16,185,129,0.4)]">
+              <span className="text-5xl mb-2">🎯</span>
+              <h2 className="text-2xl font-black text-emerald-400 mb-1 uppercase tracking-wider text-center">
                 {t("sensor.yourTurn")}
               </h2>
-              <p className="text-green-100/70 font-bold uppercase tracking-widest text-sm mb-8 text-center">
+              <p className="text-emerald-200/80 font-mono text-xs uppercase tracking-widest mb-6 text-center">
                 {t("sensor.writeAndSend")}
               </p>
               
-              <form onSubmit={handleSubmitAnswer} className="w-full flex flex-col gap-6">
+              <form onSubmit={handleSubmitAnswer} className="w-full flex flex-col gap-4">
                 <input 
                   type="text"
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value)}
                   placeholder={t("sensor.answerPlaceholder")}
-                  className="w-full bg-black/60 border-2 border-green-500/50 p-6 text-3xl font-black text-center text-white placeholder-white/20 focus:border-green-400 focus:shadow-[0_0_30px_rgba(74,222,128,0.3)] focus:outline-none rounded-2xl transition-all uppercase"
+                  className="w-full bg-black/80 border-2 border-emerald-400/80 p-4 text-2xl font-black text-center text-white placeholder-white/20 focus:outline-none focus:ring-4 focus:ring-emerald-500/50 rounded-2xl uppercase"
                   autoFocus
                 />
                 <button
                   type="submit"
                   disabled={isSubmitting || !answer.trim()}
-                  className="w-full py-5 bg-green-500 text-black font-black uppercase tracking-[0.3em] rounded-xl hover:bg-green-400 disabled:opacity-30 disabled:hover:bg-green-500 transition-all active:scale-95 shadow-[0_0_20px_rgba(74,222,128,0.4)]"
+                  className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-black uppercase tracking-wider text-lg rounded-xl disabled:opacity-40 transition-all active:scale-95 shadow-[0_0_25px_rgba(16,185,129,0.5)]"
                 >
                   {t("sensor.send")}
                 </button>
               </form>
             </div>
-          </motion.div>
+          </div>
         );
       }
 
       return (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex-1 flex flex-col items-center justify-center p-8 z-10 relative text-center"
-        >
-          <div className="bg-red-500/10 border border-red-500/20 p-12 rounded-3xl backdrop-blur-xl">
-            <NeonIcon type="settings" color="red" className="w-24 h-24 mb-8 opacity-80 mx-auto" />
-            <h2 className="text-4xl font-black text-red-500 mb-4 uppercase tracking-widest drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]">
+        <div className="flex-1 flex flex-col items-center justify-center p-8 z-10 text-center">
+          <div className="bg-red-950/40 border border-red-500/30 p-8 rounded-3xl backdrop-blur-xl max-w-xs w-full">
+            <span className="text-6xl mb-4 block animate-spin">🔒</span>
+            <h2 className="text-2xl font-black text-red-500 mb-2 uppercase tracking-wider">
               {t("sensor.locked")}
             </h2>
-            <p className="text-red-200/70 font-bold uppercase tracking-widest">
+            <p className="text-gray-300 font-mono text-xs">
               {t("sensor.someoneElseBuzzed")}
             </p>
           </div>
-        </motion.div>
+        </div>
       );
     }
 
     if (room.status === "sensor_reveal") {
       const isMe = room.sensor_buzzer_player_id === player.id;
       return (
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex-1 flex flex-col items-center justify-center p-8 z-10 relative text-center"
-        >
-          <div className="bg-white/5 border border-white/10 p-12 rounded-3xl backdrop-blur-xl w-full">
+        <div className="flex-1 flex flex-col items-center justify-center p-8 z-10 text-center">
+          <div className="bg-white/5 border border-white/15 p-8 rounded-3xl backdrop-blur-xl w-full max-w-xs">
             {isMe ? (
               <>
-                <NeonIcon type="crown" color="gold" className="w-28 h-28 mb-8 mx-auto shadow-[0_0_30px_rgba(250,204,21,0.5)] rounded-full" />
-                <h2 className="text-5xl font-black text-yellow-400 mb-6 uppercase tracking-widest drop-shadow-md">
+                <span className="text-7xl mb-4 block">👑</span>
+                <h2 className="text-3xl font-black text-amber-400 mb-2 uppercase tracking-wider">
                   {t("sensor.congrats")}
                 </h2>
-                <div className="bg-yellow-500/20 py-3 px-6 rounded-full inline-block">
-                  <p className="text-yellow-200 font-bold uppercase tracking-widest">
-                    {t("sensor.correctWonPoints")}
-                  </p>
-                </div>
+                <span className="text-xs font-mono text-amber-200 uppercase tracking-widest bg-amber-500/20 px-4 py-1.5 rounded-full inline-block">
+                  {t("sensor.correctWonPoints")}
+                </span>
               </>
             ) : (
               <>
-                <h2 className="text-4xl font-black text-white mb-6 uppercase tracking-widest">
+                <span className="text-6xl mb-4 block">🖼️</span>
+                <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-wider">
                   {t("sensor.imageRevealed")}
                 </h2>
-                <p className="text-gray-400 font-bold uppercase tracking-widest">
+                <p className="text-gray-400 font-mono text-xs">
                   {t("sensor.getReadyNextRound")}
                 </p>
               </>
             )}
           </div>
-        </motion.div>
+        </div>
       );
     }
 
     if (room.status === "finished") {
       return (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex-1 flex flex-col items-center justify-center p-8 z-10 relative text-center"
-        >
-          <h2 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 mb-6 uppercase tracking-widest">
+        <div className="flex-1 flex flex-col items-center justify-center p-8 z-10 text-center">
+          <span className="text-7xl mb-4 block">🏆</span>
+          <h2 className="text-3xl font-black text-purple-400 mb-2 uppercase tracking-wider">
             {t("sensor.gameOver")}
           </h2>
-          <div className="bg-white/10 px-8 py-4 rounded-full backdrop-blur-md">
-            <p className="text-white font-bold uppercase tracking-widest">
-              {t("sensor.resultsOnScreen", "Sonuçlar Ekranda!")}
-            </p>
-          </div>
-        </motion.div>
+          <p className="text-gray-400 font-mono text-xs">
+            {t("sensor.resultsOnScreen", "Sonuçlar Ekranda!")}
+          </p>
+        </div>
       );
     }
 
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 z-10 relative text-center">
-        <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-6 mx-auto" />
-        <p className="text-gray-400 uppercase tracking-[0.3em] font-bold">{t("game.loading" as never) || "YÜKLENİYOR..."}</p>
+      <div className="flex-1 flex flex-col items-center justify-center p-6 z-10 text-center">
+        <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">{t("game.loading" as never) || "YÜKLENİYOR..."}</p>
       </div>
     );
   };
 
   return (
-    <div className="absolute inset-0 bg-black flex flex-col overflow-hidden">
-      {/* Universal Background for Player Sensor */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.1)_0%,rgba(0,0,0,1)_100%)]" />
-      <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.05] mix-blend-overlay" />
+    <div className="absolute inset-0 bg-[#080010] flex flex-col overflow-hidden text-white">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.15)_0%,transparent_70%)] pointer-events-none" />
       
       <AnimatePresence mode="wait">
         <motion.div
           key={room.status}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.3 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.25 }}
           className="flex-1 flex flex-col"
         >
           {renderContent()}

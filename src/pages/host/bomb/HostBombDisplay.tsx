@@ -18,13 +18,14 @@ import { TVScaleFrame } from "../../../components/TVScaleFrame";
 interface Props {
   room: Room;
   players: Player[];
-  updateRoomStatus: (status: RoomStatus) => Promise<void>;
+  updateRoomStatus: (status: RoomStatus, extra?: Partial<Room>) => Promise<void>;
   updatePlayerScore: (playerId: string, delta: number) => Promise<void>;
 }
 
 export function HostBombDisplay({
   room,
   players,
+  updateRoomStatus,
 }: Props) {
   const { venue } = useVenue();
   // Initialize bomb game when started from lobby
@@ -215,7 +216,11 @@ export function HostBombDisplay({
   return (
     <TVScaleFrame>
     <div className="w-full h-full overflow-hidden bg-black text-white flex flex-col p-4">
-      <HostHeader room={room} onEndGameEarly={handleEndGameEarly} />
+      <HostHeader 
+        room={room} 
+        onEndGameEarly={handleEndGameEarly} 
+        onReturnToLobby={() => updateRoomStatus("night_lobby", { active_game: "none" })}
+      />
       <div className="flex-1 relative overflow-hidden">
       <AnimatePresence mode="wait">
         {room.status === "lobby" && (

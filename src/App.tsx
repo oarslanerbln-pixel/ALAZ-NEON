@@ -44,6 +44,9 @@ const RewardVerify = lazy(() =>
 const NightlyReport = lazy(() =>
   import("./pages/admin/NightlyReport").then((m) => ({ default: m.NightlyReport }))
 );
+const NotFoundPage = lazy(() =>
+  import("./pages/NotFoundPage").then((m) => ({ default: m.NotFoundPage }))
+);
 
 function RouteFallback() {
   const { t } = useLocale();
@@ -88,6 +91,9 @@ function App() {
                 <Route path="/admin/rewards" element={<RewardVerify />} />
                 {/* Mekan sahibi: gecelik/haftalık/aylık özet rapor */}
                 <Route path="/admin/report" element={<NightlyReport />} />
+                
+                {/* 404 Catch-All Route */}
+                <Route path="*" element={<NotFoundPage />} />
               </Route>
             </Routes>
           </Suspense>

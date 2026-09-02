@@ -9,7 +9,12 @@ const translations = {
   // ═══════════════════════════════════════════
   // LANDING PAGE
   // ═══════════════════════════════════════════
-  "common.back": { tr: "ANA SAYFA", de: "ZURÜCK ZUR STARTSEITE", en: "HOME" },
+  "common.back": { tr: "ANA SAYFA", de: "STARTSEITE", en: "HOME" },
+  "common.returnToLobby": { tr: "LOBİYE DÖN", de: "ZUR LOBBY", en: "LOBBY" },
+  "common.confirmReturnLobby": { tr: "Mevcut oyunu bitirip lobiye dönmek istiyor musunuz?", de: "Möchtest du das aktuelle Spiel beenden und zur Lobby zurückkehren?", en: "Do you want to end the game and return to lobby?" },
+  "common.confirmExitHome": { tr: "Ana sayfaya dönmek istediğinizden emin misiniz?", de: "Möchtest du wirklich zur Startseite zurückkehren?", en: "Are you sure you want to return to home?" },
+  "common.leaveGame": { tr: "AYRIL", de: "VERLASSEN", en: "LEAVE" },
+  "common.confirmLeaveGame": { tr: "Oyundan ayrılmak istediğinizden emin misiniz?", de: "Bist du sicher, dass du das Spiel verlassen möchtest?", en: "Are you sure you want to leave the game?" },
   "common.cancel": { tr: "İPTAL", de: "ABBRECHEN", en: "CANCEL" },
   "common.offline": { tr: "BAĞLANTI KOPTU, YENİDEN BAĞLANILIYOR...", de: "VERBINDUNG VERLOREN, VERBINDE NEU...", en: "CONNECTION LOST, RECONNECTING..." },
   "landing.hostLabel": { tr: "Yayıncı / Kurucu", de: "Moderator / Gastgeber", en: "Broadcaster / Host" },
@@ -122,6 +127,7 @@ const translations = {
     en: (r: string) => `OPEN LOBBY (${r} ROUNDS) →`,
   },
   "setup.starting": { tr: "BAŞLATILIYOR...", de: "WIRD GESTARTET...", en: "STARTING..." },
+  "setup.startNight": { tr: "GECEYİ BAŞLAT →", de: "SITZUNG STARTEN →", en: "START NIGHT →" },
   "setup.statusTitle": { tr: "Sistem Durumu", de: "Systemstatus", en: "System Status" },
   "setup.statusWaiting": { tr: "BEKLEMEDE", de: "WARTEND", en: "STANDBY" },
   "setup.statusDesc": {
@@ -371,27 +377,20 @@ const translations = {
     de: "Tritt der Legenden-Liga bei",
     en: "Join the Legends League",
   },
-  "leaderboard.title": {
-    tr: "HAFTALIK ŞAMPİYONLAR",
-    de: "WÖCHENTLICHE CHAMPIONS",
-    en: "WEEKLY CHAMPIONS",
-  },
-  "leaderboard.subtitle": {
-    tr: "Zirvedeki Zihinler",
-    de: "Die klügsten Köpfe an der Spitze",
-    en: "The Sharpest Minds at the Top",
-  },
+  // ═══════════════════════════════════════════
+  // LEADERBOARD / CHAMPIONS (SERIOUS & PRESTIGIOUS)
+  // ═══════════════════════════════════════════
+  "leaderboard.title": { tr: "HAFTALIK ŞAMPİYONLAR", de: "BESTENLISTE & CHAMPIONS", en: "WEEKLY CHAMPIONS" },
+  "leaderboard.subtitle": { tr: "EN YÜKSEK SKORLU OYUNCULARIN RESMİ SIRALAMASI", de: "OFFIZIELLE RANGLISTE DER TOP-SPIELER", en: "OFFICIAL RANKING OF TOP PLAYERS" },
+  "leaderboard.league": { tr: "HENGAME PREMİER LİG", de: "HENGAME PREMIER LIGA", en: "HENGAME PREMIER LEAGUE" },
+  "leaderboard.thisWeek": { tr: "BU HAFTA", de: "DIESE WOCHE", en: "THIS WEEK" },
+  "leaderboard.allTime": { tr: "TÜM ZAMANLAR", de: "EWIGE BESTENLISTE", en: "ALL-TIME" },
   "leaderboard.rank": { tr: "SIRA", de: "RANG", en: "RANK" },
   "leaderboard.player": { tr: "OYUNCU", de: "SPIELER", en: "PLAYER" },
-  "leaderboard.score": { tr: "TOPLAM PUAN", de: "GESAMTPUNKTZAHL", en: "TOTAL SCORE" },
-  "leaderboard.back": { tr: "← GERİ DÖN", de: "← ZURÜCK", en: "← BACK" },
-  "leaderboard.thisWeek": { tr: "BU HAFTA", de: "DIESE WOCHE", en: "THIS WEEK" },
-  "leaderboard.allTime": { tr: "TÜM ZAMANLAR", de: "ALLE ZEITEN", en: "ALL TIME" },
-  "leaderboard.empty": {
-    tr: "Henüz sıralamaya girecek oyun oynanmadı.",
-    de: "Noch keine Spiele für die Rangliste gespielt.",
-    en: "No games played for the ranking yet.",
-  },
+  "leaderboard.score": { tr: "TOPLAM XP", de: "GESAMT-XP", en: "TOTAL XP" },
+  "leaderboard.tier": { tr: "LİG DERECESİ", de: "LIGA-RANG", en: "TIER" },
+  "leaderboard.empty": { tr: "Bu dönem için henüz skor kaydı bulunmuyor.", de: "Noch keine Einträge für diesen Zeitraum vorhanden.", en: "No records found for this period." },
+  "leaderboard.back": { tr: "ANA SAYFAYA DÖN", de: "ZUR STARTSEITE", en: "BACK TO HOME" },
   "podium.individual": { tr: "Bireysel", de: "Einzelspieler", en: "Solo" },
 
   // ═══════════════════════════════════════════
@@ -1040,25 +1039,79 @@ const translations = {
   // ═══════════════════════════════════════════
   // QUIZ (HostQuizDisplay + PlayerQuizController)
   // ═══════════════════════════════════════════
-  "quiz.title": { tr: "HENGAME QUIZ", de: "HENGAME QUIZ", en: "HENGAME QUIZ" },
+  "quiz.title": { tr: "HENGÂME QUIZ", de: "HENGAME QUIZ", en: "HENGAME QUIZ" },
+  "quiz.subtitle": { tr: "SİBER BİLGİ SAVAŞI", de: "CYBER QUIZ BATTLE", en: "CYBER QUIZ BATTLE" },
   "quiz.questionCounter": {
-    tr: (r: number, total: number) => `SORU ${r} / ${total}`,
-    de: (r: number, total: number) => `FRAGE ${r} / ${total}`,
-    en: (r: number, total: number) => `QUESTION ${r} / ${total}`,
+    tr: (c: string | number, total: string | number) => `SORU ${c} / ${total}`,
+    de: (c: string | number, total: string | number) => `FRAGE ${c} / ${total}`,
+    en: (c: string | number, total: string | number) => `QUESTION ${c} / ${total}`,
   },
-  "quiz.loading": { tr: "Yükleniyor...", de: "Wird geladen...", en: "Loading..." },
-  "quiz.startTimer": { tr: "SÜREYİ BAŞLAT", de: "ZEIT STARTEN", en: "START TIMER" },
-  "quiz.endTimer": {
-    tr: "SÜREYİ BİTİR / CEVAPLARA GEÇ",
-    de: "ZEIT BEENDEN / ZU ANTWORTEN",
-    en: "END TIMER / SHOW ANSWERS",
+  "quiz.questionOf": {
+    tr: (c: string | number, total: string | number) => `Soru ${c} / ${total}`,
+    de: (c: string | number, total: string | number) => `Frage ${c} / ${total}`,
+    en: (c: string | number, total: string | number) => `Question ${c} / ${total}`,
   },
+  "quiz.loading": { tr: "SORU YÜKLENİYOR...", de: "FRAGE WIRD GELADEN...", en: "LOADING QUESTION..." },
+  "quiz.startTimer": { tr: "SÜREYİ BAŞLAT", de: "TIMER STARTEN", en: "START TIMER" },
+  "quiz.endTimer": { tr: "SÜREYİ BİTİR", de: "TIMER BEENDEN", en: "END TIMER" },
   "quiz.correctAnswer": { tr: "DOĞRU CEVAP", de: "RICHTIGE ANTWORT", en: "CORRECT ANSWER" },
-  "quiz.seeRanking": { tr: "SIRALAMAYI GÖR", de: "RANGLISTE ANSEHEN", en: "SEE RANKING" },
-  "quiz.currentRanking": { tr: "GÜNCEL SIRALAMA", de: "AKTUELLE RANGLISTE", en: "CURRENT RANKING" },
-  "quiz.finishGame": { tr: "OYUNU BİTİR", de: "SPIEL BEENDEN", en: "FINISH GAME" },
-  "quiz.nextQuestion": { tr: "SONRAKİ SORU", de: "NÄCHSTE FRAGE", en: "NEXT QUESTION" },
-  "quiz.champion": { tr: "ŞAMPİYON", de: "CHAMPION", en: "CHAMPION" },
+  "quiz.seeRanking": { tr: "SIRALAMAYI GÖR", de: "RANGLISTE ANZEIGEN", en: "SEE RANKING" },
+  "quiz.currentRanking": { tr: "LİDER TABLOSU", de: "AKTUELLE RANGLISTE", en: "CURRENT LEADERBOARD" },
+  "quiz.pts": { tr: "PUAN", de: "PKT", en: "PTS" },
+  "quiz.nextQuestion": { tr: "SIRADAKİ SORU →", de: "NÄCHSTE FRAGE →", en: "NEXT QUESTION →" },
+  "quiz.finishGame": { tr: "OYUNU TAMAMLA 🏆", de: "SPIEL BEENDEN 🏆", en: "FINISH GAME 🏆" },
+  "quiz.champion": { tr: "HENGÂME ŞAMPİYONU", de: "HENGAME CHAMPION", en: "HENGAME CHAMPION" },
+  "quiz.newGame": { tr: "YENİ OYUN BAŞLAT", de: "NEUES SPIEL STARTEN", en: "START NEW GAME" },
+  "quiz.watchMainScreen": {
+    tr: "TV ekranına odaklan, sorular açılmak üzere!",
+    de: "Schau auf den TV-Bildschirm, die Fragen starten gleich!",
+    en: "Watch the TV screen, questions are about to begin!",
+  },
+  "quiz.getReady": { tr: "HAZIRLAN!", de: "MACH DICH BEREIT!", en: "GET READY!" },
+  "quiz.answerSaved": { tr: "CEVAP KİLİTLENDİ 🔒", de: "ANTWORT GESPEICHERT 🔒", en: "ANSWER LOCKED 🔒" },
+  "quiz.result": { tr: "TUR SONUCU", de: "RUNDENERGEBNIS", en: "ROUND RESULT" },
+  "quiz.ranking": { tr: "SIRALAMA", de: "RANGLISTE", en: "RANKING" },
+  "quiz.followRankingOnScreen": {
+    tr: "TV ekranındaki sıralamanı takip et!",
+    de: "Verfolge deinen Rang auf dem Hauptbildschirm!",
+    en: "Follow your rank on the main screen!",
+  },
+  "quiz.yourScore": { tr: "Toplam Puanın:", de: "Deine Gesamtpunkte:", en: "Your Total Score:" },
+  "quiz.gameOver": { tr: "OYUN BİTTİ", de: "SPIEL VORBEI", en: "GAME OVER" },
+  "quiz.finalScore": { tr: "FİNAL PUANIN", de: "ENDSTAND", en: "FINAL SCORE" },
+  "quiz.liveAnswered": {
+    tr: (ans: string | number, tot: string | number) => `⚡ ${ans} / ${tot} OYUNCU KİLİTLEDİ`,
+    de: (ans: string | number, tot: string | number) => `⚡ ${ans} / ${tot} SPIELER BEREIT`,
+    en: (ans: string | number, tot: string | number) => `⚡ ${ans} / ${tot} PLAYERS LOCKED`,
+  },
+  "quiz.fastestPlayer": { tr: "⚡ TURUN EN HIZLISI", de: "⚡ SCHNELLSTER DER RUNDE", en: "⚡ SPEED DEMON OF THE ROUND" },
+  "quiz.funFactTitle": { tr: "💡 BİLİYOR MUYDUNUZ?", de: "💡 WUSSTEST DU SCHON?", en: "💡 DID YOU KNOW?" },
+  "quiz.streakActive": {
+    tr: (mult: string | number) => `🔥 ${mult}X KOMBO SERİSİ!`,
+    de: (mult: string | number) => `🔥 ${mult}X COMBO-SERIE!`,
+    en: (mult: string | number) => `🔥 ${mult}X COMBO STREAK!`,
+  },
+  "quiz.finalRoundDouble": {
+    tr: "💥 FİNAL TURU: 2X ÇİFT PUAN ÇILGINLIĞI!",
+    de: "💥 FINALE RUNDE: 2X DOPPELTE PUNKTE!",
+    en: "💥 FINAL ROUND: 2X DOUBLE POINTS!",
+  },
+  "quiz.voteDistribution": { tr: "OY DAĞILIMI", de: "STIMMENVERTEILUNG", en: "VOTE BREAKDOWN" },
+  "quiz.podium1st": { tr: "🥇 ŞAMPİYON", de: "🥇 CHAMPION", en: "🥇 CHAMPION" },
+  "quiz.podium2nd": { tr: "🥈 İKİNCİ", de: "🥈 2. PLATZ", en: "🥈 2ND PLACE" },
+  "quiz.podium3rd": { tr: "🥉 ÜÇÜNCÜ", de: "🥉 3. PLATZ", en: "🥉 3RD PLACE" },
+  "quiz.badgeSpeedDemon": { tr: "⚡ Şimşek Parmak", de: "⚡ Blitz-Finger", en: "⚡ Lightning Fingers" },
+  "quiz.badgeStreakMaster": { tr: "🔥 Alev Makinesi", de: "🔥 Flammen-Meister", en: "🔥 Streak Master" },
+  "quiz.badgeSharpMind": { tr: "🎯 Keskin Zeka", de: "🎯 Scharfer Verstand", en: "🎯 Sharp Mind" },
+  "quiz.playerCorrect": { tr: "HARİKA! DOĞRU CEVAP! 🎯", de: "PERFEKT! RICHTIGE ANTWORT! 🎯", en: "PERFECT! CORRECT ANSWER! 🎯" },
+  "quiz.playerWrong": { tr: "YANLIŞ CEVAP! 💀", de: "FALSCHE ANTWORT! 💀", en: "WRONG ANSWER! 💀" },
+  "quiz.speedBonus": {
+    tr: (pts: string | number) => `+${pts} Hız Bonusu`,
+    de: (pts: string | number) => `+${pts} Tempo-Bonus`,
+    en: (pts: string | number) => `+${pts} Speed Bonus`,
+  },
+  "quiz.waitingForTimer": { tr: "Soru TV ekranında gösteriliyor, süre başlamak üzere...", de: "Frage wird auf dem TV gezeigt, Timer startet gleich...", en: "Question is shown on TV, timer starting soon..." },
+
   "host.champion": { tr: "ŞAMPİYON", de: "CHAMPION", en: "CHAMPION" },
   "host.totalVotes": { tr: "Kullanılan Oy", de: "Stimmen", en: "Votes Cast" },
   "host.winnerPrize": { tr: "KAZANAN ÖDÜL", de: "GEWINN", en: "WINNER PRIZE" },
@@ -1073,34 +1126,6 @@ const translations = {
   "host.luck": { tr: "ŞANS", de: "GLÜCK", en: "LUCK" },
   "host.red": { tr: "KIRMIZI", de: "ROT", en: "RED" },
   "host.blue": { tr: "MAVİ", de: "BLAU", en: "BLUE" },
-  "quiz.newGame": { tr: "YENİ OYUN BAŞLAT", de: "NEUES SPIEL STARTEN", en: "START NEW GAME" },
-  "quiz.pts": { tr: "PTS", de: "PKT", en: "PTS" },
-  "quiz.yourScore": { tr: "Puanınız:", de: "Deine Punkte:", en: "Your score:" },
-  "quiz.finalScore": { tr: "Final Skorunuz", de: "Dein Endergebnis", en: "Your Final Score" },
-  "quiz.gameOver": { tr: "OYUN BİTTİ", de: "SPIEL VORBEI", en: "GAME OVER" },
-  "quiz.watchMainScreen": {
-    tr: "Lütfen ana ekrana bakarak oyunun başlamasını bekleyin.",
-    de: "Bitte auf den Hauptbildschirm schauen und auf den Spielstart warten.",
-    en: "Please watch the main screen and wait for the game to start.",
-  },
-  "quiz.getReady": { tr: "HAZIR OL", de: "MACH DICH BEREIT", en: "GET READY" },
-  "quiz.questionOf": {
-    tr: (r: number, total: number) => `Soru ${r} / ${total}`,
-    de: (r: number, total: number) => `Frage ${r} / ${total}`,
-    en: (r: number, total: number) => `Question ${r} / ${total}`,
-  },
-  "quiz.answerSaved": {
-    tr: "Cevap kaydedildi, süre bekleniyor...",
-    de: "Antwort gespeichert, warte auf Zeitablauf...",
-    en: "Answer saved, waiting for time...",
-  },
-  "quiz.result": { tr: "SONUÇ", de: "ERGEBNIS", en: "RESULT" },
-  "quiz.ranking": { tr: "SIRALAMA", de: "RANGLISTE", en: "RANKING" },
-  "quiz.followRankingOnScreen": {
-    tr: "Ana ekrandan sıralamayı takip edebilirsiniz.",
-    de: "Die Rangliste kannst du auf dem Hauptbildschirm verfolgen.",
-    en: "You can follow the ranking on the main screen.",
-  },
 
   // ═══════════════════════════════════════════
   // SENSOR (HostSensorDisplay + PlayerSensorController)
@@ -1293,7 +1318,35 @@ const translations = {
   "spectrum.results": { tr: "Sonuçlar...", de: "Ergebnisse...", en: "Results..." },
   "spectrum.redTeam": { tr: "KIRMIZI TAKIM", de: "TEAM ROT", en: "RED TEAM" },
   "spectrum.blueTeam": { tr: "MAVİ TAKIM", de: "TEAM BLAU", en: "BLUE TEAM" },
-  "spectrum.tie": { tr: "BERABERE", de: "UNENTSCHIEDEN", en: "TIE" }
+  "spectrum.tie": { tr: "BERABERE", de: "UNENTSCHIEDEN", en: "TIE" },
+
+  // ═══════════════════════════════════════════
+  // GAME SETTINGS MODAL (HIGH READABILITY & CLARITY)
+  // ═══════════════════════════════════════════
+  "gameSettings.presets": { tr: "📁 HIZLI KATEGORİ ŞABLONLARI", de: "📁 KATEGORIE-VORLAGEN", en: "📁 CATEGORY PRESETS" },
+  "gameSettings.categories": { tr: "✍️ KATEGORİLER (VİRGÜLLE AYIRIN)", de: "✍️ KATEGORIEN (KOMMAGETRENNT)", en: "✍️ CATEGORIES (COMMA-SEPARATED)" },
+  "gameSettings.roundTime": { tr: "⏱️ TUR SÜRESİ", de: "⏱️ RUNDENDAUER", en: "⏱️ ROUND DURATION" },
+  "gameSettings.totalRounds": { tr: "🔄 TUR SAYISI", de: "🔄 RUNDENANZAHL", en: "🔄 TOTAL ROUNDS" },
+  "gameSettings.roundsSuffix": { tr: "Tur", de: "Runden", en: "Rounds" },
+  "gameSettings.secondsSuffix": { tr: "Sn", de: "Sek", en: "Sec" },
+  "gameSettings.quizPool": { tr: "🎯 SORU KATEGORİLERİ", de: "🎯 FRAGEN-KATEGORIEN", en: "🎯 QUESTION CATEGORIES" },
+  "gameSettings.quizQuestionsCount": { tr: "❓ SORU SAYISI", de: "❓ ANZAHL DER FRAGEN", en: "❓ NUMBER OF QUESTIONS" },
+  "gameSettings.quizQuestionsSuffix": { tr: "Soru", de: "Fragen", en: "Questions" },
+  "gameSettings.quizTimePerQuestion": { tr: "⏱️ CEVAP SÜRESİ", de: "⏱️ ANTWORTZEIT PRO FRAGE", en: "⏱️ TIME PER QUESTION" },
+  "gameSettings.quizDoubleFinalTitle": { tr: "🔥 2X FİNAL ÇİFTE PUAN ÇARPANI", de: "🔥 2X FINAL-PUNKTE-DOPPLER", en: "🔥 2X FINAL DOUBLE POINTS" },
+  "gameSettings.quizDoubleFinalDesc": { tr: "Son soruya 2 kat puan vererek masalar arasındaki heyecanı zirveye taşır.", de: "Verdoppelt die Punkte der letzten Frage für maximale Spannung.", en: "Doubles points for the final question for maximum tension." },
+  "gameSettings.bombFuseTime": { tr: "💣 BOMBA FİTİL SÜRESİ (TEMPO)", de: "💣 BOMBEN-TIMER (TEMPO)", en: "💣 BOMB FUSE TIMER" },
+  "gameSettings.bombLives": { tr: "❤️ BAŞLANGIÇ CANI", de: "❤️ START-LEBEN", en: "❤️ STARTING LIVES" },
+  "gameSettings.livesSuffix": { tr: "Can", de: "Leben", en: "Lives" },
+  "gameSettings.sensorUnblur": { tr: "👁️ GÖRSEL NETLEŞME (UNBLUR) SÜRESİ", de: "👁️ BILD-AUFLÖSUNGSZEIT (UNBLUR)", en: "👁️ IMAGE UNBLUR DURATION" },
+  "gameSettings.sensorImagesCount": { tr: "🖼️ GÖRSEL SAYISI", de: "🖼️ ANZAHL DER BILDER", en: "🖼️ NUMBER OF IMAGES" },
+  "gameSettings.imagesSuffix": { tr: "Görsel", de: "Bilder", en: "Images" },
+  "gameSettings.sensorReward": { tr: "🏆 DOĞRU CEVAP PUANI", de: "🏆 PUNKTE BEI RICHTIGER ANTWORT", en: "🏆 POINTS FOR CORRECT ANSWER" },
+  "gameSettings.gameMode": { tr: "👥 OYUN REKABET ŞEKLİ", de: "👥 WETTKAMPF-MODUS", en: "👥 COMPETITION MODE" },
+  "gameSettings.individual": { tr: "👤 BİREYSEL REKABET", de: "👤 EINZELSPIELER", en: "👤 INDIVIDUAL SOLO" },
+  "gameSettings.team": { tr: "🔥 TAKIM & MASA MODU", de: "🔥 TEAM- & TISCH-MODUS", en: "🔥 TEAM & TABLE MODE" },
+  "gameSettings.startSession": { tr: "OYUNU BAŞLAT", de: "SPIEL STARTEN", en: "START GAME" },
+  "gameSettings.cancel": { tr: "İPTAL", de: "ABBRECHEN", en: "CANCEL" }
 } as const;
 
 type TranslationKey = keyof typeof translations;

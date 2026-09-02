@@ -105,7 +105,11 @@ export function HostVaultDisplay({ room, players, updateRoomStatus }: Props) {
   return (
     <TVScaleFrame>
       <div className="w-full h-full flex flex-col p-8 overflow-hidden bg-black/90">
-        <HostHeader room={room} onEndGameEarly={() => updateRoomStatus("lobby", { active_game: "none" })} />
+        <HostHeader 
+          room={room} 
+          onEndGameEarly={() => updateRoomStatus("lobby", { active_game: "none" })} 
+          onReturnToLobby={() => updateRoomStatus("night_lobby", { active_game: "none" })}
+        />
 
         <div className="flex-1 flex items-center justify-center relative w-full">
           <AnimatePresence mode="wait">

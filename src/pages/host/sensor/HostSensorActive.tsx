@@ -1,8 +1,10 @@
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useLocale } from "../../../hooks/useLocale";
 import type { Room } from "../../../types/database";
 import type { SensorImage } from "../../../data/sensorImages";
 import { safeForDisplay } from "../../../lib/profanity";
+import { SoundManager, sounds } from "../../../lib/audio";
 
 interface Props {
   room: Room;
@@ -15,104 +17,145 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
   const { t } = useLocale();
   const gameState = room.status;
 
+  useEffect(() => {
+    if (gameState === "sensor_active") {
+      const start = Date.now();
+      const interval = setInterval(() => {
+        const elapsed = (Date.now() - start) / 1000;
+        if (elapsed % 2 < 0.2) {
+          SoundManager.getInstance().playSFX(sounds.VOTE_TICK);
+        }
+      }, 100);
+      return () => clearInterval(interval);
+    }
+  }, [gameState, currentImage.url]);
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 relative overflow-hidden bg-black w-full h-full">
-      {/* Background */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.1)_0%,rgba(0,0,0,1)_80%)]" />
+      {/* Background Ambient Glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.15)_0%,rgba(0,0,0,1)_80%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.3)_50%)] bg-[length:100%_4px] pointer-events-none opacity-40" />
 
-      {/* Sensor Active State */}
+      {/* TOP HEADER: Category & Clue */}
+      <div className="absolute top-8 z-20 flex flex-col items-center">
+        <span className="px-5 py-1.5 rounded-full border border-purple-500/40 bg-purple-500/10 text-purple-400 font-mono tracking-widest text-xs uppercase font-bold mb-1">
+          👁️ SENSÖR • GÖRSEL TAHMİN 👁️
+        </span>
+        <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-wider drop-shadow-md">
+          {currentImage.category || "BU GÖRSELİ İLK KİM BİLECEK?"}
+        </h2>
+      </div>
+
+      {/* Active unblurring image screen */}
       {gameState === "sensor_active" && (
-        <div className="relative w-full max-w-5xl aspect-video rounded-2xl overflow-hidden border border-purple-500/30 shadow-[0_0_80px_rgba(168,85,247,0.2)] bg-black/50 backdrop-blur-xl">
-          {/* Animated Image */}
+        <div className="relative w-full max-w-5xl aspect-video rounded-3xl overflow-hidden border-2 border-purple-500/40 shadow-[0_0_90px_rgba(168,85,247,0.3)] bg-black/60 backdrop-blur-xl mt-12 flex flex-col items-center justify-center">
+          
+          {/* Animated Image with Progressive Unblur */}
           <motion.img 
-            key={currentImage.url} // Critical: Force re-mount for animation to trigger
+            key={currentImage.url}
             src={currentImage.url}
-            initial={{ filter: "blur(30px)", scale: 1.1, opacity: 0 }}
-            animate={{ filter: "blur(0px)", scale: 1, opacity: 1 }}
+            initial={{ filter: "blur(40px) contrast(150%)", scale: 1.15, opacity: 0 }}
+            animate={{ filter: "blur(0px) contrast(100%)", scale: 1, opacity: 1 }}
             transition={{ 
-              opacity: { duration: 0.5 },
-              filter: { duration: 30, ease: "linear" },
-              scale: { duration: 30, ease: "linear" }
+              opacity: { duration: 0.6 },
+              filter: { duration: 25, ease: "linear" },
+              scale: { duration: 25, ease: "linear" }
             }}
             className="w-full h-full object-cover"
           />
           
-          {/* Badge */}
-          <div className="absolute top-6 right-6 bg-black/80 px-6 py-3 text-purple-400 font-bold uppercase tracking-[0.3em] text-sm rounded-lg border border-purple-500/30 shadow-lg animate-pulse backdrop-blur-md">
+          {/* Active Buzzer Ready Badge */}
+          <div className="absolute top-6 right-6 bg-black/85 px-6 py-3 text-purple-400 font-mono font-bold uppercase tracking-[0.3em] text-xs rounded-xl border border-purple-500/50 shadow-lg animate-pulse backdrop-blur-md flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-purple-500 animate-ping" />
             {t("sensor.buzzerActive")}
           </div>
 
-          {/* Frame glow */}
-          <div className="absolute inset-0 border-[3px] border-purple-500/10 mix-blend-overlay pointer-events-none rounded-2xl" />
+          {/* Progress / Reveal Bar at the bottom */}
+          <div className="absolute bottom-0 inset-x-0 h-2 bg-black/60">
+            <motion.div 
+              initial={{ width: "0%" }}
+              animate={{ width: "100%" }}
+              transition={{ duration: 25, ease: "linear" }}
+              className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-amber-400 shadow-[0_0_15px_rgba(168,85,247,0.8)]"
+            />
+          </div>
         </div>
       )}
 
-      {/* Sensor Buzzed State */}
+      {/* Buzzed State */}
       {gameState === "sensor_buzzed" && (
-        <div className="relative w-full max-w-5xl aspect-video rounded-2xl overflow-hidden shadow-[0_0_120px_rgba(239,68,68,0.3)] border border-red-500/50">
+        <div className="relative w-full max-w-5xl aspect-video rounded-3xl overflow-hidden shadow-[0_0_120px_rgba(239,68,68,0.4)] border-2 border-red-500/60 mt-12">
           <img 
             src={currentImage.url}
-            className="w-full h-full object-cover grayscale opacity-50"
-            style={{ filter: "blur(20px)" }} 
+            className="w-full h-full object-cover grayscale opacity-30"
+            style={{ filter: "blur(25px)" }} 
           />
           
-          <div className="absolute inset-0 bg-red-950/40 backdrop-blur-sm flex flex-col items-center justify-center p-8">
+          <div className="absolute inset-0 bg-red-950/60 backdrop-blur-md flex flex-col items-center justify-center p-8">
             <motion.div 
-              initial={{ scale: 0.8, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              className="bg-black/80 border border-red-500/50 p-12 rounded-3xl shadow-2xl text-center max-w-2xl w-full backdrop-blur-xl"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", bounce: 0.5 }}
+              className="bg-black/90 border-2 border-red-500 p-10 rounded-3xl shadow-2xl text-center max-w-2xl w-full backdrop-blur-2xl flex flex-col items-center"
             >
-              <h2 className="text-4xl text-red-500 font-black mb-4 tracking-[0.2em] uppercase">
-                {t("sensor.stop")}
-              </h2>
-              <p className="text-2xl text-white font-medium mb-10 tracking-wider">
-                {t("sensor.pressedBuzzer", buzzerPlayerName || "")}
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-3xl animate-bounce">🚨</span>
+                <h2 className="text-3xl text-red-500 font-black tracking-widest uppercase">
+                  {t("sensor.stop")}
+                </h2>
+              </div>
+              
+              <p className="text-2xl text-white font-black mb-6 tracking-wide">
+                ⚡ <span className="text-red-400 uppercase">{buzzerPlayerName || "BİRİ"}</span> BASTI!
               </p>
               
               {room.sensor_player_answer ? (
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="mb-12 bg-white/5 border border-white/10 rounded-2xl p-8"
+                  className="mb-8 bg-white/5 border border-white/15 rounded-2xl p-6 w-full"
                 >
-                  <p className="text-red-400/60 text-sm mb-3 uppercase tracking-widest">{t("sensor.answerLabel")}</p>
-                  <p className="text-5xl font-black text-white tracking-wide">
+                  <p className="text-red-400 text-xs mb-2 uppercase tracking-widest font-mono">
+                    OYUNCUNUN TAHMİNİ:
+                  </p>
+                  <p className="text-4xl md:text-5xl font-black text-white tracking-wide uppercase drop-shadow-[0_0_20px_rgba(255,255,255,0.7)]">
                     "{safeForDisplay(room.sensor_player_answer)}"
                   </p>
                 </motion.div>
               ) : (
-                <div className="mb-12 flex flex-col items-center gap-6">
-                  <div className="flex items-center justify-center gap-4">
-                    <span className="w-5 h-5 rounded-full bg-red-500 animate-bounce shadow-[0_0_15px_rgba(239,68,68,0.8)]" />
-                    <span className="w-5 h-5 rounded-full bg-red-500 animate-bounce shadow-[0_0_15px_rgba(239,68,68,0.8)]" style={{ animationDelay: "0.2s" }} />
-                    <span className="w-5 h-5 rounded-full bg-red-500 animate-bounce shadow-[0_0_15px_rgba(239,68,68,0.8)]" style={{ animationDelay: "0.4s" }} />
+                <div className="mb-8 flex flex-col items-center gap-4">
+                  <div className="flex items-center justify-center gap-3">
+                    <span className="w-4 h-4 rounded-full bg-red-500 animate-bounce shadow-[0_0_15px_rgba(239,68,68,0.8)]" />
+                    <span className="w-4 h-4 rounded-full bg-red-500 animate-bounce shadow-[0_0_15px_rgba(239,68,68,0.8)]" style={{ animationDelay: "0.2s" }} />
+                    <span className="w-4 h-4 rounded-full bg-red-500 animate-bounce shadow-[0_0_15px_rgba(239,68,68,0.8)]" style={{ animationDelay: "0.4s" }} />
                   </div>
-                  <span className="text-red-400 font-bold uppercase tracking-widest text-lg">
+                  <span className="text-red-300 font-mono font-bold uppercase tracking-widest text-sm">
                     {t("sensor.waitingAnswer")}
                   </span>
                   
                   <button
                     onClick={() => onEvaluate(false)}
-                    className="mt-4 text-xs text-white/30 hover:text-white/80 uppercase tracking-widest border border-white/10 hover:border-white/30 px-6 py-2 transition-colors rounded-full"
+                    className="mt-2 text-xs text-white/50 hover:text-white uppercase tracking-widest border border-white/20 hover:border-white/50 px-5 py-2 transition-all rounded-full"
                   >
                     {t("sensor.releaseBuzzer")}
                   </button>
                 </div>
               )}
 
+              {/* Host Evaluation Buttons */}
               {room.sensor_player_answer && (
-                <div className="flex justify-center gap-6">
+                <div className="flex justify-center gap-4 w-full">
                   <button 
                     onClick={() => onEvaluate(true)}
-                    className="flex-1 py-4 bg-green-500/20 border border-green-500/50 text-green-400 rounded-xl font-black uppercase tracking-widest hover:bg-green-500 hover:text-black transition-all active:scale-95"
+                    className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 border border-emerald-400 text-white rounded-2xl font-black uppercase tracking-wider text-lg transition-all shadow-[0_0_30px_rgba(16,185,129,0.5)] transform active:scale-95 flex items-center justify-center gap-2"
                   >
-                    {t("sensor.correct")}
+                    <span>✅</span> {t("sensor.correct")} (+1000)
                   </button>
                   <button 
                     onClick={() => onEvaluate(false)}
-                    className="flex-1 py-4 bg-red-500/20 border border-red-500/50 text-red-400 rounded-xl font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all active:scale-95"
+                    className="flex-1 py-4 bg-red-950 hover:bg-red-900 border border-red-500 text-red-400 rounded-2xl font-black uppercase tracking-wider text-lg transition-all shadow-[0_0_20px_rgba(239,68,68,0.4)] transform active:scale-95 flex items-center justify-center gap-2"
                   >
-                    {t("sensor.wrong")}
+                    <span>❌</span> {t("sensor.wrong")}
                   </button>
                 </div>
               )}

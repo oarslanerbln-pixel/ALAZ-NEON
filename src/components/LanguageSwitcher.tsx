@@ -33,7 +33,7 @@ export function LanguageSwitcher({ className = "", onSwitch, fullWidth = false }
     // çağıran taraf `grid` gibi çakışan bir display sınıfı geçerse hangisinin
     // kazanacağı Tailwind'in dahili kural sırasına kalır, öngörülemez olurdu.
     // Tam genişlik ihtiyacı `fullWidth` ile karşılanıyor.
-    <div className={`flex items-center gap-1 ${className}`}>
+    <div className={`flex items-center gap-2 p-1 bg-black/40 border border-white/5 rounded-sm shadow-inner ${className}`}>
       {LANGUAGES.map(({ code, label }) => (
         <button
           key={code}
@@ -43,12 +43,12 @@ export function LanguageSwitcher({ className = "", onSwitch, fullWidth = false }
             onSwitch?.(code);
           }}
           aria-pressed={locale === code}
-          className={`px-2 py-1 text-[10px] font-black uppercase tracking-widest rounded-md transition-colors ${
-            fullWidth ? "flex-1 py-4 rounded-none" : ""
+          className={`relative px-4 py-2 text-xs font-black uppercase tracking-[0.2em] rounded-sm transition-all duration-300 ${
+            fullWidth ? "flex-1 py-4" : ""
           } ${
             locale === code
-              ? "bg-alaz-orange text-black"
-              : "bg-white/5 text-white/40 hover:text-white hover:bg-white/10"
+              ? "bg-gradient-to-b from-alaz-orange to-[#cc4400] text-black shadow-[0_0_20px_rgba(255,85,0,0.6)] border border-alaz-orange scale-[1.02] z-10"
+              : "bg-transparent text-white/30 hover:text-white/80 hover:bg-white/5 border border-transparent hover:border-white/10"
           }`}
         >
           {label}

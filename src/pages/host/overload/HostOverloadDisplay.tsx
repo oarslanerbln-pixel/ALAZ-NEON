@@ -33,23 +33,18 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
 
   // Host Logic (Server Authoritative)
   useEffect(() => {
-    if (activePlayers.length === 0) return; // Game over or no players
+    if (activePlayers.length === 0) return;
 
-    // If there is no target, or it's 'passing', or target is missing/invalid
     if (!room.overload_target_id || room.overload_target_id === "passing" || !activePlayers.find(p => p.id === room.overload_target_id)) {
-      // Find valid candidates (excluding the last target so they don't get it back immediately)
       const candidates = activePlayers.filter(p => p.id !== room.overload_last_target_id);
-      
-      // If no valid candidates (e.g., only 1 player left and they were the last target), fallback to all active
       const pool = candidates.length > 0 ? candidates : activePlayers;
       const nextTarget = pool[Math.floor(Math.random() * pool.length)];
 
-      // If this was a pass, decrease time allowed by 15% (min 1.5s)
       let newTimeAllowed = room.overload_time_allowed || 10;
       if (room.overload_target_id === "passing") {
-        newTimeAllowed = Math.max(1.5, newTimeAllowed * 0.85);
+        newTimeAllowed = Math.max(1.5, newTimeAllowed * 0.88);
+        SoundManager.getInstance().playSFX(sounds.SUCCESS);
       } else if (!room.overload_target_id) {
-        // Initial setup
         newTimeAllowed = 10;
       }
 
@@ -61,14 +56,14 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
       return;
     }
 
-    // Check if the game is won (only 1 player left)
+    // Win condition (1 survivor)
     if (activePlayers.length === 1 && (room.overload_eliminated_ids?.length || 0) > 0 && room.status !== "finished") {
-      // We have a winner!
+      SoundManager.getInstance().playSFX(sounds.FANFARE);
       updateRoomStatus("finished");
       return;
     }
 
-    // Timer Logic
+    // Timer Loop
     const interval = setInterval(() => {
       if (!room.overload_start_time || isExploding) return;
 
@@ -77,39 +72,34 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
       const elapsed = now - room.overload_start_time;
       const remaining = Math.max(0, allowedMs - elapsed);
 
-      setTimeLeft(Math.ceil(remaining / 1000));
+      const sec = Math.ceil(remaining / 1000);
+      setTimeLeft(sec);
 
-      // Boom! Time's up!
+      if (sec <= 3 && sec > 0) {
+        SoundManager.getInstance().playSFX(sounds.TICK_URGENT);
+      }
+
       if (remaining === 0) {
         setIsExploding(true);
-        SoundManager.getInstance().playSFX(sounds.FAILURE); // Or specific explosion
+        SoundManager.getInstance().playSFX(sounds.CINEMATIC_BOOM);
         
-        // Eliminate player
         const newEliminated: string[] = [...(room.overload_eliminated_ids || []), room.overload_target_id as string];
         
         setTimeout(() => {
           updateRoomStatus("playing", {
-            overload_target_id: null, // Clear target to pick a new one
+            overload_target_id: null,
             overload_last_target_id: null,
             overload_eliminated_ids: newEliminated,
-            overload_time_allowed: 10, // Reset to 10s for the next round
+            overload_time_allowed: 10,
             overload_start_time: 0
           });
           setIsExploding(false);
-        }, 3000); // Wait 3s for explosion animation
+        }, 2500);
       }
     }, 100);
 
     return () => clearInterval(interval);
   }, [room.overload_target_id, room.overload_last_target_id, room.status, room.overload_start_time, room.overload_time_allowed, activePlayers, isExploding, updateRoomStatus, room.overload_eliminated_ids]);
-
-
-  // Sound for target change
-  useEffect(() => {
-    if (room.overload_target_id && !isExploding) {
-      SoundManager.getInstance().playSFX(sounds.CLICK);
-    }
-  }, [room.overload_target_id, isExploding]);
 
   // Give reward to champion
   useEffect(() => {
@@ -125,158 +115,179 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
     );
   }, [activePlayers, venue]);
 
-  // We removed the top level activePlayers.length === 1 check that returned early.
-  // It is now handled inside AnimatePresence with room.status === "finished".
-
   return (
     <TVScaleFrame>
-    <div className="relative w-full h-full bg-[#050505] overflow-hidden flex flex-col items-center justify-center font-sans">
-      <HostHeader room={room} onEndGameEarly={() => updateRoomStatus("finished")} />
-      {/* Strategy 5: Neon Grid Background */}
-      <div className="absolute inset-0 pointer-events-none opacity-30 bg-[linear-gradient(rgba(0,255,255,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.2)_1px,transparent_1px)] bg-[size:40px_40px] [transform:perspective(1000px)_rotateX(60deg)_translateY(-100px)_translateZ(-200px)]" />
-      <div className="absolute top-0 w-full h-full bg-gradient-to-t from-transparent via-[#050505]/80 to-[#050505] pointer-events-none" />
-
-      {/* Warning State Overlay */}
-      {timeLeft <= 3 && room.status === "playing" && !isExploding && (
-        <motion.div 
-          animate={{ opacity: [0, 0.4, 0] }} 
-          transition={{ repeat: Infinity, duration: timeLeft <= 1.5 ? 0.3 : 0.6 }} 
-          className="absolute inset-0 bg-red-600 pointer-events-none z-10 mix-blend-overlay"
+      <div className="relative w-full h-full bg-[#05000a] overflow-hidden flex flex-col items-center justify-center font-sans">
+        <HostHeader 
+          room={room} 
+          onEndGameEarly={() => updateRoomStatus("finished")} 
+          onReturnToLobby={() => updateRoomStatus("night_lobby", { active_game: "none" })}
         />
-      )}
+        
+        {/* Cyberpunk Grid Background */}
+        <div className="absolute inset-0 pointer-events-none opacity-25 bg-[linear-gradient(rgba(0,255,255,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.2)_1px,transparent_1px)] bg-[size:50px_50px]" />
+        
+        {/* Critical Voltage Flash */}
+        {timeLeft <= 3 && room.status === "playing" && !isExploding && (
+          <motion.div 
+            animate={{ opacity: [0, 0.4, 0] }} 
+            transition={{ repeat: Infinity, duration: timeLeft <= 1.5 ? 0.25 : 0.5 }} 
+            className="absolute inset-0 bg-red-600 pointer-events-none z-10 mix-blend-screen"
+          />
+        )}
 
-      {/* Header Info */}
-      {room.status !== "lobby" && room.status !== "finished" && (
-        <div className="absolute top-24 left-8 right-8 flex justify-between items-center z-20">
-          <div className="text-cyan-400 font-black tracking-[0.3em] uppercase text-xl">
-            NEON OVERLOAD
-          </div>
-        <div className="flex gap-2">
-          {players.map(p => {
-            const isEliminated = (room.overload_eliminated_ids || []).includes(p.id);
-            return (
-              <div 
-                key={p.id} 
-                className={`px-3 py-1 text-xs font-bold uppercase tracking-wider border ${isEliminated ? 'border-red-500/30 text-red-500/50 line-through' : 'border-cyan-400 text-cyan-400 bg-cyan-400/10'}`}
-              >
-                {p.nickname}
-              </div>
-            );
-          })}
-        </div>
-        </div>
-      )}
-
-      <AnimatePresence mode="wait">
-        {room.status === "lobby" ? (
-          <motion.div
-            key="lobby"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 z-50 bg-black/90 backdrop-blur-sm"
-          >
-            <HostLobby
-              room={room}
-              players={players}
-              onStartGame={async () => {
-                const nextTarget = players[Math.floor(Math.random() * players.length)];
-                await updateRoomStatus("playing", {
-                  overload_target_id: nextTarget?.id || null,
-                  overload_start_time: Date.now(),
-                  overload_eliminated_ids: []
-                });
-              }}
-              onUpdateCategories={async () => {}}
-            />
-          </motion.div>
-        ) : room.status === "finished" ? (
-          <motion.div
-            key="finished"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="z-10 flex flex-col items-center justify-center"
-          >
-            <h1 className="text-6xl text-cyan-400 font-black uppercase tracking-widest animate-pulse">{t("host.champion", "ŞAMPİYON")}</h1>
-            <h2 className="text-8xl text-white font-black mt-4 uppercase drop-shadow-[0_0_30px_rgba(0,255,255,0.8)] mb-12">
-              {activePlayers[0]?.nickname || "BİLİNMİYOR"}
-            </h2>
-            <button
-              onClick={() => updateRoomStatus("lobby", { active_game: "none", overload_eliminated_ids: [], overload_target_id: null })}
-              className="px-10 py-5 bg-cyan-500 hover:bg-cyan-400 text-black font-black uppercase tracking-widest text-xl rounded-xl transition-colors shadow-[0_0_30px_rgba(0,255,255,0.4)]"
-            >
-              {t("quiz.finishGame", "OYUNU BİTİR")}
-            </button>
-          </motion.div>
-        ) : isExploding ? (
-          <motion.div
-            key="explosion"
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: [1, 2, 3], opacity: [1, 1, 0] }}
-            transition={{ duration: 1.5, ease: "easeOut" }}
-            className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none"
-          >
-            <div className="w-[800px] h-[800px] bg-red-500 rounded-full blur-[100px]" />
-            <h1 className="absolute text-[150px] font-black text-white mix-blend-overlay tracking-tighter">
-              ELENDİ!
-            </h1>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="active"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="relative z-10 flex flex-col items-center justify-center"
-          >
-            {/* The Target Name */}
-            {targetPlayer ? (
-              <motion.div 
-                initial={{ y: -50, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="absolute -top-40 flex flex-col items-center w-[80vw] text-center"
-              >
-                <div className="text-red-500 text-2xl font-bold tracking-[0.5em] mb-2 animate-pulse">HEDEF</div>
-                <h1 className="text-7xl md:text-[140px] font-black text-white uppercase tracking-widest drop-shadow-[0_0_30px_rgba(255,0,0,0.8)] leading-none truncate max-w-full">
-                  {targetPlayer.nickname}
-                </h1>
-              </motion.div>
-            ) : room.overload_target_id === "passing" ? (
-              <motion.div 
-                className="absolute -top-40 flex flex-col items-center w-[80vw] text-center"
-              >
-                <h1 className="text-7xl md:text-[100px] font-black text-yellow-400 uppercase tracking-widest drop-shadow-[0_0_30px_rgba(255,255,0,0.8)] leading-none animate-pulse">
-                  AKTARIYOR...
-                </h1>
-              </motion.div>
-            ) : null}
-
-            {/* The Energy Core (Timer) */}
-            <div className="relative w-64 h-64 md:w-96 md:h-96 mt-20 flex items-center justify-center">
-              {/* Outer pulsing ring */}
-              <motion.div 
-                animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
-                transition={{ repeat: Infinity, duration: 0.5 + (timeLeft / 20) }}
-                className="absolute inset-0 rounded-full border-[10px] shadow-[0_0_50px_rgba(255,0,255,0.6)]"
-                style={{ borderColor: timeLeft <= 3 ? '#ff0000' : '#ff00ff' }}
-              />
-              
-              {/* Inner core */}
-              <div className="absolute w-3/4 h-3/4 rounded-full bg-[#ff00ff]/20 blur-[20px]" />
-              
-              {/* Countdown Number */}
-              <div className="relative z-10 text-[120px] font-black text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]">
-                {timeLeft}
-              </div>
+        {/* TOP STATUS BAR: Active Players Badges */}
+        {room.status !== "lobby" && room.status !== "finished" && (
+          <div className="absolute top-24 left-8 right-8 flex justify-between items-center z-20">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl animate-pulse">⚡</span>
+              <span className="text-cyan-400 font-mono font-black tracking-[0.3em] uppercase text-xl">
+                AŞIRI YÜKLEME (OVERLOAD)
+              </span>
             </div>
             
-            <div className="mt-20 text-white/50 font-medium tracking-[0.2em] uppercase text-xl">
-              HIZ: {room.overload_time_allowed?.toFixed(1)}S
+            <div className="flex gap-2 flex-wrap max-w-xl justify-end">
+              {players.map(p => {
+                const isEliminated = (room.overload_eliminated_ids || []).includes(p.id);
+                const isCurrent = p.id === targetPlayer?.id;
+
+                return (
+                  <div 
+                    key={p.id} 
+                    className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all ${
+                      isCurrent 
+                        ? 'border-red-500 bg-red-600/30 text-white shadow-[0_0_20px_rgba(239,68,68,0.8)] scale-105' 
+                        : isEliminated 
+                        ? 'border-white/5 text-gray-600 line-through bg-black/40' 
+                        : 'border-cyan-400/40 text-cyan-300 bg-cyan-950/30'
+                    }`}
+                  >
+                    {p.nickname}
+                  </div>
+                );
+              })}
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
-    </div>
+
+        <AnimatePresence mode="wait">
+          {room.status === "lobby" ? (
+            <motion.div
+              key="lobby"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-50 bg-black/90 backdrop-blur-sm"
+            >
+              <HostLobby
+                room={room}
+                players={players}
+                onStartGame={async () => {
+                  const nextTarget = players[Math.floor(Math.random() * players.length)];
+                  await updateRoomStatus("playing", {
+                    overload_target_id: nextTarget?.id || null,
+                    overload_start_time: Date.now(),
+                    overload_eliminated_ids: []
+                  });
+                }}
+                onUpdateCategories={async () => {}}
+              />
+            </motion.div>
+          ) : room.status === "finished" ? (
+            <motion.div
+              key="finished"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="z-10 flex flex-col items-center justify-center text-center"
+            >
+              <span className="text-8xl mb-4 animate-bounce">👑</span>
+              <h1 className="text-4xl text-cyan-400 font-mono font-black uppercase tracking-widest mb-2">
+                HAYATTA KALAN ŞAMPİYON
+              </h1>
+              <h2 className="text-7xl md:text-8xl text-white font-black uppercase drop-shadow-[0_0_40px_rgba(0,255,255,0.9)] mb-10">
+                {activePlayers[0]?.nickname || "KAZANAN"}
+              </h2>
+              <button
+                onClick={() => updateRoomStatus("lobby", { active_game: "none", overload_eliminated_ids: [], overload_target_id: null })}
+                className="px-10 py-5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:brightness-110 text-black font-black uppercase tracking-widest text-xl rounded-2xl transition-all shadow-[0_0_40px_rgba(0,255,255,0.5)] transform active:scale-95"
+              >
+                {t("quiz.finishGame", "OYUNU BİTİR")}
+              </button>
+            </motion.div>
+          ) : isExploding ? (
+            <motion.div
+              key="explosion"
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: [1, 1.5, 2], opacity: [1, 1, 0] }}
+              transition={{ duration: 1.5, ease: "easeOut" }}
+              className="absolute inset-0 flex flex-col items-center justify-center z-50 pointer-events-none"
+            >
+              <div className="w-[800px] h-[800px] bg-red-600 rounded-full blur-[120px]" />
+              <span className="text-9xl mb-4">💥</span>
+              <h1 className="text-8xl md:text-9xl font-black text-white uppercase drop-shadow-[0_0_40px_rgba(255,0,0,1)] tracking-widest">
+                AŞIRI YÜKLENDİ!
+              </h1>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="active"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="relative z-10 flex flex-col items-center justify-center mt-12"
+            >
+              {/* Active Target Banner */}
+              {targetPlayer ? (
+                <motion.div 
+                  initial={{ y: -30, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  className="flex flex-col items-center text-center mb-6"
+                >
+                  <span className="text-red-500 text-sm font-mono font-bold tracking-[0.5em] mb-1 animate-pulse">
+                    ⚡ VOLTAJ KİMDE:
+                  </span>
+                  <h1 className="text-6xl md:text-8xl font-black text-white uppercase tracking-tight drop-shadow-[0_0_30px_rgba(255,0,0,0.8)]">
+                    {targetPlayer.nickname}
+                  </h1>
+                </motion.div>
+              ) : (
+                <div className="flex flex-col items-center text-center mb-6">
+                  <h1 className="text-5xl md:text-6xl font-black text-amber-400 uppercase tracking-widest animate-pulse">
+                    ⚡ AKTARILIYOR...
+                  </h1>
+                </div>
+              )}
+
+              {/* High-Voltage Reactor Core */}
+              <div className="relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center my-4">
+                <motion.div 
+                  animate={{ 
+                    scale: timeLeft <= 3 ? [1, 1.15, 1] : [1, 1.05, 1], 
+                    rotate: 360 
+                  }}
+                  transition={{ 
+                    scale: { repeat: Infinity, duration: Math.max(0.2, timeLeft / 10) },
+                    rotate: { repeat: Infinity, duration: 8, ease: "linear" }
+                  }}
+                  className="absolute inset-0 rounded-full border-8 border-dashed shadow-[0_0_60px_rgba(239,68,68,0.7)]"
+                  style={{ borderColor: timeLeft <= 3 ? '#ff003c' : '#a855f7' }}
+                />
+                
+                <div className="absolute inset-4 rounded-full bg-gradient-to-tr from-red-600/30 to-purple-600/30 blur-xl" />
+                
+                {/* Countdown Digit */}
+                <div className="relative z-10 text-8xl md:text-9xl font-black text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.9)]">
+                  {timeLeft}
+                </div>
+              </div>
+              
+              <div className="mt-4 px-6 py-2 rounded-full border border-white/10 bg-black/50 text-cyan-300 font-mono text-sm uppercase tracking-widest">
+                REFLEKS SÜRESİ: {room.overload_time_allowed?.toFixed(1)}S
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </TVScaleFrame>
   );
 }

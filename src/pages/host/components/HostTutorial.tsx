@@ -50,7 +50,7 @@ export function HostTutorial({ room, onComplete }: Props) {
     }
   };
 
-  const currentSlide = content[step];
+  const currentSlide = content[step] || content[0];
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center min-h-screen bg-black relative overflow-hidden">

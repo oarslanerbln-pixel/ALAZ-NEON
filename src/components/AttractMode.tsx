@@ -63,54 +63,86 @@ export function AttractMode({ onClose }: { onClose: () => void }) {
 
       <AnimatePresence mode="wait">
         {activeSlide.kind === "champions" ? (
-          // SLIDE: CHAMPIONS
+          // SLIDE: CHAMPIONS (SERIOUS & PRESTIGIOUS)
           <motion.div
             key="champions"
-            initial={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
+            initial={{ opacity: 0, scale: 0.95, filter: "blur(8px)" }}
             animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-            exit={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }}
-            transition={{ duration: 1.2 }}
-            className="w-full max-w-5xl flex flex-col items-center"
+            exit={{ opacity: 0, scale: 1.05, filter: "blur(8px)" }}
+            transition={{ duration: 1 }}
+            className="w-full max-w-5xl flex flex-col items-center select-none"
           >
-            <h1 className="text-5xl md:text-7xl font-black italic tracking-tighter text-glow-ultra-alaz mb-12 text-center">
-              {t("leaderboard.title")}
-            </h1>
+            <div className="text-center mb-8">
+              <span className="text-[10px] sm:text-xs font-mono font-black tracking-[0.3em] uppercase text-amber-400 px-4 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 inline-block mb-3">
+                ⚡ {t("leaderboard.league")} ⚡
+              </span>
+              <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight text-white drop-shadow-[0_2px_20px_rgba(0,0,0,0.8)]">
+                {t("leaderboard.title")}
+              </h1>
+              <p className="text-gray-400 font-mono font-semibold uppercase tracking-[0.2em] text-xs sm:text-sm mt-2">
+                {t("leaderboard.subtitle")}
+              </p>
+            </div>
 
-            <div className="flex justify-center items-end gap-6 h-[400px]">
-              {/* Rank 2 */}
+            <div className="flex justify-center items-end gap-6 sm:gap-8 h-[380px] w-full max-w-3xl">
+              {/* Rank 2 - Silver */}
               <motion.div 
-                initial={{ y: 200, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.6, type: "spring" }}
-                className="flex flex-col items-center"
-              >
-                <div className="text-2xl font-black text-gray-300 mb-2">{topPlayers[1].name}</div>
-                <div className="text-gray-400 font-bold mb-4">{topPlayers[1].score.toLocaleString()}</div>
-                <div className="w-32 h-48 bg-white/10 border-t-4 border-gray-300 rounded-t-xl flex items-center justify-center text-4xl font-black text-gray-400">#2</div>
-              </motion.div>
-
-              {/* Rank 1 */}
-              <motion.div 
-                initial={{ y: 200, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.8, type: "spring" }}
-                className="flex flex-col items-center z-10"
-              >
-                <div className="text-4xl font-black text-alaz-orange mb-2 text-glow-alaz">{topPlayers[0].name}</div>
-                <div className="text-white font-black text-2xl mb-4">{topPlayers[0].score.toLocaleString()}</div>
-                <div className="w-40 h-64 bg-alaz-orange/20 border-t-4 border-alaz-orange rounded-t-xl flex items-center justify-center text-6xl font-black text-alaz-orange shadow-[0_0_50px_rgba(255,77,0,0.3)]">#1</div>
-              </motion.div>
-
-              {/* Rank 3 */}
-              <motion.div 
-                initial={{ y: 200, opacity: 0 }}
+                initial={{ y: 150, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.4, type: "spring" }}
-                className="flex flex-col items-center"
+                className="flex-1 flex flex-col items-center"
               >
-                <div className="text-2xl font-black text-orange-700 mb-2">{topPlayers[2].name}</div>
-                <div className="text-gray-400 font-bold mb-4">{topPlayers[2].score.toLocaleString()}</div>
-                <div className="w-32 h-40 bg-white/5 border-t-4 border-orange-900 rounded-t-xl flex items-center justify-center text-4xl font-black text-orange-900">#3</div>
+                <div className="text-xl sm:text-2xl font-black uppercase tracking-tight text-gray-200 mb-1 text-center truncate max-w-[180px]">
+                  {topPlayers[1].name}
+                </div>
+                <div className="text-gray-400 font-mono font-bold text-xs sm:text-sm mb-3">
+                  {topPlayers[1].score.toLocaleString()} XP
+                </div>
+                <div className="w-full h-44 bg-gradient-to-b from-[#1c1c28] to-[#0d0d14] border-t-2 border-t-gray-300 border-x border-white/10 rounded-t-3xl flex flex-col items-center justify-center shadow-lg">
+                  <span className="text-4xl font-mono font-black text-gray-400">#02</span>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-gray-500 mt-1">SILBER</span>
+                </div>
+              </motion.div>
+
+              {/* Rank 1 - Gold Champion */}
+              <motion.div 
+                initial={{ y: 180, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.6, type: "spring" }}
+                className="flex-[1.2] flex flex-col items-center z-10"
+              >
+                <span className="px-3 py-0.5 rounded-full bg-yellow-400 text-black font-mono font-black text-[9px] uppercase tracking-widest mb-1.5 shadow-[0_0_15px_rgba(250,204,21,0.6)]">
+                  👑 CHAMPION
+                </span>
+                <div className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white mb-1 text-center drop-shadow-sm truncate max-w-[220px]">
+                  {topPlayers[0].name}
+                </div>
+                <div className="text-amber-400 font-mono font-black text-sm sm:text-base mb-3 drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]">
+                  {topPlayers[0].score.toLocaleString()} XP
+                </div>
+                <div className="w-full h-60 bg-gradient-to-b from-[#2a1d0d] to-[#120c05] border-t-2 border-t-yellow-400 border-x border-amber-500/30 rounded-t-3xl flex flex-col items-center justify-center shadow-[0_0_50px_rgba(250,204,21,0.25)]">
+                  <span className="text-6xl font-mono font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500">#01</span>
+                  <span className="text-[10px] font-mono uppercase tracking-[0.2em] font-black text-amber-400 mt-1">GOLD</span>
+                </div>
+              </motion.div>
+
+              {/* Rank 3 - Bronze */}
+              <motion.div 
+                initial={{ y: 150, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3, type: "spring" }}
+                className="flex-1 flex flex-col items-center"
+              >
+                <div className="text-xl sm:text-2xl font-black uppercase tracking-tight text-amber-500 mb-1 text-center truncate max-w-[180px]">
+                  {topPlayers[2].name}
+                </div>
+                <div className="text-gray-400 font-mono font-bold text-xs sm:text-sm mb-3">
+                  {topPlayers[2].score.toLocaleString()} XP
+                </div>
+                <div className="w-full h-36 bg-gradient-to-b from-[#1f140e] to-[#0c0805] border-t-2 border-t-amber-700 border-x border-white/10 rounded-t-3xl flex flex-col items-center justify-center shadow-lg">
+                  <span className="text-4xl font-mono font-black text-amber-700">#03</span>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-amber-800 mt-1">BRONZE</span>
+                </div>
               </motion.div>
             </div>
           </motion.div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { PlayerBackground } from "../../../components/PlayerBackground";
 import { useLocale } from "../../../hooks/useLocale";
@@ -31,21 +31,25 @@ export function PlayerStandings({ currentPlayer }: PlayerStandingsProps) {
       try {
         const q = query(
           collection(db, "players"),
-          where("room_id", "==", currentPlayer.room_id),
-          orderBy("total_score", "desc")
+          where("room_id", "==", currentPlayer.room_id)
         );
         const snap = await getDocs(q);
-        const players: RankedPlayer[] = snap.docs.map((d, i) => ({
-          id: d.id,
-          nickname: d.data().nickname,
-          total_score: d.data().total_score,
-          rank: i + 1,
-        }));
+        const players: RankedPlayer[] = snap.docs
+          .map((d) => ({
+            id: d.id,
+            nickname: d.data().nickname || "Oyuncu",
+            total_score: d.data().total_score || 0,
+            rank: 0,
+          }))
+          .sort((a, b) => b.total_score - a.total_score)
+          .map((p, i) => ({ ...p, rank: i + 1 }));
+
         setRankedPlayers(players.slice(0, 5)); // Top 5 göster
         const me = players.find((p) => p.id === currentPlayer.id);
         setMyRank(me?.rank ?? null);
         setLoaded(true);
-      } catch {
+      } catch (err) {
+        console.error("Standings fetch error:", err);
         setLoaded(true);
       }
     };

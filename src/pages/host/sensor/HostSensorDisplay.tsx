@@ -170,7 +170,11 @@ export function HostSensorDisplay({
     return (
       <TVScaleFrame>
         <div className="w-full h-full bg-black text-white overflow-hidden flex flex-col font-mono relative">
-          <HostHeader room={room} onEndGameEarly={() => { grantSensorRewards(); updateRoomStatus("finished"); }} />
+          <HostHeader 
+            room={room} 
+            onEndGameEarly={() => { grantSensorRewards(); updateRoomStatus("finished"); }} 
+            onReturnToLobby={() => updateRoomStatus("night_lobby", { active_game: "none" })}
+          />
           <div className="flex-1 relative z-10">
             <HostLobby
               room={room}
@@ -186,7 +190,11 @@ export function HostSensorDisplay({
   return (
     <TVScaleFrame>
       <div className="w-full h-full bg-black text-white overflow-hidden flex flex-col font-sans relative">
-        <HostHeader room={room} onEndGameEarly={() => { grantSensorRewards(); updateRoomStatus("finished"); }} />
+        <HostHeader 
+          room={room} 
+          onEndGameEarly={() => { grantSensorRewards(); updateRoomStatus("finished"); }} 
+          onReturnToLobby={() => updateRoomStatus("night_lobby", { active_game: "none" })}
+        />
 
         <div className="flex-1 flex flex-col relative z-10">
           {gameState === "sensor_intro" && currentImage && (

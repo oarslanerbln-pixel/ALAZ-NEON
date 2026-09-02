@@ -8,6 +8,7 @@ import { useToast } from "../../../contexts/ToastContextCore";
 import { containsProfanity } from "../../../lib/profanity";
 import { looksLikeGibberish } from "../../../lib/wordValidation";
 import { useLocale } from "../../../hooks/useLocale";
+import { haptics } from "../../../lib/haptics";
 
 interface Props {
   room: Room;
@@ -22,25 +23,14 @@ export function PlayerBombController({ room, player }: Props) {
 
   const isMyTurn = room.bomb_target_player === player.id;
   const currentLives = player.lives !== undefined ? player.lives : 3;
-
-  // isSubmitting React state'i asenkron güncelleniyor; aynı olay döngüsü
-  // tiki içinde gelen iki gönderim (çift dokunma/çift Enter) ikisi de
-  // isSubmitting'i henüz false görüp iki farklı rastgele hedefe iki ayrı
-  // updateDoc yazabiliyordu — bomba kısa süreliğine yanlış oyuncuya geçmiş
-  // gibi görünüyordu. Senkron bir ref ile kilitliyoruz (diğer modlardaki
-  // aynı desen).
   const isSubmittingRef = useRef(false);
 
   useEffect(() => {
     if (isMyTurn && room.status === "bomb_active") {
-      // Süre dolup patladığında (kelime GÖNDERİLMEDEN) `word` state'i hiç
-      // temizlenmiyordu — sadece başarılı gönderimde temizleniyordu (aşağıda).
-      // Bomba sonraki bir turda yine bu oyuncuya gelirse, önceki yarım/yazılmış
-      // kelime input'ta duruyor gibi görünüyordu. Her yeni sıra başında sıfırlıyoruz.
       setWord("");
-      // Vibrate mobile device if supported when turn starts
+      haptics.warning();
       if (navigator.vibrate) {
-        navigator.vibrate([200, 100, 200]);
+        navigator.vibrate([200, 100, 300]);
       }
     } else if (!isMyTurn) {
       setWord("");
@@ -57,30 +47,29 @@ export function PlayerBombController({ room, player }: Props) {
     if ((room.used_words || []).some(w => w.toLowerCase() === normalizedWord)) {
       showToast(t("bomb.toastWordUsed"), "error");
       SoundManager.getInstance().playSFX(sounds.FAILURE);
-      if (navigator.vibrate) navigator.vibrate(200);
+      haptics.impact();
       return;
     }
 
-    // Bombada geri bildirim anında olmalı — host'un elle reddetmesini beklersek
-    // sıradaki oyuncuya çoktan paslanmış oluyor. Kelime dev ekrana da düşüyor.
     if (containsProfanity(word)) {
       showToast(t("bomb.toastProfane"), "error");
       SoundManager.getInstance().playSFX(sounds.FAILURE);
-      if (navigator.vibrate) navigator.vibrate(200);
+      haptics.impact();
       return;
     }
 
     if (looksLikeGibberish(word)) {
       showToast(t("bomb.toastGibberish"), "error");
       SoundManager.getInstance().playSFX(sounds.FAILURE);
-      if (navigator.vibrate) navigator.vibrate(200);
+      haptics.impact();
       return;
     }
 
     isSubmittingRef.current = true;
     setIsSubmitting(true);
+    haptics.tap();
+
     try {
-      // Fetch all players to find the next target
       const playersRef = collection(db, "players");
       const q = query(playersRef, where("room_id", "==", room.id));
       const querySnapshot = await getDocs(q);
@@ -93,10 +82,10 @@ export function PlayerBombController({ room, player }: Props) {
       const activePlayers = allPlayers.filter(p => 
         p.id !== player.id && 
         (p.lives === undefined || p.lives > 0) &&
-        (p.last_active ? (now - p.last_active < 30000) : true) // Exclude ghosts
+        (p.last_active ? (now - p.last_active < 30000) : true)
       );
       
-      let nextPlayerId = player.id; // fallback to self if somehow alone
+      let nextPlayerId = player.id;
       if (activePlayers.length > 0) {
         const randomTarget = activePlayers[Math.floor(Math.random() * activePlayers.length)];
         nextPlayerId = randomTarget.id;
@@ -105,7 +94,7 @@ export function PlayerBombController({ room, player }: Props) {
       SoundManager.getInstance().playSFX(sounds.SUCCESS);
 
       await updateDoc(doc(db, "rooms", room.id), {
-        previous_bomb_target_player: player.id, // Track who threw it for reject mechanic
+        previous_bomb_target_player: player.id,
         bomb_target_player: nextPlayerId,
         used_words: arrayUnion(word.trim()),
       });
@@ -118,15 +107,18 @@ export function PlayerBombController({ room, player }: Props) {
       setTimeout(() => {
         isSubmittingRef.current = false;
         setIsSubmitting(false);
-      }, 500);
+      }, 400);
     }
   };
 
   if (currentLives <= 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-black text-white p-6">
-        <h1 className="text-4xl font-black text-gray-600 tracking-widest uppercase">{t("bomb.eliminatedYou")}</h1>
-        <p className="text-gray-500 mt-4 text-center">{t("bomb.watchOthers")}</p>
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-black text-white p-6 text-center">
+        <span className="text-7xl mb-4 grayscale">💀</span>
+        <h1 className="text-3xl font-black text-red-500 tracking-widest uppercase mb-2">
+          {t("bomb.eliminatedYou")}
+        </h1>
+        <p className="text-gray-400 text-sm max-w-xs">{t("bomb.watchOthers")}</p>
       </div>
     );
   }
@@ -134,21 +126,25 @@ export function PlayerBombController({ room, player }: Props) {
   if (room.status === "bomb_intro") {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-black text-white p-6">
-        <div className="w-16 h-16 border-4 border-[#ff003c] border-t-transparent rounded-full animate-spin mb-6" />
-        <h1 className="text-2xl font-black text-[#ff003c] tracking-widest uppercase animate-pulse">{t("bomb.preparing")}</h1>
+        <div className="w-16 h-16 border-4 border-red-500 border-t-transparent rounded-full animate-spin mb-6" />
+        <h1 className="text-2xl font-black text-red-500 tracking-widest uppercase animate-pulse">
+          {t("bomb.preparing")}
+        </h1>
       </div>
     );
   }
 
   if (room.status === "bomb_explosion") {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-[#ff003c] text-white p-6 text-center animate-screen-shake-violent relative overflow-hidden">
-        <div className="absolute inset-0 bg-white/40 animate-impact-shock pointer-events-none" />
-        <span className="text-8xl mb-6 animate-bounce">💥</span>
-        <h1 className="text-6xl font-black text-black tracking-widest uppercase drop-shadow-[0_0_30px_rgba(0,0,0,0.8)]">
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-red-600 text-white p-6 text-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-white/20 animate-pulse pointer-events-none" />
+        <span className="text-8xl mb-4 animate-bounce">💥</span>
+        <h1 className="text-5xl font-black text-black tracking-widest uppercase drop-shadow-md">
           {t("bomb.explodedShort")}
         </h1>
-        <p className="mt-6 font-bold text-2xl tracking-widest uppercase text-black/80">{t("bomb.watchMainScreen")}</p>
+        <p className="mt-4 font-bold text-lg tracking-widest uppercase text-black/80">
+          {t("bomb.watchMainScreen")}
+        </p>
       </div>
     );
   }
@@ -156,101 +152,108 @@ export function PlayerBombController({ room, player }: Props) {
   if (room.status === "finished") {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-black text-white p-6 text-center">
-        <h1 className="text-4xl font-black text-alaz-orange tracking-widest uppercase drop-shadow-lg">{t("bomb.gameOver")}</h1>
-        <p className="mt-4 text-gray-400">{t("bomb.resultsOnScreen")}</p>
+        <span className="text-7xl mb-4">🏆</span>
+        <h1 className="text-3xl font-black text-amber-400 tracking-widest uppercase mb-2">
+          {t("bomb.gameOver")}
+        </h1>
+        <p className="text-gray-400">{t("bomb.resultsOnScreen")}</p>
       </div>
     );
   }
 
-  if (room.status === "lobby") {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-black text-white p-6 text-center">
-        <div className="text-6xl mb-6">💣</div>
-        <h1 className="text-2xl font-black text-[#ff003c] tracking-widest uppercase mb-4">{t("bomb.title" as never) || "BOMBA"}</h1>
-        <p className="text-gray-400">{t("bomb.watchMainScreen" as never) || "Ana ekranı takip edin"}</p>
-      </div>
-    );
-  }
+  // Active game screen
+  const latestWord = (room.used_words || []).slice(-1)[0];
 
-  // Active game logic
-  if (room.status === "bomb_active") {
-    return (
-    <div className={`flex-1 flex flex-col min-h-[100dvh] p-4 transition-colors duration-300 ${isMyTurn ? 'bg-[#ff003c]' : 'bg-black'} text-white`}>
-      <div className="flex justify-between items-center mb-8 px-2 py-4">
-        <div className="flex gap-1">
+  return (
+    <div className={`flex-1 flex flex-col min-h-[100dvh] p-4 transition-colors duration-300 ${
+      isMyTurn ? 'bg-[#2a0008]' : 'bg-[#0a0003]'
+    } text-white justify-between`}>
+      
+      {/* Top Header: Lives & Category */}
+      <div className="flex justify-between items-center px-3 py-3 rounded-2xl bg-black/60 border border-white/10 backdrop-blur-md">
+        <div className="flex gap-1.5 items-center">
           {Array.from({ length: 3 }).map((_, i) => (
-            <svg 
-              key={i}
-              xmlns="http://www.w3.org/2000/svg" 
-              width="24" 
-              height="24" 
-              viewBox="0 0 24 24" 
-              fill={i < currentLives ? (isMyTurn ? "black" : "#ff003c") : "transparent"} 
-              stroke={i < currentLives ? (isMyTurn ? "black" : "#ff003c") : (isMyTurn ? "rgba(0,0,0,0.3)" : "#333")} 
-              strokeWidth="2" 
-              strokeLinecap="round" 
-              strokeLinejoin="round"
-            >
-              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-            </svg>
+            <span key={i} className="text-xl">
+              {i < currentLives ? "❤️" : "🖤"}
+            </span>
           ))}
         </div>
-        <div className={`text-xs font-bold uppercase tracking-widest ${isMyTurn ? 'text-black' : 'text-gray-500'}`}>
-          {t("bomb.categoryLabel", room.active_letter || "")}
+        <div className="text-right">
+          <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">
+            KATEGORİ
+          </span>
+          <span className="text-sm font-black text-red-400 uppercase tracking-wider">
+            {room.active_letter || "GENEL"}
+          </span>
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full">
+      {/* Main Action Center */}
+      <div className="flex-1 flex flex-col justify-center items-center max-w-sm mx-auto w-full my-4">
         {isMyTurn ? (
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
+            initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-full"
+            className="w-full bg-red-950/80 border-2 border-red-500 rounded-3xl p-6 shadow-[0_0_40px_rgba(239,68,68,0.5)] backdrop-blur-xl flex flex-col items-center text-center"
           >
-            <h2 className="text-4xl font-black text-black uppercase tracking-tighter mb-8 text-center drop-shadow-md animate-pulse">
-              {t("bomb.yourTurn")}
-            </h2>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-3xl animate-bounce">💣</span>
+              <h2 className="text-2xl font-black text-red-400 uppercase tracking-tight">
+                {t("bomb.yourTurn")}
+              </h2>
+            </div>
             
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <p className="text-xs text-gray-300 mb-5 font-medium">
+              Geçerli bir kelime yaz ve bombayı fırlat!
+            </p>
+
+            <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
               <input
                 type="text"
                 value={word}
                 onChange={(e) => setWord(e.target.value)}
                 autoFocus
                 disabled={isSubmitting}
-                className="w-full bg-white text-black p-6 text-2xl font-black text-center uppercase tracking-widest shadow-[0_10px_30px_rgba(0,0,0,0.5)] focus:outline-none focus:ring-4 focus:ring-black"
+                className="w-full bg-black/90 border-2 border-red-400 text-white rounded-2xl p-4 text-2xl font-black text-center uppercase tracking-wider focus:outline-none focus:ring-4 focus:ring-red-500/50 shadow-inner"
                 placeholder={t("bomb.wordPlaceholder")}
               />
               <button
                 type="submit"
                 disabled={!word.trim() || isSubmitting}
-                className={`w-full p-6 text-xl font-black uppercase tracking-widest transition-all ${
+                className={`w-full py-5 rounded-2xl text-xl font-black uppercase tracking-wider transition-all transform active:scale-95 shadow-[0_0_25px_rgba(239,68,68,0.6)] ${
                   !word.trim() || isSubmitting
-                    ? 'bg-black/30 text-black/50 cursor-not-allowed'
-                    : 'bg-black text-[#ff003c] shadow-xl hover:scale-[1.02] active:scale-95'
+                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700'
+                    : 'bg-gradient-to-r from-red-600 to-amber-600 text-white hover:brightness-110'
                 }`}
               >
-                {isSubmitting ? t("bomb.throwing") : t("bomb.throwBomb")}
+                {isSubmitting ? t("bomb.throwing") : "🔥 BOMBAYI AT! (PASLA)"}
               </button>
             </form>
           </motion.div>
         ) : (
-          <div className="text-center">
-            <div className="text-6xl mb-6 animate-bounce">💣</div>
-            <h2 className="text-2xl font-bold text-gray-400 uppercase tracking-widest mb-2">{t("bomb.elsewhereLabel")}</h2>
-            <p className="text-4xl font-black text-white uppercase tracking-tighter">{t("bomb.elsewhere")}</p>
-            <p className="mt-8 text-gray-500 font-medium">{t("bomb.waitYourTurn")}</p>
+          <div className="text-center p-6 bg-black/50 border border-white/10 rounded-3xl backdrop-blur-md w-full">
+            <div className="text-6xl mb-4 animate-pulse">💣</div>
+            <h2 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest mb-1">
+              {t("bomb.elsewhereLabel")}
+            </h2>
+            <p className="text-2xl font-black text-white uppercase tracking-tight mb-4">
+              Bomba Başka Masada!
+            </p>
+            {latestWord && (
+              <div className="bg-white/5 border border-white/10 rounded-xl p-3 inline-block max-w-full">
+                <span className="text-[10px] text-gray-400 font-mono block">SON SÖYLENEN KELİME:</span>
+                <span className="text-lg font-black text-amber-400 uppercase">{latestWord}</span>
+              </div>
+            )}
+            <p className="mt-4 text-xs text-gray-500">{t("bomb.waitYourTurn")}</p>
           </div>
         )}
       </div>
-    </div>
-    );
-  }
 
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-black text-white p-6 text-center">
-      <div className="w-12 h-12 border-4 border-[#ff003c] border-t-transparent rounded-full animate-spin mb-4" />
-      <p className="text-gray-400 uppercase tracking-widest">{t("game.loading" as never) || "YÜKLENİYOR..."}</p>
+      {/* Bottom Status */}
+      <div className="text-center py-2 text-[11px] font-mono text-gray-500">
+        ALAZ NEON PARTY • BOMB PARTY
+      </div>
     </div>
   );
 }

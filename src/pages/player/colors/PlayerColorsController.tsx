@@ -4,7 +4,6 @@ import type { Room, Player } from "../../../types/database";
 import { db } from "../../../lib/firebase";
 import { doc, increment, updateDoc } from "firebase/firestore";
 import { haptics } from "../../../lib/haptics";
-import { useLocale } from "../../../hooks/useLocale";
 
 interface Props {
   room: Room;
@@ -15,23 +14,22 @@ export function PlayerColorsController({ room, player }: Props) {
   const [localClicks, setLocalClicks] = useState(0);
   const pendingClicksRef = useRef(0);
   const isFlushingRef = useRef(false);
-  const { t } = useLocale();
   
-  // Eğer oyuncu oyun başladıktan sonra girmişse, fallback olarak ID'sinin son harfine göre takım ata
   const fallbackTeam = player.id.charCodeAt(player.id.length - 1) % 2 === 0 ? "red" : "blue";
   const team = room.colors_team_assignments?.[player.id] || fallbackTeam;
 
-  const handleClick = () => {
+  const handleClick = (e: React.TouchEvent | React.MouseEvent) => {
     if (room.status !== "colors_active" || !team) return;
     
-    // Vibrate on every tap for tactile feedback
+    // Tap haptics
     haptics.tap();
     
-    setLocalClicks(prev => prev + 1);
-    pendingClicksRef.current += 1;
+    const count = 'touches' in e && e.touches.length > 1 ? e.touches.length : 1;
+    setLocalClicks(prev => prev + count);
+    pendingClicksRef.current += count;
   };
 
-  // Batch updates to Firestore every 500ms to avoid rate limits
+  // Batch updates to Firestore
   useEffect(() => {
     if (room.status !== "colors_active" || !team) return;
 
@@ -39,32 +37,30 @@ export function PlayerColorsController({ room, player }: Props) {
       const clicksToFlush = pendingClicksRef.current;
       if (clicksToFlush > 0 && !isFlushingRef.current) {
         isFlushingRef.current = true;
-        pendingClicksRef.current = 0; // Reset immediately
+        pendingClicksRef.current = 0;
         
-        // KRİTİK DÜZELTME: Tüm oyuncuların aynı "rooms/id" dokümanına yazması
-        // "Contention" kilitlenmesine neden oluyordu.
-        // Artık her oyuncu kendi dokümanına yazıyor.
         const playerRef = doc(db, "players", player.id);
         
         updateDoc(playerRef, {
           colors_clicks: increment(clicksToFlush)
         }).catch(err => {
           console.error("Failed to flush clicks to Firestore:", err);
-          // If it fails, add them back so we don't lose them
           pendingClicksRef.current += clicksToFlush;
         }).finally(() => {
           isFlushingRef.current = false;
         });
       }
-    }, 1000);
+    }, 600);
 
     return () => clearInterval(interval);
   }, [room.status, player.id, team]);
 
-  const bgClass = team === "red" ? "bg-red-600" : (team === "blue" ? "bg-blue-600" : "bg-black");
+  const bgClass = team === "red" 
+    ? "bg-gradient-to-b from-[#b30027] to-[#ff003c]" 
+    : (team === "blue" ? "bg-gradient-to-b from-[#004bb3] to-[#00aaff]" : "bg-black");
 
   return (
-    <div className={`w-full h-[100dvh] flex flex-col font-sans overflow-hidden transition-colors duration-500 ${bgClass}`}>
+    <div className={`w-full h-[100dvh] flex flex-col font-sans overflow-hidden transition-colors duration-500 ${bgClass} text-white`}>
       <AnimatePresence mode="wait">
         {room.status === "colors_intro" && (
           <motion.div
@@ -74,25 +70,22 @@ export function PlayerColorsController({ room, player }: Props) {
             exit={{ opacity: 0 }}
             className="flex-1 flex flex-col items-center justify-center p-6 text-center"
           >
-            <h2 className="text-white font-black text-3xl mb-8 tracking-[0.2em] animate-pulse">
-              TAKIMIN BELİRLENİYOR...
+            <span className="text-7xl mb-4 animate-bounce">{team === "red" ? "🔴" : "🔵"}</span>
+            <h2 className="text-white/80 font-mono text-sm uppercase tracking-widest mb-2">
+              TAKIMIN BELİRLENDİ
             </h2>
-            {team ? (
-              <motion.div 
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", bounce: 0.5 }}
-              >
-                <div className={`text-6xl font-black uppercase tracking-widest text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]`}>
-                  {team === "red" ? "KIRMIZI" : "MAVİ"}
-                </div>
-                <p className="mt-4 text-white/80 font-bold uppercase tracking-widest">
-                  Parmağını Isıt!
-                </p>
-              </motion.div>
-            ) : (
-              <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto" />
-            )}
+            <motion.div 
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", bounce: 0.5 }}
+            >
+              <div className="text-5xl md:text-6xl font-black uppercase tracking-widest text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.9)] mb-4">
+                {team === "red" ? "KIRMIZI TAKIM" : "MAVİ TAKIM"}
+              </div>
+              <p className="text-white/90 font-mono text-xs uppercase tracking-widest bg-black/30 px-6 py-2 rounded-full border border-white/20 inline-block">
+                Tüm parmaklarınla olabildiğince hızlı tıkla!
+              </p>
+            </motion.div>
           </motion.div>
         )}
 
@@ -102,22 +95,31 @@ export function PlayerColorsController({ room, player }: Props) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex-1 w-full h-full"
+            className="flex-1 w-full h-full relative"
           >
-            {/* The giant spam button */}
+            {/* Turbo Click Pad */}
             <button
               onClick={handleClick}
-              className="w-full h-full flex flex-col items-center justify-center active:bg-white/20 transition-colors"
-              style={{ touchAction: "manipulation" }} // Prevents double-tap to zoom on mobile
+              onTouchStart={handleClick}
+              className="w-full h-full flex flex-col items-center justify-center active:brightness-125 transition-all select-none p-6"
+              style={{ touchAction: "manipulation" }}
             >
-              <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:40px_40px] opacity-20 pointer-events-none" />
+              <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:40px_40px] opacity-25 pointer-events-none" />
               
-              <h1 className="text-white font-black text-7xl uppercase tracking-tighter mix-blend-overlay z-10 select-none">
-                BAS!
+              <span className="text-8xl mb-2 animate-pulse pointer-events-none">⚡</span>
+              
+              <h1 className="text-white font-black text-6xl md:text-7xl uppercase tracking-wider drop-shadow-[0_0_30px_rgba(0,0,0,0.8)] pointer-events-none">
+                HIZLA BAS!
               </h1>
-              <p className="text-white/50 text-2xl font-bold mt-4 z-10 select-none">
-                {localClicks}
-              </p>
+              
+              <div className="mt-6 bg-black/40 border border-white/20 px-8 py-3 rounded-3xl backdrop-blur-md pointer-events-none">
+                <span className="text-xs font-mono text-white/70 uppercase tracking-widest block text-center">
+                  SENİN TIK SAYIN
+                </span>
+                <span className="text-4xl font-black text-white block text-center mt-1">
+                  {localClicks}
+                </span>
+              </div>
             </button>
           </motion.div>
         )}
@@ -130,28 +132,17 @@ export function PlayerColorsController({ room, player }: Props) {
             exit={{ opacity: 0 }}
             className="flex-1 flex flex-col items-center justify-center p-6 text-center"
           >
-            <h2 className="text-4xl font-black text-white uppercase tracking-[0.2em] mb-4">
-              SAVAŞ BİTTİ
+            <span className="text-8xl mb-4">🏁</span>
+            <h2 className="text-4xl font-black text-white uppercase tracking-wider mb-2">
+              SAVAŞ TAMAMLANDI!
             </h2>
-            <p className="text-white/80 font-bold uppercase tracking-widest text-xl">
-              Sonuçlar Ekranda!
+            <p className="text-white/80 font-mono text-sm uppercase tracking-widest mb-8">
+              Sonuçlar TV Ekranında!
             </p>
-            <div className="mt-12 text-6xl font-black text-white/30">
-              {localClicks} TIK
+            <div className="bg-black/40 border border-white/20 p-6 rounded-2xl backdrop-blur-md">
+              <span className="text-xs font-mono text-gray-300 uppercase block mb-1">TOPLAM KATKIN:</span>
+              <span className="text-5xl font-black text-white">{localClicks} TIK</span>
             </div>
-          </motion.div>
-        )}
-
-        {!["colors_intro", "colors_active", "colors_reveal"].includes(room.status) && (
-          <motion.div
-            key="fallback"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-black"
-          >
-            <div className="w-12 h-12 rounded-full border-4 border-white border-t-transparent animate-spin mb-4 mx-auto" />
-            <p className="text-white/50 uppercase tracking-widest">{t("common.loading", "YÜKLENİYOR...")}</p>
           </motion.div>
         )}
       </AnimatePresence>

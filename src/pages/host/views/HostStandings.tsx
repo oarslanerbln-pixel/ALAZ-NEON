@@ -134,7 +134,7 @@ export function HostStandings({
               {/* Avatar/Badge */}
               <div className="w-20 h-full flex items-center justify-center border-r border-white/5">
                 <div className={`w-12 h-12 flex items-center justify-center rounded-full text-sm tracking-widest ${badgeBg}`}>
-                  {upperTL(item.name.substring(0, 3))}
+                  {upperTL((item.name || "?").substring(0, 3))}
                 </div>
               </div>
 

@@ -114,7 +114,7 @@ export function HostDisplay() {
     );
   }
 
-  if (room.active_game === "overload") {
+  if (room.active_game === "overload" || room.game_type === "overload") {
     return (
       <HostOverloadDisplay
         room={room}
@@ -124,7 +124,7 @@ export function HostDisplay() {
     );
   }
 
-  if (room.active_game === "echo") {
+  if (room.active_game === "echo" || room.game_type === "echo") {
     return (
       <HostEchoDisplay
         room={room}
@@ -134,7 +134,7 @@ export function HostDisplay() {
     );
   }
 
-  if (room.active_game === "pulse") {
+  if (room.active_game === "pulse" || room.game_type === "pulse") {
     return (
       <HostPulseDisplay
         room={room}
@@ -144,7 +144,7 @@ export function HostDisplay() {
     );
   }
 
-  if (room.active_game === "spectrum") {
+  if (room.active_game === "spectrum" || room.game_type === "spectrum") {
     return (
       <HostSpectrumDisplay
         room={room}
@@ -154,7 +154,7 @@ export function HostDisplay() {
     );
   }
 
-  if (room.active_game === "colors") {
+  if (room.active_game === "colors" || room.game_type === "colors") {
     return (
       <HostColorsDisplay
         room={room}
@@ -164,7 +164,7 @@ export function HostDisplay() {
     );
   }
 
-  if (room.active_game === "vault") {
+  if (room.active_game === "vault" || room.game_type === "vault") {
     return (
       <HostVaultDisplay
         room={room}
@@ -174,7 +174,7 @@ export function HostDisplay() {
     );
   }
 
-  if (room.active_game === "unity") {
+  if (room.active_game === "unity" || room.game_type === "unity") {
     return (
       <HostUnityDisplay
         room={room}
@@ -184,7 +184,7 @@ export function HostDisplay() {
     );
   }
 
-  if (room.active_game === "bar") {
+  if (room.active_game === "bar" || room.game_type === "bar") {
     return (
       <HostBarDisplay
         room={room}
@@ -194,7 +194,7 @@ export function HostDisplay() {
     );
   }
 
-  if (room.active_game === "kablo") {
+  if (room.active_game === "kablo" || room.game_type === "kablo") {
     return (
       <HostKabloDisplay
         room={room}
@@ -707,6 +707,7 @@ function HostDisplayGame({
         <HostHeader 
           room={room} 
           onEndGameEarly={handleEndGameEarly} 
+          onReturnToLobby={() => updateRoomStatus("night_lobby", { active_game: "none" })}
           onTriggerAdBreak={() => {
             updateRoomStatus("ad_break", { ad_break_next_state: "lobby" }).then(() => setGameState("ad_break"));
           }}

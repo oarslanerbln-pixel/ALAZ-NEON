@@ -3,17 +3,146 @@ import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 
 import { SoundManager, sounds } from "../../../lib/audio";
-import { BackgroundSlider } from "../../../components/BackgroundSlider";
 import { NeonIcon } from "../../../components/NeonIcon";
 import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import type { Room, Player, GameType } from "../../../types/database";
 
 import { getRandomSensorImage } from "../../../data/sensorImages";
-import { getCategoryPresets } from "../../../lib/categoryPresets";
-import { useToast } from "../../../contexts/ToastContextCore";
+import { GameSettingsModal } from "../components/GameSettingsModal";
 import { useLocale } from "../../../hooks/useLocale";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useVenue } from "../../../contexts/VenueContextCore";
+
+
+const GAMES = [
+  {
+    id: "scattegories" as GameType,
+    titlePrefix: "HENGAME",
+    titleHighlight: "ARENA",
+    gradientText: "from-alaz-orange to-yellow-500 drop-shadow-[0_0_10px_rgba(255,85,0,0.3)]",
+    shadowColor: "rgba(255,85,0,0.4)",
+    icon: "flame" as const,
+    iconColor: "orange" as const,
+    descKey: "dashboard.modeArenaDesc",
+    bgAccent: "bg-alaz-orange/20",
+    hoverBgAccent: "group-hover:bg-alaz-orange/40",
+    iconAccent: "bg-alaz-orange/10 border-alaz-orange/40",
+    borderAccent: "hover:border-alaz-orange/60"
+  },
+  {
+    id: "quiz" as GameType,
+    titlePrefix: "HENGAME",
+    titleHighlight: "QUIZ",
+    gradientText: "from-neon-blue to-blue-400 drop-shadow-[0_0_10px_rgba(0,229,255,0.3)]",
+    shadowColor: "rgba(0,229,255,0.3)",
+    icon: "lightbulb" as const,
+    iconColor: "blue" as const,
+    descKey: "dashboard.modeQuizDesc",
+    bgAccent: "bg-neon-blue/20",
+    hoverBgAccent: "group-hover:bg-neon-blue/40",
+    iconAccent: "bg-neon-blue/10 border-neon-blue/40",
+    borderAccent: "hover:border-neon-blue/60"
+  },
+  {
+    id: "bomb" as GameType,
+    titlePrefix: "HENGAME",
+    titleHighlight: "BOMB",
+    gradientText: "from-red-500 to-orange-500 drop-shadow-[0_0_10px_rgba(255,0,0,0.3)]",
+    shadowColor: "rgba(255,0,0,0.3)",
+    icon: "rocket" as const,
+    iconColor: "red" as const,
+    descKey: "dashboard.modeBombDesc",
+    bgAccent: "bg-red-500/20",
+    hoverBgAccent: "group-hover:bg-red-500/40",
+    iconAccent: "bg-red-500/10 border-red-500/40",
+    borderAccent: "hover:border-red-500/60"
+  },
+  {
+    id: "sensor" as GameType,
+    titlePrefix: "HENGAME",
+    titleHighlight: "SENSÖR",
+    gradientText: "from-neon-pink to-purple-500 drop-shadow-[0_0_10px_rgba(255,0,255,0.3)]",
+    shadowColor: "rgba(255,0,255,0.3)",
+    icon: "dashboard" as const,
+    iconColor: "pink" as const,
+    descKey: "dashboard.modeSensorDesc",
+    bgAccent: "bg-neon-pink/20",
+    hoverBgAccent: "group-hover:bg-neon-pink/40",
+    iconAccent: "bg-neon-pink/10 border-neon-pink/40",
+    borderAccent: "hover:border-neon-pink/60"
+  },
+  {
+    id: "overload" as GameType,
+    titlePrefix: "NEON",
+    titleHighlight: "OVERLOAD",
+    gradientText: "from-cyan-400 to-purple-500 drop-shadow-[0_0_10px_rgba(0,255,255,0.3)]",
+    shadowColor: "rgba(0,255,255,0.3)",
+    icon: "flame" as const,
+    iconColor: "blue" as const,
+    descKey: "Cyberpunk temalı hız ve refleks oyunu. Top patlamadan telefonu salla veya butona basarak sıranı devret!",
+    bgAccent: "bg-cyan-400/20",
+    hoverBgAccent: "group-hover:bg-cyan-400/40",
+    iconAccent: "bg-cyan-400/10 border-cyan-400/40",
+    borderAccent: "hover:border-cyan-400/60"
+  },
+  {
+    id: "colors" as GameType,
+    titlePrefix: "NEON",
+    titleHighlight: "SAVAŞLARI",
+    gradientText: "from-purple-400 to-pink-500 drop-shadow-[0_0_10px_rgba(168,85,247,0.3)]",
+    shadowColor: "rgba(168,85,247,0.3)",
+    icon: "dashboard" as const,
+    iconColor: "pink" as const,
+    descKey: "Kırmızı ve Mavi takımların TV ekranını ele geçirmek için kapıştığı dev halat çekme (Tug of War) şovu!",
+    bgAccent: "bg-purple-500/20",
+    hoverBgAccent: "group-hover:bg-purple-500/40",
+    iconAccent: "bg-purple-500/10 border-purple-500/40",
+    borderAccent: "hover:border-purple-500/60"
+  },
+  {
+    id: "wheel" as GameType,
+    titlePrefix: "HENGAME",
+    titleHighlight: "ÇARK",
+    gradientText: "from-cyber-yellow to-alaz-orange drop-shadow-[0_0_10px_rgba(255,215,0,0.3)]",
+    shadowColor: "rgba(255,215,0,0.3)",
+    icon: "flame" as const,
+    iconColor: "gold" as const,
+    descKey: "Oyun aralarında müşterilerinize sürpriz ödüller dağıtın. Rastgele seçilen müşteri çarkı çevirir.",
+    bgAccent: "bg-cyber-yellow/20",
+    hoverBgAccent: "group-hover:bg-cyber-yellow/40",
+    iconAccent: "bg-cyber-yellow/10 border-cyber-yellow/40",
+    borderAccent: "hover:border-cyber-yellow/60"
+  },
+  {
+    id: "vault" as GameType,
+    titlePrefix: "NEON",
+    titleHighlight: "ŞİFRE",
+    gradientText: "from-emerald-400 to-teal-500 drop-shadow-[0_0_10px_rgba(16,185,129,0.3)]",
+    shadowColor: "rgba(16,185,129,0.3)",
+    icon: "flame" as const,
+    iconColor: "green" as const,
+    descKey: "Gizli neon kasayı açmak için şifreyi ilk tahmin eden olmak için yarış!",
+    bgAccent: "bg-emerald-500/20",
+    hoverBgAccent: "group-hover:bg-emerald-500/40",
+    iconAccent: "bg-emerald-500/10 border-emerald-500/40",
+    borderAccent: "hover:border-emerald-500/60"
+  },
+  {
+    id: "unity" as GameType,
+    titlePrefix: "NEON",
+    titleHighlight: "BİRLİK",
+    gradientText: "from-amber-400 to-orange-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.3)]",
+    shadowColor: "rgba(245,158,11,0.3)",
+    icon: "flame" as const,
+    iconColor: "orange" as const,
+    descKey: "Bütün mekan güçlerini birleştirip dev neon bataryayı patlatmaya çalışıyor!",
+    bgAccent: "bg-amber-500/20",
+    hoverBgAccent: "group-hover:bg-amber-500/40",
+    iconAccent: "bg-amber-500/10 border-amber-500/40",
+    borderAccent: "hover:border-amber-500/60"
+  }
+];
 
 interface HostDashboardProps {
   room: Room;
@@ -22,20 +151,26 @@ interface HostDashboardProps {
 }
 
 export function HostDashboard({ room, players, updateRoomStatus }: HostDashboardProps) {
-  const { t, locale } = useLocale();
+  const { t } = useLocale();
   const { venue } = useVenue();
-  const { showToast } = useToast();
   const [isKioskMode, setIsKioskMode] = useState(false);
   const [kioskImageIndex, setKioskImageIndex] = useState(0);
 
   // Game Setup State
   const [setupGameMode, setSetupGameMode] = useState<GameType | null>(null);
-  const [categories, setCategories] = useState(t("categories.default"));
-  const [activePreset, setActivePreset] = useState<string | null>(null);
-  const [timerValue, setTimerValue] = useState("60");
-  const [gameMode, setGameMode] = useState<"individual" | "team">("individual");
-  const [totalRounds, setTotalRounds] = useState("3");
-  const presets = getCategoryPresets(locale);
+
+  // Carousel State
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const [direction, setDirection] = useState(0);
+
+  const paginate = (newDirection: number) => {
+    setDirection(newDirection);
+    let next = carouselIndex + newDirection;
+    if (next < 0) next = GAMES.length - 1;
+    if (next >= GAMES.length) next = 0;
+    setCarouselIndex(next);
+  };
+
 
   useEffect(() => {
     if (!isKioskMode) return;
@@ -45,44 +180,8 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     return () => clearInterval(interval);
   }, [isKioskMode, venue.promo_images]);
 
-  const applyPreset = (name: string) => {
-    setCategories(presets[name].join(", "));
-    setActivePreset(name);
-  };
-
-  const confirmStartGame = async () => {
-    if (!setupGameMode) return;
-    
-    let parsedCategories: string[] = [];
-    if (["scattegories", "quiz", "bomb"].includes(setupGameMode)) {
-      parsedCategories = categories
-        .split(",")
-        .map((c) => c.trim())
-        .filter(Boolean);
-            
-      if (parsedCategories.length === 0) {
-        showToast(t("setup.errorNoCategory", "Kategori seçiniz!"), "warning");
-        return;
-      }
-    }
-
-    const settings: Partial<Room> = {
-      timer_setting: parseInt(timerValue, 10),
-      total_rounds: parseInt(totalRounds, 10),
-      game_mode: gameMode,
-      ...(parsedCategories.length > 0 ? { categories: parsedCategories } : {})
-    };
-
-    await executeStartGame(setupGameMode, settings);
-    setSetupGameMode(null);
-  };
-
   const handleStartGame = (game: GameType) => {
-    if (["scattegories", "quiz", "bomb", "sensor"].includes(game)) {
-      setSetupGameMode(game);
-    } else {
-      executeStartGame(game);
-    }
+    setSetupGameMode(game);
   };
 
   const executeStartGame = async (game: GameType, settings?: Partial<Room>) => {
@@ -176,8 +275,15 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
 
   return (
     <TVScaleFrame>
-    <div className="w-full h-full relative overflow-hidden bg-black font-sans selection:bg-alaz-orange selection:text-black">
-      <BackgroundSlider className="absolute inset-0 z-0 opacity-40 pointer-events-none" />
+    <div className="w-full h-full relative overflow-hidden font-sans selection:bg-alaz-orange selection:text-black">
+      {/* Light Pastel Background */}
+      <div className="absolute inset-0 bg-slate-50 z-0" />
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 z-0" />
+      <div className="absolute inset-0 z-0 opacity-40 mix-blend-overlay pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-white rounded-full blur-[100px] animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-white rounded-full blur-[120px] animate-pulse delay-1000" />
+      </div>
+
       <div className="absolute inset-0 pointer-events-none z-50 opacity-[0.03] bg-[linear-gradient(rgba(255,255,255,0)_50%,rgba(0,0,0,1)_50%)] bg-[length:100%_4px]" />
 
       <div className="p-6 md:p-10 flex flex-col h-full relative z-10">
@@ -188,7 +294,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
         <div className="flex-1 mt-4 w-full max-w-[1600px] mx-auto px-4 grid grid-cols-1 lg:grid-cols-4 gap-4">
           {/* QR Code and Players Column */}
           <div className="flex flex-col gap-4 lg:col-span-1">
-            <div className="bg-black/60 backdrop-blur-2xl p-5 rounded-[1.5rem] border border-alaz-orange/30 flex flex-col items-center shadow-[0_0_40px_rgba(255,85,0,0.15)] relative overflow-hidden group/qr">
+            <div className="bg-[#0b0b14]/90 backdrop-blur-3xl p-5 rounded-[1.5rem] border border-white/10 flex flex-col items-center shadow-[0_20px_40px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.2)] relative overflow-hidden group/qr">
               <div className="absolute inset-0 bg-gradient-to-b from-alaz-orange/10 to-transparent pointer-events-none" />
               <div className="absolute -top-20 -right-20 w-40 h-40 bg-alaz-orange/20 rounded-full blur-[60px] pointer-events-none group-hover/qr:bg-alaz-orange/30 transition-colors duration-700" />
 
@@ -204,7 +310,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                   SİSTEME <span className="text-transparent bg-clip-text bg-gradient-to-r from-alaz-orange to-yellow-500">{t("host.login", "GİRİŞ YAP")}</span>
                 </h3>
                 
-                <p className="text-gray-400 text-[10px] font-medium text-center px-2 mb-4 leading-relaxed">
+                <p className="text-gray-300 text-[11px] font-medium text-center px-2 mb-4 leading-relaxed">
                   Müşterilerinizin oyunlara katılabilmesi için önce yandaki QR kodu okutması veya oda kodunu girmesi gerekmektedir.
                 </p>
 
@@ -230,8 +336,8 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
               </div>
             </div>
 
-            <div className="flex-1 bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 p-4 flex flex-col overflow-hidden max-h-[250px]">
-              <h3 className="text-white/60 font-black text-sm uppercase tracking-widest mb-4">
+            <div className="flex-1 bg-[#0b0b14]/90 backdrop-blur-3xl rounded-2xl border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.2)] p-4 flex flex-col overflow-hidden max-h-[250px]">
+              <h3 className="text-gray-300 font-black text-sm uppercase tracking-widest mb-4">
                 {t("dashboard.playersCount", players.length)}
               </h3>
               <div className="flex-1 overflow-y-auto pr-2 space-y-2">
@@ -256,201 +362,99 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
 
           {/* Game Selection Column */}
           <div className="lg:col-span-3 flex flex-col gap-3">
-            <h2 className="text-lg font-black text-white/50 uppercase tracking-[0.3em] pl-2 m-0">{t("host.step2", "ADIM 2: ")}<span className="text-white">{t("host.selectGame", "OYUN SEÇ")}</span></h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="relative w-full h-full flex flex-col items-center justify-center min-h-[500px]">
+              <h2 className="text-lg font-black text-slate-500 uppercase tracking-[0.3em] drop-shadow-sm mb-6">
+                {t("host.step2", "ADIM 2: ")}<span className="text-slate-800">{t("host.selectGame", "OYUN SEÇ")}</span>
+              </h2>
               
-              {/* ALAZ ARENA Card */}
-              <button
-                onClick={() => handleStartGame("scattegories")}
-                className="relative group overflow-hidden bg-black/60 backdrop-blur-2xl border-[1.5px] border-alaz-orange/30 hover:border-alaz-orange p-5 rounded-2xl text-left transition-all duration-500 hover:-translate-y-1 shadow-[0_10px_30px_rgba(0,0,0,0.8)] hover:shadow-[0_0_50px_rgba(255,85,0,0.4)]"
-              >
-                {/* Background Glow */}
-                <div className="absolute -right-20 -top-20 w-32 h-32 bg-alaz-orange/20 rounded-full blur-[50px] group-hover:bg-alaz-orange/40 transition-colors duration-500" />
-                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none" />
-                
-                <div className="relative z-10 flex flex-col h-full">
-                  <div className="w-10 h-10 bg-alaz-orange/10 border-[1.5px] border-alaz-orange/40 rounded-2xl flex items-center justify-center mb-3 group-hover:rotate-12 group-hover:scale-110 transition-all duration-500 shadow-[0_0_15px_rgba(255,85,0,0.2)]">
-                    <NeonIcon type="flame" color="orange" className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-xl font-black text-white mb-1 tracking-widest group-hover:text-alaz-orange transition-colors">HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-alaz-orange to-yellow-500 drop-shadow-[0_0_10px_rgba(255,85,0,0.3)]">ARENA</span></h3>
-                  <p className="text-gray-400 text-[10px] leading-snug mt-1 flex-1 font-medium">{t("dashboard.modeArenaDesc")}</p>
-                  
-                  <div className="mt-3 flex items-center gap-3 text-alaz-orange text-xs font-black tracking-[0.2em] uppercase opacity-60 group-hover:opacity-100 transition-all duration-300">
-                    {t("dashboard.startSession")} <span className="text-lg leading-none group-hover:translate-x-2 transition-transform">→</span>
-                  </div>
-                </div>
-              </button>
+              <div className="relative w-full max-w-4xl aspect-[21/9] flex items-center justify-center perspective-1000">
+                {/* Carousel Left Arrow */}
+                <button
+                  onClick={() => paginate(-1)}
+                  className="absolute left-0 z-20 w-16 h-16 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 transition-all hover:scale-110 shadow-xl -ml-8"
+                >
+                  <ChevronLeft className="w-8 h-8 text-slate-800 opacity-80" />
+                </button>
 
-              {/* ALAZ QUIZ Card */}
-              <button
-                onClick={() => handleStartGame("quiz")}
-                className="relative group overflow-hidden bg-black/60 backdrop-blur-2xl border-[1.5px] border-neon-blue/30 hover:border-neon-blue p-5 rounded-2xl text-left transition-all duration-500 hover:-translate-y-1 shadow-[0_10px_30px_rgba(0,0,0,0.8)] hover:shadow-[0_0_50px_rgba(0,229,255,0.3)]"
-              >
-                <div className="absolute -right-20 -top-20 w-32 h-32 bg-neon-blue/20 rounded-full blur-[50px] group-hover:bg-neon-blue/40 transition-colors duration-500" />
-                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none" />
-                
-                <div className="relative z-10 flex flex-col h-full">
-                  <div className="w-10 h-10 bg-neon-blue/10 border-[1.5px] border-neon-blue/40 rounded-2xl flex items-center justify-center mb-3 group-hover:rotate-12 group-hover:scale-110 transition-all duration-500 shadow-[0_0_15px_rgba(0,229,255,0.2)]">
-                    <NeonIcon type="lightbulb" color="blue" className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-xl font-black text-white mb-1 tracking-widest group-hover:text-neon-blue transition-colors">HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-blue-400 drop-shadow-[0_0_10px_rgba(0,229,255,0.3)]">QUIZ</span></h3>
-                  <p className="text-gray-400 text-[10px] leading-snug mt-1 flex-1 font-medium">{t("dashboard.modeQuizDesc")}</p>
-                  
-                  <div className="mt-3 flex items-center gap-3 text-neon-blue text-xs font-black tracking-[0.2em] uppercase opacity-60 group-hover:opacity-100 transition-all duration-300">
-                    Oturumu Başlat <span className="text-lg leading-none group-hover:translate-x-2 transition-transform">→</span>
-                  </div>
-                </div>
-              </button>
+                <div className="w-full h-full relative overflow-visible flex items-center justify-center px-4">
+                  <AnimatePresence initial={false} custom={direction} mode="popLayout">
+                    <motion.div
+                      key={carouselIndex}
+                      custom={direction}
+                      initial={{ opacity: 0, x: direction > 0 ? 300 : -300, scale: 0.8, rotateY: direction > 0 ? -15 : 15 }}
+                      animate={{ opacity: 1, x: 0, scale: 1, rotateY: 0 }}
+                      exit={{ opacity: 0, x: direction < 0 ? 300 : -300, scale: 0.8, rotateY: direction < 0 ? -15 : 15 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      className="absolute inset-0 flex items-center justify-center p-4"
+                    >
+                      {(() => {
+                        const game = GAMES[carouselIndex];
+                        return (
+                          <button
+                            onClick={() => handleStartGame(game.id)}
+                            className={`w-full h-full relative group overflow-hidden bg-[#0b0b14]/90 backdrop-blur-3xl border border-white/10 ${game.borderAccent} p-10 rounded-sm text-left transition-all duration-500 shadow-[0_20px_40px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.2)]`}
+                            style={{ boxShadow: `0 20px 50px ${game.shadowColor}, inset 0 1px 1px rgba(255,255,255,0.3)` }}
+                          >
+                            {/* Devasa Filigran İkon */}
+                            <div className="absolute -right-10 -bottom-10 opacity-[0.03] group-hover:opacity-10 group-hover:scale-110 transition-all duration-1000 pointer-events-none rotate-12">
+                              <NeonIcon type={game.icon} color={game.iconColor} className="w-96 h-96" />
+                            </div>
 
-              {/* ALAZ BOMB Card */}
-              <button
-                onClick={() => handleStartGame("bomb")}
-                className="relative group overflow-hidden bg-black/60 backdrop-blur-2xl border-[1.5px] border-red-500/30 hover:border-red-500 p-5 rounded-2xl text-left transition-all duration-500 hover:-translate-y-1 shadow-[0_10px_30px_rgba(0,0,0,0.8)] hover:shadow-[0_0_50px_rgba(255,0,0,0.3)]"
-              >
-                <div className="absolute -right-20 -top-20 w-32 h-32 bg-red-500/20 rounded-full blur-[50px] group-hover:bg-red-500/40 transition-colors duration-500" />
-                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none" />
-                
-                <div className="relative z-10 flex flex-col h-full">
-                  <div className="w-10 h-10 bg-red-500/10 border-[1.5px] border-red-500/40 rounded-2xl flex items-center justify-center mb-3 group-hover:rotate-12 group-hover:scale-110 transition-all duration-500 shadow-[0_0_15px_rgba(255,0,0,0.2)]">
-                    <NeonIcon type="rocket" color="red" className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-xl font-black text-white mb-1 tracking-widest group-hover:text-red-500 transition-colors">HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500 drop-shadow-[0_0_10px_rgba(255,0,0,0.3)]">BOMB</span></h3>
-                  <p className="text-gray-400 text-[10px] leading-snug mt-1 flex-1 font-medium">{t("dashboard.modeBombDesc")}</p>
-                  
-                  <div className="mt-3 flex items-center gap-3 text-red-500 text-xs font-black tracking-[0.2em] uppercase opacity-60 group-hover:opacity-100 transition-all duration-300">
-                    Oturumu Başlat <span className="text-lg leading-none group-hover:translate-x-2 transition-transform">→</span>
-                  </div>
+                            {/* Arka Plan Glow */}
+                            <div className={`absolute -right-20 -top-20 w-64 h-64 ${game.bgAccent} rounded-full blur-[80px] ${game.hoverBgAccent} transition-colors duration-700 pointer-events-none`} />
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none" />
+                            
+                            <div className="relative z-10 flex flex-col h-full justify-between">
+                              <div>
+                                <div className={`w-16 h-16 ${game.iconAccent} border-[1.5px] rounded-sm flex items-center justify-center mb-6 group-hover:rotate-12 group-hover:scale-110 transition-all duration-500 shadow-xl`}>
+                                  <NeonIcon type={game.icon} color={game.iconColor} className="w-8 h-8" />
+                                </div>
+                                <h3 className="text-4xl sm:text-5xl font-black text-white mb-2 tracking-widest transition-colors uppercase">
+                                  {game.titlePrefix} <span className={`text-transparent bg-clip-text bg-gradient-to-r ${game.gradientText}`}>{game.titleHighlight}</span>
+                                </h3>
+                                <p className="text-gray-300 text-lg leading-relaxed mt-4 max-w-xl font-medium">
+                                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                  {game.descKey.startsWith("dashboard.") ? t(game.descKey as any) : game.descKey}
+                                </p>
+                              </div>
+                              
+                              <div className="mt-8 flex items-center gap-4 text-white text-sm font-black tracking-[0.3em] uppercase opacity-70 group-hover:opacity-100 transition-all duration-300">
+                                <div className="bg-white/10 px-6 py-3 rounded-sm flex items-center gap-3 backdrop-blur-md border border-white/20 group-hover:bg-white/20 transition-colors">
+                                  {t("dashboard.startSession", "SESSION STARTEN")} <span className="text-xl leading-none group-hover:translate-x-3 transition-transform">→</span>
+                                </div>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })()}
+                    </motion.div>
+                  </AnimatePresence>
                 </div>
-              </button>
 
-              {/* ALAZ SENSÖR Card */}
-              <button
-                onClick={() => handleStartGame("sensor")}
-                className="relative group overflow-hidden bg-black/60 backdrop-blur-2xl border-[1.5px] border-neon-pink/30 hover:border-neon-pink p-5 rounded-2xl text-left transition-all duration-500 hover:-translate-y-1 shadow-[0_10px_30px_rgba(0,0,0,0.8)] hover:shadow-[0_0_50px_rgba(255,0,255,0.3)]"
-              >
-                <div className="absolute -right-20 -top-20 w-32 h-32 bg-neon-pink/20 rounded-full blur-[50px] group-hover:bg-neon-pink/40 transition-colors duration-500" />
-                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none" />
-                
-                <div className="relative z-10 flex flex-col h-full">
-                  <div className="w-10 h-10 bg-neon-pink/10 border-[1.5px] border-neon-pink/40 rounded-2xl flex items-center justify-center mb-3 group-hover:rotate-12 group-hover:scale-110 transition-all duration-500 shadow-[0_0_15px_rgba(255,0,255,0.2)]">
-                    <NeonIcon type="dashboard" color="pink" className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-xl font-black text-white mb-1 tracking-widest group-hover:text-neon-pink transition-colors">HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-pink to-purple-500 drop-shadow-[0_0_10px_rgba(255,0,255,0.3)]">SENSÖR</span></h3>
-                  <p className="text-gray-400 text-[10px] leading-snug mt-1 flex-1 font-medium">{t("dashboard.modeSensorDesc")}</p>
-                  
-                  <div className="mt-3 flex items-center gap-3 text-neon-pink text-xs font-black tracking-[0.2em] uppercase opacity-60 group-hover:opacity-100 transition-all duration-300">
-                    Oturumu Başlat <span className="text-lg leading-none group-hover:translate-x-2 transition-transform">→</span>
-                  </div>
-                </div>
-              </button>
-
-              {/* NEON OVERLOAD Card */}
-              <button
-                onClick={() => handleStartGame("overload")}
-                className="relative group overflow-hidden bg-black/60 backdrop-blur-2xl border-[1.5px] border-cyan-400/30 hover:border-cyan-400 p-5 rounded-2xl text-left transition-all duration-500 hover:-translate-y-1 shadow-[0_10px_30px_rgba(0,0,0,0.8)] hover:shadow-[0_0_50px_rgba(0,255,255,0.3)]"
-              >
-                <div className="absolute -right-20 -top-20 w-32 h-32 bg-cyan-400/20 rounded-full blur-[50px] group-hover:bg-cyan-400/40 transition-colors duration-500" />
-                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none" />
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0)_50%,rgba(0,255,255,0.05)_50%)] bg-[length:100%_4px] pointer-events-none opacity-50" />
-                
-                <div className="relative z-10 flex flex-col h-full">
-                  <div className="w-10 h-10 bg-cyan-400/10 border-[1.5px] border-cyan-400/40 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-125 transition-transform duration-500 shadow-[0_0_15px_rgba(0,255,255,0.2)]">
-                    <NeonIcon type="flame" color="blue" className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-xl font-black text-white mb-1 tracking-widest group-hover:text-cyan-400 transition-colors">NEON <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 drop-shadow-[0_0_10px_rgba(0,255,255,0.3)]">OVERLOAD</span></h3>
-                  <p className="text-gray-400 text-[10px] leading-snug mt-1 flex-1 font-medium">Cyberpunk temalı hız ve refleks oyunu. Top patlamadan telefonu salla veya butona basarak sıranı devret!</p>
-                  
-                  <div className="mt-3 flex items-center gap-3 text-cyan-400 text-xs font-black tracking-[0.2em] uppercase opacity-60 group-hover:opacity-100 transition-all duration-300">
-                    Oturumu Başlat <span className="text-lg leading-none group-hover:translate-x-2 transition-transform">→</span>
-                  </div>
-                </div>
-              </button>
-
-              {/* NEON SAVAŞLARI (COLORS) Card */}
-              <button
-                onClick={() => handleStartGame("colors")}
-                className="relative group overflow-hidden bg-black/60 backdrop-blur-2xl border-[1.5px] border-purple-500/30 hover:border-purple-500 p-5 rounded-2xl text-left transition-all duration-500 hover:-translate-y-1 shadow-[0_10px_30px_rgba(0,0,0,0.8)] hover:shadow-[0_0_50px_rgba(168,85,247,0.3)]"
-              >
-                <div className="absolute -right-20 -top-20 w-32 h-32 bg-purple-500/20 rounded-full blur-[50px] group-hover:bg-purple-500/40 transition-colors duration-500" />
-                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none" />
-                
-                <div className="relative z-10 flex flex-col h-full">
-                  <div className="w-10 h-10 bg-purple-500/10 border-[1.5px] border-purple-500/40 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-125 transition-transform duration-500 shadow-[0_0_15px_rgba(168,85,247,0.2)]">
-                    <NeonIcon type="dashboard" color="pink" className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-xl font-black text-white mb-1 tracking-widest group-hover:text-purple-400 transition-colors">NEON <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 drop-shadow-[0_0_10px_rgba(168,85,247,0.3)]">SAVAŞLARI</span></h3>
-                  <p className="text-gray-400 text-[10px] leading-snug mt-1 flex-1 font-medium">Kırmızı ve Mavi takımların TV ekranını ele geçirmek için kapıştığı dev halat çekme (Tug of War) şovu!</p>
-                  
-                  <div className="mt-3 flex items-center gap-3 text-purple-400 text-xs font-black tracking-[0.2em] uppercase opacity-60 group-hover:opacity-100 transition-all duration-300">
-                    Savaşı Başlat <span className="text-lg leading-none group-hover:translate-x-2 transition-transform">→</span>
-                  </div>
-                </div>
-              </button>
-
-              {/* ALAZ ÇARK Card */}
-              <button
-                onClick={() => handleStartGame("wheel")}
-                className="relative group overflow-hidden bg-black/60 backdrop-blur-2xl border-[1.5px] border-cyber-yellow/30 hover:border-cyber-yellow p-5 rounded-2xl text-left transition-all duration-500 hover:-translate-y-1 shadow-[0_10px_30px_rgba(0,0,0,0.8)] hover:shadow-[0_0_50px_rgba(255,215,0,0.3)] "
-              >
-                <div className="absolute -right-20 -top-20 w-32 h-32 bg-cyber-yellow/20 rounded-full blur-[50px] group-hover:bg-cyber-yellow/40 transition-colors duration-500" />
-                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none" />
-                
-                <div className="relative z-10 flex flex-col h-full">
-                  <div className="w-10 h-10 bg-cyber-yellow/10 border-[1.5px] border-cyber-yellow/40 rounded-2xl flex items-center justify-center mb-3 group-hover:rotate-180 transition-transform duration-1000 shadow-[0_0_15px_rgba(255,215,0,0.2)]">
-                    <NeonIcon type="flame" color="gold" className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-xl font-black text-white mb-1 tracking-widest group-hover:text-cyber-yellow transition-colors">HENGAME <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyber-yellow to-alaz-orange drop-shadow-[0_0_10px_rgba(255,215,0,0.3)]">ÇARK</span></h3>
-                  <p className="text-gray-400 text-[10px] leading-snug mt-1 flex-1 font-medium">Oyun aralarında müşterilerinize sürpriz ödüller (indirim, bedava içecek vb.) dağıtın. Rastgele seçilen müşteri çarkı çevirir.</p>
-                  
-                  <div className="mt-3 flex items-center gap-3 text-cyber-yellow text-xs font-black tracking-[0.2em] uppercase opacity-60 group-hover:opacity-100 transition-all duration-300">
-                    Çarkıfeleği Başlat <span className="text-lg leading-none group-hover:translate-x-2 transition-transform">→</span>
-                  </div>
-                </div>
-              </button>
-
-              {/* NEON ŞİFRE (VAULT) Card */}
-              <button
-                onClick={() => handleStartGame("vault")}
-                className="relative group overflow-hidden bg-black/60 backdrop-blur-2xl border-[1.5px] border-emerald-500/30 hover:border-emerald-500 p-5 rounded-2xl text-left transition-all duration-500 hover:-translate-y-1 shadow-[0_10px_30px_rgba(0,0,0,0.8)] hover:shadow-[0_0_50px_rgba(16,185,129,0.3)]"
-              >
-                <div className="absolute -right-20 -top-20 w-32 h-32 bg-emerald-500/20 rounded-full blur-[50px] group-hover:bg-emerald-500/40 transition-colors duration-500" />
-                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none" />
-                
-                <div className="relative z-10 flex flex-col h-full">
-                  <div className="w-10 h-10 bg-emerald-500/10 border-[1.5px] border-emerald-500/40 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-125 transition-transform duration-500 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-                    <NeonIcon type="flame" color="green" className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-xl font-black text-white mb-1 tracking-widest group-hover:text-emerald-400 transition-colors">NEON <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-500 drop-shadow-[0_0_10px_rgba(16,185,129,0.3)]">ŞİFRE</span></h3>
-                  <p className="text-gray-400 text-[10px] leading-snug mt-1 flex-1 font-medium">Gizli neon kasayı açmak için şifreyi ilk tahmin eden olmak için yarış!</p>
-                  
-                  <div className="mt-3 flex items-center gap-3 text-emerald-400 text-xs font-black tracking-[0.2em] uppercase opacity-60 group-hover:opacity-100 transition-all duration-300">
-                    Soygunu Başlat <span className="text-lg leading-none group-hover:translate-x-2 transition-transform">→</span>
-                  </div>
-                </div>
-              </button>
-
-              {/* NEON BİRLİK (UNITY) Card */}
-              <button
-                onClick={() => handleStartGame("unity")}
-                className="relative group overflow-hidden bg-black/60 backdrop-blur-2xl border-[1.5px] border-amber-500/30 hover:border-amber-500 p-5 rounded-2xl text-left transition-all duration-500 hover:-translate-y-1 shadow-[0_10px_30px_rgba(0,0,0,0.8)] hover:shadow-[0_0_50px_rgba(245,158,11,0.3)]"
-              >
-                <div className="absolute -right-20 -top-20 w-32 h-32 bg-amber-500/20 rounded-full blur-[50px] group-hover:bg-amber-500/40 transition-colors duration-500" />
-                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none" />
-                
-                <div className="relative z-10 flex flex-col h-full">
-                  <div className="w-10 h-10 bg-amber-500/10 border-[1.5px] border-amber-500/40 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-125 transition-transform duration-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
-                    <NeonIcon type="flame" color="orange" className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-xl font-black text-white mb-1 tracking-widest group-hover:text-amber-400 transition-colors">NEON <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.3)]">BİRLİK</span></h3>
-                  <p className="text-gray-400 text-[10px] leading-snug mt-1 flex-1 font-medium">Bütün mekan güçlerini birleştirip dev neon bataryayı patlatmaya çalışıyor!</p>
-                  
-                  <div className="mt-3 flex items-center gap-3 text-amber-400 text-xs font-black tracking-[0.2em] uppercase opacity-60 group-hover:opacity-100 transition-all duration-300">
-                    Enerjiyi Başlat <span className="text-lg leading-none group-hover:translate-x-2 transition-transform">→</span>
-                  </div>
-                </div>
-              </button>
-
+                {/* Carousel Right Arrow */}
+                <button
+                  onClick={() => paginate(1)}
+                  className="absolute right-0 z-20 w-16 h-16 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 transition-all hover:scale-110 shadow-xl -mr-8"
+                >
+                  <ChevronRight className="w-8 h-8 text-slate-800 opacity-80" />
+                </button>
+              </div>
+              
+              {/* Carousel Indicators */}
+              <div className="flex items-center gap-3 mt-8">
+                {GAMES.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setDirection(idx > carouselIndex ? 1 : -1);
+                      setCarouselIndex(idx);
+                    }}
+                    className={`h-2 rounded-full transition-all duration-300 ${idx === carouselIndex ? 'w-8 bg-slate-800' : 'w-2 bg-slate-300 hover:bg-slate-400'}`}
+                  />
+                ))}
+              </div>
             </div>
+            
           </div>
         </div>
       </div>
@@ -493,153 +497,13 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       </AnimatePresence>
 
       {/* Game Setup Modal */}
-      <AnimatePresence>
-        {setupGameMode && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-[#0a0a0f] border border-white/20 p-8 w-full max-w-2xl shadow-[0_0_50px_rgba(255,77,0,0.2)] relative overflow-hidden"
-            >
-              <div className="absolute -right-20 -top-20 w-48 h-48 bg-alaz-orange/20 rounded-full blur-[80px] pointer-events-none" />
-              
-              <h3 className="text-2xl font-black text-white uppercase tracking-widest mb-2 relative z-10">
-                {setupGameMode === "scattegories" ? "HENGAME ARENA" : setupGameMode === "quiz" ? "HENGAME QUIZ" : "HENGAME BOMB"}
-              </h3>
-              <p className="text-alaz-orange text-xs font-bold uppercase tracking-widest mb-8 relative z-10">{t("setup.title", "Oyun Ayarları")}</p>
-
-              <div className="space-y-6 relative z-10 max-h-[60vh] overflow-y-auto pr-2">
-                
-                {["scattegories", "quiz", "bomb"].includes(setupGameMode) && (
-                  <>
-                    <div>
-                      <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
-                        {t("setup.presetLabel", "Hızlı Preset")}
-                      </label>
-                      <div className="flex flex-wrap gap-3">
-                        {Object.keys(presets).map((name) => (
-                          <button
-                            key={name}
-                            onClick={() => applyPreset(name)}
-                            className={`px-4 py-2 font-sans font-black text-[10px] uppercase tracking-widest transition-all border-[0.5px] rounded-none shadow-md ${
-                              activePreset === name
-                                ? "bg-white border-white text-black"
-                                : "bg-black/60 border-white/20 text-gray-400 hover:border-white/50 hover:text-white"
-                            }`}
-                          >
-                            {name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col">
-                      <label className="block text-[11px] uppercase tracking-[0.3em] font-black text-alaz-orange mb-3 animate-pulse">
-                        {t("setup.categoriesLabel", "Kategoriler (Virgülle Ayır)")}
-                      </label>
-                      <textarea
-                        rows={2}
-                        value={categories}
-                        onChange={(e) => {
-                          setCategories(e.target.value);
-                          setActivePreset(null);
-                        }}
-                        className="w-full bg-black/60 border-[0.5px] border-white/20 p-5 text-white focus:border-alaz-orange focus:outline-none resize-none font-black leading-relaxed rounded-none shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]"
-                        placeholder="Şehir, Ülke, İsim..."
-                      />
-                    </div>
-
-                    {/* Timer */}
-                    <div>
-                      <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
-                        {t("setup.timerLabel", "Tur Süresi")}
-                      </label>
-                      <select
-                        value={timerValue}
-                        onChange={(e) => setTimerValue(e.target.value)}
-                        className="w-full bg-black/60 border-[0.5px] border-white/20 p-3 text-white focus:border-alaz-orange focus:outline-none transition-all font-sans font-black text-[12px] uppercase tracking-[0.1em] rounded-none"
-                      >
-                        <option className="bg-[#0a0a0f] text-white" value="30">{t("setup.timer30", "30 Saniye")}</option>
-                        <option className="bg-[#0a0a0f] text-white" value="45">{t("setup.timer45", "45 Saniye")}</option>
-                        <option className="bg-[#0a0a0f] text-white" value="60">{t("setup.timer60", "60 Saniye")}</option>
-                        <option className="bg-[#0a0a0f] text-white" value="90">{t("setup.timer90", "90 Saniye")}</option>
-                      </select>
-                    </div>
-
-                    {/* Game Mode */}
-                    <div>
-                      <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
-                        {t("setup.gameModeLabel", "Oyun Modu")}
-                      </label>
-                      <div className="grid grid-cols-2 gap-4">
-                        <button
-                          onClick={() => setGameMode("individual")}
-                          className={`py-3 font-sans font-black text-xs uppercase tracking-widest transition-all border-[0.5px] rounded-none ${
-                            gameMode === "individual" ? "bg-white text-black border-white" : "bg-black/60 border-white/20 text-gray-400 hover:border-white/40"
-                          }`}
-                        >
-                          {t("setup.individual", "Bireysel")}
-                        </button>
-                        <button
-                          onClick={() => setGameMode("team")}
-                          className={`py-3 font-sans font-black text-xs uppercase tracking-widest transition-all border-[0.5px] rounded-none ${
-                            gameMode === "team" ? "bg-alaz-orange text-black border-alaz-orange" : "bg-black/60 border-white/20 text-gray-400 hover:border-alaz-orange/40"
-                          }`}
-                        >
-                          {t("setup.team", "Takım")}
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Total Rounds (For all except wheel) */}
-                {["scattegories", "quiz", "bomb", "sensor"].includes(setupGameMode) && (
-                  <div>
-                    <label className="block text-[10px] uppercase tracking-[0.2em] font-medium text-gray-500 mb-3">
-                      {t("setup.roundsLabel", "Tur Sayısı")}
-                    </label>
-                    <div className="grid grid-cols-4 gap-4">
-                      {["3", "5", "7", "10"].map((r) => (
-                        <button
-                          key={r}
-                          onClick={() => setTotalRounds(r)}
-                          className={`py-3 font-sans font-black text-lg transition-all border-[0.5px] rounded-none ${
-                            totalRounds === r ? "bg-alaz-orange text-black border-alaz-orange" : "bg-black/60 border-white/20 text-gray-400 hover:border-alaz-orange/40"
-                          }`}
-                        >
-                          {r}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex gap-4 mt-8">
-                  <button
-                    onClick={() => setSetupGameMode(null)}
-                    className="flex-1 py-4 font-black text-xs uppercase tracking-widest bg-white/5 hover:bg-white/10 text-white transition-colors"
-                  >
-                    {t("common.cancel", "İPTAL")}
-                  </button>
-                  <button
-                    onClick={confirmStartGame}
-                    className="flex-1 py-4 font-black text-xs uppercase tracking-widest bg-alaz-orange hover:bg-alaz-orange/80 text-black transition-colors shadow-[0_0_20px_rgba(255,77,0,0.3)]"
-                  >
-                    {t("setup.startButton", "BAŞLAT")}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <GameSettingsModal
+        isOpen={!!setupGameMode}
+        game={setupGameMode}
+        room={room}
+        onClose={() => setSetupGameMode(null)}
+        onStart={executeStartGame}
+      />
     </div>
     </TVScaleFrame>
   );

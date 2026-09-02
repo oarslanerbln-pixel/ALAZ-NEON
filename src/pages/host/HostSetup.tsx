@@ -4,7 +4,6 @@ import { collection, addDoc } from "firebase/firestore";
 import { db, auth } from "../../lib/firebase";
 import { motion } from "framer-motion";
 import { NeonIcon } from "../../components/NeonIcon";
-import { KineticSpark } from "../../components/KineticSpark";
 import { LanguageSwitcher } from "../../components/LanguageSwitcher";
 import { useLocale } from "../../hooks/useLocale";
 import { useToast } from "../../contexts/ToastContextCore";
@@ -25,20 +24,25 @@ function GlassPanel({
 }) {
   return (
     <div 
-      className={`relative overflow-hidden group shadow-[0_0_30px_rgba(0,0,0,0.9)] ${className}`}
+      className={`relative overflow-hidden group shadow-[0_20px_40px_rgba(0,0,0,0.4)] rounded-xl ${className}`}
     >
-      <div className="absolute inset-0 z-0 bg-black/40 backdrop-blur-2xl border border-white/10 group-hover:border-transparent transition-all duration-500 rounded-sm" />
+      {/* Base Frosted Glass Layer */}
+      <div className="absolute inset-0 z-0 bg-[#0b0b14]/90 backdrop-blur-3xl border border-white/10 group-hover:border-white/20 transition-all duration-500 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)]" />
       
-      {/* Animated glowing border background */}
+      {/* Animated glowing border background (Neon Spin) */}
       <div 
-        className="absolute inset-[-50%] z-0 animate-[spin_3s_linear_infinite] opacity-0 group-hover:opacity-100 transition-opacity duration-500" 
+        className="absolute inset-[-100%] z-0 animate-[spin_4s_linear_infinite] opacity-0 group-hover:opacity-40 transition-opacity duration-700 pointer-events-none mix-blend-screen" 
         style={{ 
           background: `conic-gradient(from 0deg, transparent 0 270deg, ${neonColor} 360deg)`,
           animationDelay: delay 
         }} 
       />
-      <div className="absolute inset-[2px] bg-black/90 backdrop-blur-xl z-10 rounded-sm" />
-      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none z-10 rounded-sm" />
+      
+      {/* Inner Mask to hide the spin effect from the center */}
+      <div className="absolute inset-[1.5px] bg-[#1a1a28]/80 backdrop-blur-2xl z-10 rounded-xl" />
+      
+      {/* Glossy Specular Highlight */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] via-transparent to-black/40 pointer-events-none z-10 rounded-xl" />
 
       <div className="relative z-20 h-full">
         {children}
@@ -106,16 +110,15 @@ export function HostSetup() {
   };
 
   return (
-    <div className="flex-1 w-full min-h-screen relative overflow-hidden bg-black">
-      {/* PREMIUM CINEMATIC BACKGROUND */}
+    <div className="flex-1 w-full min-h-screen relative overflow-hidden bg-slate-50">
+      {/* PASTEL BACKGROUND LAYER */}
       <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100" />
         <motion.div
-          className="absolute inset-0 bg-[url('/images/bg-neon.jpg')] bg-cover bg-center"
-          animate={{ scale: [1, 1.08, 1], opacity: [0.15, 0.4, 0.15] }}
-          transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_50%_50%,_rgba(255,255,255,0.8),_transparent_70%)]"
+          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/50" />
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-[10px]" />
       </div>
 
       <div className="p-10 max-w-5xl mx-auto w-full relative z-10">
@@ -126,18 +129,9 @@ export function HostSetup() {
           transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
           className="w-full h-full relative"
         >
-          <header className="mb-12 pointer-events-none opacity-90 scale-[0.6] origin-left">
-            <div className="absolute top-10 w-full h-[120px] opacity-20 pointer-events-none">
-              <KineticSpark
-                className="scale-50"
-                delay={-1}
-              />
-            </div>
-          </header>
-
           <button
             onClick={() => navigate("/")}
-            className="mb-8 flex items-center gap-2 text-alaz-orange/70 hover:text-alaz-orange transition-colors text-xs font-bold uppercase tracking-widest relative z-20"
+            className="mb-8 flex items-center gap-2 text-slate-700 hover:text-black transition-colors text-xs font-bold uppercase tracking-widest relative z-20"
           >
             <span className="text-xl">←</span> {t("common.back", "ANA SAYFA")}
           </button>
@@ -154,7 +148,7 @@ export function HostSetup() {
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-sans font-black text-transparent bg-clip-text bg-gradient-to-r from-alaz-orange to-yellow-500 tracking-tighter uppercase drop-shadow-[0_0_20px_rgba(255,85,0,0.5)]">
                   {t("setup.title")}
                 </h2>
-                <p className="text-gray-400 font-bold text-xs mt-3 uppercase tracking-[0.3em]">{t("setup.subtitle")}</p>
+                <p className="text-gray-300 font-bold text-xs mt-4 uppercase tracking-[0.25em]">{t("setup.subtitle")}</p>
               </div>
 
               <div className="flex-1 relative z-10 w-full max-w-md mx-auto flex flex-col justify-center">
@@ -170,15 +164,19 @@ export function HostSetup() {
                 </div>
               </div>
 
-              <div className="mt-12 relative z-10 w-full max-w-md mx-auto">
+              <div className="mt-12 relative z-10 w-full max-w-md mx-auto group">
+                {/* Premium Animated Neon Glow Layer */}
+                <div className="absolute -inset-2 bg-gradient-to-r from-cyan-400 via-blue-500 to-cyan-400 rounded-xl blur-xl opacity-20 group-hover:opacity-60 transition duration-700 pointer-events-none" />
+                
                 <button
                   onClick={startLobby}
                   disabled={isCreating}
-                  className="relative w-full py-5 sm:py-7 bg-black hover:bg-[#001014] border-2 border-[#00f3ff]/70 hover:border-[#00f3ff] transition-all text-lg sm:text-2xl font-sans font-black uppercase tracking-[0.18em] group shadow-[0_0_40px_rgba(0,243,255,0.45)] hover:shadow-[0_0_60px_rgba(0,243,255,0.7)] hover:scale-[1.02] active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none"
-                  style={{ clipPath: "polygon(22px 0, calc(100% - 22px) 0, 100% 22px, 100% calc(100% - 22px), calc(100% - 22px) 100%, 22px 100%, 0 calc(100% - 22px), 0 22px)" }}
+                  className="relative w-full py-5 sm:py-6 bg-gradient-to-b from-[#0a0f18] to-[#04080c] hover:from-[#0f1724] hover:to-[#080d14] border border-[#00f3ff]/30 hover:border-[#00f3ff]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all duration-300 text-lg sm:text-2xl font-sans font-black uppercase tracking-[0.18em] rounded-xl disabled:opacity-50 disabled:pointer-events-none"
                 >
+                  <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(0,243,255,0.1),transparent)] translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
+                  
                   <motion.span
-                    className="whitespace-nowrap text-white block"
+                    className="whitespace-nowrap text-white block relative z-10"
                     animate={isCreating ? {} : {
                       textShadow: [
                         "0 0 4px rgba(0,243,255,0.8), 0 0 10px rgba(0,243,255,0.4)",
@@ -194,7 +192,7 @@ export function HostSetup() {
                       ease: "linear",
                     }}
                   >
-                    {isCreating ? t("setup.starting", "BAŞLATILIYOR...") : "GECEYİ BAŞLAT →"}
+                    {isCreating ? t("setup.starting", "BAŞLATILIYOR...") : t("setup.startNight", "GECEYİ BAŞLAT →")}
                   </motion.span>
                 </button>
               </div>
