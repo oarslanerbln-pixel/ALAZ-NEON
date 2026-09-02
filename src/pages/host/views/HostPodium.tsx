@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useLocale } from "../../../hooks/useLocale";
 import { ShareableRecapCard } from "../components/ShareableRecapCard";
 import { SoundManager, sounds } from "../../../lib/audio";
-import { Crown, Sparkles, Zap, Ghost, Download, RotateCcw } from "lucide-react";
+import { ConfettiCanvas, type ConfettiCanvasRef } from "../../../components/ConfettiCanvas";
+import { AnimatedNumber } from "../../../components/AnimatedNumber";
+import { DURATION, EASE, SPRING, STAGGER, TWEEN, listItem } from "../../../lib/motion";
 import type { Player } from "../../../types/database";
 import type { JulesAward } from "../../../lib/intelligence";
 
@@ -21,6 +23,93 @@ interface HostPodiumProps {
   onResetGame: () => void;
 }
 
+/** Açılış sırası (sn): 3. → 2. → 1. — gerilim tırmanır, şampiyon en son. */
+const REVEAL_DELAY = { 3: 0.4, 2: 1.2, 1: 2.2 } as const;
+const T_FANFARE = REVEAL_DELAY[1];
+const T_CONFETTI = REVEAL_DELAY[1] + 0.25;
+
+type Place = 1 | 2 | 3;
+
+interface PillarProps {
+  place: Place;
+  name: string;
+  score: number;
+}
+
+const PLACE_STYLE: Record<Place, { width: string; height: string; pillar: string; name: string; score: string; number: string; edge: string }> = {
+  1: {
+    width: "w-72",
+    height: "70%",
+    pillar: "bg-white/[0.08] backdrop-blur-3xl border-t border-x border-white/20 shadow-[0_-20px_60px_rgba(255,230,0,0.08)]",
+    name: "text-3xl md:text-4xl font-medium text-white tracking-[0.1em] drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]",
+    score: "text-2xl font-light text-white mt-2",
+    number: "text-5xl md:text-6xl lg:text-7xl font-thin text-white/40 mt-6",
+    edge: "from-yellow-200/70 via-yellow-400/40 to-transparent",
+  },
+  2: {
+    width: "w-64",
+    height: "50%",
+    pillar: "bg-white/[0.03] backdrop-blur-3xl border-t border-x border-white/10",
+    name: "text-3xl font-light text-white tracking-widest",
+    score: "text-xl font-light text-white/50 mt-1",
+    number: "text-4xl md:text-5xl font-thin text-white/20 mt-4",
+    edge: "from-slate-200/60 via-slate-300/30 to-transparent",
+  },
+  3: {
+    width: "w-64",
+    height: "35%",
+    pillar: "bg-white/[0.02] backdrop-blur-3xl border-t border-x border-white/5",
+    name: "text-2xl font-light text-white/80 tracking-widest",
+    score: "text-lg font-light text-white/40 mt-1",
+    number: "text-3xl md:text-4xl font-thin text-white/10 mt-4",
+    edge: "from-orange-300/50 via-orange-400/25 to-transparent",
+  },
+};
+
+/**
+ * Podyum sütunu. `height` animasyonu (her karede layout) yerine sütun sabit
+ * yükseklikte durur ve `translateY` ile aşağıdan yükselir; kapsayıcı sahne
+ * çizgisinin altını kırpar. Şampiyon sütunu oturunca kısa bir ölçek nabzı atar.
+ */
+function Pillar({ place, name, score }: PillarProps) {
+  const s = PLACE_STYLE[place];
+  const delay = REVEAL_DELAY[place];
+  const isWinner = place === 1;
+
+  return (
+    <div className={`relative h-full flex flex-col justify-end overflow-hidden px-6 -mx-6 z-10 ${s.width}`}>
+      <motion.div
+        initial={{ y: "115%", opacity: 0 }}
+        animate={{ y: 0, opacity: 1, scale: isWinner ? [1, 1, 1.03, 1] : 1 }}
+        transition={{
+          y: { ...SPRING.gentle, delay },
+          opacity: { duration: DURATION.base, delay },
+          scale: { duration: 0.7, delay: delay + 0.55, ease: EASE.inOut, times: [0, 0.2, 0.6, 1] },
+        }}
+        style={{ height: s.height, originY: 1 }}
+        className={`relative w-full rounded-t-3xl flex flex-col items-center justify-start pt-8 will-change-transform ${s.pillar}`}
+      >
+        {/* Madalya rengi üst kenar ışığı */}
+        <div aria-hidden="true" className={`absolute top-0 inset-x-0 h-24 rounded-t-3xl bg-gradient-to-b ${s.edge} pointer-events-none`} />
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...TWEEN.enter, delay: delay + 0.35 }}
+          className={`absolute ${isWinner ? "-top-32" : "-top-20"} text-center w-full`}
+        >
+          <div className={`truncate max-w-[280px] px-2 mx-auto ${s.name}`}>{name}</div>
+          <div className={`tracking-widest ${s.score}`}>
+            <AnimatedNumber from={0} value={score} delay={delay + 0.4} duration={1} />
+          </div>
+        </motion.div>
+
+        <div className={s.number}>{place}</div>
+      </motion.div>
+    </div>
+  );
+}
+
 export function HostPodium({
   room,
   players,
@@ -29,13 +118,18 @@ export function HostPodium({
   onResetGame,
 }: HostPodiumProps) {
   const { t } = useLocale();
+  const confettiRef = useRef<ConfettiCanvasRef>(null);
 
   useEffect(() => {
-    // Play celebratory fanfare timed with 1st place rising
-    const timer = setTimeout(() => {
-      SoundManager.getInstance().playSFX(sounds.FANFARE, 0.7);
-    }, 1500);
-    return () => clearTimeout(timer);
+    // Fanfar 1. sıranın yükselişiyle, konfeti oturduğu anda; ikinci dalga kutlamayı sürdürür
+    const sfx = setTimeout(() => SoundManager.getInstance().playSFX(sounds.FANFARE, 0.7), T_FANFARE * 1000);
+    const c1 = setTimeout(() => confettiRef.current?.celebrationCannon(), T_CONFETTI * 1000);
+    const c2 = setTimeout(() => confettiRef.current?.celebrationCannon(), (T_CONFETTI + 0.9) * 1000);
+    return () => {
+      clearTimeout(sfx);
+      clearTimeout(c1);
+      clearTimeout(c2);
+    };
   }, []);
 
   const getWinner = (key: "uniqueCount" | "earlyCount" | "blankCount") => {
@@ -87,21 +181,31 @@ export function HostPodium({
     try {
       setIsGeneratingPDF(true);
 
+      // html2canvas + jsPDF sadece bu butona basılınca lazım oluyor ama
+      // eskiden dosyanın en tepesinde statik import edilmişlerdi. HostPodium
+      // üç farklı oyun modu (Klasik/Bomba/Sensör) tarafından paylaşıldığı
+      // için bu, üçünün de tek bir ~600KB'lık paylaşılan pakete (yalnızca bu
+      // iki kütüphane yüzünden) bağımlı kalmasına yol açıyordu — podyum
+      // ekranını sadece GÖRMEK için bile o paket indiriliyordu. Dinamik
+      // import ile bu ağırlık yalnızca "PDF İndir"e gerçekten basıldığında
+      // indiriliyor.
       const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
         import("html2canvas"),
         import("jspdf"),
       ]);
 
+      // Temporarily hide buttons to exclude from PDF
       const actionButtons = document.getElementById("podium-action-buttons");
       if (actionButtons) actionButtons.style.display = "none";
 
       const canvas = await html2canvas(element, {
         backgroundColor: "#000000",
-        scale: 2,
+        scale: 2, // higher resolution
         useCORS: true,
         logging: false,
       });
 
+      // Restore buttons
       if (actionButtons) actionButtons.style.display = "flex";
 
       const imgData = canvas.toDataURL("image/png");
@@ -115,7 +219,7 @@ export function HostPodium({
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      
+
       const date = new Date().toISOString().split("T")[0];
       pdf.save(`ALAZ-NEON-Sonuclar-${date}.pdf`);
     } catch (error) {
@@ -125,243 +229,127 @@ export function HostPodium({
     }
   };
 
+  const awardCards = [
+    { title: t("podium.creativeTitle"), desc: t("podium.creativeDesc"), winner: uniqueW, countLabel: t("podium.creativeCount"), none: t("podium.creativeNone") },
+    { title: t("podium.speedTitle"), desc: t("podium.speedDesc"), winner: earlyW, countLabel: t("podium.speedCount"), none: t("podium.speedNone") },
+    { title: t("podium.ghostTitle"), desc: t("podium.ghostDesc"), winner: blankW, countLabel: t("podium.ghostCount"), none: t("podium.ghostNone") },
+  ];
+
   return (
     <motion.div
       id="podium-container"
       key="finished"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="flex flex-col items-center justify-center min-h-full w-full py-16 overflow-y-auto bg-black select-none relative"
+      transition={TWEEN.screen}
+      className="flex flex-col items-center justify-center min-h-full w-full py-20 overflow-y-auto bg-black"
     >
-      {/* Background Volumetric Glows */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-gradient-to-b from-amber-500/15 via-alaz-orange/10 to-transparent rounded-full blur-[140px] pointer-events-none" />
+      <ConfettiCanvas ref={confettiRef} autoCannon={false} />
 
-      {/* Header Title */}
-      <motion.div
-        initial={{ y: -40, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2, type: "spring", stiffness: 80 }}
-        className="text-center mb-16 relative z-10"
+      <motion.h2
+        initial={{ y: -40, opacity: 0, scale: 0.92 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        transition={{ ...SPRING.gentle, delay: 0.2 }}
+        className="text-4xl md:text-5xl lg:text-6xl font-light text-white mb-20 uppercase tracking-[0.3em]"
       >
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <Sparkles className="w-5 h-5 text-yellow-400 animate-pulse" />
-          <span className="text-xs font-mono font-bold tracking-[0.3em] uppercase text-yellow-400">
-            ŞAMPİYONLUK KÜRSÜSÜ
-          </span>
-          <Sparkles className="w-5 h-5 text-yellow-400 animate-pulse" />
-        </div>
-        <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tight font-sans drop-shadow-[0_0_30px_rgba(255,215,0,0.3)]">
-          {t("podium.title")}
-        </h2>
-      </motion.div>
+        {t("podium.title")}
+      </motion.h2>
 
-      {/* 3D Cyber Podium Towers */}
-      <div className="flex items-end justify-center w-full max-w-5xl gap-4 md:gap-6 h-[460px] border-b-2 border-white/10 relative z-10 px-4">
-        
-        {/* 2nd Place (Silver) */}
-        {second && (
-          <motion.div
-            initial={{ height: 0 }}
-            animate={{ height: "55%" }}
-            transition={{ delay: 0.8, duration: 1.2, type: "spring" }}
-            className="flex-1 max-w-[260px] bg-[#0d0d18]/90 backdrop-blur-3xl border-t-2 border-x-2 border-cyan-400/40 rounded-t-[2.5rem] flex flex-col items-center justify-start pt-6 relative group shadow-[0_0_30px_rgba(0,229,255,0.15)]"
-          >
-            <div className="absolute -top-24 text-center w-full px-2">
-              <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center mx-auto mb-2 text-cyan-300 font-mono font-black text-sm shadow-md">
-                2
-              </div>
-              <div className="text-xl md:text-2xl font-black text-white truncate max-w-[220px] mx-auto tracking-wide">
-                {second.name}
-              </div>
-              <div className="text-base font-mono font-bold text-cyan-400 mt-0.5">
-                {second.score} PUAN
-              </div>
-            </div>
-            <div className="text-5xl font-black font-mono text-cyan-400/20 mt-4">2</div>
-          </motion.div>
-        )}
+      <div className="flex items-end justify-center w-full max-w-4xl gap-4 h-[450px] border-b-2 border-white/10 relative">
+        <div className="absolute inset-0 bg-gradient-to-t from-alaz-orange/5 to-transparent pointer-events-none" />
 
-        {/* 1st Place (Gold / Champion) */}
+        {/* Şampiyon spot ışığı: dönen konik gradyan, 1. sıra yükselince belirir */}
         {first && (
           <motion.div
-            initial={{ height: 0 }}
-            animate={{ height: "80%" }}
-            transition={{ delay: 1.4, duration: 1.5, type: "spring", stiffness: 75 }}
-            className="flex-1 max-w-[300px] bg-gradient-to-b from-[#1c1808]/95 to-[#0e0e18]/95 backdrop-blur-3xl border-t-2 border-x-2 border-yellow-400 rounded-t-[2.5rem] flex flex-col items-center justify-start pt-8 relative z-20 shadow-[0_-20px_60px_rgba(234,179,8,0.3)]"
-          >
-            <div className="absolute -top-32 text-center w-full px-2">
-              <div className="w-14 h-14 rounded-3xl bg-yellow-400/20 border-2 border-yellow-400 flex items-center justify-center mx-auto mb-2 shadow-[0_0_30px_rgba(234,179,8,0.5)]">
-                <Crown className="w-8 h-8 text-yellow-400 fill-yellow-400 animate-bounce" />
-              </div>
-              <div className="text-2xl md:text-4xl font-black text-white truncate max-w-[260px] mx-auto tracking-tight drop-shadow-[0_0_20px_rgba(255,215,0,0.5)]">
-                {first.name}
-              </div>
-              <div className="text-xl font-mono font-black text-yellow-400 mt-1 drop-shadow-md">
-                {first.score} PUAN
-              </div>
-            </div>
-            <div className="text-7xl font-black font-mono text-yellow-400/30 mt-6">1</div>
-          </motion.div>
+            aria-hidden="true"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: DURATION.cinematic, delay: REVEAL_DELAY[1] + 0.3 }}
+            className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 w-[1100px] h-[1100px] rounded-full podium-spotlight pointer-events-none z-0"
+          />
         )}
 
-        {/* 3rd Place (Bronze) */}
-        {third && (
-          <motion.div
-            initial={{ height: 0 }}
-            animate={{ height: "40%" }}
-            transition={{ delay: 0.4, duration: 1, type: "spring" }}
-            className="flex-1 max-w-[260px] bg-[#0d0d18]/90 backdrop-blur-3xl border-t-2 border-x-2 border-amber-600/40 rounded-t-[2.5rem] flex flex-col items-center justify-start pt-6 relative shadow-[0_0_25px_rgba(217,119,6,0.15)]"
-          >
-            <div className="absolute -top-24 text-center w-full px-2">
-              <div className="w-10 h-10 rounded-2xl bg-amber-600/20 border border-amber-600/50 flex items-center justify-center mx-auto mb-2 text-amber-400 font-mono font-black text-sm shadow-md">
-                3
-              </div>
-              <div className="text-lg md:text-xl font-black text-white/90 truncate max-w-[220px] mx-auto tracking-wide">
-                {third.name}
-              </div>
-              <div className="text-sm font-mono font-bold text-amber-500 mt-0.5">
-                {third.score} PUAN
-              </div>
-            </div>
-            <div className="text-4xl font-black font-mono text-amber-600/20 mt-4">3</div>
-          </motion.div>
-        )}
-
+        {second && <Pillar place={2} name={second.name} score={second.score} />}
+        {first && <Pillar place={1} name={first.name} score={first.score} />}
+        {third && <Pillar place={3} name={third.name} score={third.score} />}
       </div>
 
-      {/* Recap Card */}
+      {/* RECAP CARD MOVED OUT OF PODIUM TO PREVENT OVERLAP */}
       {awards && (awards.creative || awards.funny) && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 2 }}
-          className="mt-12 w-full max-w-md flex justify-center relative z-10"
+          transition={{ ...TWEEN.enter, delay: 3 }}
+          className="mt-12 w-full max-w-md flex justify-center"
         >
           <ShareableRecapCard awards={awards} roomCode={room?.code} />
         </motion.div>
       )}
 
-      {/* Nightlife Awards (Gecenin Enleri) */}
+      {/* OYUNUN ENLERI (AWARDS) */}
       <motion.div
-        initial={{ opacity: 0, y: 40 }}
+        initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 2.2, duration: 0.8 }}
-        className="mt-16 w-full max-w-5xl px-4 relative z-10"
+        transition={{ ...TWEEN.enter, delay: 3.4 }}
+        className="mt-16 w-full max-w-4xl"
       >
-        <h3 className="text-center text-xs font-mono font-bold text-gray-400 uppercase tracking-[0.3em] mb-6">
+        <h3 className="text-center text-xs font-light text-white/40 uppercase tracking-[0.4em] mb-8">
           {t("podium.awardsTitle")}
         </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          {/* Creative Award */}
-          <div className="bg-[#0d0d18]/80 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 flex flex-col items-center justify-center text-center transition-all hover:border-cyan-400/40">
-            <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center mb-3 text-cyan-400">
-              <Sparkles className="w-6 h-6" />
-            </div>
-            <h4 className="text-white font-bold text-sm uppercase tracking-wider mb-1">
-              {t("podium.creativeTitle")}
-            </h4>
-            <p className="text-gray-400 text-xs font-medium mb-4">
-              {t("podium.creativeDesc")}
-            </p>
-            {uniqueW ? (
-              <>
-                <div className="text-xl font-black text-cyan-300 truncate w-full px-2 tracking-wide font-mono">
-                  {uniqueW.name}
-                </div>
-                <div className="text-gray-400 font-mono text-[11px] mt-1 uppercase">
-                  {uniqueW.count} {t("podium.creativeCount")}
-                </div>
-              </>
-            ) : (
-              <div className="text-gray-500 italic text-xs">
-                {t("podium.creativeNone")}
-              </div>
-            )}
-          </div>
-
-          {/* Speed Award */}
-          <div className="bg-[#0d0d18]/80 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 flex flex-col items-center justify-center text-center transition-all hover:border-alaz-orange/40">
-            <div className="w-12 h-12 rounded-2xl bg-alaz-orange/10 border border-alaz-orange/30 flex items-center justify-center mb-3 text-alaz-orange">
-              <Zap className="w-6 h-6" />
-            </div>
-            <h4 className="text-white font-bold text-sm uppercase tracking-wider mb-1">
-              {t("podium.speedTitle")}
-            </h4>
-            <p className="text-gray-400 text-xs font-medium mb-4">
-              {t("podium.speedDesc")}
-            </p>
-            {earlyW ? (
-              <>
-                <div className="text-xl font-black text-alaz-orange truncate w-full px-2 tracking-wide font-mono">
-                  {earlyW.name}
-                </div>
-                <div className="text-gray-400 font-mono text-[11px] mt-1 uppercase">
-                  {earlyW.count} {t("podium.speedCount")}
-                </div>
-              </>
-            ) : (
-              <div className="text-gray-500 italic text-xs">
-                {t("podium.speedNone")}
-              </div>
-            )}
-          </div>
-
-          {/* Ghost Award */}
-          <div className="bg-[#0d0d18]/80 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 flex flex-col items-center justify-center text-center transition-all hover:border-purple-400/40">
-            <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-400/30 flex items-center justify-center mb-3 text-purple-400">
-              <Ghost className="w-6 h-6" />
-            </div>
-            <h4 className="text-white font-bold text-sm uppercase tracking-wider mb-1">
-              {t("podium.ghostTitle")}
-            </h4>
-            <p className="text-gray-400 text-xs font-medium mb-4">
-              {t("podium.ghostDesc")}
-            </p>
-            {blankW ? (
-              <>
-                <div className="text-xl font-black text-purple-300 truncate w-full px-2 tracking-wide font-mono">
-                  {blankW.name}
-                </div>
-                <div className="text-gray-400 font-mono text-[11px] mt-1 uppercase">
-                  {blankW.count} {t("podium.ghostCount")}
-                </div>
-              </>
-            ) : (
-              <div className="text-gray-500 italic text-xs">
-                {t("podium.ghostNone")}
-              </div>
-            )}
-          </div>
-
-        </div>
+        <motion.div
+          variants={{ hidden: {}, visible: { transition: { staggerChildren: STAGGER.base, delayChildren: 3.6 } } }}
+          initial="hidden"
+          animate="visible"
+          className="grid grid-cols-1 md:grid-cols-3 gap-8"
+        >
+          {awardCards.map((card) => (
+            <motion.div
+              key={card.title}
+              variants={listItem}
+              className="bg-white/[0.02] backdrop-blur-2xl border border-white/5 rounded-3xl p-8 flex flex-col items-center justify-center text-center transition-colors hover:bg-white/[0.04]"
+            >
+              <h4 className="text-white font-medium text-sm uppercase tracking-widest mb-1">{card.title}</h4>
+              <p className="text-white/40 text-[10px] font-light uppercase tracking-widest mb-6">{card.desc}</p>
+              {card.winner ? (
+                <>
+                  <div className="text-2xl font-light text-white truncate w-full px-2 mx-auto tracking-wider">
+                    {card.winner.name}
+                  </div>
+                  <div className="text-white/60 font-light text-xs mt-2 uppercase tracking-widest tabular-nums">
+                    {card.winner.count} {card.countLabel}
+                  </div>
+                </>
+              ) : (
+                <div className="text-white/30 font-light italic text-sm">{card.none}</div>
+              )}
+            </motion.div>
+          ))}
+        </motion.div>
       </motion.div>
 
-      {/* Action Buttons */}
       <motion.div
         id="podium-action-buttons"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 3 }}
-        className="mt-16 flex flex-wrap items-center justify-center gap-4 mb-16 relative z-20 px-4"
+        transition={{ duration: DURATION.slow, delay: 4.6 }}
+        className="mt-16 flex items-center justify-center gap-6 mb-20 relative z-20"
       >
         <button
           onClick={handleDownloadPDF}
           disabled={isGeneratingPDF}
-          className="px-8 py-4 bg-white/5 hover:bg-white/15 border border-white/15 text-white font-black text-xs rounded-2xl transition-all uppercase tracking-widest disabled:opacity-50 flex items-center gap-2.5 active:scale-95"
+          className="px-8 py-4 border border-white/20 hover:bg-white/5 text-white/80 font-medium rounded-full transition-colors uppercase tracking-widest disabled:opacity-50 flex items-center gap-2"
         >
-          <Download className="w-4 h-4 text-cyan-400" />
-          <span>{isGeneratingPDF ? "PDF HAZIRLANIYOR..." : "PDF İNDİR"}</span>
+          {isGeneratingPDF ? "PDF HAZIRLANIYOR..." : "PDF İNDİR"}
         </button>
-
-        <button
+        <motion.button
           onClick={onResetGame}
-          className="px-10 py-4 bg-white text-black hover:bg-gray-200 font-black text-xs rounded-2xl transition-all uppercase tracking-widest shadow-[0_0_30px_rgba(255,255,255,0.3)] flex items-center gap-2.5 active:scale-95"
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.96 }}
+          transition={SPRING.stiff}
+          className="px-12 py-4 bg-white hover:bg-gray-200 text-black font-medium rounded-full transition-colors uppercase tracking-[0.2em] shadow-[0_0_30px_rgba(255,255,255,0.2)]"
         >
-          <RotateCcw className="w-4 h-4 text-black" />
-          <span>{t("podium.newGame")}</span>
-        </button>
+          {t("podium.newGame")}
+        </motion.button>
       </motion.div>
     </motion.div>
   );

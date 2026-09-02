@@ -3,9 +3,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { PlayerBackground } from "../../../components/PlayerBackground";
+import { AnimatedNumber } from "../../../components/AnimatedNumber";
 import { useLocale } from "../../../hooks/useLocale";
 import type { Player } from "../../../types/database";
 import { ConfettiCanvas } from "../../../components/ConfettiCanvas";
+import { SPRING, STAGGER, TWEEN } from "../../../lib/motion";
 
 interface PlayerStandingsProps {
   currentPlayer: Player | null;
@@ -70,15 +72,16 @@ export function PlayerStandings({ currentPlayer }: PlayerStandingsProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      transition={TWEEN.screen}
       className="flex-1 flex flex-col items-center justify-center p-6 text-center z-10"
     >
-      {myRank && myRank <= 3 && <ConfettiCanvas trigger={true} autoCannon={true} />}
+      {myRank !== null && myRank <= 3 && <ConfettiCanvas trigger={true} autoCannon={true} />}
       <PlayerBackground />
       {/* My Rank Card */}
       <motion.div
         initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+        transition={{ ...SPRING.gentle, delay: 0.1 }}
         className="w-full max-w-sm mb-8"
       >
         {currentPlayer && myRank !== null ? (
@@ -93,10 +96,10 @@ export function PlayerStandings({ currentPlayer }: PlayerStandingsProps) {
                   {t("playerStandings.ranking")}
                 </p>
                 <motion.div
-                  initial={{ scale: 0.5, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.3, type: "spring", stiffness: 300 }}
-                  className="text-6xl font-black tracking-tighter"
+                  initial={{ scale: 0.4, opacity: 0, rotate: -8 }}
+                  animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                  transition={{ ...SPRING.bouncy, delay: 0.3 }}
+                  className="text-6xl font-black tracking-tighter tabular-nums origin-left"
                   style={{
                     color: myRank === 1 ? "#ff5500" : "#ffffff",
                     textShadow: myRank === 1 ? "0 0 20px rgba(255,85,0,0.5)" : "none"
@@ -110,14 +113,9 @@ export function PlayerStandings({ currentPlayer }: PlayerStandingsProps) {
                 <p className="text-[10px] text-white/50 font-mono uppercase tracking-[0.3em] mb-1">
                   {t("playerStandings.score")}
                 </p>
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                  className="text-4xl font-mono font-black text-white"
-                >
-                  {currentPlayer.total_score}
-                </motion.span>
+                <span className="text-4xl font-mono font-black text-white">
+                  <AnimatedNumber from={0} value={currentPlayer.total_score} delay={0.45} duration={0.9} />
+                </span>
               </div>
             </div>
           </div>
@@ -132,36 +130,36 @@ export function PlayerStandings({ currentPlayer }: PlayerStandingsProps) {
       <AnimatePresence>
         {loaded && rankedPlayers.length > 0 && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              visible: { opacity: 1, y: 0, transition: { ...TWEEN.enter, delayChildren: 0.5, staggerChildren: STAGGER.base } },
+            }}
             className="w-full max-w-sm space-y-2"
           >
             <p className="text-[10px] text-white/50 uppercase tracking-[0.4em] mb-4 font-mono text-left pl-2">
-          {t("playerStandings.leaderboard")}
+              {t("playerStandings.leaderboard")}
             </p>
-            {rankedPlayers.map((p, i) => {
+            {rankedPlayers.map((p) => {
               const style = rankLabel(p.rank);
               const isMe = p.id === currentPlayer?.id;
               return (
                 <motion.div
                   key={p.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 + i * 0.08 }}
-                  className={`flex items-center h-12 shadow-lg transition-all ${style.border} ${style.bg} ${
-                    isMe ? "bg-white/10" : ""
-                  }`}
+                  layout
+                  variants={{ hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0, transition: SPRING.snappy } }}
+                  className={`flex items-center h-12 shadow-lg ${style.border} ${style.bg} ${isMe ? "bg-white/10" : ""}`}
                 >
-                  <div className={`w-10 h-full flex items-center justify-center border-r border-white/10 bg-black/40`}>
-                    <span className={`text-sm font-mono font-bold tracking-tighter italic ${style.color}`}>
+                  <div className="w-10 h-full flex items-center justify-center border-r border-white/10 bg-black/40">
+                    <span className={`text-sm font-mono font-bold tracking-tighter italic tabular-nums ${style.color}`}>
                       {style.emoji}
                     </span>
                   </div>
                   <span className={`flex-1 text-sm tracking-[0.1em] uppercase truncate text-left px-4 ${isMe ? "text-alaz-orange font-black" : "text-white font-bold"}`}>
                     {p.nickname}
                   </span>
-                  <div className={`w-16 h-full flex items-center justify-center bg-black/50`}>
+                  <div className="w-16 h-full flex items-center justify-center bg-black/50">
                     <span className={`text-sm font-mono font-black tabular-nums ${isMe ? "text-alaz-orange" : "text-white"}`}>
                       {p.total_score}
                     </span>

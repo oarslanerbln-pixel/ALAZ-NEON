@@ -1,169 +1,259 @@
 import { useEffect, useRef } from "react";
+import { normalizeFrameDelta, prefersReducedMotion } from "../lib/motion";
 
 interface Particle {
   x: number;
   y: number;
   size: number;
+  /** Temel hız (px/kare, 60fps birimi) — hız çarpanı çizim anında uygulanır */
   vx: number;
   vy: number;
   color: string;
 }
 
-export function ParticleBackground({
-  speedMultiplier = 1,
-}: {
-  speedMultiplier?: number;
-}) {
+const PARTICLE_COUNT = 120;
+const LINK_DISTANCE = 150;
+const LINK_DISTANCE_SQ = LINK_DISTANCE * LINK_DISTANCE;
+const MAX_DPR = 2;
+/** Neon: Blue, Pink, Orange, Gold */
+const COLORS = ["#00f3ff", "#ff003c", "#ff4d00", "#FFD700"];
+
+/**
+ * Parlama sprite'ı: radyal gradyan BİR KEZ offscreen tuvale çiziliyor, her
+ * karede `drawImage` ile kopyalanıyor. Eski sürüm 120 parçacık × 60 kare =
+ * saniyede 7.200 `shadowBlur` geçişi yapıyordu — canvas'ın en pahalı işlemi.
+ */
+function makeGlowSprite(color: string, radius: number, dpr: number): HTMLCanvasElement {
+  const size = Math.ceil(radius * 2 * dpr);
+  const sprite = document.createElement("canvas");
+  sprite.width = size;
+  sprite.height = size;
+  const ctx = sprite.getContext("2d");
+  if (ctx) {
+    const c = size / 2;
+    const g = ctx.createRadialGradient(c, c, 0, c, c, c);
+    g.addColorStop(0, color);
+    g.addColorStop(0.35, color);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, size, size);
+  }
+  return sprite;
+}
+
+/**
+ * Takımyıldız arka planı (TV ve quiz ekranları).
+ *
+ * - DPR farkındalığı + kapsayıcı tabanlı ölçüm (TVScaleFrame içinde pencere
+ *   boyutu yanlıştır).
+ * - Delta-time: 120Hz ekranda iki kat hızlı akmıyor.
+ * - `speedMultiplier` değişince parçacıklar YENİDEN ÜRETİLMİYOR (eskiden
+ *   son 10 saniyeye girince tüm yıldızlar bir anda yer değiştiriyordu);
+ *   çarpan lerp ile yumuşakça hedefe gidiyor.
+ * - Sayfa görünmezken döngü durur; "hareketi azalt" tercihinde tek kare çizilir.
+ */
+export function ParticleBackground({ speedMultiplier = 1 }: { speedMultiplier?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const mouseRef = useRef({ x: 0, y: 0, radius: 200 });
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const targetSpeedRef = useRef(speedMultiplier);
+
+  useEffect(() => {
+    targetSpeedRef.current = speedMultiplier;
+  }, [speedMultiplier]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-
+    const wrapper = wrapperRef.current;
+    if (!canvas || !wrapper) return;
     const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return;
 
-    let animationFrameId: number;
-    let particles: Particle[] = [];
-    const particleCount = 120; // Reduced count for constellation performance
-    // Neon colors: Blue, Pink, Orange, Gold
-    const colors = ["#00f3ff", "#ff003c", "#ff4d00", "#FFD700"]; 
+    const reduced = prefersReducedMotion();
+    const dpr = Math.min(Math.max(window.devicePixelRatio || 1, 1), MAX_DPR);
+    const sprites = new Map<string, HTMLCanvasElement>();
+    for (const c of COLORS) sprites.set(c, makeGlowSprite(c, 14, dpr));
 
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      initParticles();
-    };
+    let width = 0;
+    let height = 0;
+    let particles: Particle[] = [];
+    let frameId: number | null = null;
+    let lastTime = 0;
+    let currentSpeed = targetSpeedRef.current;
+    const pointer = { x: -9999, y: -9999, radius: 200 };
 
     const initParticles = () => {
       particles = [];
-      for (let i = 0; i < particleCount; i++) {
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
         particles.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
+          x: Math.random() * width,
+          y: Math.random() * height,
           size: Math.random() * 2 + 1,
-          vx: (Math.random() - 0.5) * 1.5 * speedMultiplier,
-          vy: (Math.random() - 0.5) * 1.5 * speedMultiplier,
-          color: colors[Math.floor(Math.random() * colors.length)],
+          vx: (Math.random() - 0.5) * 1.5,
+          vy: (Math.random() - 0.5) * 1.5,
+          color: COLORS[Math.floor(Math.random() * COLORS.length)],
         });
       }
     };
 
-    const drawParticles = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const resize = (w: number, h: number) => {
+      const nextW = Math.max(1, Math.round(w));
+      const nextH = Math.max(1, Math.round(h));
+      // Yalnızca yeniden konumlandır; parçacıkları koru (ilk kurulum hariç)
+      const first = width === 0;
+      const sx = first ? 1 : nextW / width;
+      const sy = first ? 1 : nextH / height;
+      width = nextW;
+      height = nextH;
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      if (first) initParticles();
+      else for (const p of particles) { p.x *= sx; p.y *= sy; }
+      if (reduced) draw();
+    };
+
+    const draw = () => {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, width, height);
+
+      // 1) Bağlantı çizgileri (altta)
+      ctx.lineWidth = 1;
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        for (let j = i + 1; j < particles.length; j++) {
+          const q = particles[j];
+          const dx = p.x - q.x;
+          const dy = p.y - q.y;
+          const d2 = dx * dx + dy * dy;
+          if (d2 >= LINK_DISTANCE_SQ) continue;
+          ctx.globalAlpha = (1 - Math.sqrt(d2) / LINK_DISTANCE) * 0.35;
+          ctx.strokeStyle = p.color;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(q.x, q.y);
+          ctx.stroke();
+        }
+      }
+
+      // 2) Parlayan küreler (üstte): sprite + beyaz çekirdek
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const sprite = sprites.get(p.color);
+        const r = p.size * 5;
+        ctx.globalAlpha = 0.75;
+        if (sprite) ctx.drawImage(sprite, p.x - r, p.y - r, r * 2, r * 2);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    };
+
+    const update = (dt: number) => {
+      // Hız çarpanı hedefe yumuşakça (≈0.5sn) yaklaşır; ani sıçrama yok
+      currentSpeed += (targetSpeedRef.current - currentSpeed) * Math.min(1, 0.08 * dt);
+      const maxBase = 2;
 
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
 
-        // Mouse interaction (Repel)
-        const dx = mouseRef.current.x - p.x;
-        const dy = mouseRef.current.y - p.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance < mouseRef.current.radius) {
-          const force = (mouseRef.current.radius - distance) / mouseRef.current.radius;
-          p.vx -= (dx / distance) * force * 0.2;
-          p.vy -= (dy / distance) * force * 0.2;
+        // İşaretçi itme (CSS px uzayında)
+        const dx = pointer.x - p.x;
+        const dy = pointer.y - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > 0 && dist < pointer.radius) {
+          const force = ((pointer.radius - dist) / pointer.radius) * 0.2 * dt;
+          p.vx -= (dx / dist) * force;
+          p.vy -= (dy / dist) * force;
         }
 
-        // Apply slight friction and natural movement
-        p.x += p.vx;
-        p.y += p.vy;
+        if (p.vx > maxBase) p.vx = maxBase;
+        else if (p.vx < -maxBase) p.vx = -maxBase;
+        if (p.vy > maxBase) p.vy = maxBase;
+        else if (p.vy < -maxBase) p.vy = -maxBase;
 
-        // Bounce off edges smoothly
-        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
-        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
-        
-        // Speed limit
-        const maxSpeed = 2 * speedMultiplier;
-        if (p.vx > maxSpeed) p.vx = maxSpeed;
-        if (p.vx < -maxSpeed) p.vx = -maxSpeed;
-        if (p.vy > maxSpeed) p.vy = maxSpeed;
-        if (p.vy < -maxSpeed) p.vy = -maxSpeed;
+        p.x += p.vx * currentSpeed * dt;
+        p.y += p.vy * currentSpeed * dt;
 
-        // Draw glowing orb
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = 0.8;
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = p.color;
-        ctx.fill();
-        ctx.shadowBlur = 0; // reset for next drawings
-        
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = "#ffffff";
-        ctx.globalAlpha = 1;
-        ctx.fill();
-
-        // Draw constellation lines to close particles
-        for (let j = i + 1; j < particles.length; j++) {
-          const p2 = particles[j];
-          const dx2 = p.x - p2.x;
-          const dy2 = p.y - p2.y;
-          const dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-
-          if (dist2 < 150) {
-            ctx.beginPath();
-            ctx.moveTo(p.x, p.y);
-            ctx.lineTo(p2.x, p2.y);
-            // Opacity based on distance
-            const alpha = (1 - dist2 / 150) * 0.4;
-            
-            // Create gradient line between two colors
-            const grad = ctx.createLinearGradient(p.x, p.y, p2.x, p2.y);
-            grad.addColorStop(0, p.color);
-            grad.addColorStop(1, p2.color);
-            
-            ctx.strokeStyle = grad;
-            ctx.lineWidth = 1;
-            ctx.globalAlpha = alpha;
-            ctx.stroke();
-          }
-        }
-      }
-
-      animationFrameId = requestAnimationFrame(drawParticles);
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      mouseRef.current.x = e.clientX;
-      mouseRef.current.y = e.clientY;
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches[0]) {
-        mouseRef.current.x = e.touches[0].clientX;
-        mouseRef.current.y = e.touches[0].clientY;
+        if (p.x < 0) { p.x = 0; p.vx = Math.abs(p.vx); }
+        else if (p.x > width) { p.x = width; p.vx = -Math.abs(p.vx); }
+        if (p.y < 0) { p.y = 0; p.vy = Math.abs(p.vy); }
+        else if (p.y > height) { p.y = height; p.vy = -Math.abs(p.vy); }
       }
     };
 
-    window.addEventListener("resize", resizeCanvas);
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("touchmove", handleTouchMove);
+    const frame = (now: number) => {
+      const dt = lastTime === 0 ? 1 : normalizeFrameDelta(now - lastTime);
+      lastTime = now;
+      update(dt);
+      draw();
+      frameId = requestAnimationFrame(frame);
+    };
 
-    resizeCanvas();
-    drawParticles();
+    const start = () => {
+      if (reduced || frameId !== null) return;
+      lastTime = 0;
+      frameId = requestAnimationFrame(frame);
+    };
+    const stop = () => {
+      if (frameId !== null) cancelAnimationFrame(frameId);
+      frameId = null;
+    };
+
+    // İşaretçi koordinatını tuvalin CSS uzayına çevir (ölçekli kapsayıcı uyumu)
+    const toLocal = (clientX: number, clientY: number) => {
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      pointer.x = ((clientX - rect.left) / rect.width) * width;
+      pointer.y = ((clientY - rect.top) / rect.height) * height;
+    };
+    const onMouseMove = (e: MouseEvent) => toLocal(e.clientX, e.clientY);
+    const onTouchMove = (e: TouchEvent) => {
+      const t = e.touches[0];
+      if (t) toLocal(t.clientX, t.clientY);
+    };
+    const onLeave = () => { pointer.x = -9999; pointer.y = -9999; };
+    const onVisibility = () => (document.hidden ? stop() : start());
+
+    let observer: ResizeObserver | null = null;
+    const onWindowResize = () => resize(wrapper.clientWidth || window.innerWidth, wrapper.clientHeight || window.innerHeight);
+    if (typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver((entries) => {
+        const r = entries[0]?.contentRect;
+        if (r && r.width > 0 && r.height > 0) resize(r.width, r.height);
+      });
+      observer.observe(wrapper);
+    } else {
+      window.addEventListener("resize", onWindowResize);
+    }
+    onWindowResize();
+
+    window.addEventListener("mousemove", onMouseMove, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
+    window.addEventListener("mouseleave", onLeave);
+    document.addEventListener("visibilitychange", onVisibility);
+
+    if (reduced) draw();
+    else start();
 
     return () => {
-      window.removeEventListener("resize", resizeCanvas);
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("touchmove", handleTouchMove);
-      cancelAnimationFrame(animationFrameId);
+      stop();
+      observer?.disconnect();
+      window.removeEventListener("resize", onWindowResize);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("mouseleave", onLeave);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [speedMultiplier]);
+  }, []);
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-[-2] overflow-hidden bg-[#030303]">
+    <div ref={wrapperRef} className="fixed inset-0 pointer-events-none z-[-2] overflow-hidden bg-[#030303]">
       {/* Dynamic slow pulsing background gradient */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,243,255,0.05)_0%,rgba(0,0,0,1)_100%)] mix-blend-screen" />
       <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.05]" />
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0"
-      />
+      <canvas ref={canvasRef} aria-hidden="true" className="absolute inset-0 w-full h-full" />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { PlayerBackground } from "../../../components/PlayerBackground";
 import { useLocale } from "../../../hooks/useLocale";
+import { SPRING, TWEEN } from "../../../lib/motion";
 
 interface PlayerReviewProps {
   submitStatus: "idle" | "submitting" | "success" | "error";
@@ -13,6 +14,7 @@ export function PlayerReview({ submitStatus }: PlayerReviewProps) {
       key="review"
       initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
+      transition={TWEEN.screen}
       className="flex flex-col items-center justify-center text-center p-8 min-h-[60vh] relative z-10"
     >
       <PlayerBackground />
@@ -21,7 +23,7 @@ export function PlayerReview({ submitStatus }: PlayerReviewProps) {
         <motion.div
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 300, delay: 0.1 }}
+          transition={{ ...SPRING.snappy, delay: 0.1 }}
           className="w-20 h-20 bg-zinc-900 border border-zinc-700 flex items-center justify-center relative"
         >
           <div className="absolute top-0 left-0 w-1.5 h-1.5 bg-white" />
@@ -31,9 +33,9 @@ export function PlayerReview({ submitStatus }: PlayerReviewProps) {
             {submitStatus === "success" ? (
               <motion.div
                 key="check"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 400 }}
+                initial={{ scale: 0, rotate: -30 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={SPRING.bouncy}
                 className="text-3xl"
               >
                 ✓
@@ -62,7 +64,7 @@ export function PlayerReview({ submitStatus }: PlayerReviewProps) {
       <motion.h2
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
+        transition={{ ...TWEEN.enter, delay: 0.2 }}
         className="text-xl font-light text-white tracking-[0.3em] mb-3 uppercase"
       >
         {t("playerReview.title")}
@@ -108,6 +110,7 @@ export function PlayerReview({ submitStatus }: PlayerReviewProps) {
           <motion.div
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={SPRING.snappy}
             className="px-6 py-3 bg-zinc-900 border border-zinc-700 text-white font-mono text-xs tracking-[0.3em] flex items-center gap-3 relative overflow-hidden"
           >
             <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-green-500" />
