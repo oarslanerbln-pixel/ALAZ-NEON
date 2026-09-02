@@ -6,6 +6,7 @@ import { db } from "../../lib/firebase";
 import { ParticleBackground } from "../../components/ParticleBackground";
 import { TVScaleFrame } from "../../components/TVScaleFrame";
 import { KineticSpark } from "../../components/KineticSpark";
+import { DURATION, EASE } from "../../lib/motion";
 import { sounds, SoundManager } from "../../lib/audio";
 import { calculateRoundScores } from "../../lib/scoring";
 import { Sentinel } from "../../lib/sentinel";
@@ -689,7 +690,10 @@ function HostDisplayGame({
   return (
     <TVScaleFrame>
     <div
-      className={`w-full h-full flex flex-col p-8 overflow-hidden ${gameState === "playing" && timeLeft <= 10 ? "animate-shake" : ""}`}
+      // Not: eskiden son 10 saniye boyunca tüm TV `animate-shake` ile
+      // titriyordu. Sarsıntı artık HostPlaying'de, yalnızca süre bittiği anda,
+      // tek seferlik (oyun "juice" kuralı: sarsıntı noktalama işaretidir).
+      className="w-full h-full flex flex-col p-8 overflow-hidden"
       data-tension={
         tensionRatio > 0.8 ? "high" : tensionRatio > 0.5 ? "medium" : "low"
       }
@@ -700,9 +704,6 @@ function HostDisplayGame({
       {/* TV Cyberpunk Vignette & Scanlines */}
       <div className="tv-cyber-vignette fixed inset-0 z-40 pointer-events-none" />
       <div className="tv-scanlines fixed inset-0 z-40 pointer-events-none opacity-25" />
-      {gameState === "playing" && timeLeft <= 10 && (
-        <div className="danger-overlay" />
-      )}
       {gameState !== "intro" && gameState !== "gameIntro" && gameState !== "ad_break" && (
         <HostHeader 
           room={room} 
@@ -720,8 +721,11 @@ function HostDisplayGame({
               key="intro"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0, scale: 1.2, filter: "blur(40px)" }}
-              transition={{ duration: 1.5, ease: "circIn" }}
+              // Tam ekran bir elemanda blur(40px) çıkışı her karede
+              // 1920×1080'lik yeniden boyama demekti; ölçek + opaklık aynı
+              // "uzaklaşarak kaybolma" hissini compositor'da verir.
+              exit={{ opacity: 0, scale: 1.08 }}
+              transition={{ duration: DURATION.cinematic, ease: EASE.in }}
               className="bg-black fixed inset-0 z-[100] flex items-center justify-center overflow-hidden noise-suppression"
             >
               <div className="relative w-full max-w-7xl flex flex-col items-center justify-center">
@@ -771,6 +775,7 @@ function HostDisplayGame({
             <HostPlaying
               currentLetter={currentLetter}
               timeLeft={timeLeft}
+              maxTime={room?.timer_setting}
               categories={room?.categories || []}
               submittedPlayerIds={submittedPlayerIds}
               playersCount={players.length}

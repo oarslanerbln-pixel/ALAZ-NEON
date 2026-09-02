@@ -798,17 +798,37 @@
   animation: impact-shock 0.4s ease-out both;
 }
 
-/* 3. Son 5 Saniye Kalp Atışı (Tension Heartbeat) */
+/* 3. Son 5 Saniye Kalp Atışı (Tension Heartbeat)
+   Eskiden her karede 140px'lik inset box-shadow yeniden boyanıyordu (tam
+   ekran overlay'de bu, mobil GPU'yu tek başına dizlerinin üstüne çökertir).
+   Artık parlama BİR KEZ boyanıyor; kalp atışı yalnızca transform + opacity
+   ile (compositor). Görsel sonuç aynı, maliyet ~sıfır. */
 @keyframes tension-heartbeat {
-  0%, 100% { transform: scale(1); box-shadow: inset 0 0 40px rgba(255, 0, 0, 0.2); }
-  15% { transform: scale(1.015); box-shadow: inset 0 0 100px rgba(255, 0, 0, 0.6); }
-  30% { transform: scale(1); box-shadow: inset 0 0 40px rgba(255, 0, 0, 0.2); }
-  45% { transform: scale(1.025); box-shadow: inset 0 0 140px rgba(255, 0, 0, 0.8); }
-  60% { transform: scale(1); box-shadow: inset 0 0 40px rgba(255, 0, 0, 0.2); }
+  0%, 100% { transform: scale(1); opacity: 0.55; }
+  15% { transform: scale(1.015); opacity: 0.85; }
+  30% { transform: scale(1); opacity: 0.55; }
+  45% { transform: scale(1.025); opacity: 1; }
+  60% { transform: scale(1); opacity: 0.55; }
 }
 
 .tension-heartbeat-glow {
+  box-shadow: inset 0 0 120px rgba(255, 0, 0, 0.7);
+  will-change: transform, opacity;
   animation: tension-heartbeat 0.9s ease-in-out infinite;
+}
+
+/* Sadece ölçek atan kalp atışı — rakam/harf gibi metin kapsayıcıları için. */
+@keyframes heartbeat-scale {
+  0%, 100% { transform: scale(1); }
+  15% { transform: scale(1.06); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.09); }
+  60% { transform: scale(1); }
+}
+
+.animate-heartbeat {
+  animation: heartbeat-scale 0.9s ease-in-out infinite;
+  transform-origin: center;
 }
 
 /* 4. Dokunmatik Neon Ripple */
@@ -851,3 +871,57 @@
   pointer-events: none;
 }
 
+/* ── Shimmer (HoldButton ve 1. sıra satırı bunu bekliyordu; tanımlı değildi) ── */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.animate-shimmer {
+  animation: shimmer 2.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+/* ── Podyum spot ışığı: dönen konik gradyan (transform-only) ─────────────── */
+@keyframes spotlight-spin {
+  to { transform: rotate(360deg); }
+}
+
+.podium-spotlight {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(255, 230, 0, 0.18) 40deg,
+    transparent 80deg,
+    transparent 180deg,
+    rgba(255, 255, 255, 0.10) 220deg,
+    transparent 260deg
+  );
+  /* Koni kenarları sert kalmasın: merkezden dışa doğru sönen radyal maske */
+  -webkit-mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 15%, rgba(0, 0, 0, 0) 60%);
+  mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 15%, rgba(0, 0, 0, 0) 60%);
+  animation: spotlight-spin 9s linear infinite;
+  will-change: transform;
+}
+
+/* ── Reduced motion (WCAG 2.3.3 / Apple "Reduce Motion") ─────────────────
+   framer-motion tarafı App.tsx'teki <MotionConfig reducedMotion="user"> ile
+   çözülüyor; burası CSS keyframe'leri kapsıyor. Dekoratif sonsuz döngüler
+   (scanline, radar, glitch, shimmer, spotlight...) tek kareye iniyor; durum
+   geçişleri anlık oluyor. Oyun mantığı etkilenmez — zamanlayıcılar JS'te. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .ambient-bg,
+  .animate-scanline,
+  .podium-spotlight {
+    animation: none !important;
+  }
+}

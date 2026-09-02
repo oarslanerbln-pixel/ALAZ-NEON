@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SoundManager, sounds } from "../lib/audio";
+import { DURATION, EASE, SPRING } from "../lib/motion";
 
 interface LetterSpinnerProps {
   targetLetter: string;
@@ -10,7 +11,9 @@ interface LetterSpinnerProps {
 const letters = "ABCDEFGHIJKLMNOPRSTUVYZ".split("");
 
 const generateExplosionParticles = () => {
-  return Array.from({ length: 80 }).map(() => ({
+  // 80 → 48: her biri text-shadow'lu dev bir DOM düğümü; 48 tanesi görsel
+  // olarak ayırt edilemez, paint maliyeti %40 düşer.
+  return Array.from({ length: 48 }).map(() => ({
     x: (Math.random() - 0.5) * (typeof window !== "undefined" ? window.innerWidth : 1000) * 2,
     y: (Math.random() - 0.5) * (typeof window !== "undefined" ? window.innerHeight : 800) * 2,
     rotation: (Math.random() - 0.5) * 1080,
@@ -136,13 +139,10 @@ export function LetterSpinner({
           ) : (
             <motion.div
               initial={{ scale: 0, opacity: 0, rotate: -180 }}
-              animate={{
-                scale: [1, 1.4, 1.2, 1],
-                opacity: 1,
-                rotate: 0,
-                filter: ["blur(20px)", "blur(0px)"],
-              }}
-              transition={{ duration: 0.8, type: "spring", bounce: 0.5 }}
+              animate={{ scale: 1, opacity: 1, rotate: 0 }}
+              // Yay aşımı "pop"u kendisi verir; blur animasyonu (her kare
+              // paint) gereksiz — drop-shadow statik kalıyor.
+              transition={SPRING.bouncy}
               className="text-9xl md:text-[12rem] lg:text-[16rem] font-black font-inter text-transparent bg-clip-text bg-gradient-to-br from-cyber-yellow via-white to-alaz-orange h-full flex items-center justify-center w-full"
               data-text={effectiveLetter}
               style={{ filter: 'drop-shadow(0 0 40px rgba(252,238,10,0.8))' }}
@@ -181,7 +181,7 @@ export function LetterSpinner({
                 ease: "easeOut",
                 delay: particle.delay
               }}
-              className="absolute font-black text-6xl md:text-8xl opacity-90"
+              className="absolute font-black text-6xl md:text-8xl opacity-90 will-change-transform"
               style={{ color: particle.color, textShadow: `0 0 30px ${particle.color}` }}
             >
               {targetLetter}
@@ -191,26 +191,29 @@ export function LetterSpinner({
           {/* Giant center blast wave */}
           <motion.div
             initial={{ scale: 1, opacity: 1 }}
-            animate={{ scale: 40, opacity: 0 }}
-            transition={{ duration: 1.5, ease: "easeOut" }}
-            className="absolute text-white font-black text-9xl drop-shadow-[0_0_100px_rgba(255,255,255,1)]"
+            animate={{ scale: 24, opacity: 0 }}
+            transition={{ duration: DURATION.cinematic, ease: EASE.out }}
+            // drop-shadow(100px) 24× ölçekte her kare tam ekran bulanıklık
+            // demekti; düz beyaz harf aynı "patlama"yı okutuyor.
+            className="absolute text-white font-black text-9xl will-change-transform"
           >
             {targetLetter}
           </motion.div>
           
           {/* Shockwave ring */}
           <motion.div
-             initial={{ scale: 0, opacity: 1, borderWidth: "50px" }}
-             animate={{ scale: 5, opacity: 0, borderWidth: "1px" }}
-             transition={{ duration: 1, ease: "easeOut" }}
-             className="absolute w-96 h-96 rounded-full border-white"
+            initial={{ scale: 0, opacity: 1 }}
+            animate={{ scale: 5, opacity: 0 }}
+            transition={{ duration: 1, ease: EASE.out }}
+            // border-width animasyonu layout tetikler; sabit kalınlık + scale
+            className="absolute w-96 h-96 rounded-full border-[12px] border-white will-change-transform"
           />
 
           {/* Screen flash */}
           <motion.div
             initial={{ opacity: 1 }}
             animate={{ opacity: 0 }}
-            transition={{ duration: 1, ease: "easeOut" }}
+            transition={{ duration: 1, ease: EASE.out }}
             className="absolute inset-0 bg-white mix-blend-overlay"
           />
         </div>

@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
+import { motion, useMotionValue } from "framer-motion";
 import { useLocale } from "../hooks/useLocale";
+import { haptics } from "../lib/haptics";
 
 interface HoldButtonProps {
   onComplete: () => void;
@@ -10,6 +12,14 @@ interface HoldButtonProps {
   holdDuration?: number;
 }
 
+/**
+ * Basılı tutma butonu.
+ *
+ * Dolum çubuğu bir motion value ile `scaleX` üzerinden sürülüyor: eskiden her
+ * rAF karesinde `setProgress` ile React yeniden render ediliyor ve `width`
+ * (layout özelliği) değiştiriliyordu — saniyede 60 render + 60 layout.
+ * Şimdi kare başına tek bir transform yazımı var; React hiç uyanmıyor.
+ */
 export function HoldButton({
   onComplete,
   disabled = false,
@@ -23,41 +33,44 @@ export function HoldButton({
   // olamayacağı için (t() çağrısı gerekiyor) burada çözülüyor.
   const resolvedHoldText = holdText ?? t("game.submitting");
   const [isHolding, setIsHolding] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const progress = useMotionValue(0);
   const animationRef = useRef<number>(0);
   const startTimeRef = useRef<number>(0);
 
+  const resetHold = () => {
+    setIsHolding(false);
+    progress.set(0);
+    startTimeRef.current = 0;
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = 0;
+    }
+  };
+
   const startHold = () => {
-    if (disabled) return;
+    if (disabled || animationRef.current) return;
     setIsHolding(true);
-    // Başlangıç zamanını performance.now() ile değil, requestAnimationFrame'in
-    // verdiği timestamp ile alıyoruz — render saflığı kuralını ihlal etmiyor
-    // ve elapsed hesabı aynı zaman kaynağından geldiği için daha tutarlı.
+    haptics.tap();
+    // Başlangıç zamanını requestAnimationFrame'in verdiği timestamp ile alıyoruz;
+    // elapsed hesabı aynı zaman kaynağından geldiği için tutarlı.
     startTimeRef.current = 0;
 
     const animate = (time: number) => {
       if (startTimeRef.current === 0) startTimeRef.current = time;
       const elapsed = time - startTimeRef.current;
-      const currentProgress = Math.min((elapsed / holdDuration) * 100, 100);
-      setProgress(currentProgress);
+      const current = Math.min(elapsed / holdDuration, 1);
+      progress.set(current);
 
-      if (currentProgress < 100) {
+      if (current < 1) {
         animationRef.current = requestAnimationFrame(animate);
       } else {
+        animationRef.current = 0;
+        haptics.success();
         onComplete();
         resetHold();
       }
     };
     animationRef.current = requestAnimationFrame(animate);
-  };
-
-  const resetHold = () => {
-    setIsHolding(false);
-    setProgress(0);
-    startTimeRef.current = 0;
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-    }
   };
 
   useEffect(() => {
@@ -71,10 +84,11 @@ export function HoldButton({
       onPointerDown={startHold}
       onPointerUp={resetHold}
       onPointerLeave={resetHold}
+      onPointerCancel={resetHold}
       onContextMenu={(e) => e.preventDefault()}
       disabled={disabled}
       style={{ touchAction: "none", WebkitUserSelect: "none" }}
-      className={`relative overflow-hidden w-full py-5 rounded-sm font-black font-mono text-lg tracking-widest transition-all border-2 select-none 
+      className={`relative overflow-hidden w-full py-5 rounded-sm font-black font-mono text-lg tracking-widest transition-[transform,opacity,background-color,border-color,box-shadow,color] duration-200 border-2 select-none
         ${
           disabled
             ? "bg-black/50 border-gray-800 text-gray-500 cursor-not-allowed scale-95 opacity-50"
@@ -84,14 +98,18 @@ export function HoldButton({
         } ${className}`}
     >
       {!disabled && (
-        <div
-          className="absolute inset-y-0 left-0 bg-alaz-orange transition-none z-0"
-          style={{ width: `${progress}%` }}
+        <motion.div
+          aria-hidden="true"
+          style={{ scaleX: progress, originX: 0 }}
+          className="absolute inset-0 bg-alaz-orange z-0 will-change-transform"
         />
       )}
 
       {!disabled && !isHolding && (
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-hacker-green/30 to-transparent -translate-x-full animate-shimmer z-0" />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-hacker-green/30 to-transparent animate-shimmer z-0 pointer-events-none"
+        />
       )}
 
       <span className="relative z-10 drop-shadow-md">

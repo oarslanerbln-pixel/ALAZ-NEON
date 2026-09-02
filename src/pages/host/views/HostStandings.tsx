@@ -1,9 +1,12 @@
-import { useEffect } from "react";
-import { motion, animate, useMotionValue, useTransform } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { useLocale } from "../../../hooks/useLocale";
 import { upperTL } from "../../../lib/stringUtils";
 import type { Player, RoundResultInfo, Room } from "../../../types/database";
-import { ConfettiCanvas } from "../../../components/ConfettiCanvas";
+import { ConfettiCanvas, type ConfettiCanvasRef } from "../../../components/ConfettiCanvas";
+import { AnimatedNumber } from "../../../components/AnimatedNumber";
+import { SPRING, STAGGER, TWEEN, popBouncy } from "../../../lib/motion";
+import type { Variants } from "framer-motion";
 
 interface HostStandingsProps {
   room: Room | null;
@@ -11,33 +14,56 @@ interface HostStandingsProps {
   roundResults: RoundResultInfo[];
   onNextStep: () => void;
 }
-function AnimatedCounter({ from, to, delay }: { from: number; to: number; delay: number }) {
-  const count = useMotionValue(from);
-  const rounded = useTransform(count, (latest) => Math.round(latest));
 
-  useEffect(() => {
-    const controls = animate(count, to, { duration: 1.5, delay, ease: "easeOut" });
-    return controls.stop;
-  }, [count, from, to, delay]);
+// `id` kararlı React anahtarı: takma adlar benzersiz olmak zorunda değil.
+type RankingItem = { id: string; name: string; score: number; roundScore: number };
 
-  return <motion.span>{rounded}</motion.span>;
-}
+/** Koreografi zamanları (sn) — tek yerde, okunabilir. */
+const T_COUNT_START = 0.9; // puan sayacı başlar
+const T_REORDER = 1.6; // satırlar yeni sıraya kayar
+const T_CONFETTI = 2.3; // konfeti (yeni sıra oturduktan sonra)
 
-export function HostStandings({
-  room,
-  players,
-  roundResults,
-  onNextStep,
-}: HostStandingsProps) {
+/**
+ * Variant nesneleri MODÜL SEVİYESİNDE sabit.
+ *
+ * Neden kritik: bunlar render içinde üretilip `transition.delay` satırın
+ * `index`ine bağlandığında, satırlar yeniden sıralanırken index değişiyor,
+ * framer bunu "animasyon tanımı değişti" olarak okuyup GİRİŞ animasyonunu
+ * baştan çalıştırıyordu — yer değiştiren satırlar tam da kaydıkları anda
+ * opacity 0'a düşüp görünmez oluyordu (tarayıcıda ölçüldü: yeniden sıralama
+ * karesinde iki satır op=0, x=-24px). Kademeli gecikme artık kapsayıcıdaki
+ * `staggerChildren` ile veriliyor; çocukların kendi geçişi index'ten bağımsız.
+ */
+const LIST_VARIANTS: Variants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: STAGGER.base, delayChildren: 0.2 } },
+};
+
+const ROW_VARIANTS: Variants = {
+  hidden: { x: -24, opacity: 0 },
+  visible: { x: 0, opacity: 1, transition: SPRING.snappy },
+};
+
+/** Tur puanı rozeti: sayaç başlarken belirir, gecikme sabit. */
+const ROUND_CHIP_VARIANTS: Variants = {
+  hidden: { opacity: 0, scale: 0.5 },
+  visible: { opacity: 1, scale: 1, transition: { ...SPRING.bouncy, delay: T_COUNT_START - 0.2 } },
+};
+
+/**
+ * Tur sonu puan durumu.
+ *
+ * Kahoot/Jackbox standardı "sıralama anı": satırlar ÖNCEKİ sıralamayla
+ * belirir, tur puanları sayılır, ardından satırlar yeni sıraya fiziksel
+ * olarak kayar (framer `layout` + yay). Eskiden liste doğrudan son hâliyle
+ * geliyordu — "kim kimi geçti" hiç görünmüyordu.
+ */
+export function HostStandings({ room, players, roundResults, onNextStep }: HostStandingsProps) {
   const { t } = useLocale();
+  const confettiRef = useRef<ConfettiCanvasRef>(null);
+  const [revealed, setRevealed] = useState(false);
 
-  // Calculate current rankings
-  // If team mode, group by team
-  // `id` is a stable React key: nicknames aren't guaranteed unique (nothing
-  // stops two players joining with the same name), so keying rows by name
-  // alone could mix up which row owns which animation/identity on re-render.
-  type RankingItem = { id: string; name: string; score: number; roundScore: number };
-  let ranking: RankingItem[] = [];
+  let finalRanking: RankingItem[] = [];
 
   if (room?.game_mode === "team") {
     const teams: Record<string, { score: number; roundScore: number }> = {};
@@ -45,41 +71,56 @@ export function HostStandings({
       const tName = p.team_name || t("podium.individual");
       if (!teams[tName]) teams[tName] = { score: 0, roundScore: 0 };
       teams[tName].score += p.total_score;
-
       const res = roundResults.find((r) => r.playerId === p.id);
-      if (res) {
-        teams[tName].roundScore += res.roundScore;
-      }
+      if (res) teams[tName].roundScore += res.roundScore;
     });
-    ranking = Object.entries(teams)
+    finalRanking = Object.entries(teams)
       .map(([name, data]) => ({ id: name, name, ...data }))
       .sort((a, b) => b.score - a.score);
   } else {
-    ranking = [...players]
+    finalRanking = [...players]
       .sort((a, b) => b.total_score - a.total_score)
       .map((p) => {
         const res = roundResults.find((r) => r.playerId === p.id);
-        return {
-          id: p.id,
-          name: p.nickname,
-          score: p.total_score,
-          roundScore: res ? res.roundScore : 0,
-        };
+        return { id: p.id, name: p.nickname, score: p.total_score, roundScore: res ? res.roundScore : 0 };
       });
   }
 
+  // Önceki sıralama: tur puanı düşülmüş skora göre (eşitlikte son sıra korunur)
+  const previousRanking = [...finalRanking].sort(
+    (a, b) => b.score - b.roundScore - (a.score - a.roundScore),
+  );
+  const previousIndex = new Map(previousRanking.map((item, i) => [item.id, i]));
+  const rows = revealed ? finalRanking : previousRanking;
+  const hasRoundData = roundResults.length > 0;
+
+  useEffect(() => {
+    if (!hasRoundData) {
+      // Puan değişimi yoksa koreografi gereksiz: doğrudan son sırayı göster
+      const t0 = setTimeout(() => setRevealed(true), 0);
+      return () => clearTimeout(t0);
+    }
+    const t1 = setTimeout(() => setRevealed(true), T_REORDER * 1000);
+    const t2 = setTimeout(() => confettiRef.current?.celebrationCannon(), T_CONFETTI * 1000);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [hasRoundData]);
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
+      transition={TWEEN.screen}
       className="flex-1 flex flex-col items-center justify-between py-6 max-w-5xl mx-auto w-full relative z-10"
     >
-      <ConfettiCanvas trigger={true} autoCannon={true} />
+      <ConfettiCanvas ref={confettiRef} autoCannon={false} />
+
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.1, type: "spring", stiffness: 100 }}
+        transition={{ ...SPRING.gentle, delay: 0.1 }}
         className="w-full flex items-center justify-between px-8 py-6 bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-3xl mb-8 shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
       >
         <div className="flex items-center gap-4">
@@ -89,7 +130,7 @@ export function HostStandings({
         </div>
         <div className="flex items-center gap-4 border-l border-white/10 pl-6">
           <span className="text-white/40 text-sm tracking-widest uppercase">Round</span>
-          <span className="text-white font-light text-3xl">
+          <span className="text-white font-light text-3xl tabular-nums">
             {room?.current_round}
             <span className="text-white/20 mx-2">/</span>
             <span className="text-white/60">{room?.total_rounds}</span>
@@ -97,89 +138,128 @@ export function HostStandings({
         </div>
       </motion.div>
 
-      <div className="flex-1 w-full flex flex-col overflow-y-auto pr-4 pb-10 space-y-4" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.2) transparent" }}>
-        {ranking.map((item, index) => {
-          const isFirst = index === 0;
+      <motion.div
+        variants={LIST_VARIANTS}
+        initial="hidden"
+        animate="visible"
+        className="flex-1 w-full flex flex-col overflow-y-auto pr-4 pb-10 space-y-4"
+        style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.2) transparent" }}
+      >
+        <LayoutGroup>
+          {rows.map((item, index) => {
+            const isFirst = revealed && index === 0;
+            const prevIdx = previousIndex.get(item.id) ?? index;
+            const delta = revealed ? prevIdx - index : 0; // + : yükseldi
 
-          // Apple/Tesla Premium Style
-          let rowBg = "bg-white/[0.02] backdrop-blur-2xl border border-white/5 shadow-lg";
-          let textStyle = "text-white/90";
-          let scoreStyle = "text-white/80 font-light";
-          let badgeBg = "bg-white/5 text-white/70";
-          let rankText = "text-white/30";
+            let rowBg = "bg-white/[0.02] backdrop-blur-2xl border border-white/5 shadow-lg";
+            let textStyle = "text-white/90";
+            let scoreStyle = "text-white/80 font-light";
+            let badgeBg = "bg-white/5 text-white/70";
+            let rankText = "text-white/30";
 
-          if (isFirst) {
-            rowBg = "bg-white/[0.08] backdrop-blur-3xl border border-white/20 shadow-[0_0_40px_rgba(255,255,255,0.1)]";
-            textStyle = "text-white font-medium";
-            scoreStyle = "text-white font-normal";
-            badgeBg = "bg-white/20 text-white font-medium";
-            rankText = "text-white/80";
-          }
+            if (isFirst) {
+              rowBg = "bg-white/[0.08] backdrop-blur-3xl border border-white/20 shadow-[0_0_40px_rgba(255,255,255,0.1)]";
+              textStyle = "text-white font-medium";
+              scoreStyle = "text-white font-normal";
+              badgeBg = "bg-white/20 text-white font-medium";
+              rankText = "text-white/80";
+            }
 
-          return (
-            <motion.div
-              key={item.id}
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.2 + index * 0.05, type: "spring", stiffness: 100 }}
-              className={`relative w-full flex items-center h-20 overflow-hidden rounded-2xl transition-all duration-500 hover:bg-white/[0.06] hover:scale-[1.01] ${rowBg}`}
-            >
-              {/* Rank Column */}
-              <div className={`w-20 h-full flex items-center justify-center border-r border-white/5`}>
-                 <span className={`text-3xl font-light tracking-tighter ${rankText}`}>
-                   {index + 1}
-                 </span>
-              </div>
-
-              {/* Avatar/Badge */}
-              <div className="w-20 h-full flex items-center justify-center border-r border-white/5">
-                <div className={`w-12 h-12 flex items-center justify-center rounded-full text-sm tracking-widest ${badgeBg}`}>
-                  {upperTL(item.name.substring(0, 3))}
-                </div>
-              </div>
-
-              {/* Name Column */}
-              <div className="flex-1 flex flex-col justify-center px-6 h-full">
-                <div className="flex items-center gap-4">
-                  <h3 className={`text-2xl tracking-widest uppercase ${textStyle}`}>
-                    {item.name}
-                  </h3>
-                  {item.roundScore > 0 && (
-                    <motion.span 
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 1.0 + index * 0.1 }}
-                      className="text-sm font-medium text-white/80 bg-white/10 px-3 py-1 rounded-full border border-white/20"
-                    >
-                      +{item.roundScore}
-                    </motion.span>
-                  )}
-                </div>
-              </div>
-
-              {/* Score Column */}
-              <div className={`w-40 h-full flex items-center justify-center border-l border-white/5`}>
-                <div className={`text-4xl tracking-tighter ${scoreStyle}`}>
-                  <AnimatedCounter
-                    from={item.score - item.roundScore}
-                    to={item.score}
-                    delay={0.8}
+            return (
+              <motion.div
+                key={item.id}
+                layout
+                variants={ROW_VARIANTS}
+                transition={SPRING.layout}
+                className={`relative w-full flex items-center h-20 shrink-0 overflow-hidden rounded-2xl transition-[background-color,border-color,box-shadow] duration-500 ${rowBg}`}
+              >
+                {/* Lider parıltısı: transform-only shimmer */}
+                {isFirst && (
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer pointer-events-none"
                   />
+                )}
+
+                {/* Sıra */}
+                <div className="w-20 h-full flex items-center justify-center border-r border-white/5 relative overflow-hidden">
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    <motion.span
+                      key={index}
+                      initial={{ y: 18, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: -18, opacity: 0 }}
+                      transition={SPRING.snappy}
+                      className={`text-3xl font-light tracking-tighter tabular-nums block ${rankText}`}
+                    >
+                      {index + 1}
+                    </motion.span>
+                  </AnimatePresence>
                 </div>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
+
+                {/* Rozet */}
+                <div className="w-20 h-full flex items-center justify-center border-r border-white/5">
+                  <div className={`w-12 h-12 flex items-center justify-center rounded-full text-sm tracking-widest ${badgeBg}`}>
+                    {upperTL(item.name.substring(0, 3))}
+                  </div>
+                </div>
+
+                {/* İsim + tur puanı + sıra değişimi */}
+                <div className="flex-1 flex flex-col justify-center px-6 h-full">
+                  <div className="flex items-center gap-4">
+                    <h3 className={`text-2xl tracking-widest uppercase ${textStyle}`}>{item.name}</h3>
+                    {item.roundScore > 0 && (
+                      <motion.span
+                        variants={ROUND_CHIP_VARIANTS}
+                        className="text-sm font-medium text-white/80 bg-white/10 px-3 py-1 rounded-full border border-white/20 tabular-nums"
+                      >
+                        +{item.roundScore}
+                      </motion.span>
+                    )}
+                    <AnimatePresence>
+                      {delta !== 0 && (
+                        <motion.span
+                          key={delta > 0 ? "up" : "down"}
+                          variants={popBouncy}
+                          initial="hidden"
+                          animate="visible"
+                          exit="exit"
+                          className={`text-xs font-bold tracking-widest px-2 py-1 rounded-full tabular-nums ${
+                            delta > 0 ? "text-emerald-300 bg-emerald-500/15" : "text-rose-300/80 bg-rose-500/10"
+                          }`}
+                        >
+                          {delta > 0 ? `▲ ${delta}` : `▼ ${-delta}`}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+
+                {/* Skor */}
+                <div className="w-40 h-full flex items-center justify-center border-l border-white/5">
+                  <div className={`text-4xl tracking-tighter ${scoreStyle}`}>
+                    <AnimatedNumber
+                      from={item.score - item.roundScore}
+                      value={item.score}
+                      delay={T_COUNT_START}
+                      duration={1.3}
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </LayoutGroup>
+      </motion.div>
 
       <motion.button
         onClick={onNextStep}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.5 }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className="mt-6 w-full max-w-sm py-5 bg-white text-black hover:bg-gray-100 rounded-full font-medium uppercase tracking-[0.2em] text-lg shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-all"
+        transition={{ ...TWEEN.enter, delay: 1.5 }}
+        whileHover={{ scale: 1.04 }}
+        whileTap={{ scale: 0.96 }}
+        className="mt-6 w-full max-w-sm py-5 bg-white text-black hover:bg-gray-100 rounded-full font-medium uppercase tracking-[0.2em] text-lg shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-colors"
       >
         {room?.current_round === room?.total_rounds ? t("standings.finishGame") : t("standings.nextRound")}
       </motion.button>
