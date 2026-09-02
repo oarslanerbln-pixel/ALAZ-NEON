@@ -51,3 +51,4 @@ build_output.txt
 errors.txt
 _dbg_*
 _arsiv/
+.env*
