@@ -1357,15 +1357,15 @@ const translations = {
     en: "Maximize Your Venue's Entertainment Potential" 
   },
   "b2b.heroSubtitle": {
-    tr: "Müşterilerinizin içeride geçirdiği süreyi (Dwell Time) interaktif bir dijital deneyimle artırın. İçecek satışlarını katlayın.",
-    de: "Erhöhen Sie die Verweildauer (Dwell Time) Ihrer Gäste mit einem interaktiven digitalen Erlebnis. Steigern Sie Ihren Getränkeumsatz.",
-    en: "Increase your guests' dwell time with an interactive digital experience. Multiply your drink sales."
+    tr: "Müşterilerinizin içeride geçirdiği süreyi (Dwell Time) eşsiz bir dijital deneyimle artırın. Sipariş oranlarınızı ve müşteri sadakatini katlayın.",
+    de: "Erhöhen Sie die Verweildauer (Dwell Time) Ihrer Gäste mit einem einzigartigen digitalen Erlebnis. Steigern Sie Ihre Bestellraten und Kundenbindung.",
+    en: "Increase your guests' dwell time with a unique digital experience. Multiply your order rates and customer loyalty."
   },
   "b2b.problemTitle": { tr: "PROBLEM", de: "DAS PROBLEM", en: "THE PROBLEM" },
   "b2b.problemDesc": {
-    tr: "Misafirler birer içki içip telefonlarına bakıyor ve mekandan erken ayrılıyorlar.",
-    de: "Gäste trinken ein Getränk, schauen auf ihre Handys und verlassen die Location frühzeitig.",
-    en: "Guests have one drink, look at their phones, and leave the venue early."
+    tr: "Misafirler kısa süre vakit geçirip telefonlarına bakıyor ve mekandan erken ayrılıyorlar.",
+    de: "Gäste verbringen wenig Zeit, schauen auf ihre Handys und verlassen die Location frühzeitig.",
+    en: "Guests spend little time, look at their phones, and leave the venue early."
   },
   "b2b.solutionTitle": { tr: "ÇÖZÜM: ALAZ NEON", de: "DIE LÖSUNG: ALAZ NEON", en: "THE SOLUTION: ALAZ NEON" },
   "b2b.solutionDesc": {
@@ -1393,9 +1393,9 @@ const translations = {
   },
   "b2b.roiTitle": { tr: "YATIRIM GETİRİSİ (ROI)", de: "RETURN ON INVESTMENT (ROI)", en: "RETURN ON INVESTMENT (ROI)" },
   "b2b.roiDesc": {
-    tr: "Oyuncular arası rekabet, mekana bağlığı ve ekstra içecek siparişlerini tetikler.",
-    de: "Der Wettbewerb zwischen den Spielern fördert die Kundenbindung und löst zusätzliche Getränkebestellungen aus.",
-    en: "Competition between players fosters loyalty and triggers extra drink orders."
+    tr: "Oyuncular arası rekabet, mekana bağlılığı ve ekstra siparişleri tetikler.",
+    de: "Der Wettbewerb zwischen den Spielern fördert die Kundenbindung und löst zusätzliche Bestellungen aus.",
+    en: "Competition between players fosters loyalty and triggers extra orders."
   },
   "b2b.ctaButton": { tr: "DEMO RANDEVUSU İSTE", de: "DEMO-TERMIN VEREINBAREN", en: "REQUEST A DEMO" }
 } as const;
