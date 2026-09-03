@@ -1,0 +1,41 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  documents Document[]
+  medications Medication[]
+}
+
+model Document {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  encryptedSummary String   // End-to-end encrypted summary
+  createdAt        DateTime @default(now())
+  // Original text and images are NOT stored due to ephemeral processing constraint (HIPAA/KVKK)
+}
+
+model Medication {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  dosage    String?
+  frequency String?
+  takenAt   DateTime? // When it was marked as taken
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
