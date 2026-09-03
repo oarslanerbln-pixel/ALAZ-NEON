@@ -74,6 +74,7 @@ export function HostHeader({
             onClick={handleReturnToLobby}
             className="flex items-center gap-2 text-xs font-mono font-bold text-alaz-orange hover:text-white bg-alaz-orange/10 hover:bg-alaz-orange border border-alaz-orange/40 hover:border-alaz-orange px-3.5 py-2 rounded-2xl transition-all active:scale-95 cursor-pointer shadow-[0_0_15px_rgba(255,85,0,0.25)]"
             title={t("common.returnToLobby", "LOBİYE DÖN")}
+            aria-label={t("common.returnToLobby", "LOBİYE DÖN")}
           >
             <LayoutGrid className="w-4 h-4" />
             <span className="hidden sm:inline uppercase tracking-wider">{t("common.returnToLobby", "LOBİYE DÖN")}</span>
@@ -85,6 +86,7 @@ export function HostHeader({
           onClick={handleExitHome}
           className="flex items-center gap-1.5 text-xs font-mono font-bold text-white/70 hover:text-white bg-white/5 hover:bg-white/15 border border-white/15 hover:border-white/40 px-3.5 py-2 rounded-2xl transition-all active:scale-95 cursor-pointer"
           title={t("common.back", "ANA SAYFA")}
+          aria-label={t("common.back", "ANA SAYFA")}
         >
           <Home className="w-4 h-4 text-cyan-400" />
           <span className="hidden md:inline uppercase tracking-wider">{t("common.back", "ANA SAYFA")}</span>
@@ -156,6 +158,8 @@ export function HostHeader({
           onClick={handleToggleMute}
           className="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/80 hover:text-white transition-all active:scale-95 cursor-pointer"
           title={isMuted ? "Sesi Aç" : "Sesi Kapat"}
+          aria-label={isMuted ? "Sesi Aç" : "Sesi Kapat"}
+          aria-pressed={isMuted}
         >
           {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
         </button>
