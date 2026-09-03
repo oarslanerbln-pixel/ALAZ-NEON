@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+:root {
+  /* High Contrast Mode for elderly users */
+  --background: #000000;
+  --foreground: #ffff00;
+  --interactive: #00ffff;
+  --success: #00ff00;
+  --error: #ff0000;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-interactive: var(--interactive);
+  --color-success: var(--success);
+  --color-error: var(--error);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 18px; /* Baseline minimum font size for elderly users */
+  line-height: 1.6;
+}
+
+button, a, input, select {
+  font-size: 1.1rem; /* Emphasized interactive elements */
+}
+
+.high-contrast-focus {
+  outline: 4px solid var(--interactive);
+  outline-offset: 4px;
+}
