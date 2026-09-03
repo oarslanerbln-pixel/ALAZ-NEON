@@ -48,6 +48,9 @@ const NightlyReport = lazy(() =>
 const NotFoundPage = lazy(() =>
   import("./pages/NotFoundPage").then((m) => ({ default: m.NotFoundPage }))
 );
+const B2BPitchPage = lazy(() =>
+  import("./pages/marketing/B2BPitchPage").then((m) => ({ default: m.B2BPitchPage }))
+);
 
 function RouteFallback() {
   const { t } = useLocale();
@@ -100,6 +103,8 @@ function App() {
                 {/* Mekan sahibi: gecelik/haftalık/aylık özet rapor */}
                 <Route path="/admin/report" element={<NightlyReport />} />
                 
+                {/* B2B Pazarlama / Satış Sunum Sayfası */}
+                <Route path="/business" element={<B2BPitchPage />} />
                 {/* 404 Catch-All Route */}
                 <Route path="*" element={<NotFoundPage />} />
               </Route>

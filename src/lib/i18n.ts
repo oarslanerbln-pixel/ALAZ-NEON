@@ -1346,7 +1346,58 @@ const translations = {
   "gameSettings.individual": { tr: "👤 BİREYSEL REKABET", de: "👤 EINZELSPIELER", en: "👤 INDIVIDUAL SOLO" },
   "gameSettings.team": { tr: "🔥 TAKIM & MASA MODU", de: "🔥 TEAM- & TISCH-MODUS", en: "🔥 TEAM & TABLE MODE" },
   "gameSettings.startSession": { tr: "OYUNU BAŞLAT", de: "SPIEL STARTEN", en: "START GAME" },
-  "gameSettings.cancel": { tr: "İPTAL", de: "ABBRECHEN", en: "CANCEL" }
+  "gameSettings.cancel": { tr: "İPTAL", de: "ABBRECHEN", en: "CANCEL" },
+
+  // ═══════════════════════════════════════════
+  // B2B MARKETING (PITCH PAGE)
+  // ═══════════════════════════════════════════
+  "b2b.heroTitle": { 
+    tr: "Mekanınızın Eğlence Potansiyelini Katlayın", 
+    de: "Maximieren Sie das Unterhaltungspotenzial Ihrer Location", 
+    en: "Maximize Your Venue's Entertainment Potential" 
+  },
+  "b2b.heroSubtitle": {
+    tr: "Müşterilerinizin içeride geçirdiği süreyi (Dwell Time) interaktif bir dijital deneyimle artırın. İçecek satışlarını katlayın.",
+    de: "Erhöhen Sie die Verweildauer (Dwell Time) Ihrer Gäste mit einem interaktiven digitalen Erlebnis. Steigern Sie Ihren Getränkeumsatz.",
+    en: "Increase your guests' dwell time with an interactive digital experience. Multiply your drink sales."
+  },
+  "b2b.problemTitle": { tr: "PROBLEM", de: "DAS PROBLEM", en: "THE PROBLEM" },
+  "b2b.problemDesc": {
+    tr: "Misafirler birer içki içip telefonlarına bakıyor ve mekandan erken ayrılıyorlar.",
+    de: "Gäste trinken ein Getränk, schauen auf ihre Handys und verlassen die Location frühzeitig.",
+    en: "Guests have one drink, look at their phones, and leave the venue early."
+  },
+  "b2b.solutionTitle": { tr: "ÇÖZÜM: ALAZ NEON", de: "DIE LÖSUNG: ALAZ NEON", en: "THE SOLUTION: ALAZ NEON" },
+  "b2b.solutionDesc": {
+    tr: "Televizyonlarınızı dev bir interaktif oyun konsoluna dönüştürün. Müşterileriniz sadece kendi telefonlarından (uygulama indirmeden) oyuna dahil olur.",
+    de: "Verwandeln Sie Ihre Fernseher in eine riesige interaktive Spielekonsole. Ihre Gäste nehmen einfach mit ihren eigenen Smartphones teil (ohne App-Download).",
+    en: "Transform your TVs into a giant interactive game console. Guests join simply using their own smartphones (no app download)."
+  },
+  "b2b.feature1Title": { tr: "🚫 UYGULAMA İNDİRMEK YOK", de: "🚫 KEIN APP-DOWNLOAD", en: "🚫 NO APP DOWNLOAD" },
+  "b2b.feature1Desc": {
+    tr: "Misafirler masalarındaki veya TV'deki QR kodu okutarak anında oyuna başlar.",
+    de: "Gäste scannen den QR-Code auf ihren Tischen oder am TV und spielen sofort mit.",
+    en: "Guests scan the QR code on their tables or on the TV and start playing instantly."
+  },
+  "b2b.feature2Title": { tr: "⚡ GERÇEK ZAMANLI SENKRONİZASYON", de: "⚡ ECHTZEIT-SYNCHRONISATION", en: "⚡ REAL-TIME SYNCHRONIZATION" },
+  "b2b.feature2Desc": {
+    tr: "Milisaniyelik hızla tüm ekranlar senkronize çalışır. %100 bulut tabanlı altyapı.",
+    de: "Alle Bildschirme synchronisieren sich in Millisekunden. 100% cloudbasierte Infrastruktur.",
+    en: "All screens synchronize in milliseconds. 100% cloud-based infrastructure."
+  },
+  "b2b.feature3Title": { tr: "📺 HER TV'YE UYUMLU", de: "📺 KOMPATIBEL MIT JEDEM TV", en: "📺 COMPATIBLE WITH ANY TV" },
+  "b2b.feature3Desc": {
+    tr: "Sadece bir internet bağlantısı ve Chromecast veya Smart TV tarayıcısı yeterlidir.",
+    de: "Alles was Sie brauchen ist eine Internetverbindung und einen Chromecast oder Smart TV-Browser.",
+    en: "All you need is an internet connection and a Chromecast or Smart TV browser."
+  },
+  "b2b.roiTitle": { tr: "YATIRIM GETİRİSİ (ROI)", de: "RETURN ON INVESTMENT (ROI)", en: "RETURN ON INVESTMENT (ROI)" },
+  "b2b.roiDesc": {
+    tr: "Oyuncular arası rekabet, mekana bağlığı ve ekstra içecek siparişlerini tetikler.",
+    de: "Der Wettbewerb zwischen den Spielern fördert die Kundenbindung und löst zusätzliche Getränkebestellungen aus.",
+    en: "Competition between players fosters loyalty and triggers extra drink orders."
+  },
+  "b2b.ctaButton": { tr: "DEMO RANDEVUSU İSTE", de: "DEMO-TERMIN VEREINBAREN", en: "REQUEST A DEMO" }
 } as const;
 
 type TranslationKey = keyof typeof translations;
