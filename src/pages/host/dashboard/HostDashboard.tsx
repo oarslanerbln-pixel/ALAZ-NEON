@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ComponentProps } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -8,16 +8,41 @@ import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import type { Room, Player, GameType } from "../../../types/database";
 
+import { doc, writeBatch } from "firebase/firestore";
+import { db } from "../../../lib/firebase";
+
 import { getRandomSensorImage } from "../../../data/sensorImages";
 import { GameSettingsModal } from "../components/GameSettingsModal";
 import { useLocale } from "../../../hooks/useLocale";
+import type { TranslationKey } from "../../../lib/i18n";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useVenue } from "../../../contexts/VenueContextCore";
 
 
-const GAMES = [
+/**
+ * Dashboard'daki oyun kartlari. `id` alani `GameType` ile birebir ortusmeli:
+ * HostDisplay ve PlayerGame yonlendirmesi bu degere bakiyor. Bir mod burada
+ * yoksa uygulamada baslatilamaz — echo/pulse/spectrum/bar/kablo uzun sure
+ * bu yuzden erisilemez kalmisti.
+ */
+interface GameCard {
+  id: GameType;
+  titlePrefix: string;
+  titleHighlight: string;
+  gradientText: string;
+  shadowColor: string;
+  icon: NonNullable<ComponentProps<typeof NeonIcon>["type"]>;
+  iconColor: NonNullable<ComponentProps<typeof NeonIcon>["color"]>;
+  descKey: TranslationKey;
+  bgAccent: string;
+  hoverBgAccent: string;
+  iconAccent: string;
+  borderAccent: string;
+}
+
+const GAMES: GameCard[] = [
   {
-    id: "scattegories" as GameType,
+    id: "scattegories",
     titlePrefix: "HENGAME",
     titleHighlight: "ARENA",
     gradientText: "from-alaz-orange to-yellow-500 drop-shadow-[0_0_10px_rgba(255,85,0,0.3)]",
@@ -31,7 +56,7 @@ const GAMES = [
     borderAccent: "hover:border-alaz-orange/60"
   },
   {
-    id: "quiz" as GameType,
+    id: "quiz",
     titlePrefix: "HENGAME",
     titleHighlight: "QUIZ",
     gradientText: "from-neon-blue to-blue-400 drop-shadow-[0_0_10px_rgba(0,229,255,0.3)]",
@@ -45,7 +70,7 @@ const GAMES = [
     borderAccent: "hover:border-neon-blue/60"
   },
   {
-    id: "bomb" as GameType,
+    id: "bomb",
     titlePrefix: "HENGAME",
     titleHighlight: "BOMB",
     gradientText: "from-red-500 to-orange-500 drop-shadow-[0_0_10px_rgba(255,0,0,0.3)]",
@@ -59,7 +84,7 @@ const GAMES = [
     borderAccent: "hover:border-red-500/60"
   },
   {
-    id: "sensor" as GameType,
+    id: "sensor",
     titlePrefix: "HENGAME",
     titleHighlight: "SENSÖR",
     gradientText: "from-neon-pink to-purple-500 drop-shadow-[0_0_10px_rgba(255,0,255,0.3)]",
@@ -73,74 +98,144 @@ const GAMES = [
     borderAccent: "hover:border-neon-pink/60"
   },
   {
-    id: "overload" as GameType,
+    id: "overload",
     titlePrefix: "NEON",
     titleHighlight: "OVERLOAD",
     gradientText: "from-cyan-400 to-purple-500 drop-shadow-[0_0_10px_rgba(0,255,255,0.3)]",
     shadowColor: "rgba(0,255,255,0.3)",
     icon: "flame" as const,
     iconColor: "blue" as const,
-    descKey: "Cyberpunk temalı hız ve refleks oyunu. Top patlamadan telefonu salla veya butona basarak sıranı devret!",
+    descKey: "dashboard.modeOverloadDesc",
     bgAccent: "bg-cyan-400/20",
     hoverBgAccent: "group-hover:bg-cyan-400/40",
     iconAccent: "bg-cyan-400/10 border-cyan-400/40",
     borderAccent: "hover:border-cyan-400/60"
   },
   {
-    id: "colors" as GameType,
+    id: "colors",
     titlePrefix: "NEON",
     titleHighlight: "SAVAŞLARI",
     gradientText: "from-purple-400 to-pink-500 drop-shadow-[0_0_10px_rgba(168,85,247,0.3)]",
     shadowColor: "rgba(168,85,247,0.3)",
     icon: "dashboard" as const,
     iconColor: "pink" as const,
-    descKey: "Kırmızı ve Mavi takımların TV ekranını ele geçirmek için kapıştığı dev halat çekme (Tug of War) şovu!",
+    descKey: "dashboard.modeColorsDesc",
     bgAccent: "bg-purple-500/20",
     hoverBgAccent: "group-hover:bg-purple-500/40",
     iconAccent: "bg-purple-500/10 border-purple-500/40",
     borderAccent: "hover:border-purple-500/60"
   },
   {
-    id: "wheel" as GameType,
+    id: "wheel",
     titlePrefix: "HENGAME",
     titleHighlight: "ÇARK",
     gradientText: "from-cyber-yellow to-alaz-orange drop-shadow-[0_0_10px_rgba(255,215,0,0.3)]",
     shadowColor: "rgba(255,215,0,0.3)",
     icon: "flame" as const,
     iconColor: "gold" as const,
-    descKey: "Oyun aralarında müşterilerinize sürpriz ödüller dağıtın. Rastgele seçilen müşteri çarkı çevirir.",
+    descKey: "dashboard.modeWheelDesc",
     bgAccent: "bg-cyber-yellow/20",
     hoverBgAccent: "group-hover:bg-cyber-yellow/40",
     iconAccent: "bg-cyber-yellow/10 border-cyber-yellow/40",
     borderAccent: "hover:border-cyber-yellow/60"
   },
   {
-    id: "vault" as GameType,
+    id: "vault",
     titlePrefix: "NEON",
     titleHighlight: "ŞİFRE",
     gradientText: "from-emerald-400 to-teal-500 drop-shadow-[0_0_10px_rgba(16,185,129,0.3)]",
     shadowColor: "rgba(16,185,129,0.3)",
     icon: "flame" as const,
     iconColor: "green" as const,
-    descKey: "Gizli neon kasayı açmak için şifreyi ilk tahmin eden olmak için yarış!",
+    descKey: "dashboard.modeVaultDesc",
     bgAccent: "bg-emerald-500/20",
     hoverBgAccent: "group-hover:bg-emerald-500/40",
     iconAccent: "bg-emerald-500/10 border-emerald-500/40",
     borderAccent: "hover:border-emerald-500/60"
   },
   {
-    id: "unity" as GameType,
+    id: "unity",
     titlePrefix: "NEON",
     titleHighlight: "BİRLİK",
     gradientText: "from-amber-400 to-orange-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.3)]",
     shadowColor: "rgba(245,158,11,0.3)",
     icon: "flame" as const,
     iconColor: "orange" as const,
-    descKey: "Bütün mekan güçlerini birleştirip dev neon bataryayı patlatmaya çalışıyor!",
+    descKey: "dashboard.modeUnityDesc",
     bgAccent: "bg-amber-500/20",
     hoverBgAccent: "group-hover:bg-amber-500/40",
     iconAccent: "bg-amber-500/10 border-amber-500/40",
     borderAccent: "hover:border-amber-500/60"
+  },
+  {
+    id: "echo",
+    titlePrefix: "HENGAME",
+    titleHighlight: "ECHO",
+    gradientText: "from-indigo-400 to-violet-500 drop-shadow-[0_0_10px_rgba(99,102,241,0.3)]",
+    shadowColor: "rgba(99,102,241,0.3)",
+    icon: "users",
+    iconColor: "blue",
+    descKey: "dashboard.modeEchoDesc",
+    bgAccent: "bg-indigo-500/20",
+    hoverBgAccent: "group-hover:bg-indigo-500/40",
+    iconAccent: "bg-indigo-500/10 border-indigo-500/40",
+    borderAccent: "hover:border-indigo-500/60"
+  },
+  {
+    id: "pulse",
+    titlePrefix: "NEON",
+    titleHighlight: "PULSE",
+    gradientText: "from-neon-blue to-cyan-300 drop-shadow-[0_0_10px_rgba(0,243,255,0.3)]",
+    shadowColor: "rgba(0,243,255,0.3)",
+    icon: "dashboard",
+    iconColor: "blue",
+    descKey: "dashboard.modePulseDesc",
+    bgAccent: "bg-neon-blue/20",
+    hoverBgAccent: "group-hover:bg-neon-blue/40",
+    iconAccent: "bg-neon-blue/10 border-neon-blue/40",
+    borderAccent: "hover:border-neon-blue/60"
+  },
+  {
+    id: "spectrum",
+    titlePrefix: "NEON",
+    titleHighlight: "SPEKTRUM",
+    gradientText: "from-rose-400 to-sky-400 drop-shadow-[0_0_10px_rgba(244,63,94,0.3)]",
+    shadowColor: "rgba(244,63,94,0.3)",
+    icon: "users",
+    iconColor: "pink",
+    descKey: "dashboard.modeSpectrumDesc",
+    bgAccent: "bg-rose-500/20",
+    hoverBgAccent: "group-hover:bg-rose-500/40",
+    iconAccent: "bg-rose-500/10 border-rose-500/40",
+    borderAccent: "hover:border-rose-500/60"
+  },
+  {
+    id: "bar",
+    titlePrefix: "NEON",
+    titleHighlight: "BAR",
+    gradientText: "from-pink-400 to-fuchsia-500 drop-shadow-[0_0_10px_rgba(236,72,153,0.3)]",
+    shadowColor: "rgba(236,72,153,0.3)",
+    icon: "crown",
+    iconColor: "pink",
+    descKey: "dashboard.modeBarDesc",
+    bgAccent: "bg-pink-500/20",
+    hoverBgAccent: "group-hover:bg-pink-500/40",
+    iconAccent: "bg-pink-500/10 border-pink-500/40",
+    borderAccent: "hover:border-pink-500/60"
+  },
+  {
+    id: "kablo",
+    titlePrefix: "NEON",
+    titleHighlight: "KABLO",
+    gradientText: "from-yellow-400 to-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.3)]",
+    shadowColor: "rgba(245,158,11,0.3)",
+    icon: "flame",
+    iconColor: "gold",
+    descKey: "dashboard.modeKabloDesc",
+    bgAccent: "bg-yellow-500/20",
+    hoverBgAccent: "group-hover:bg-yellow-500/40",
+    iconAccent: "bg-yellow-500/10 border-yellow-500/40",
+    borderAccent: "hover:border-yellow-500/60"
   }
 ];
 
@@ -266,6 +361,70 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       extraUpdates = {
         active_game: game,
       };
+    }
+
+    // Echo / Spectrum / Pulse ekranlari kurulumlarini kendileri yapiyor, ama
+    // bunu yalnizca ilgili alan BOSKEN yapiyorlar: alanlar burada
+    // temizlenmezse ikinci tur onceki turun sorusu/oylari ve kadrosuyla
+    // aciliyor. Ayrica dogrudan *_intro ile basliyoruz — "lobby" uzerinden
+    // gecmek, oyuncu telefonlarinda hicbir dala uymayan kisa bir bos kare
+    // birakiyordu (bu ekranlarin hepsi *_intro durumunu tanıyor).
+    if (game === "echo") {
+      initialStatus = "echo_intro";
+      extraUpdates = {
+        ...extraUpdates,
+        echo_question: null,
+        echo_votes: {},
+      };
+    }
+
+    if (game === "spectrum") {
+      initialStatus = "spectrum_intro";
+      extraUpdates = {
+        ...extraUpdates,
+        spectrum_teams: null,
+        spectrum_scores: { red: 50, blue: 50 },
+      };
+    }
+
+    if (game === "pulse") {
+      initialStatus = "pulse_intro";
+      extraUpdates = {
+        ...extraUpdates,
+        pulse_clicks: {},
+      };
+    }
+
+    // Bar ve Kablo, Echo/Spectrum'un aksine "lobby"den kendini baslatmiyor:
+    // ekranlari dogrudan *_intro durumunu bekliyor. Lobby ile acilirlarsa
+    // hicbir dala girmeyip bos ekranda kaliyorlar.
+    if (game === "bar") {
+      initialStatus = "bar_intro";
+      extraUpdates = {
+        ...extraUpdates,
+        bar_active_recipe: [],
+        bar_end_time: 0,
+      };
+    }
+
+    if (game === "kablo") {
+      initialStatus = "kablo_intro";
+      extraUpdates = {
+        ...extraUpdates,
+        kablo_winner_id: null,
+      };
+    }
+
+    // Bar ve Kablo skorlari oyuncu dokumaninda birikiyor ve hicbir yerde
+    // sifirlanmiyordu: ikinci Kablo turu, onceki turun toplami zaten hedefin
+    // ustunde oldugu icin aninca "kazanildi" ekranina duserdi.
+    if (game === "bar" || game === "kablo") {
+      const resetField = game === "bar" ? "bar_score" : "kablo_score";
+      const batch = writeBatch(db);
+      players.forEach((p) => {
+        batch.update(doc(db, "players", p.id), { [resetField]: 0 });
+      });
+      await batch.commit();
     }
 
     await updateRoomStatus(initialStatus, extraUpdates);
@@ -413,8 +572,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                                   {game.titlePrefix} <span className={`text-transparent bg-clip-text bg-gradient-to-r ${game.gradientText}`}>{game.titleHighlight}</span>
                                 </h3>
                                 <p className="text-gray-300 text-lg leading-relaxed mt-4 max-w-xl font-medium">
-                                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                                  {game.descKey.startsWith("dashboard.") ? t(game.descKey as any) : game.descKey}
+                                  {t(game.descKey)}
                                 </p>
                               </div>
                               
@@ -441,14 +599,17 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
               </div>
               
               {/* Carousel Indicators */}
-              <div className="flex items-center gap-3 mt-8">
-                {GAMES.map((_, idx) => (
+              {/* 14 mod var: tek satira sigmazsa alt satira sarsin. */}
+              <div className="flex flex-wrap justify-center items-center gap-2 mt-8 max-w-md">
+                {GAMES.map((g, idx) => (
                   <button
-                    key={idx}
+                    key={g.id}
                     onClick={() => {
                       setDirection(idx > carouselIndex ? 1 : -1);
                       setCarouselIndex(idx);
                     }}
+                    aria-label={`${g.titlePrefix} ${g.titleHighlight}`}
+                    aria-current={idx === carouselIndex}
                     className={`h-2 rounded-full transition-all duration-300 ${idx === carouselIndex ? 'w-8 bg-slate-800' : 'w-2 bg-slate-300 hover:bg-slate-400'}`}
                   />
                 ))}

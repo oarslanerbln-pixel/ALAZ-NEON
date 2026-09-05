@@ -1,6 +1,8 @@
-# 🔥 ALAZ: NEON
+# 🔥 HENGAME
 
-A premium, interactive party game built with **React 19**, **Firebase**, and **Tailwind 4**. Designed for a "TV + Phone" experience where the TV acts as the host display and players join using their mobile devices.
+A premium, interactive party game for cafés and venues, built with **React 19**, **Firebase**, and **Tailwind 4**. Designed for a "TV + Phone" experience: the TV acts as the host display and guests join from their own phones by scanning a QR code.
+
+> **Naming note:** `HENGAME` is the product/brand name. `alaz-*` (package name, CSS design tokens such as `--alaz-orange`, the `Alaz-Neon` design system) is the *internal* name of the visual system and is intentionally left unchanged — it never appears in the UI.
 
 ## 🚀 Alaz-Neon Aesthetic
 The project features a high-end "Alaz-Neon" design system:

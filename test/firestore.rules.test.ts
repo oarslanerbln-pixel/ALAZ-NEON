@@ -254,6 +254,72 @@ describe("rooms — overload savuşturma", () => {
   });
 });
 
+describe("rooms — echo oylamasi", () => {
+  beforeEach(() => seed({ status: "echo_active", echo_question: "Kim?", echo_votes: {} }));
+
+  it("oyuncu kendi oyunu yazabilir", async () => {
+    await assertSucceeds(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        [`echo_votes.${PLAYER_ID}`]: OTHER_PLAYER_ID,
+      })
+    );
+  });
+
+  it("oyuncu oy bahanesiyle oda durumunu degistiremez", async () => {
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        [`echo_votes.${PLAYER_ID}`]: OTHER_PLAYER_ID,
+        status: "finished",
+      })
+    );
+  });
+
+  it("oylama acik degilken oy yazilamaz", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), { status: "echo_reveal" });
+    });
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        [`echo_votes.${PLAYER_ID}`]: OTHER_PLAYER_ID,
+      })
+    );
+  });
+});
+
+describe("rooms — pulse dokunusu", () => {
+  beforeEach(() =>
+    seed({ status: "pulse_active", pulse_target_time: Date.now() + 10000, pulse_clicks: {} })
+  );
+
+  it("oyuncu kendi dokunus zamanini yazabilir", async () => {
+    await assertSucceeds(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        [`pulse_clicks.${PLAYER_ID}`]: Date.now(),
+      })
+    );
+  });
+
+  it("oyuncu dokunus bahanesiyle baska alan yazamaz", async () => {
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        [`pulse_clicks.${PLAYER_ID}`]: Date.now(),
+        total_score: 9999,
+      })
+    );
+  });
+
+  it("tur bittikten sonra dokunus yazilamaz", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), { status: "pulse_reveal" });
+    });
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        [`pulse_clicks.${PLAYER_ID}`]: Date.now(),
+      })
+    );
+  });
+});
+
 describe("rooms — host yetkisi", () => {
   beforeEach(() => seed());
 

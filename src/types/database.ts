@@ -114,14 +114,24 @@ export interface Room {
   overload_start_time?: number;
   overload_eliminated_ids?: string[];
   // Echo Game Fields
-  echo_question?: string;
+  /**
+   * Yeni tur baslarken HostDashboard bu alani null'a cekiyor — HostEchoDisplay
+   * "soru yoksa yeni soru sec" mantigiyla calisiyor, dolayisiyla temizlenmezse
+   * ikinci Echo turu bir onceki gecenin sorusuyla ve oylariyla aciliyordu.
+   */
+  echo_question?: string | null;
   echo_votes?: Record<string, string>;
   // Pulse Game Fields
   pulse_target_time?: number;
   pulse_clicks?: Record<string, number>;
   pulse_result?: number;
   // Spectrum Game Fields
-  spectrum_teams?: Record<string, "red" | "blue">; // playerId -> team
+  /**
+   * playerId -> takim. Echo'daki ile ayni sebeple nullable: takimlar yalnizca
+   * bu alan bosken yeniden kurulur, aksi halde ikinci tur eski (ve lobiden
+   * ayrilmis oyuncular iceren) kadroyla basliyor.
+   */
+  spectrum_teams?: Record<string, "red" | "blue"> | null;
   spectrum_scores?: Record<"red" | "blue", number>;
   spectrum_end_time?: number;
   // Ad Break Flow Control

@@ -42,6 +42,23 @@ service cloud.firestore {
         touchesOnly(['overload_target_id', 'overload_time_allowed']);
     }
 
+    // Echo modu: oyuncu telefonundan oyunu oda dokumanindaki echo_votes
+    // haritasina yaziyor (`echo_votes.<playerId>`). Ic ice alan yazimi
+    // affectedKeys() tarafinda ust seviye 'echo_votes' olarak gorunur.
+    // Bu kural olmadan her oy sessizce permission-denied oluyordu —
+    // overload savusturmasindaki ile tipatip ayni kirik.
+    function isEchoVote() {
+      return resource.data.status == 'echo_active' &&
+        touchesOnly(['echo_votes']);
+    }
+
+    // Pulse modu: oyuncu, cekirdegin patladigini dusundugu anin zaman
+    // damgasini pulse_clicks haritasina yaziyor. Echo ile ayni sekil.
+    function isPulseTap() {
+      return resource.data.status == 'pulse_active' &&
+        touchesOnly(['pulse_clicks']);
+    }
+
     match /rooms/{roomId} {
       // Anyone can read the room data
       allow read: if true;
@@ -61,7 +78,9 @@ service cloud.firestore {
         isBombPass() ||
         isSensorBuzz() ||
         isSensorAnswer() ||
-        isOverloadDeflect()
+        isOverloadDeflect() ||
+        isEchoVote() ||
+        isPulseTap()
       );
 
       // Only the host can delete the room.
