@@ -721,6 +721,56 @@ const translations = {
     de: "Wer schnell ist, gewinnt! Errate das mysteriöse Bild als Erster, hau auf den riesigen Neon-Buzzer.",
     en: "Fast wins! Be the first to guess the mystery image, race for the giant neon buzzer.",
   },
+  "dashboard.modeOverloadDesc": {
+    tr: "Refleks oyunu: yük patlamadan telefonu salla ya da butona bas, sırayı devret.",
+    de: "Reflexspiel: Schüttle das Handy oder tippe den Buzzer und gib weiter, bevor die Ladung hochgeht.",
+    en: "A reflex game: shake your phone or hit the buzzer to pass the charge before it blows.",
+  },
+  "dashboard.modeColorsDesc": {
+    tr: "Kırmızı ve Mavi takımların ekranı ele geçirmek için kapıştığı dev halat çekme şovu.",
+    de: "Die große Tauzieh-Show: Team Rot gegen Team Blau um die Herrschaft über den Bildschirm.",
+    en: "A giant tug-of-war show: Team Red versus Team Blue for control of the screen.",
+  },
+  "dashboard.modeWheelDesc": {
+    tr: "Oyun aralarında misafirlerinize sürpriz ödüller dağıtın. Rastgele seçilen misafir çarkı çevirir.",
+    de: "Verteile zwischen den Spielen Überraschungspreise. Ein zufällig gewählter Gast dreht das Rad.",
+    en: "Hand out surprise prizes between games. A randomly picked guest spins the wheel.",
+  },
+  "dashboard.modeVaultDesc": {
+    tr: "Gizli neon kasanın şifresini ipuçlarıyla ilk çözen kazanır.",
+    de: "Wer den Code des geheimen Neon-Tresors zuerst knackt, gewinnt.",
+    en: "First to crack the secret neon vault's code from the clues wins.",
+  },
+  "dashboard.modeUnityDesc": {
+    tr: "Tüm masalar aynı anda basıyor: dev neon bataryayı birlikte doldurun.",
+    de: "Alle Tische tippen gleichzeitig: Ladet die riesige Neon-Batterie gemeinsam auf.",
+    en: "Every table taps together: charge the giant neon battery as one.",
+  },
+  "dashboard.modeEchoDesc": {
+    tr: "Masa anketi: soruyu okuyun, herkes gizlice oy versin, sonuçlar ekranda patlasın.",
+    de: "Die Tischumfrage: Frage vorlesen, alle stimmen heimlich ab, das Ergebnis knallt auf den Bildschirm.",
+    en: "The table poll: read the question, everyone votes in secret, results explode on screen.",
+  },
+  "dashboard.modePulseDesc": {
+    tr: "Ortak ritim testi: çekirdek patladığı an herkes aynı anda butona bassın.",
+    de: "Der gemeinsame Rhythmus-Test: Alle tippen genau in dem Moment, in dem der Kern explodiert.",
+    en: "A shared rhythm test: everyone taps at the exact moment the core bursts.",
+  },
+  "dashboard.modeSpectrumDesc": {
+    tr: "Takımlar rastgele kurulur, 30 saniyede en çok dokunan renk ekranı boyar.",
+    de: "Die Teams werden zufällig gelost — wer in 30 Sekunden am meisten tippt, färbt den Bildschirm.",
+    en: "Teams are drawn at random; whoever taps most in 30 seconds paints the screen.",
+  },
+  "dashboard.modeBarDesc": {
+    tr: "Tarifi ezberle, malzemeleri doğru sırayla dök. En çok tamamlayan barista kazanır.",
+    de: "Rezept merken, Zutaten in der richtigen Reihenfolge eingießen. Wer am meisten schafft, gewinnt.",
+    en: "Memorize the recipe, pour the ingredients in order. Most drinks completed wins.",
+  },
+  "dashboard.modeKabloDesc": {
+    tr: "Takım işi: kabloları doğru uçlara bağlayıp mekanın jeneratörünü birlikte ateşleyin.",
+    de: "Teamarbeit: Verbindet die Kabel richtig und startet gemeinsam den Generator des Ladens.",
+    en: "Teamwork: connect the wires correctly and fire up the venue's generator together.",
+  },
 
   // ═══════════════════════════════════════════
   // AUTH — sayfa başlıkları
@@ -1400,7 +1450,7 @@ const translations = {
   "b2b.ctaButton": { tr: "DEMO RANDEVUSU İSTE", de: "DEMO-TERMIN VEREINBAREN", en: "REQUEST A DEMO" }
 } as const;
 
-type TranslationKey = keyof typeof translations;
+export type TranslationKey = keyof typeof translations;
 type TranslationValue = string | ((...args: (string | number)[]) => string);
 
 // ───────── STATE MANAGEMENT ─────────

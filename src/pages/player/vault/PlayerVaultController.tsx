@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
+import { retentionExpiry } from "../../../lib/retention";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useLocale } from "../../../hooks/useLocale";
 import type { Room, Player } from "../../../types/database";
@@ -90,7 +91,8 @@ export function PlayerVaultController({ room, player }: Props) {
         round_letter: "VAULT",
         round_index: 0,
         data: { guess: currentGuess },
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        expires_at: retentionExpiry(),
       });
     } catch (err) {
       console.error(err);

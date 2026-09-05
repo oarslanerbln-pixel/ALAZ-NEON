@@ -1,7 +1,7 @@
 {
-  "name": "HEGAME - Neon Party Game",
-  "short_name": "HEGAME",
-  "description": "Gece hayatı ve kafeler için interaktif neon parti oyunu",
+  "name": "HENGAME — Kafe & Mekan Oyunu",
+  "short_name": "HENGAME",
+  "description": "Kafeler ve mekanlar için TV + telefon üzerinden oynanan interaktif neon parti oyunu.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#030305",
@@ -9,16 +9,16 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/vite.svg",
-      "sizes": "192x192",
+      "src": "/icon.svg",
+      "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/vite.svg",
-      "sizes": "512x512",
+      "src": "/icon.svg",
+      "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     }
   ]
 }

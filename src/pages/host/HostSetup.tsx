@@ -2,6 +2,8 @@ import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, addDoc } from "firebase/firestore";
 import { db, auth } from "../../lib/firebase";
+import { retentionExpiry } from "../../lib/retention";
+import { allocateRoomCode } from "../../lib/roomQueries";
 import { motion } from "framer-motion";
 import { NeonIcon } from "../../components/NeonIcon";
 import { LanguageSwitcher } from "../../components/LanguageSwitcher";
@@ -51,16 +53,6 @@ function GlassPanel({
   );
 }
 
-// Helper to generate a 4-character random code
-const generateRoomCode = () => {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let code = "";
-  for (let i = 0; i < 4; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
-};
-
 export function HostSetup() {
   const navigate = useNavigate();
   const { t, locale } = useLocale();
@@ -78,7 +70,7 @@ export function HostSetup() {
     localStorage.setItem("cafe_game_mode", "individual");
 
     try {
-      const roomCode = generateRoomCode();
+      const roomCode = await allocateRoomCode();
 
       const docRef = await addDoc(collection(db, "rooms"), {
           code: roomCode,
@@ -92,6 +84,9 @@ export function HostSetup() {
           game_mode: "individual",
           locale: locale,
           created_at: Date.now(),
+          // Firestore TTL politikasi bu alana bakip dokumani siliyor
+          // (bkz. lib/retention.ts ve README).
+          expires_at: retentionExpiry(),
           host_uid: auth.currentUser?.uid || "anonymous",
           // Aktif mekan markasının anlık kopyası — canlı referans değil,
           // bkz. types/database.ts Room.venue_* alanlarındaki not.

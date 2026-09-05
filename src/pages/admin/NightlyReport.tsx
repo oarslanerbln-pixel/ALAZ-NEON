@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { onAuthStateChanged, signOut, type User } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../../lib/firebase";
+import { useIsStaff } from "../../hooks/useIsStaff";
+import { StaffAccessNotice } from "../../components/StaffAccessNotice";
 import type { Room, Reward, GameType } from "../../types/database";
 import { errorMessage } from "../../lib/errors";
 
@@ -59,7 +61,7 @@ interface ReportData {
 
 export function NightlyReport() {
   const navigate = useNavigate();
-  const [authUser, setAuthUser] = useState<User | null | undefined>(undefined);
+  const { user: authUser, isStaff } = useIsStaff();
   const [preset, setPreset] = useState<RangePreset>("today");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -67,11 +69,8 @@ export function NightlyReport() {
   const [data, setData] = useState<ReportData | null>(null);
 
   useEffect(() => {
-    return onAuthStateChanged(auth, setAuthUser);
   }, []);
 
-  const isPasswordAuthed =
-    !!authUser && authUser.providerData.some((p) => p.providerId === "password");
 
   const loadReport = useCallback(async () => {
     setLoading(true);
@@ -150,12 +149,12 @@ export function NightlyReport() {
   }, [preset]);
 
   useEffect(() => {
-    if (isPasswordAuthed) loadReport();
-  }, [isPasswordAuthed, preset, loadReport]);
+    if (isStaff) loadReport();
+  }, [isStaff, preset, loadReport]);
 
   const copySummary = () => {
     if (!data) return;
-    const summary = `📊 HEGAME Gece Analitiği (${preset.toUpperCase()})\n` +
+    const summary = `📊 HENGAME Gece Analitiği (${preset.toUpperCase()})\n` +
       `🕹️ Toplam Oyun: ${data.roomCount} (${data.finishedCount} tamamlandı)\n` +
       `👥 Toplam Oyuncu: ${data.playerCount} (Oda başına ortalama: ${data.avgPlayersPerRoom})\n` +
       `🎁 Dağıtılan İkram: ${data.rewardsGranted} (Kullanılan: ${data.rewardsClaimed})\n` +
@@ -167,7 +166,8 @@ export function NightlyReport() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (authUser === undefined) {
+  // Oturum ya da personel kaydı henüz çözülmedi.
+  if (authUser === undefined || (authUser && isStaff === undefined)) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center text-white/50 font-mono text-sm uppercase tracking-widest">
         Yükleniyor...
@@ -175,23 +175,8 @@ export function NightlyReport() {
     );
   }
 
-  if (!isPasswordAuthed) {
-    return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white p-6 text-center gap-6">
-        <h1 className="text-2xl font-black uppercase tracking-widest text-alaz-orange">
-          Gecelik Rapor
-        </h1>
-        <p className="text-white/50 max-w-sm">
-          Bu ekran yalnızca işletme hesabıyla giriş yapıldığında açılır.
-        </p>
-        <Link
-          to="/login"
-          className="px-8 py-3 bg-alaz-orange text-black font-black uppercase tracking-widest rounded-xl"
-        >
-          Giriş Yap
-        </Link>
-      </div>
-    );
+  if (!authUser || !isStaff) {
+    return <StaffAccessNotice title="Gecelik Rapor" user={authUser} />;
   }
 
   const redemptionRate =
@@ -205,7 +190,7 @@ export function NightlyReport() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs px-2 py-0.5 rounded bg-alaz-orange/20 text-alaz-orange font-bold uppercase tracking-widest border border-alaz-orange/30">HEGAME B2B</span>
+              <span className="text-xs px-2 py-0.5 rounded bg-alaz-orange/20 text-alaz-orange font-bold uppercase tracking-widest border border-alaz-orange/30">HENGAME B2B</span>
             </div>
             <h1 className="text-3xl font-black uppercase tracking-widest text-white mt-1">
               İşletme Analytics

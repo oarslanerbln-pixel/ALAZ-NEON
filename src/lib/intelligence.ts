@@ -1,5 +1,5 @@
 /**
- * Intelligence Engine for Alaz Neon / Cafe Nightlife Game
+ * Intelligence Engine for HENGAME (cafe & venue party game)
  * Provides real-time game analytics and predictive metrics.
  *
  * This module acts as the 'Machine Learning' layer, using weighted logic

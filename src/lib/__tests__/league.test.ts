@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { getLeagueFromScore, getNextLeagueProgress, LEAGUE_TIERS } from "../league";
 
-describe("HEGAME League logic", () => {
+describe("HENGAME League logic", () => {
   it("sıfır puan için Bronz Lig döner", () => {
     const league = getLeagueFromScore(0);
     expect(league.tier).toBe("BRONZE");

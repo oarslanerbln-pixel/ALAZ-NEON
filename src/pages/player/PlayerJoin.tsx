@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import type { User } from "firebase/auth";
 import { db, auth } from "../../lib/firebase";
+import { retentionExpiry } from "../../lib/retention";
+import { findJoinableRoomByCode } from "../../lib/roomQueries";
 import { useLocale } from "../../hooks/useLocale";
 import { errorMessage } from "../../lib/errors";
 import { PhoneAuth } from "../../components/PhoneAuth";
@@ -13,7 +15,6 @@ import { PlayerProfileCard } from "./components/PlayerProfileCard";
 import { PlayerRewards } from "./components/PlayerRewards";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { containsProfanity } from "../../lib/profanity";
-import type { Room } from "../../types/database";
 
 export function PlayerJoin() {
   const navigate = useNavigate();
@@ -52,12 +53,10 @@ export function PlayerJoin() {
   useEffect(() => {
     if (roomCode.length === 4) {
       const checkMode = async () => {
-        const q = query(collection(db, "rooms"), where("code", "==", roomCode.toUpperCase()));
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-          const data = querySnapshot.docs[0].data();
-          setGameMode(data.game_mode || "individual");
-        }
+        // Katilim akisiyla AYNI secim: kod cakismasinda burada baska bir
+        // odanin modunu gosterip katilimda baskasina girmek olmasin.
+        const room = await findJoinableRoomByCode(roomCode);
+        if (room) setGameMode(room.game_mode || "individual");
       };
       checkMode();
     }
@@ -71,20 +70,14 @@ export function PlayerJoin() {
     try {
       const cleanCode = roomCode.trim().toUpperCase();
 
-      const q = query(collection(db, "rooms"), where("code", "==", cleanCode));
-      const querySnapshot = await getDocs(q);
+      // Onceden sorgudan donen ILK dokuman aliniyor, durum kontrolu ondan
+      // SONRA yapiliyordu: kod cakismasi varsa oyuncu kapanmis eski odaya
+      // dusup "oyun baslamis" hatasi aliyor, canli odaya hic giremiyordu.
+      // Artik eleme once yapiliyor (bkz. lib/roomCodes.ts).
+      const room = await findJoinableRoomByCode(cleanCode);
 
-      if (querySnapshot.empty) {
+      if (!room) {
         setErrorMsg(t("join.errorNoRoom"));
-        setIsLoading(false);
-        return;
-      }
-      
-      const roomDoc = querySnapshot.docs[0];
-      const room = { id: roomDoc.id, ...roomDoc.data() } as Room;
-
-      if (room.status === "closed" || room.status === "finished") {
-        setErrorMsg(t("join.errorStarted"));
         setIsLoading(false);
         return;
       }
@@ -116,7 +109,10 @@ export function PlayerJoin() {
             total_score: 0,
             night_score: 0,
             uid: currentUser?.uid || "anonymous",
-            created_at: Date.now()
+            created_at: Date.now(),
+            // Firestore TTL politikasi bu alana bakip dokumani siliyor
+            // (bkz. lib/retention.ts ve README).
+            expires_at: retentionExpiry(),
         });
 
         localStorage.setItem("cafe_game_playerId", playerRef.id);
