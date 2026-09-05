@@ -616,6 +616,27 @@ describe("staff koleksiyonu — yetkinin kaynağı", () => {
     await seedStaff();
     await assertFails(deleteDoc(doc(asVenueOwner(), "staff", OWNER_UID)));
   });
+
+  it("custom claim de personel sayılıyor — staff kaydı olmadan da geçerli", async () => {
+    // Proje Blaze plana geçip Cloud Functions ile claim atamaya başladığında
+    // kuralları değiştirmeden bu yola geçilebilsin diye destekleniyor.
+    // Belgelediğimiz bir yetki yolu; testsiz bırakılırsa sessizce bozulur.
+    const withClaim = testEnv
+      .authenticatedContext("uid-claim-staff", { staff: true })
+      .firestore();
+    await assertSucceeds(
+      setDoc(doc(withClaim, "app_config", "active_venue"), { name: "CLAIM İLE" })
+    );
+  });
+
+  it("claim'i false olan hesap personel değil", async () => {
+    const withoutClaim = testEnv
+      .authenticatedContext("uid-claim-false", { staff: false })
+      .firestore();
+    await assertFails(
+      setDoc(doc(withoutClaim, "app_config", "active_venue"), { name: "ELE GEÇİRİLDİ" })
+    );
+  });
 });
 
 describe("seasons koleksiyonu", () => {
