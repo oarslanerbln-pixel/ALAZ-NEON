@@ -155,7 +155,8 @@ export function HostHeader({
         <button
           onClick={handleToggleMute}
           className="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/80 hover:text-white transition-all active:scale-95 cursor-pointer"
-          title={isMuted ? "Sesi Aç" : "Sesi Kapat"}
+          title={isMuted ? t("common.unmute") : t("common.mute")}
+          aria-label={isMuted ? t("common.unmute") : t("common.mute")}
         >
           {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
         </button>
