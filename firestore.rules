@@ -209,11 +209,12 @@ service cloud.firestore {
     match /app_config/{docId} {
       // Aktif mekan markası (isim/logo/renk/özellik anahtarları) — herkes
       // okuyabilir (landing/login/host kurulumu oda açılmadan önce buna
-      // bakıyor), ama yalnızca e-posta/şifre ile giriş yapmış işletme
-      // hesabı değiştirebilir. Anonim host/oyuncu oturumları (uygulamanın
-      // geri kalanının kullandığı tek kimlik doğrulama yolu) bu dokümana
-      // asla yazamaz — aksi hâlde herhangi bir ziyaretçi tüm uygulamanın
-      // markasını değiştirebilirdi.
+      // bakıyor), ama yalnızca personel listesindeki hesap değiştirebilir.
+      //
+      // Bu kural bir kez zaten "yalnızca e-posta/şifre ile giriş yapmış
+      // hesap" diye yazılmıştı; /register herkese açık olduğu için o,
+      // pratikte "kayıt olan herkes" demekti. Yetkinin giriş yöntemine
+      // değil açık bir listeye bağlanması tam olarak bu yüzden (isStaff).
       allow read: if true;
       allow write: if isStaff();
     }
