@@ -586,6 +586,67 @@ describe("rewards koleksiyonu", () => {
   });
 });
 
+describe("TTL alanı (expires_at) yazımı", () => {
+  // Firestore TTL politikası bu alana bakıyor; alan yazılamazsa temizlik
+  // hiç çalışmaz ve odalar/cevaplar yine sonsuza kadar birikir.
+  it("host oda açarken expires_at yazabiliyor", async () => {
+    await assertSucceeds(
+      setDoc(doc(asHost(), "rooms", "room-ttl"), {
+        code: "WXYZ",
+        host_uid: HOST_UID,
+        status: "night_lobby",
+        categories: [],
+        timer_setting: 60,
+        total_rounds: 3,
+        current_round: 0,
+        game_mode: "individual",
+        created_at: Date.now(),
+        expires_at: new Date(Date.now() + 86400000),
+      })
+    );
+  });
+
+  it("oyuncu katılırken expires_at yazabiliyor", async () => {
+    await seed();
+    await assertSucceeds(
+      setDoc(doc(asPlayer(), "players", "player-ttl"), {
+        room_id: ROOM_ID,
+        uid: PLAYER_UID,
+        nickname: "YENİ",
+        team_name: null,
+        total_score: 0,
+        created_at: Date.now(),
+        expires_at: new Date(Date.now() + 86400000),
+      })
+    );
+  });
+
+  it("oyuncu cevap gönderirken expires_at yazabiliyor", async () => {
+    await seed({ status: "playing" });
+    await assertSucceeds(
+      addDoc(collection(asPlayer(), "answers"), {
+        room_id: ROOM_ID,
+        player_id: PLAYER_ID,
+        round_letter: "A",
+        round_index: 0,
+        data: { sehir: "ANKARA" },
+        created_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 86400000),
+      })
+    );
+  });
+
+  it("oyuncu skor güncellerken expires_at'i DEĞİŞTİREMİYOR — alan beyaz listede değil", async () => {
+    await seed();
+    await assertFails(
+      updateDoc(doc(asPlayer(), "players", PLAYER_ID), {
+        kablo_score: 1,
+        expires_at: new Date(Date.now() + 10 * 365 * 86400000),
+      })
+    );
+  });
+});
+
 describe("staff koleksiyonu — yetkinin kaynağı", () => {
   it("hiç kimse kendini personel yapamaz", async () => {
     // Bu kural tüm modelin dayandığı nokta: staff dokümanı istemciden

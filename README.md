@@ -76,6 +76,40 @@ To revoke access, delete that document.
 > the Admin SDK is also accepted, with no rule changes needed — it avoids the
 > per-evaluation `get()` that the allowlist costs.
 
+## 🗑 Data retention (one-time console setup)
+
+Rooms, players and answers used to accumulate forever — the codebase contains no
+`deleteDoc` at all, and no room is ever marked `closed`. For a venue playing every
+night that is both a growing cost and a growing room-code collision surface.
+
+Every newly written room / player / answer now carries an `expires_at`
+**Timestamp** (`src/lib/retention.ts`, currently **90 days** — long enough to keep
+the monthly report on `/admin/report` intact). Deletion is left to Firestore's own
+TTL feature, so no Cloud Functions and no Blaze plan are required:
+
+Google Cloud Console → Firestore → **Time-to-live (TTL)** → *Create policy*, once
+per collection:
+
+| Collection group | Timestamp field |
+|---|---|
+| `rooms`    | `expires_at` |
+| `players`  | `expires_at` |
+| `answers`  | `expires_at` |
+
+Or with the gcloud CLI:
+
+```bash
+gcloud firestore fields ttls update expires_at   --collection-group=rooms --enable-ttl
+```
+
+> **Two caveats.** TTL only deletes documents that *carry* the field, so records
+> written before this change are never cleaned up — clear those out once by hand.
+> And deletions are best-effort: Firestore usually removes documents within 24
+> hours of expiry, not at the exact timestamp.
+
+Shortening the window is a one-line change in `src/lib/retention.ts`, but keep it
+above ~31 days or the monthly report silently empties out (a test guards this).
+
 ## 🧹 Code Quality
 - **Type Safety**: Shared `Room` / `Player` / `Answer` types in `src/types/database.ts` for all Firestore reads/writes.
 - **Optimization**: Lean UI components with logic extracted to custom hooks.

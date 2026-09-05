@@ -154,7 +154,7 @@ export function NightlyReport() {
 
   const copySummary = () => {
     if (!data) return;
-    const summary = `📊 HEGAME Gece Analitiği (${preset.toUpperCase()})\n` +
+    const summary = `📊 HENGAME Gece Analitiği (${preset.toUpperCase()})\n` +
       `🕹️ Toplam Oyun: ${data.roomCount} (${data.finishedCount} tamamlandı)\n` +
       `👥 Toplam Oyuncu: ${data.playerCount} (Oda başına ortalama: ${data.avgPlayersPerRoom})\n` +
       `🎁 Dağıtılan İkram: ${data.rewardsGranted} (Kullanılan: ${data.rewardsClaimed})\n` +
@@ -190,7 +190,7 @@ export function NightlyReport() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs px-2 py-0.5 rounded bg-alaz-orange/20 text-alaz-orange font-bold uppercase tracking-widest border border-alaz-orange/30">HEGAME B2B</span>
+              <span className="text-xs px-2 py-0.5 rounded bg-alaz-orange/20 text-alaz-orange font-bold uppercase tracking-widest border border-alaz-orange/30">HENGAME B2B</span>
             </div>
             <h1 className="text-3xl font-black uppercase tracking-widest text-white mt-1">
               İşletme Analytics

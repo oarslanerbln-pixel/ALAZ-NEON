@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { collection, addDoc, query, where, getDocs, limit, serverTimestamp } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
+import { retentionExpiry } from "../../../lib/retention";
 import { AnimatePresence, motion } from "framer-motion";
 import { ParticleBackground } from "../../../components/ParticleBackground";
 import { SoundManager, sounds } from "../../../lib/audio";
@@ -81,6 +82,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
           selectedOption: option,
         },
         created_at: serverTimestamp(),
+        expires_at: retentionExpiry(),
       });
       haptics.success();
     } catch (err) {

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { collection, addDoc, doc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
+import { retentionExpiry } from "../../lib/retention";
 import { NeonIcon } from "../../components/NeonIcon";
 import { DatabaseStatus } from "../../components/DatabaseStatus";
 import { useToast } from "../../contexts/ToastContextCore";
@@ -181,7 +182,8 @@ export function PlayerGame() {
           round_letter: activeLetter,
           round_index: currentRound,
           data: finalData,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          expires_at: retentionExpiry(),
         });
       } catch (err) {
         submitError = err;

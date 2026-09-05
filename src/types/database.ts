@@ -1,3 +1,4 @@
+
 import type { Locale } from "../lib/i18n";
 import type { FieldValue, Timestamp } from "firebase/firestore";
 
@@ -73,6 +74,20 @@ export interface Room {
   id: string;
   code: string;
   status: RoomStatus | "night_lobby";
+  /**
+   * Odanin acildigi an (epoch ms). HostSetup bunu her odaya yaziyordu ama
+   * tipte hic tanimli degildi. Oda kodu tahsisi ve katilim secimi buna
+   * bakiyor (bkz. lib/roomCodes.ts): odalar hic silinmedigi icin "canli
+   * oda" ancak zamanla tanimlanabiliyor. Cok eski odalarda eksik olabilir.
+   */
+  created_at?: number;
+  /**
+   * Firestore TTL politikasinin baktigi alan — bu tarihten sonra dokuman
+   * otomatik siliniyor (bkz. lib/retention.ts ve README). TTL yalnizca bu
+   * alani TASIYAN dokumanlari siler; alan eklenmeden once yazilmis eski
+   * kayitlar icin bir kereye mahsus elle temizlik gerekiyor.
+   */
+  expires_at?: Timestamp;
   active_game?: GameType | "none";
   game_type?: GameType; // Legacy
   host_uid?: string;
@@ -172,6 +187,13 @@ export interface Player {
   total_score: number;
   night_score?: number;
   created_at: number;
+  /**
+   * Firestore TTL politikasinin baktigi alan — bu tarihten sonra dokuman
+   * otomatik siliniyor (bkz. lib/retention.ts ve README). TTL yalnizca bu
+   * alani TASIYAN dokumanlari siler; alan eklenmeden once yazilmis eski
+   * kayitlar icin bir kereye mahsus elle temizlik gerekiyor.
+   */
+  expires_at?: Timestamp;
   lives?: number;
   last_active?: number;
   colors_clicks?: number;
@@ -191,6 +213,13 @@ export interface Answer {
   // once read back, or a pending FieldValue while serverTimestamp() (quiz)
   // hasn't committed yet.
   created_at?: string | Timestamp | FieldValue;
+  /**
+   * Firestore TTL politikasinin baktigi alan — bu tarihten sonra dokuman
+   * otomatik siliniyor (bkz. lib/retention.ts ve README). TTL yalnizca bu
+   * alani TASIYAN dokumanlari siler; alan eklenmeden once yazilmis eski
+   * kayitlar icin bir kereye mahsus elle temizlik gerekiyor.
+   */
+  expires_at?: Timestamp;
 }
 
 export interface AnswerBreakdown {
