@@ -35,9 +35,13 @@ export function HostBarDisplay({ room, players, updateRoomStatus }: Props) {
       
       timer = setTimeout(() => {
         const recipe = Array.from({ length: 4 }).map(() => COLORS[Math.floor(Math.random() * COLORS.length)]);
+        // Sure, kurulum modalindeki "Bar suresi" alanindan geliyor; daha once
+        // sabit 60 sn yazildigi icin host'un sectigi deger sessizce yok
+        // sayiliyordu. Oda alani bos gelirse (eski odalar) 60 sn'ye duser.
+        const durationSec = room.timer_setting > 0 ? room.timer_setting : 60;
         updateRoomStatus("bar_active", { 
           bar_active_recipe: recipe,
-          bar_end_time: Date.now() + 60000 
+          bar_end_time: Date.now() + durationSec * 1000 
         });
       }, 4500);
     } else if (room.status === "bar_active") {
@@ -50,7 +54,7 @@ export function HostBarDisplay({ room, players, updateRoomStatus }: Props) {
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [room.status, updateRoomStatus]);
+  }, [room.status, room.timer_setting, updateRoomStatus]);
 
   // Timer logic & Recipe Rotation
   useEffect(() => {

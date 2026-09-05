@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import { onAuthStateChanged, signOut, type User } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../../lib/firebase";
+import { useIsStaff } from "../../hooks/useIsStaff";
+import { StaffAccessNotice } from "../../components/StaffAccessNotice";
 import { useVenue } from "../../contexts/VenueContextCore";
 import { DEFAULT_VENUE_CONFIG, type Reward, type SponsorAd, type WheelSlice } from "../../types/database";
 import { errorMessage } from "../../lib/errors";
@@ -20,13 +22,14 @@ const REWARD_TYPE_OPTIONS: { value: Reward["type"]; label: string }[] = [
  * rengi buradan değiştirilir; kaydedilince landing/login/host kurulumu
  * anında yeni markayla güncellenir (canlı Firestore dinleyicisi üzerinden).
  *
- * Erişim e-posta/şifre ile girişe bağlı (bkz. firestore.rules) — anonim
- * host/oyuncu oturumları bu dokümana yazamaz, sadece okuyabilir.
+ * Erişim personel listesine bağlı: yalnızca staff/{uid} kaydı olan hesap
+ * yazabiliyor (bkz. firestore.rules isStaff()). Anonim host/oyuncu
+ * oturumları ve sıradan kayıtlı hesaplar bu dokümanı sadece okuyabilir.
  */
 export function VenueSettings() {
   const navigate = useNavigate();
   const { venue } = useVenue();
-  const [authUser, setAuthUser] = useState<User | null | undefined>(undefined);
+  const { user: authUser, isStaff } = useIsStaff();
 
   const [name, setName] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
@@ -54,7 +57,6 @@ export function VenueSettings() {
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
   useEffect(() => {
-    return onAuthStateChanged(auth, setAuthUser);
   }, []);
 
   // Context'ten gelen canlı değeri form alanlarına yansıt (yalnızca ilk
@@ -118,8 +120,6 @@ export function VenueSettings() {
     setWheelSlices(prev => prev.filter(s => s.id !== id));
   };
 
-  const isPasswordAuthed =
-    !!authUser && authUser.providerData.some((p) => p.providerId === "password");
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,8 +149,8 @@ export function VenueSettings() {
     }
   };
 
-  // Auth durumu henüz bilinmiyor
-  if (authUser === undefined) {
+  // Oturum ya da personel kaydı henüz çözülmedi.
+  if (authUser === undefined || (authUser && isStaff === undefined)) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center text-white/50 font-mono text-sm uppercase tracking-widest">
         Yükleniyor...
@@ -158,24 +158,9 @@ export function VenueSettings() {
     );
   }
 
-  // Anonim (host/oyuncu) oturum ya da hiç oturum yok — gerçek girişe yönlendir
-  if (!isPasswordAuthed) {
-    return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white p-6 text-center gap-6">
-        <h1 className="text-2xl font-black uppercase tracking-widest text-alaz-orange">
-          Mekan Ayarları
-        </h1>
-        <p className="text-white/50 max-w-sm">
-          Bu ekran yalnızca işletme hesabıyla giriş yapıldığında açılır.
-        </p>
-        <Link
-          to="/login"
-          className="px-8 py-3 bg-alaz-orange text-black font-black uppercase tracking-widest rounded-xl"
-        >
-          Giriş Yap
-        </Link>
-      </div>
-    );
+  // Giriş yok ya da hesap personel değil — ikisini de tek ekran anlatıyor.
+  if (!authUser || !isStaff) {
+    return <StaffAccessNotice title="Mekan Ayarları" user={authUser} />;
   }
 
   return (

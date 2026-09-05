@@ -65,18 +65,39 @@ async function seed(roomOverrides: Record<string, unknown> = {}) {
 }
 
 const OWNER_UID = "uid-venue-owner";
+const RANDOM_SIGNUP_UID = "uid-random-signup";
 
 const asHost = () => testEnv.authenticatedContext(HOST_UID).firestore();
 const asPlayer = () => testEnv.authenticatedContext(PLAYER_UID).firestore();
 const asGuest = () => testEnv.unauthenticatedContext().firestore();
-// Gerçek Firebase ID token'larında sağlayıcı bilgisi burada durur:
-// token.firebase.sign_in_provider. Uygulamadaki her anonim host/oyuncu
-// oturumunun "anonymous" olduğu, yalnızca e-posta/şifreyle giriş yapmış
-// hesapların "password" taşıdığı varsayımını burada simüle ediyoruz.
+
+/**
+ * İşletme personeli: staff/{uid} dokümanı olan hesap. `seedStaff()` bu
+ * dokümanı kurallar devre dışıyken oluşturuyor — gerçekte de tek yolu bu
+ * (Firebase Console / Admin SDK), hiçbir istemci kendine yazamıyor.
+ */
 const asVenueOwner = () =>
   testEnv
     .authenticatedContext(OWNER_UID, { firebase: { sign_in_provider: "password" } })
     .firestore();
+
+/**
+ * /register herkese açık: sıradan bir ziyaretçi de e-posta/şifre hesabı
+ * açabiliyor. Bu bağlam tam olarak onu temsil ediyor — token'ı işletme
+ * hesabınınkiyle AYNI, tek farkı staff kaydının olmaması. Yetki eskiden
+ * sign_in_provider'a bakıyordu, yani bu hesap da her şeyi yapabiliyordu.
+ */
+const asRandomSignup = () =>
+  testEnv
+    .authenticatedContext(RANDOM_SIGNUP_UID, { firebase: { sign_in_provider: "password" } })
+    .firestore();
+
+/** Personel listesine bir uid ekler (yalnızca kurallar devre dışıyken mümkün). */
+async function seedStaff(uid: string = OWNER_UID) {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), "staff", uid), { added_at: Date.now() });
+  });
+}
 
 beforeAll(async () => {
   testEnv = await initializeTestEnvironment({
@@ -254,6 +275,72 @@ describe("rooms — overload savuşturma", () => {
   });
 });
 
+describe("rooms — echo oylamasi", () => {
+  beforeEach(() => seed({ status: "echo_active", echo_question: "Kim?", echo_votes: {} }));
+
+  it("oyuncu kendi oyunu yazabilir", async () => {
+    await assertSucceeds(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        [`echo_votes.${PLAYER_ID}`]: OTHER_PLAYER_ID,
+      })
+    );
+  });
+
+  it("oyuncu oy bahanesiyle oda durumunu degistiremez", async () => {
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        [`echo_votes.${PLAYER_ID}`]: OTHER_PLAYER_ID,
+        status: "finished",
+      })
+    );
+  });
+
+  it("oylama acik degilken oy yazilamaz", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), { status: "echo_reveal" });
+    });
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        [`echo_votes.${PLAYER_ID}`]: OTHER_PLAYER_ID,
+      })
+    );
+  });
+});
+
+describe("rooms — pulse dokunusu", () => {
+  beforeEach(() =>
+    seed({ status: "pulse_active", pulse_target_time: Date.now() + 10000, pulse_clicks: {} })
+  );
+
+  it("oyuncu kendi dokunus zamanini yazabilir", async () => {
+    await assertSucceeds(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        [`pulse_clicks.${PLAYER_ID}`]: Date.now(),
+      })
+    );
+  });
+
+  it("oyuncu dokunus bahanesiyle baska alan yazamaz", async () => {
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        [`pulse_clicks.${PLAYER_ID}`]: Date.now(),
+        total_score: 9999,
+      })
+    );
+  });
+
+  it("tur bittikten sonra dokunus yazilamaz", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), { status: "pulse_reveal" });
+    });
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        [`pulse_clicks.${PLAYER_ID}`]: Date.now(),
+      })
+    );
+  });
+});
+
 describe("rooms — host yetkisi", () => {
   beforeEach(() => seed());
 
@@ -333,7 +420,8 @@ describe("app_config — mekan markası", () => {
     await assertSucceeds(getDoc(doc(asGuest(), "app_config", "active_venue")));
   });
 
-  it("e-posta/şifre ile giriş yapmış işletme hesabı markayı değiştirebilir", async () => {
+  it("personel listesindeki işletme hesabı markayı değiştirebilir", async () => {
+    await seedStaff();
     await assertSucceeds(
       setDoc(doc(asVenueOwner(), "app_config", "active_venue"), {
         name: "YENİ MEKAN",
@@ -341,6 +429,21 @@ describe("app_config — mekan markası", () => {
         rewards_enabled: false,
         updated_at: Date.now(),
       })
+    );
+  });
+
+  it("KAYIT OLAN HERHANGİ BİRİ markayı değiştiremez — asıl güvenlik açığı buydu", async () => {
+    // /register herkese açık. Yetki sign_in_provider'a bakarken bu hesap
+    // tüm uygulamanın markasını değiştirebiliyordu; staff kaydı yok, artık
+    // reddediliyor.
+    await assertFails(
+      setDoc(doc(asRandomSignup(), "app_config", "active_venue"), { name: "ELE GEÇİRİLDİ" })
+    );
+  });
+
+  it("işletme hesabı bile staff kaydı silinince markayı değiştiremez", async () => {
+    await assertFails(
+      setDoc(doc(asVenueOwner(), "app_config", "active_venue"), { name: "ELE GEÇİRİLDİ" })
     );
   });
 
@@ -392,8 +495,15 @@ describe("rewards koleksiyonu", () => {
   });
 
   it("işletme hesabı (doğrulama ekranı) başkasının ödülünü kod ile okuyabilir", async () => {
+    await seedStaff();
     await seedReward();
     await assertSucceeds(getDoc(doc(asVenueOwner(), "rewards", REWARD_ID)));
+  });
+
+  it("KAYIT OLAN HERHANGİ BİRİ başkasının ödülünü okuyamaz", async () => {
+    // Eskiden bu hesap tüm ödül koleksiyonunu okuyup kuponları toplayabilirdi.
+    await seedReward();
+    await assertFails(getDoc(doc(asRandomSignup(), "rewards", REWARD_ID)));
   });
 
   it("host, kazanan oyuncu adına 'available' bir ödül oluşturabilir", async () => {
@@ -438,6 +548,7 @@ describe("rewards koleksiyonu", () => {
   });
 
   it("işletme hesabı (barda doğrulama) ödülü 'claimed' işaretleyebilir", async () => {
+    await seedStaff();
     await seedReward();
     await assertSucceeds(
       updateDoc(doc(asVenueOwner(), "rewards", REWARD_ID), {
@@ -448,6 +559,7 @@ describe("rewards koleksiyonu", () => {
   });
 
   it("işletme hesabı bile status/claimed_at dışındaki alanları değiştiremez", async () => {
+    await seedStaff();
     await seedReward();
     await assertFails(
       updateDoc(doc(asVenueOwner(), "rewards", REWARD_ID), {
@@ -458,8 +570,90 @@ describe("rewards koleksiyonu", () => {
   });
 
   it("ödül dokümanı hiçbir zaman silinemez", async () => {
+    await seedStaff();
     await seedReward();
     await assertFails(deleteDoc(doc(asVenueOwner(), "rewards", REWARD_ID)));
+  });
+
+  it("KAYIT OLAN HERHANGİ BİRİ ödülü 'claimed' işaretleyemez — bedava içecek açığı", async () => {
+    await seedReward();
+    await assertFails(
+      updateDoc(doc(asRandomSignup(), "rewards", REWARD_ID), {
+        status: "claimed",
+        claimed_at: Date.now(),
+      })
+    );
+  });
+});
+
+describe("staff koleksiyonu — yetkinin kaynağı", () => {
+  it("hiç kimse kendini personel yapamaz", async () => {
+    // Bu kural tüm modelin dayandığı nokta: staff dokümanı istemciden
+    // yazılabilseydi, herkes tek satırla kendine tam yetki verirdi.
+    await assertFails(
+      setDoc(doc(asRandomSignup(), "staff", RANDOM_SIGNUP_UID), { added_at: Date.now() })
+    );
+  });
+
+  it("personel bile başka birini personel yapamaz (yalnızca Console/Admin SDK)", async () => {
+    await seedStaff();
+    await assertFails(
+      setDoc(doc(asVenueOwner(), "staff", RANDOM_SIGNUP_UID), { added_at: Date.now() })
+    );
+  });
+
+  it("hesap kendi personel kaydını okuyabilir (arayüz 'bu hesap personel mi' diye soruyor)", async () => {
+    await seedStaff();
+    await assertSucceeds(getDoc(doc(asVenueOwner(), "staff", OWNER_UID)));
+  });
+
+  it("kimse başkasının personel kaydını okuyamaz — liste toplanamaz", async () => {
+    await seedStaff();
+    await assertFails(getDoc(doc(asRandomSignup(), "staff", OWNER_UID)));
+  });
+
+  it("personel kaydı silinemez", async () => {
+    await seedStaff();
+    await assertFails(deleteDoc(doc(asVenueOwner(), "staff", OWNER_UID)));
+  });
+
+  it("custom claim de personel sayılıyor — staff kaydı olmadan da geçerli", async () => {
+    // Proje Blaze plana geçip Cloud Functions ile claim atamaya başladığında
+    // kuralları değiştirmeden bu yola geçilebilsin diye destekleniyor.
+    // Belgelediğimiz bir yetki yolu; testsiz bırakılırsa sessizce bozulur.
+    const withClaim = testEnv
+      .authenticatedContext("uid-claim-staff", { staff: true })
+      .firestore();
+    await assertSucceeds(
+      setDoc(doc(withClaim, "app_config", "active_venue"), { name: "CLAIM İLE" })
+    );
+  });
+
+  it("claim'i false olan hesap personel değil", async () => {
+    const withoutClaim = testEnv
+      .authenticatedContext("uid-claim-false", { staff: false })
+      .firestore();
+    await assertFails(
+      setDoc(doc(withoutClaim, "app_config", "active_venue"), { name: "ELE GEÇİRİLDİ" })
+    );
+  });
+});
+
+describe("seasons koleksiyonu", () => {
+  it("herkes sezonu okuyabilir", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "seasons", "s1"), { name: "SEZON 1" });
+    });
+    await assertSucceeds(getDoc(doc(asGuest(), "seasons", "s1")));
+  });
+
+  it("anonim oturum sezon yazamaz — kural 'gelistirme sirasinda' notuyla açık kalmıştı", async () => {
+    await assertFails(setDoc(doc(asPlayer(), "seasons", "s1"), { name: "SAHTE" }));
+  });
+
+  it("personel sezon yazabilir", async () => {
+    await seedStaff();
+    await assertSucceeds(setDoc(doc(asVenueOwner(), "seasons", "s1"), { name: "SEZON 1" }));
   });
 });
 

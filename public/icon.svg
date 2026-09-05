@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="HENGAME">
+  <title>HENGAME</title>
+  <defs>
+    <linearGradient id="hg-flame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffb020"/>
+      <stop offset="55%" stop-color="#ff5500"/>
+      <stop offset="100%" stop-color="#ff0055"/>
+    </linearGradient>
+    <filter id="hg-glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="14" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Maskable ikonlarda kenarlardan %10 kirpilabilir: zemin tam kare,
+       "H" harfi guvenli alanin (merkez %80) icinde kaliyor. -->
+  <rect width="512" height="512" fill="#030305"/>
+  <rect x="26" y="26" width="460" height="460" rx="104" fill="none"
+        stroke="url(#hg-flame)" stroke-width="10" opacity="0.55"/>
+
+  <g filter="url(#hg-glow)">
+    <path d="M158 136h56v90h84v-90h56v240h-56v-96h-84v96h-56z" fill="url(#hg-flame)"/>
+  </g>
+</svg>
