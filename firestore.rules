@@ -7,6 +7,33 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    /**
+     * Isletme/personel yetkisi.
+     *
+     * Onceden bu yetki "e-posta/sifre ile giris yapmis olmak"
+     * (sign_in_provider == 'password') demekti. Ama /register herkese acik
+     * bir oyuncu kayit ekrani ve orada da e-posta/sifre hesabi aciliyor:
+     * yani HERHANGI bir ziyaretci kayit olup mekan markasini degistirebilir,
+     * butun odul kuponlarini okuyabilir ve istedigini "kullanildi"
+     * isaretleyebilirdi. Giris YONTEMI bir rol degil.
+     *
+     * Yetki artik acik bir listeye bagli:
+     *   staff/{uid} dokumani varsa o hesap personeldir.
+     * Doküman hicbir istemciden yazilamiyor (asagidaki match blogu),
+     * yalnizca Firebase Console'dan ya da Admin SDK ile olusturuluyor.
+     *
+     * Custom claim de kabul ediliyor: proje Blaze plana gecip Cloud
+     * Functions ile claim atamaya basladiginda kurallari degistirmeye gerek
+     * kalmadan o yola gecilebilir (claim, get() maliyeti de olmayan daha
+     * ucuz yol).
+     */
+    function isStaff() {
+      return isAuth() && (
+        request.auth.token.get('staff', false) == true ||
+        exists(/databases/$(database)/documents/staff/$(request.auth.uid))
+      );
+    }
+
     // A write may touch these fields and nothing else.
     function touchesOnly(fields) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
@@ -162,6 +189,23 @@ service cloud.firestore {
         get(/databases/$(database)/documents/rooms/$(resource.data.room_id)).data.host_uid == request.auth.uid;
     }
 
+    /**
+     * Personel listesi. Dokumanin ICERIGI onemli degil, VARLIGI yetkiyi
+     * veriyor (istege bagli olarak not/isim alanlari tutulabilir).
+     *
+     * Yazma hicbir istemciye acik degil: bu kural kendi kendine yetki
+     * verilmesini engelleyen tek sey. Yeni personel Firebase Console'dan
+     * staff/<uid> dokumani olusturularak ekleniyor (bkz. README).
+     *
+     * Okuma yalnizca kisinin KENDI dokumanina acik: arayuz "bu hesap
+     * personel mi" sorusunu sorabilsin diye. Butun listeyi cekip personel
+     * uid'lerini toplamak mumkun degil.
+     */
+    match /staff/{staffUid} {
+      allow read: if isAuth() && request.auth.uid == staffUid;
+      allow write: if false;
+    }
+
     match /app_config/{docId} {
       // Aktif mekan markası (isim/logo/renk/özellik anahtarları) — herkes
       // okuyabilir (landing/login/host kurulumu oda açılmadan önce buna
@@ -171,14 +215,17 @@ service cloud.firestore {
       // asla yazamaz — aksi hâlde herhangi bir ziyaretçi tüm uygulamanın
       // markasını değiştirebilirdi.
       allow read: if true;
-      allow write: if isAuth() && request.auth.token.firebase.sign_in_provider == 'password';
+      allow write: if isStaff();
     }
 
     match /seasons/{seasonId} {
-      // Seasons are readable by everyone
+      // Sezonlar herkese acik okunur.
       allow read: if true;
-      // Writing seasons should only be done via admin/Cloud Functions (or manually by Host for now, so we can allow it for authenticated users during dev)
-      allow write: if isAuth();
+      // Yazma onceden "gelistirme sirasinda simdilik" notuyla giris yapmis
+      // HERKESE (anonim oyuncu oturumlari dahil) acikti; koleksiyon
+      // uygulamada hic kullanilmiyor, yani bu yalnizca acik bir kapiydi.
+      // Artik personel hesabina kilitli.
+      allow write: if isStaff();
     }
 
     match /rewards/{rewardId} {
@@ -191,8 +238,7 @@ service cloud.firestore {
       // kodla arama yapıyor — resource.data.uid personelin kendi uid'i
       // değil) açık.
       allow read: if isAuth() &&
-        (resource.data.uid == request.auth.uid ||
-         request.auth.token.firebase.sign_in_provider == 'password');
+        (resource.data.uid == request.auth.uid || isStaff());
 
       // Ödül üretimi host tarafında (kazanan OYUNCULAR adına) oluyor —
       // host'un kendi kimliği kazananınkinden farklı, bu yüzden "sadece
@@ -208,8 +254,7 @@ service cloud.firestore {
       // işletme hesabına (barda doğrulama yapan personel) açık, ve yalnızca
       // status/claimed_at alanlarına dokunabiliyor — başka bir alanı
       // (uid, code, title...) değiştiremiyor.
-      allow update: if isAuth() &&
-        request.auth.token.firebase.sign_in_provider == 'password' &&
+      allow update: if isStaff() &&
         touchesOnly(['status', 'claimed_at']);
 
       allow delete: if false;

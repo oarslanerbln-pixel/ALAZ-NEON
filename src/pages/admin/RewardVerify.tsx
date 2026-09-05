@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { onAuthStateChanged, signOut, type User } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../../lib/firebase";
+import { useIsStaff } from "../../hooks/useIsStaff";
+import { StaffAccessNotice } from "../../components/StaffAccessNotice";
 import type { Reward } from "../../types/database";
 import { errorMessage } from "../../lib/errors";
 
@@ -14,7 +16,7 @@ const REWARD_TYPE_LABEL: Record<Reward["type"], string> = {
 
 /**
  * Personel tarafı: barda/kapıda ödül kodunu doğrulayıp "kullanıldı" olarak
- * işaretleme ekranı. VenueSettings ile aynı e-posta/şifre girişine
+ * işaretleme ekranı. VenueSettings ile aynı personel yetkisine
  * kilitli (bkz. firestore.rules) — anonim host/oyuncu oturumları artık
  * `status` alanını "claimed"a çeviremiyor, bu sayfa dışında hiçbir yerden.
  *
@@ -26,7 +28,7 @@ const REWARD_TYPE_LABEL: Record<Reward["type"], string> = {
  */
 export function RewardVerify() {
   const navigate = useNavigate();
-  const [authUser, setAuthUser] = useState<User | null | undefined>(undefined);
+  const { user: authUser, isStaff } = useIsStaff();
 
   const [code, setCode] = useState("");
   const [searching, setSearching] = useState(false);
@@ -36,11 +38,8 @@ export function RewardVerify() {
   const [redeemedNickname, setRedeemedNickname] = useState<string | null>(null);
 
   useEffect(() => {
-    return onAuthStateChanged(auth, setAuthUser);
   }, []);
 
-  const isPasswordAuthed =
-    !!authUser && authUser.providerData.some((p) => p.providerId === "password");
 
   const resetLookup = () => {
     setFound(null);
@@ -100,7 +99,8 @@ export function RewardVerify() {
     }
   };
 
-  if (authUser === undefined) {
+  // Oturum ya da personel kaydı henüz çözülmedi.
+  if (authUser === undefined || (authUser && isStaff === undefined)) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center text-white/50 font-mono text-sm uppercase tracking-widest">
         Yükleniyor...
@@ -108,23 +108,8 @@ export function RewardVerify() {
     );
   }
 
-  if (!isPasswordAuthed) {
-    return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white p-6 text-center gap-6">
-        <h1 className="text-2xl font-black uppercase tracking-widest text-alaz-orange">
-          Ödül Doğrula
-        </h1>
-        <p className="text-white/50 max-w-sm">
-          Bu ekran yalnızca işletme hesabıyla giriş yapıldığında açılır.
-        </p>
-        <Link
-          to="/login"
-          className="px-8 py-3 bg-alaz-orange text-black font-black uppercase tracking-widest rounded-xl"
-        >
-          Giriş Yap
-        </Link>
-      </div>
-    );
+  if (!authUser || !isStaff) {
+    return <StaffAccessNotice title="Ödül Doğrula" user={authUser} />;
   }
 
   return (

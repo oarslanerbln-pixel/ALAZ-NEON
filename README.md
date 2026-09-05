@@ -45,6 +45,37 @@ The game expects the following Firestore collections:
 - `players`: Stores participants, nicknames, and scores.
 - `answers`: Stores player responses for each round.
 
+## 🔐 Staff access (required before first use)
+
+Admin screens — venue settings (`/admin/venue`), reward verification
+(`/admin/rewards`) and the nightly report (`/admin/report`) — are restricted to
+**staff accounts**. Staff status is *not* implied by how you signed in: `/register`
+is a public player sign-up that also creates email/password accounts, so
+"signed in with a password" would mean "anyone who registered".
+
+Authority comes from a document in the `staff` collection:
+
+```
+staff/<uid>        # the document's existence grants access; contents are free-form
+```
+
+No client can write this collection (`allow write: if false` in `firestore.rules`),
+so an account cannot grant itself access. To add a staff member:
+
+1. Have the person register at `/register` (or create the account in
+   Firebase Console → Authentication).
+2. Copy their **User UID** from Firebase Console → Authentication → Users.
+   (An account that signs in and opens an admin screen is also shown its own
+   `staff/<uid>` path on the access-denied screen.)
+3. Firebase Console → Firestore → create collection `staff`, document ID `<uid>`,
+   with any field (e.g. `added_at`).
+
+To revoke access, delete that document.
+
+> When the project moves to the Blaze plan, a `staff: true` **custom claim** set via
+> the Admin SDK is also accepted, with no rule changes needed — it avoids the
+> per-evaluation `get()` that the allowlist costs.
+
 ## 🧹 Code Quality
 - **Type Safety**: Shared `Room` / `Player` / `Answer` types in `src/types/database.ts` for all Firestore reads/writes.
 - **Optimization**: Lean UI components with logic extracted to custom hooks.
