@@ -17,6 +17,8 @@ const translations = {
   "common.confirmLeaveGame": { tr: "Oyundan ayrılmak istediğinizden emin misiniz?", de: "Bist du sicher, dass du das Spiel verlassen möchtest?", en: "Are you sure you want to leave the game?" },
   "common.cancel": { tr: "İPTAL", de: "ABBRECHEN", en: "CANCEL" },
   "common.offline": { tr: "BAĞLANTI KOPTU, YENİDEN BAĞLANILIYOR...", de: "VERBINDUNG VERLOREN, VERBINDE NEU...", en: "CONNECTION LOST, RECONNECTING..." },
+  "common.mute": { tr: "Sesi Kapat", de: "Stumm schalten", en: "Mute" },
+  "common.unmute": { tr: "Sesi Aç", de: "Stummschaltung aufheben", en: "Unmute" },
   "landing.hostLabel": { tr: "Yayıncı / Kurucu", de: "Moderator / Gastgeber", en: "Broadcaster / Host" },
   "join.hostOffline": { tr: "HOST ÇEVRİMDIŞI", de: "HOST OFFLINE", en: "HOST OFFLINE" },
   "join.title": { tr: "SAVAŞA KATIL", de: "TRITT DEM KAMPF BEI", en: "JOIN THE BATTLE" },
