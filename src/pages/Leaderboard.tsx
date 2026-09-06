@@ -40,6 +40,7 @@ export function Leaderboard() {
             whileHover={{ x: -4, scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate("/")}
+            aria-label={t("leaderboard.back")}
             className="flex items-center gap-2.5 px-4 sm:px-5 py-2.5 bg-[#0e0e18]/90 border border-white/15 hover:border-amber-400/60 rounded-2xl transition-all text-white backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.5)] cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4 text-amber-400" />
