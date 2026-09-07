@@ -26,7 +26,7 @@ interface LanguageSwitcherProps {
  * sessizce ezilmesine yol açıyordu (bkz. PlayerJoin.tsx'teki eski davranış).
  */
 export function LanguageSwitcher({ className = "", onSwitch, fullWidth = false }: LanguageSwitcherProps) {
-  const { locale, switchLocale } = useLocale();
+  const { t, locale, switchLocale } = useLocale();
 
   return (
     // `className` sadece EKLENİYOR, taban `flex` düzenini ezmiyor —
@@ -42,6 +42,7 @@ export function LanguageSwitcher({ className = "", onSwitch, fullWidth = false }
             switchLocale(code);
             onSwitch?.(code);
           }}
+          aria-label={t(`lang.${code}`)}
           aria-pressed={locale === code}
           className={`relative px-4 py-2 text-xs font-black uppercase tracking-[0.2em] rounded-sm transition-all duration-300 ${
             fullWidth ? "flex-1 py-4" : ""
