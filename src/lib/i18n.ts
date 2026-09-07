@@ -1399,6 +1399,13 @@ const translations = {
   "gameSettings.cancel": { tr: "İPTAL", de: "ABBRECHEN", en: "CANCEL" },
 
   // ═══════════════════════════════════════════
+  // LANGUAGE LABELS (FOR ACCESSIBILITY)
+  // ═══════════════════════════════════════════
+  "lang.de": { tr: "Almanca", de: "Deutsch", en: "German" },
+  "lang.tr": { tr: "Türkçe", de: "Türkisch", en: "Turkish" },
+  "lang.en": { tr: "İngilizce", de: "Englisch", en: "English" },
+
+  // ═══════════════════════════════════════════
   // B2B MARKETING (PITCH PAGE)
   // ═══════════════════════════════════════════
   "b2b.heroTitle": { 
