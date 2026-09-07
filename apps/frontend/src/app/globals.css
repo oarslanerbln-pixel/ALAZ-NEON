@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+:root {
+  --background: #000000;
+  --foreground: #ffff00; /* High Contrast Yellow */
+  --interactive: #00ffff; /* High Contrast Cyan */
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px; /* Minimum 16px font size */
+}
+
+/* Base interactive elements */
+button, a {
+  color: var(--interactive);
+  border-color: var(--interactive);
+}
