@@ -1,0 +1,3 @@
+## 2026-09-08 - [Added ARIA Labels with Translation to Icon-Only Mute Buttons]
+**Learning:** When addressing accessibility for icon-only components (like mute buttons) in a multi-language application, adding `aria-label` attributes requires proper integration with the localization system (`i18n.ts` and `t()` function). Hardcoded text for screen readers undermines the i18n effort and harms the experience for international users relying on assistive technology.
+**Action:** Always verify that newly added accessibility attributes (such as `aria-label`, `alt`, `title`) reference the shared localization dictionary rather than hardcoded strings, ensuring all users receive accessibility features in their preferred language.
