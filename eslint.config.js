@@ -17,6 +17,7 @@ export default defineConfig([
     'src/**/*.d.ts.map',
     'test/**/*.js',
     'test/**/*.d.ts',
+    'apps/**',
   ]),
   {
     files: ['**/*.{ts,tsx}'],
