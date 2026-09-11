@@ -66,7 +66,7 @@ export function PlayerPlaying({
               className="space-y-3 origin-top"
             >
               <div className="flex items-center justify-between ml-2 mb-2">
-                <label className="text-xs text-hacker-green/80 font-black font-mono uppercase tracking-[0.3em]">
+                <label htmlFor={`input-${idx}`} className="text-xs text-hacker-green/80 font-black font-mono uppercase tracking-[0.3em]">
                   &gt; {idx + 1}. {cat}
                 </label>
                 <motion.button
@@ -89,6 +89,7 @@ export function PlayerPlaying({
               </div>
               <div className="relative group">
                 <input
+                  id={`input-${idx}`}
                   type="text"
                   value={answers[cat] || ""}
                   onChange={(e) => onAnswerChange(cat, e.target.value)}
