@@ -73,7 +73,7 @@ export function VenueSettings() {
     setPromoImages(venue.promo_images || []);
     setSponsorAds(venue.sponsor_ads || []);
     setWheelSlices(venue.wheel_slices || DEFAULT_VENUE_CONFIG.wheel_slices || []);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []);
 
   const addPromoImage = () => {

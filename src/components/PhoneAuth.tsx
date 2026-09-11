@@ -93,7 +93,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
         window.recaptchaVerifier = undefined;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []);
 
   const digits = normalizeDigits(phoneNumber);
