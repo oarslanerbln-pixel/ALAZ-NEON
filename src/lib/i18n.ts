@@ -13,6 +13,11 @@ const translations = {
   "common.returnToLobby": { tr: "LOBİYE DÖN", de: "ZUR LOBBY", en: "LOBBY" },
   "common.confirmReturnLobby": { tr: "Mevcut oyunu bitirip lobiye dönmek istiyor musunuz?", de: "Möchtest du das aktuelle Spiel beenden und zur Lobby zurückkehren?", en: "Do you want to end the game and return to lobby?" },
   "common.confirmExitHome": { tr: "Ana sayfaya dönmek istediğinizden emin misiniz?", de: "Möchtest du wirklich zur Startseite zurückkehren?", en: "Are you sure you want to return to home?" },
+  "common.confirmEndNight": {
+    tr: "Geceyi bitirip odayı kapatmak istediğinizden emin misiniz? Misafirler oyundan çıkarılacak.",
+    de: "Möchtest du den Abend beenden und den Raum schließen? Die Gäste werden aus dem Spiel entfernt.",
+    en: "End the night and close the room? Guests will be removed from the game.",
+  },
   "common.leaveGame": { tr: "AYRIL", de: "VERLASSEN", en: "LEAVE" },
   "common.confirmLeaveGame": { tr: "Oyundan ayrılmak istediğinizden emin misiniz?", de: "Bist du sicher, dass du das Spiel verlassen möchtest?", en: "Are you sure you want to leave the game?" },
   "common.cancel": { tr: "İPTAL", de: "ABBRECHEN", en: "CANCEL" },

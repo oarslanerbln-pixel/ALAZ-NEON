@@ -82,6 +82,13 @@ export interface Room {
    */
   created_at?: number;
   /**
+   * Host ekraninin son sinyali (epoch ms). TV tarayicisi 15 sn'de bir
+   * guncelliyor (bkz. useHostRoom). Oyuncu tarafi bu alana bakip "host
+   * cevrimdisi" uyarisi gosteriyor — onceden host kopunca oda sonsuza kadar
+   * donuk kaliyor, misafire hicbir aciklama cikmiyordu.
+   */
+  host_last_active?: number;
+  /**
    * Firestore TTL politikasinin baktigi alan — bu tarihten sonra dokuman
    * otomatik siliniyor (bkz. lib/retention.ts ve README). TTL yalnizca bu
    * alani TASIYAN dokumanlari siler; alan eklenmeden once yazilmis eski

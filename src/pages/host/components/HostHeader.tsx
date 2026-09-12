@@ -21,6 +21,8 @@ interface HostHeaderProps {
   onTriggerAdBreak?: () => void;
   onReturnToLobby?: () => void;
   onExitToHome?: () => void;
+  /** Çıkış onayı için gösterilecek çeviri anahtarı (varsayılan: ana sayfaya dönüş). */
+  exitConfirmKey?: "common.confirmExitHome" | "common.confirmEndNight";
 }
 
 export function HostHeader({
@@ -29,6 +31,7 @@ export function HostHeader({
   onTriggerAdBreak,
   onReturnToLobby,
   onExitToHome,
+  exitConfirmKey = "common.confirmExitHome",
 }: HostHeaderProps) {
   const { t } = useLocale();
   const navigate = useNavigate();
@@ -49,7 +52,7 @@ export function HostHeader({
 
   const handleExitHome = () => {
     SoundManager.getInstance().playSFX(sounds.CLICK);
-    if (window.confirm(t("common.confirmExitHome", "Ana sayfaya dönmek istediğinizden emin misiniz?"))) {
+    if (window.confirm(t(exitConfirmKey))) {
       if (onExitToHome) {
         onExitToHome();
       } else {
