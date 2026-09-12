@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #000000;
+  --color-foreground: #ffff00;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-size: 16px; /* Ensure 16px minimum */
+    min-height: 100vh;
+  }
+
+  /* Interactive Elements Cyan highlight for High Contrast Mode */
+  a, button, input, select, textarea {
+    color: #00ffff;
+  }
+
+  a:hover, button:hover, input:hover, select:hover, textarea:hover {
+    color: #ffff00;
+  }
+
+  .high-contrast-focus {
+    @apply focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400;
+  }
+}
