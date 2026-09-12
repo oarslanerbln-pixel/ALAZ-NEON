@@ -169,7 +169,7 @@ export function HostBarDisplay({ room, players, updateRoomStatus }: Props) {
                           style={{ backgroundColor: color }}
                         />
                         <span className="text-[10px] font-mono font-black text-white z-10 text-center leading-tight uppercase drop-shadow-md">
-                          {t(INGREDIENT_KEYS[color] as never) || t("bar.layer")}
+                          {INGREDIENT_KEYS[color] ? t(INGREDIENT_KEYS[color] as never) : t("bar.layer")}
                         </span>
                       </motion.div>
                     ))}

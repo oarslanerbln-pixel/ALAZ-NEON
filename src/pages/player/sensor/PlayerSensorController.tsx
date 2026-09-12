@@ -102,7 +102,7 @@ export function PlayerSensorController({ room, player }: Props) {
             SENSÖR
           </h2>
           <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">
-            {t("sensor.watchMainScreen" as never) || "Ana Ekranı Takip Edin"}
+            {t("common.followMainScreen")}
           </p>
         </div>
       );
@@ -252,7 +252,7 @@ export function PlayerSensorController({ room, player }: Props) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 z-10 text-center">
         <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">{t("game.loading" as never) || "YÜKLENİYOR..."}</p>
+        <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">{t("common.loading")}</p>
       </div>
     );
   };
