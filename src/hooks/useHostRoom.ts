@@ -26,6 +26,29 @@ export function useHostRoom(roomId: string | null) {
     setNotFound(!roomId);
   }
 
+  /**
+   * Host canlılık sinyali.
+   *
+   * TV tarayıcısı kapanır ya da çökerse oda sonsuza kadar donuk kalıyor,
+   * misafirlerin telefonunda hiçbir açıklama çıkmıyordu. Oyuncu tarafında
+   * 15 sn'lik aynı sinyal zaten vardı (bkz. PlayerGame); host tarafında
+   * hiç yoktu. Okuyan taraf: lib/liveness.ts → isHostOnline().
+   *
+   * Bu hook yalnızca host ekranlarında kullanılıyor (HostDisplay /
+   * HostDisplayClassic), yani sinyali gerçekten TV atıyor.
+   */
+  useEffect(() => {
+    if (!roomId) return;
+    const roomRef = doc(db, "rooms", roomId);
+    const ping = () => {
+      updateDoc(roomRef, { host_last_active: Date.now() }).catch(() => {});
+    };
+
+    ping(); // Ekran açılır açılmaz
+    const interval = setInterval(ping, 15000);
+    return () => clearInterval(interval);
+  }, [roomId]);
+
   useEffect(() => {
     if (!roomId) return;
 

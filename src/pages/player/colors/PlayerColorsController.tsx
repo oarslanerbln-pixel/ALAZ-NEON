@@ -4,6 +4,7 @@ import type { Room, Player } from "../../../types/database";
 import { db } from "../../../lib/firebase";
 import { doc, increment, updateDoc } from "firebase/firestore";
 import { haptics } from "../../../lib/haptics";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface Props {
   room: Room;
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function PlayerColorsController({ room, player }: Props) {
+  const { t } = useLocale();
   const [localClicks, setLocalClicks] = useState(0);
   const pendingClicksRef = useRef(0);
   const isFlushingRef = useRef(false);
@@ -72,7 +74,7 @@ export function PlayerColorsController({ room, player }: Props) {
           >
             <span className="text-7xl mb-4 animate-bounce">{team === "red" ? "🔴" : "🔵"}</span>
             <h2 className="text-white/80 font-mono text-sm uppercase tracking-widest mb-2">
-              TAKIMIN BELİRLENDİ
+              {t("colors.teamAssigned")}
             </h2>
             <motion.div 
               initial={{ scale: 0 }}
@@ -80,10 +82,10 @@ export function PlayerColorsController({ room, player }: Props) {
               transition={{ type: "spring", bounce: 0.5 }}
             >
               <div className="text-5xl md:text-6xl font-black uppercase tracking-widest text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.9)] mb-4">
-                {team === "red" ? "KIRMIZI TAKIM" : "MAVİ TAKIM"}
+                {team === "red" ? t("spectrum.redTeam") : t("spectrum.blueTeam")}
               </div>
               <p className="text-white/90 font-mono text-xs uppercase tracking-widest bg-black/30 px-6 py-2 rounded-full border border-white/20 inline-block">
-                Tüm parmaklarınla olabildiğince hızlı tıkla!
+                {t("colors.tapFast")}
               </p>
             </motion.div>
           </motion.div>
@@ -114,7 +116,7 @@ export function PlayerColorsController({ room, player }: Props) {
               
               <div className="mt-6 bg-black/40 border border-white/20 px-8 py-3 rounded-3xl backdrop-blur-md pointer-events-none">
                 <span className="text-xs font-mono text-white/70 uppercase tracking-widest block text-center">
-                  SENİN TIK SAYIN
+                  {t("colors.yourTapCount")}
                 </span>
                 <span className="text-4xl font-black text-white block text-center mt-1">
                   {localClicks}
@@ -134,10 +136,10 @@ export function PlayerColorsController({ room, player }: Props) {
           >
             <span className="text-8xl mb-4">🏁</span>
             <h2 className="text-4xl font-black text-white uppercase tracking-wider mb-2">
-              SAVAŞ TAMAMLANDI!
+              {t("colors.battleOver")}
             </h2>
             <p className="text-white/80 font-mono text-sm uppercase tracking-widest mb-8">
-              Sonuçlar TV Ekranında!
+              {t("colors.resultsOnTV")}
             </p>
             <div className="bg-black/40 border border-white/20 p-6 rounded-2xl backdrop-blur-md">
               <span className="text-xs font-mono text-gray-300 uppercase block mb-1">TOPLAM KATKIN:</span>

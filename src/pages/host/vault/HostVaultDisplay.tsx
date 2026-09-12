@@ -123,10 +123,10 @@ export function HostVaultDisplay({ room, players, updateRoomStatus }: Props) {
               >
                 <NeonIcon type="flame" color="green" className="w-32 h-32 mb-8 animate-pulse" />
                 <h1 className="text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-emerald-400 to-teal-600 uppercase tracking-widest drop-shadow-[0_0_30px_rgba(16,185,129,0.5)]">
-                  {t("host.vaultIntroTitle", "NEON ŞİFRE")}
+                  {t("host.vaultIntroTitle")}
                 </h1>
                 <p className="text-white/50 text-2xl mt-4 uppercase tracking-[0.5em]">
-                  {t("host.vaultIntroDesc", "KASAYI İLK AÇAN KAZANIR")}
+                  {t("host.vaultIntroDesc")}
                 </p>
               </motion.div>
             )}
@@ -152,7 +152,7 @@ export function HostVaultDisplay({ room, players, updateRoomStatus }: Props) {
                     </div>
                   </motion.div>
                   <h2 className="text-3xl font-black text-emerald-400 mt-8 tracking-widest uppercase">
-                    ŞİFREYİ ÇÖZ!
+                    {t("vault.crackItBang")}
                   </h2>
                 </div>
 
@@ -200,10 +200,10 @@ export function HostVaultDisplay({ room, players, updateRoomStatus }: Props) {
               >
                 <NeonIcon type="unlock" color="green" className="w-40 h-40 mb-8 drop-shadow-[0_0_50px_rgba(16,185,129,0.8)]" />
                 <h2 className="text-4xl text-emerald-400 font-black tracking-widest uppercase mb-4">
-                  KASA AÇILDI!
+                  {t("vault.opened")}
                 </h2>
                 <h1 className="text-8xl text-white font-black uppercase drop-shadow-[0_0_30px_rgba(255,255,255,0.5)] mb-8">
-                  {winner?.nickname || "BİLİNMİYOR"}
+                  {winner?.nickname || t("bar.unknown")}
                 </h1>
                 <p className="text-3xl font-mono text-emerald-400 bg-emerald-400/10 px-8 py-4 rounded-xl border border-emerald-400/30">
                   ŞİFRE: {room.vault_code}
@@ -212,7 +212,7 @@ export function HostVaultDisplay({ room, players, updateRoomStatus }: Props) {
                   onClick={() => updateRoomStatus("lobby", { active_game: "none", vault_winner_id: null, vault_code: "" })}
                   className="mt-16 px-12 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-black rounded-full uppercase tracking-widest transition-colors shadow-[0_0_30px_rgba(16,185,129,0.4)]"
                 >
-                  Lobiye Dön
+                  {t("common.backToLobby")}
                 </button>
               </motion.div>
             )}

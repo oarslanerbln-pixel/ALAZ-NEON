@@ -5,6 +5,7 @@ import { collection, addDoc, doc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { retentionExpiry } from "../../lib/retention";
 import { NeonIcon } from "../../components/NeonIcon";
+import { HostOfflineBanner } from "../../components/HostOfflineBanner";
 import { DatabaseStatus } from "../../components/DatabaseStatus";
 import { useToast } from "../../contexts/ToastContextCore";
 import { sounds, SoundManager } from "../../lib/audio";
@@ -236,9 +237,18 @@ export function PlayerGame() {
   const activeGameComponent = renderGame();
   if (activeGameComponent) {
     return (
-      <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-black"><span className="text-white animate-pulse">Yükleniyor...</span></div>}>
-        {activeGameComponent}
-      </Suspense>
+      <>
+        <HostOfflineBanner room={room} />
+        <Suspense
+          fallback={
+            <div className="flex-1 flex items-center justify-center bg-black">
+              <span className="text-white animate-pulse">{t("common.loadingDots")}</span>
+            </div>
+          }
+        >
+          {activeGameComponent}
+        </Suspense>
+      </>
     );
   }
 
@@ -266,6 +276,8 @@ export function PlayerGame() {
   }
 
   return (
+    <>
+    <HostOfflineBanner room={room} />
     <div 
       className="min-h-[100dvh] bg-black/60 flex flex-col text-white relative overflow-hidden font-inter transition-colors duration-500"
       data-tension={timeLeft <= 10 && timeLeft > 0 && gameState === "playing" ? "high" : undefined}
@@ -383,6 +395,7 @@ export function PlayerGame() {
 
       <DatabaseStatus />
     </div>
+  </>
   );
 }
 

@@ -8,6 +8,7 @@ import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { grantRewardToPlayers } from "../../../lib/rewards";
 import { useVenue } from "../../../contexts/VenueContextCore";
+import { activePlayers as activePlayersOf } from "../../../lib/liveness";
 
 interface HostOverloadDisplayProps {
   room: Room;
@@ -22,9 +23,18 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
   const { venue } = useVenue();
   const hasGrantedReward = useRef(false);
 
-  // Active players (not eliminated)
-  const activePlayers = useMemo(() => {
-    return players.filter(p => !(room.overload_eliminated_ids || []).includes(p.id));
+  /**
+   * Sirasi gelebilecek oyuncular: elenmemis VE hala sinyal gonderen.
+   *
+   * Onceden yalnizca elenme kontrolu vardi; telefonu cebine koyup giden
+   * misafire voltaj geciyor ve tur, sure dolana kadar kilitleniyordu.
+   * Oyuncu tarafi bu filtreyi zaten uyguluyordu ama hedefi HOST seciyor.
+   */
+  const eligiblePlayers = useMemo(() => {
+    const notEliminated = players.filter(
+      (p) => !(room.overload_eliminated_ids || []).includes(p.id),
+    );
+    return activePlayersOf(notEliminated);
   }, [players, room.overload_eliminated_ids]);
 
   const targetPlayer = useMemo(() => {
@@ -33,11 +43,11 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
 
   // Host Logic (Server Authoritative)
   useEffect(() => {
-    if (activePlayers.length === 0) return;
+    if (eligiblePlayers.length === 0) return;
 
-    if (!room.overload_target_id || room.overload_target_id === "passing" || !activePlayers.find(p => p.id === room.overload_target_id)) {
-      const candidates = activePlayers.filter(p => p.id !== room.overload_last_target_id);
-      const pool = candidates.length > 0 ? candidates : activePlayers;
+    if (!room.overload_target_id || room.overload_target_id === "passing" || !eligiblePlayers.find(p => p.id === room.overload_target_id)) {
+      const candidates = eligiblePlayers.filter(p => p.id !== room.overload_last_target_id);
+      const pool = candidates.length > 0 ? candidates : eligiblePlayers;
       const nextTarget = pool[Math.floor(Math.random() * pool.length)];
 
       let newTimeAllowed = room.overload_time_allowed || 10;
@@ -57,7 +67,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
     }
 
     // Win condition (1 survivor)
-    if (activePlayers.length === 1 && (room.overload_eliminated_ids?.length || 0) > 0 && room.status !== "finished") {
+    if (eligiblePlayers.length === 1 && (room.overload_eliminated_ids?.length || 0) > 0 && room.status !== "finished") {
       SoundManager.getInstance().playSFX(sounds.FANFARE);
       updateRoomStatus("finished");
       return;
@@ -99,12 +109,12 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
     }, 100);
 
     return () => clearInterval(interval);
-  }, [room.overload_target_id, room.overload_last_target_id, room.status, room.overload_start_time, room.overload_time_allowed, activePlayers, isExploding, updateRoomStatus, room.overload_eliminated_ids]);
+  }, [room.overload_target_id, room.overload_last_target_id, room.status, room.overload_start_time, room.overload_time_allowed, eligiblePlayers, isExploding, updateRoomStatus, room.overload_eliminated_ids]);
 
   // Give reward to champion
   useEffect(() => {
-    if (activePlayers.length !== 1 || hasGrantedReward.current) return;
-    const champion = activePlayers[0];
+    if (eligiblePlayers.length !== 1 || hasGrantedReward.current) return;
+    const champion = eligiblePlayers[0];
     if (!champion?.uid) return;
     hasGrantedReward.current = true;
     grantRewardToPlayers(
@@ -113,7 +123,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
     ).catch((err) =>
       console.error("[HostOverloadDisplay] Ödül dağıtımı başarısız:", err),
     );
-  }, [activePlayers, venue]);
+  }, [eligiblePlayers, venue]);
 
   return (
     <TVScaleFrame>
@@ -142,7 +152,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
             <div className="flex items-center gap-2">
               <span className="text-2xl animate-pulse">⚡</span>
               <span className="text-cyan-400 font-mono font-black tracking-[0.3em] uppercase text-xl">
-                AŞIRI YÜKLEME (OVERLOAD)
+                {t("overload.title")}
               </span>
             </div>
             
@@ -183,7 +193,8 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
                 room={room}
                 players={players}
                 onStartGame={async () => {
-                  const nextTarget = players[Math.floor(Math.random() * players.length)];
+                  const pool = activePlayersOf(players);
+                  const nextTarget = pool[Math.floor(Math.random() * pool.length)];
                   await updateRoomStatus("playing", {
                     overload_target_id: nextTarget?.id || null,
                     overload_start_time: Date.now(),
@@ -202,16 +213,16 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
             >
               <span className="text-8xl mb-4 animate-bounce">👑</span>
               <h1 className="text-4xl text-cyan-400 font-mono font-black uppercase tracking-widest mb-2">
-                HAYATTA KALAN ŞAMPİYON
+                {t("overload.survivor")}
               </h1>
               <h2 className="text-7xl md:text-8xl text-white font-black uppercase drop-shadow-[0_0_40px_rgba(0,255,255,0.9)] mb-10">
-                {activePlayers[0]?.nickname || "KAZANAN"}
+                {eligiblePlayers[0]?.nickname || "KAZANAN"}
               </h2>
               <button
                 onClick={() => updateRoomStatus("lobby", { active_game: "none", overload_eliminated_ids: [], overload_target_id: null })}
                 className="px-10 py-5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:brightness-110 text-black font-black uppercase tracking-widest text-xl rounded-2xl transition-all shadow-[0_0_40px_rgba(0,255,255,0.5)] transform active:scale-95"
               >
-                {t("quiz.finishGame", "OYUNU BİTİR")}
+                {t("quiz.finishGame")}
               </button>
             </motion.div>
           ) : isExploding ? (
@@ -225,7 +236,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
               <div className="w-[800px] h-[800px] bg-red-600 rounded-full blur-[120px]" />
               <span className="text-9xl mb-4">💥</span>
               <h1 className="text-8xl md:text-9xl font-black text-white uppercase drop-shadow-[0_0_40px_rgba(255,0,0,1)] tracking-widest">
-                AŞIRI YÜKLENDİ!
+                {t("overload.overloaded")}
               </h1>
             </motion.div>
           ) : (
@@ -244,7 +255,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
                   className="flex flex-col items-center text-center mb-6"
                 >
                   <span className="text-red-500 text-sm font-mono font-bold tracking-[0.5em] mb-1 animate-pulse">
-                    ⚡ VOLTAJ KİMDE:
+                    ⚡ {t("overload.whoHasVoltage")}
                   </span>
                   <h1 className="text-6xl md:text-8xl font-black text-white uppercase tracking-tight drop-shadow-[0_0_30px_rgba(255,0,0,0.8)]">
                     {targetPlayer.nickname}

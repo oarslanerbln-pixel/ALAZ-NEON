@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
+import { useNavigate } from "react-router-dom";
 
 import { SoundManager, sounds } from "../../../lib/audio";
 import { NeonIcon } from "../../../components/NeonIcon";
@@ -14,6 +15,7 @@ import { db } from "../../../lib/firebase";
 import { getRandomSensorImage } from "../../../data/sensorImages";
 import { GameSettingsModal } from "../components/GameSettingsModal";
 import { GAME_CARDS as GAMES } from "../../../lib/gameCatalog";
+import { activePlayers as activePlayersOf } from "../../../lib/liveness";
 import { useLocale } from "../../../hooks/useLocale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useVenue } from "../../../contexts/VenueContextCore";
@@ -28,6 +30,7 @@ interface HostDashboardProps {
 }
 
 export function HostDashboard({ room, players, updateRoomStatus }: HostDashboardProps) {
+  const navigate = useNavigate();
   const { t } = useLocale();
   const { venue } = useVenue();
   const [isKioskMode, setIsKioskMode] = useState(false);
@@ -56,6 +59,26 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     }, 5000);
     return () => clearInterval(interval);
   }, [isKioskMode, venue.promo_images]);
+
+  /**
+   * Geceyi bitirir: odayı "closed" durumuna alır ve ana sayfaya döner.
+   *
+   * "closed" durumu ve oyuncu tarafındaki kapanış ekranı (PlayerGame,
+   * `game.roomClosed`) baştan yazılmıştı ama hiçbir yerde tetiklenmiyordu —
+   * kod tabanında tek bir yazma yoktu. Yani odaların bir sonu yoktu:
+   * misafirlerin telefonu gece bitince de açık kalıyor, oda sonsuza kadar
+   * "canlı" görünüyordu (oda kodu tahsisi de bundan etkileniyordu,
+   * bkz. lib/roomCodes.ts).
+   */
+  const endNight = async () => {
+    try {
+      await updateRoomStatus("closed", { active_game: "none" });
+    } catch (err) {
+      console.error("[HostDashboard] Oda kapatılamadı:", err);
+    } finally {
+      navigate("/");
+    }
+  };
 
   const handleStartGame = (game: GameType) => {
     setSetupGameMode(game);
@@ -88,7 +111,11 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     }
     
     if (game === "bomb") {
-      const activePlayers = players.filter(p => (p.lives === undefined ? 3 : p.lives) > 0);
+      // Canı olan VE hâlâ sinyal gönderen oyuncular: bomba, telefonu cebine
+      // koyup gitmiş bir misafire verilirse tur süre dolana kadar kilitlenir.
+      const activePlayers = activePlayersOf(
+        players.filter((p) => (p.lives === undefined ? 3 : p.lives) > 0),
+      );
       const randomPlayer = activePlayers.length > 0 ? activePlayers[Math.floor(Math.random() * activePlayers.length)] : null;
       const availableCategories = settings?.categories || room.categories || [];
       const randomCategory = availableCategories.length > 0 ? availableCategories[Math.floor(Math.random() * availableCategories.length)] : "GENEL";
@@ -230,6 +257,8 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       <div className="p-6 md:p-10 flex flex-col h-full relative z-10">
         <HostHeader
           room={room}
+          exitConfirmKey="common.confirmEndNight"
+          onExitToHome={endNight}
         />
 
         <div className="flex-1 mt-4 w-full max-w-[1600px] mx-auto px-4 grid grid-cols-1 lg:grid-cols-4 gap-4">

@@ -11,21 +11,26 @@ interface Props {
   updateRoomStatus: (status: Room["status"], updates?: Partial<Room>) => Promise<void>;
 }
 
-const PREMIUM_QUESTIONS = [
-  "Bir zombi istilasında ilk kim yem olur?",
-  "En kötü eski sevgiliye sahip olan kim?",
-  "En çok 'Yarın diyete başlıyorum' diyen kim?",
-  "Mekandaki en iyi giyinen kişi kim?",
-  "Gizli bir ajan olma ihtimali en yüksek kim?",
-  "Issız adaya düşse ilk kimi yer?",
-];
+/**
+ * Soru metni değil ÇEVİRİ ANAHTARI saklanıyor.
+ *
+ * Oda dokümanına düz metin yazılsaydı dil, soruyu seçen host'un diline
+ * sabitlenirdi; oysa oyuncular kendi telefonlarında kendi dillerini
+ * seçebiliyor (bkz. PlayerJoin). Anahtar saklandığında herkes soruyu kendi
+ * dilinde görüyor. Eski odalarda düz metin durabilir — okuyan taraf
+ * (echoQuestionText) iki biçimi de karşılıyor.
+ */
+const PREMIUM_QUESTION_KEYS = [
+  "echo.q1", "echo.q2", "echo.q3", "echo.q4", "echo.q5", "echo.q6",
+] as const;
 
 export function HostEchoDisplay({ room, players, updateRoomStatus }: Props) {
   // If we are in lobby and starting the game
   useEffect(() => {
     if (room.status === "lobby" || room.status === "echo_intro") {
       if (!room.echo_question) {
-        const randomQ = PREMIUM_QUESTIONS[Math.floor(Math.random() * PREMIUM_QUESTIONS.length)];
+        const randomQ =
+          PREMIUM_QUESTION_KEYS[Math.floor(Math.random() * PREMIUM_QUESTION_KEYS.length)];
         updateRoomStatus("echo_intro", { echo_question: randomQ, echo_votes: {} });
       } else if (room.status !== "echo_intro") {
         updateRoomStatus("echo_intro");

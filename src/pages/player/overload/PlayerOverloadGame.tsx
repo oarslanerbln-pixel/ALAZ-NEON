@@ -5,6 +5,7 @@ import { updateDoc, doc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { haptics } from "../../../lib/haptics";
 import { SoundManager, sounds } from "../../../lib/audio";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface PlayerOverloadGameProps {
   room: Room;
@@ -12,6 +13,7 @@ interface PlayerOverloadGameProps {
 }
 
 export function PlayerOverloadGame({ room, player }: PlayerOverloadGameProps) {
+  const { t } = useLocale();
   const [isDeflecting, setIsDeflecting] = useState(false);
 
   const isTarget = room.overload_target_id === player.id;
@@ -47,9 +49,9 @@ export function PlayerOverloadGame({ room, player }: PlayerOverloadGameProps) {
       <div className="w-full h-[100dvh] flex flex-col items-center justify-center bg-[#05000a] text-white p-6 text-center font-sans">
         <div className="text-7xl mb-4 animate-bounce">⚡</div>
         <h2 className="text-2xl font-black text-cyan-400 mb-2 uppercase tracking-[0.3em]">
-          AŞIRI YÜKLEME (OVERLOAD)
+          {t("overload.title")}
         </h2>
-        <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">Ana ekranı takip edin</p>
+        <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">{t("common.followMainScreen")}</p>
       </div>
     );
   }
@@ -60,10 +62,10 @@ export function PlayerOverloadGame({ room, player }: PlayerOverloadGameProps) {
       <div className={`w-full h-[100dvh] flex flex-col items-center justify-center font-sans text-center px-6 transition-colors duration-500 ${isWinner ? 'bg-emerald-950' : 'bg-red-950'} text-white`}>
         <span className="text-8xl mb-4">{isWinner ? "👑" : "💀"}</span>
         <h2 className={`text-4xl font-black mb-3 uppercase tracking-wider ${isWinner ? 'text-emerald-400' : 'text-red-400'}`}>
-          {isWinner ? "ŞAMPİYON!" : "OYUN BİTTİ"}
+          {isWinner ? t("overload.champion") : t("overload.gameOver")}
         </h2>
         <p className="text-gray-300 font-mono text-xs uppercase tracking-widest">
-          Sonuçlar ekranda!
+          {t("overload.resultsOnScreen")}
         </p>
       </div>
     );
@@ -74,9 +76,9 @@ export function PlayerOverloadGame({ room, player }: PlayerOverloadGameProps) {
       <div className="w-full h-[100dvh] bg-[#1a0005] flex flex-col items-center justify-center font-sans text-white p-6 text-center">
         <span className="text-7xl mb-4 grayscale">💀</span>
         <h1 className="text-3xl font-black text-red-500 uppercase tracking-widest mb-2">
-          AŞIRI YÜKLENDİN!
+          {t("overload.youOverloaded")}
         </h1>
-        <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">Hayatta kalanları izle</p>
+        <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">{t("overload.watchSurvivors")}</p>
       </div>
     );
   }
@@ -111,11 +113,11 @@ export function PlayerOverloadGame({ room, player }: PlayerOverloadGameProps) {
                 className="w-64 h-64 rounded-full bg-gradient-to-b from-red-500 to-amber-600 border-4 border-white text-white font-black text-3xl uppercase tracking-wider shadow-[0_0_80px_rgba(239,68,68,0.9)] active:brightness-125 transition-all flex flex-col items-center justify-center"
               >
                 <span className="text-5xl mb-2">⚡</span>
-                <span>SAVUŞTUR!</span>
+                <span>{t("overload.deflect")}</span>
               </motion.button>
               
               <p className="mt-8 text-red-200 font-mono text-xs font-bold uppercase tracking-widest animate-pulse">
-                DOKUN VE HEMEN PASLA!
+                {t("overload.tapAndPass")}
               </p>
             </motion.div>
           ) : (
@@ -131,17 +133,17 @@ export function PlayerOverloadGame({ room, player }: PlayerOverloadGameProps) {
               </div>
               
               <h2 className="text-cyan-300 font-black text-2xl tracking-widest mb-2 uppercase">
-                GÜVENDESİN
+                {t("overload.youAreSafe")}
               </h2>
               <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">
-                Sıradaki kurbana odaklan
+                {t("overload.focusNext")}
               </p>
             </motion.div>
           )
         ) : (
           <div className="flex flex-col items-center justify-center">
             <div className="w-12 h-12 rounded-full border-4 border-cyan-400 border-t-transparent animate-spin mb-4" />
-            <p className="text-cyan-400 font-mono text-xs uppercase tracking-widest">YÜKLENİYOR...</p>
+            <p className="text-cyan-400 font-mono text-xs uppercase tracking-widest">{t("common.loading")}</p>
           </div>
         )}
       </AnimatePresence>

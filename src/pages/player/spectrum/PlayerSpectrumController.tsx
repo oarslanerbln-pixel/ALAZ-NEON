@@ -71,7 +71,7 @@ export function PlayerSpectrumController({ room, player }: Props) {
       `}>
         <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay" />
         <h2 className="text-3xl font-black text-white mb-4 uppercase tracking-widest z-10 drop-shadow-lg">
-          TAKIMIN BELLİ OLDU
+          {t("spectrum.teamSet")}
         </h2>
         <div className={`w-32 h-32 rounded-full flex items-center justify-center z-10 border-4 shadow-2xl mb-6
           ${isRed ? "border-[#ff003c] bg-[#ff003c]/30 shadow-[#ff003c]/50" : "border-neon-blue bg-neon-blue/30 shadow-neon-blue/50"}
@@ -81,10 +81,10 @@ export function PlayerSpectrumController({ room, player }: Props) {
         <h1 className={`text-4xl font-black uppercase tracking-widest z-10
           ${isRed ? "text-[#ff003c]" : "text-neon-blue"}
         `}>
-          {isRed ? "KIRMIZI TAKIM" : "MAVİ TAKIM"}
+          {isRed ? t("spectrum.redTeam") : t("spectrum.blueTeam")}
         </h1>
         <p className="mt-8 text-white/50 uppercase tracking-widest font-bold z-10 animate-pulse">
-          TV Ekranını Bekle
+          {t("spectrum.waitTV")}
         </p>
       </div>
     );
@@ -119,7 +119,7 @@ export function PlayerSpectrumController({ room, player }: Props) {
             </>
           ) : (
             <h1 className="text-4xl font-black text-white/30 uppercase tracking-widest">
-              KAYBETTİNİZ
+              {t("spectrum.youLostCaps")}
             </h1>
           )}
         </motion.div>

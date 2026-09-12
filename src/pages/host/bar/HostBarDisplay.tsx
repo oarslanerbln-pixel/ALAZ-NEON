@@ -14,12 +14,18 @@ interface Props {
 }
 
 const COLORS = ["#ff0055", "#00e5ff", "#aeff00", "#ffaa00", "#b700ff"];
-const INGREDIENT_NAMES: Record<string, string> = {
-  "#ff0055": "ÇİLEK LİKÖRÜ",
-  "#00e5ff": "BLUE CURAÇAO",
-  "#aeff00": "LIME & MİNT",
-  "#ffaa00": "PORTAKAL C",
-  "#b700ff": "VİYOLA ŞURUP"
+/**
+ * Malzeme etiketleri çeviri anahtarı (modül seviyesinde t() çağrılamaz).
+ * İçerikler kafe konumlandırmasına uygun şekilde alkolsüz: likör ve curaçao
+ * yerine şurup/limonata/meyve suyu — bkz. commit c688924, alkol
+ * referanslarının temizliği; bar modu o geçişte atlanmıştı.
+ */
+const INGREDIENT_KEYS: Record<string, string> = {
+  "#ff0055": "bar.ing.strawberry",
+  "#00e5ff": "bar.ing.blue",
+  "#aeff00": "bar.ing.lime",
+  "#ffaa00": "bar.ing.orange",
+  "#b700ff": "bar.ing.violet"
 };
 
 export function HostBarDisplay({ room, players, updateRoomStatus }: Props) {
@@ -130,7 +136,7 @@ export function HostBarDisplay({ room, players, updateRoomStatus }: Props) {
                 {/* Header: Timer */}
                 <div className="flex items-center gap-3 bg-black/60 border border-cyan-500/40 px-8 py-3 rounded-full backdrop-blur-md shadow-[0_0_25px_rgba(0,229,255,0.3)]">
                   <span className="text-cyan-400 font-mono text-sm uppercase tracking-widest font-bold">
-                    KOKTEYL SERVİS SÜRESİ:
+                    {t("bar.serviceTime")}
                   </span>
                   <span className="text-4xl font-black text-cyan-300 font-mono">
                     00:{timeLeft.toString().padStart(2, "0")}
@@ -140,7 +146,7 @@ export function HostBarDisplay({ room, players, updateRoomStatus }: Props) {
                 {/* Main Recipe Glass Presentation */}
                 <div className="flex flex-col items-center justify-center my-auto">
                   <span className="text-xs font-mono uppercase tracking-[0.4em] text-pink-400 font-bold mb-4">
-                    🎯 İSTENEN KOKTEYL TARİFİ (4 KATMAN)
+                    🎯 {t("bar.hostRecipe")}
                   </span>
                   
                   <div className="flex gap-4 p-8 bg-black/70 rounded-3xl border-2 border-white/20 shadow-[0_0_50px_rgba(255,0,128,0.3)] backdrop-blur-xl">
@@ -163,7 +169,7 @@ export function HostBarDisplay({ room, players, updateRoomStatus }: Props) {
                           style={{ backgroundColor: color }}
                         />
                         <span className="text-[10px] font-mono font-black text-white z-10 text-center leading-tight uppercase drop-shadow-md">
-                          {INGREDIENT_NAMES[color] || "KATMAN"}
+                          {INGREDIENT_KEYS[color] ? t(INGREDIENT_KEYS[color] as never) : t("bar.layer")}
                         </span>
                       </motion.div>
                     ))}
@@ -206,11 +212,11 @@ export function HostBarDisplay({ room, players, updateRoomStatus }: Props) {
                 
                 <span className="text-8xl mb-4 animate-bounce">🏆</span>
                 <h1 className="text-5xl md:text-6xl font-black uppercase text-amber-400 mb-2 drop-shadow-[0_0_30px_rgba(245,158,11,0.8)]">
-                  GECENİN BAŞ BARMENİ!
+                  {t("bar.topBarista")}
                 </h1>
                 
                 <h2 className="text-6xl md:text-7xl font-black text-white uppercase tracking-wider mb-8 drop-shadow-lg">
-                  {topPlayers[0]?.nickname || "BİLİNMİYOR"} ({topPlayers[0]?.bar_score || 0} Kokteyl)
+                  {topPlayers[0]?.nickname || t("bar.unknown")} ({topPlayers[0]?.bar_score || 0} Kokteyl)
                 </h2>
 
                 <button

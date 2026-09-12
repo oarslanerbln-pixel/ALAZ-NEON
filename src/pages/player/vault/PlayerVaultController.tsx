@@ -169,7 +169,7 @@ export function PlayerVaultController({ room, player }: Props) {
             onClick={() => handleKeyPress("DEL")}
             className="aspect-square bg-red-500/20 hover:bg-red-500/30 active:bg-red-500/40 rounded-2xl flex items-center justify-center text-xl font-bold text-red-400 transition-colors"
           >
-            SİL
+            {t("vault.delete")}
           </button>
         </div>
         
@@ -184,8 +184,8 @@ export function PlayerVaultController({ room, player }: Props) {
       
       {hasWon && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 backdrop-blur-md">
-          <h1 className="text-6xl text-emerald-400 font-black animate-pulse">BAŞARILI!</h1>
-          <p className="text-white mt-4">Kasa kırıldı. TV ekranına bak!</p>
+          <h1 className="text-6xl text-emerald-400 font-black animate-pulse">{t("vault.success")}</h1>
+          <p className="text-white mt-4">{t("vault.successDesc")}</p>
         </div>
       )}
     </div>

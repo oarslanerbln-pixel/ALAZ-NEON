@@ -6,6 +6,7 @@ import { SoundManager, sounds } from "../../../lib/audio";
 import { useVenue } from "../../../contexts/VenueContextCore";
 import { DEFAULT_VENUE_CONFIG, type Room, type Player } from "../../../types/database";
 import { haptics } from "../../../lib/haptics";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface Props {
   room: Room;
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function PlayerWheelController({ room, player }: Props) {
+  const { t } = useLocale();
   const { venue } = useVenue();
   const slices = venue.wheel_slices?.length ? venue.wheel_slices : DEFAULT_VENUE_CONFIG.wheel_slices!;
   const [isSpinning, setIsSpinning] = useState(false);
@@ -71,9 +73,9 @@ export function PlayerWheelController({ room, player }: Props) {
               exit={{ opacity: 0, y: -15 }}
               className="text-center"
             >
-              <h2 className="text-2xl font-black uppercase tracking-widest text-amber-400 mb-2">ÇARKIFELEK</h2>
+              <h2 className="text-2xl font-black uppercase tracking-widest text-amber-400 mb-2">{t("wheel.title")}</h2>
               <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">
-                Oyunun başlamasını bekliyoruz. Ana ekranı takip edin.
+                {t("wheel.waitingRoom")}
               </p>
             </motion.div>
           )}
@@ -87,10 +89,10 @@ export function PlayerWheelController({ room, player }: Props) {
               className="text-center bg-black/50 border border-white/10 p-6 rounded-3xl backdrop-blur-md"
             >
               <h2 className="text-xl font-black uppercase tracking-wider text-amber-400 mb-2">
-                ŞANS ÇARKI
+                {t("wheel.hostTitle")}
               </h2>
               <p className="text-gray-300 font-mono text-xs">
-                TV ekranına bak! Şanslı masa birazdan seçilecek...
+                {t("wheel.watchTVSoon")}
               </p>
             </motion.div>
           )}
@@ -105,10 +107,10 @@ export function PlayerWheelController({ room, player }: Props) {
             >
               <span className="text-5xl mb-2 block">👀</span>
               <h2 className="text-xl font-black uppercase tracking-wider text-white mb-2">
-                Sıra Başka Masada!
+                {t("wheel.otherTable")}
               </h2>
               <p className="text-gray-400 font-mono text-xs">
-                Çarkın dönüşünü TV ekranından izle!
+                {t("wheel.watchOnTV")}
               </p>
             </motion.div>
           )}
@@ -123,7 +125,7 @@ export function PlayerWheelController({ room, player }: Props) {
             >
               <div className="bg-amber-500/20 border-2 border-amber-400 px-6 py-2 rounded-full mb-6">
                 <span className="text-amber-300 font-black text-sm uppercase tracking-widest animate-pulse">
-                  ⭐ ŞANSLI SEÇİLDİN! ⭐
+                  ⭐ {t("wheel.youWereChosen")} ⭐
                 </span>
               </div>
 
@@ -134,11 +136,11 @@ export function PlayerWheelController({ room, player }: Props) {
                 className="w-64 h-64 rounded-full bg-gradient-to-tr from-amber-600 to-yellow-400 border-4 border-white text-black font-black text-3xl uppercase tracking-wider shadow-[0_0_80px_rgba(255,215,0,0.8)] active:brightness-125 transition-all flex flex-col items-center justify-center"
               >
                 <span className="text-5xl mb-2">🎰</span>
-                <span>ÇEVİR!</span>
+                <span>{t("wheel.spin")}!</span>
               </motion.button>
 
               <p className="text-amber-200/80 font-mono text-xs mt-6 text-center">
-                Dokun ve çarkı tüm gücünle döndür!
+                {t("wheel.tapToSpin")}
               </p>
             </motion.div>
           )}
@@ -153,9 +155,9 @@ export function PlayerWheelController({ room, player }: Props) {
             >
               <div className="w-16 h-16 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
               <h2 className="text-2xl font-black uppercase tracking-wider text-amber-400 mb-1">
-                ÇARK DÖNÜYOR...
+                {t("wheel.spinning")}
               </h2>
-              <p className="text-gray-400 font-mono text-xs">Nefesler tutuldu!</p>
+              <p className="text-gray-400 font-mono text-xs">{t("wheel.heldBreath")}</p>
             </motion.div>
           )}
 
@@ -169,7 +171,7 @@ export function PlayerWheelController({ room, player }: Props) {
             >
               <span className="text-6xl mb-2 block animate-bounce">🎉</span>
               <span className="text-xs font-mono text-amber-300 uppercase tracking-widest block mb-1">
-                KAZANILAN ÖDÜL:
+                {t("wheel.prizeWonColon")}
               </span>
               <h1 className="text-4xl font-black text-white uppercase tracking-wider drop-shadow-md">
                 {winningSlice.text}

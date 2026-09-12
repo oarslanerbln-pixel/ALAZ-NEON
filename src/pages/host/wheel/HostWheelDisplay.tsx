@@ -7,6 +7,7 @@ import { HostLobby } from "../views/HostLobby";
 import { useVenue } from "../../../contexts/VenueContextCore";
 import { DEFAULT_VENUE_CONFIG, type Room, type Player, type RoomStatus } from "../../../types/database";
 import { KineticSpark } from "../../../components/KineticSpark";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface Props {
   room: Room;
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function HostWheelDisplay({ room, players, updateRoomStatus }: Props) {
+  const { t } = useLocale();
   const { venue } = useVenue();
   const slices = venue.wheel_slices?.length ? venue.wheel_slices : DEFAULT_VENUE_CONFIG.wheel_slices!;
   const controls = useAnimation();
@@ -102,7 +104,7 @@ export function HostWheelDisplay({ room, players, updateRoomStatus }: Props) {
           {/* TOP BANNER: Status & Selected Spinner */}
           <div className="z-20 text-center mb-6">
             <span className="px-6 py-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-300 font-mono tracking-widest text-xs uppercase font-bold mb-2 inline-block">
-              🎰 ŞANS ÇARKI • GECE ÖDÜLLERİ 🎰
+              🎰 {t("wheel.hostTitle")} 🎰
             </span>
 
             {activeSpinner ? (
@@ -111,11 +113,11 @@ export function HostWheelDisplay({ room, players, updateRoomStatus }: Props) {
                 animate={{ scale: 1 }}
                 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tight drop-shadow-[0_0_20px_rgba(255,215,0,0.8)]"
               >
-                ŞANSLI OYUNCU: <span className="text-amber-400">{activeSpinner.nickname}</span>
+                {t("wheel.luckyPlayer")} <span className="text-amber-400">{activeSpinner.nickname}</span>
               </motion.h2>
             ) : (
               <h2 className="text-2xl text-gray-400 font-mono uppercase tracking-widest">
-                Şanslı masa seçilmeyi bekliyor...
+                {t("wheel.waitingForPick")}
               </h2>
             )}
           </div>
@@ -199,7 +201,7 @@ export function HostWheelDisplay({ room, players, updateRoomStatus }: Props) {
                 className="bg-black/80 border-2 border-amber-400 p-6 rounded-3xl shadow-[0_0_40px_rgba(255,215,0,0.6)] backdrop-blur-xl"
               >
                 <KineticSpark playAudio={false} />
-                <span className="text-xs font-mono text-amber-300 uppercase tracking-widest block mb-1">KAZANILAN ÖDÜL</span>
+                <span className="text-xs font-mono text-amber-300 uppercase tracking-widest block mb-1">{t("wheel.prizeWon")}</span>
                 <h1 className="text-5xl font-black text-white uppercase drop-shadow-lg">
                   {winningSlice.text}
                 </h1>
@@ -210,7 +212,7 @@ export function HostWheelDisplay({ room, players, updateRoomStatus }: Props) {
                   onClick={selectRandomSpinner}
                   className="px-10 py-4 bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-black font-black uppercase tracking-widest text-lg rounded-2xl transition-all shadow-[0_0_30px_rgba(255,215,0,0.5)] transform active:scale-95"
                 >
-                  🎲 RASTGELE ŞANSLI SEÇ
+                  🎲 {t("wheel.pickRandom")}
                 </button>
               )
             )}

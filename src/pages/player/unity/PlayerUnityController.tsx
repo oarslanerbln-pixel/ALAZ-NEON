@@ -80,13 +80,13 @@ export function PlayerUnityController({ room }: Props) {
             {isWin ? (
               <>
                 <NeonIcon type="flame" color="orange" className="w-32 h-32 mx-auto mb-6" />
-                <h1 className="text-5xl font-black text-amber-400 uppercase tracking-widest mb-2">BAŞARILI!</h1>
-                <p className="text-white">Enerji patlaması gerçekleşti.</p>
+                <h1 className="text-5xl font-black text-amber-400 uppercase tracking-widest mb-2">{t("unity.success")}</h1>
+                <p className="text-white">{t("unity.surgeHappened")}</p>
               </>
             ) : (
               <>
-                <h1 className="text-5xl font-black text-red-500 uppercase tracking-widest mb-2">BAŞARISIZ</h1>
-                <p className="text-white/50">Yeterli enerji toplanamadı.</p>
+                <h1 className="text-5xl font-black text-red-500 uppercase tracking-widest mb-2">{t("unity.failed")}</h1>
+                <p className="text-white/50">{t("unity.notEnough")}</p>
               </>
             )}
           </motion.div>
@@ -108,7 +108,7 @@ export function PlayerUnityController({ room }: Props) {
             </motion.button>
             
             <p className="mt-12 text-center text-amber-400/50 font-bold tracking-widest uppercase animate-pulse">
-              TV Ekranına Bakarak Süreyi Takip Et
+              {t("unity.watchTimer")}
             </p>
           </>
         )}

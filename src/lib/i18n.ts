@@ -13,6 +13,11 @@ const translations = {
   "common.returnToLobby": { tr: "LOBİYE DÖN", de: "ZUR LOBBY", en: "LOBBY" },
   "common.confirmReturnLobby": { tr: "Mevcut oyunu bitirip lobiye dönmek istiyor musunuz?", de: "Möchtest du das aktuelle Spiel beenden und zur Lobby zurückkehren?", en: "Do you want to end the game and return to lobby?" },
   "common.confirmExitHome": { tr: "Ana sayfaya dönmek istediğinizden emin misiniz?", de: "Möchtest du wirklich zur Startseite zurückkehren?", en: "Are you sure you want to return to home?" },
+  "common.confirmEndNight": {
+    tr: "Geceyi bitirip odayı kapatmak istediğinizden emin misiniz? Misafirler oyundan çıkarılacak.",
+    de: "Möchtest du den Abend beenden und den Raum schließen? Die Gäste werden aus dem Spiel entfernt.",
+    en: "End the night and close the room? Guests will be removed from the game.",
+  },
   "common.leaveGame": { tr: "AYRIL", de: "VERLASSEN", en: "LEAVE" },
   "common.confirmLeaveGame": { tr: "Oyundan ayrılmak istediğinizden emin misiniz?", de: "Bist du sicher, dass du das Spiel verlassen möchtest?", en: "Are you sure you want to leave the game?" },
   "common.cancel": { tr: "İPTAL", de: "ABBRECHEN", en: "CANCEL" },
@@ -773,6 +778,167 @@ const translations = {
   },
 
   // ═══════════════════════════════════════════
+  // OYUN MODLARI — misafir telefonu ve TV ekranı
+  //
+  // Bu modlar (çarkıfelek, overload, echo, pulse, unity, kasa, bar,
+  // spectrum, kablo) sonradan eklenirken metinleri doğrudan bileşenlerin
+  // içine sabit Türkçe olarak yazılmıştı. Varsayılan dil "de" ve asıl pazar
+  // Berlin olduğu için Alman misafir kendi telefonunda Türkçe metin
+  // görüyordu. İlk modlar (quiz/sensör/bomba) baştan çevrilmişti; bu blok
+  // geri kalanını aynı hizaya getiriyor.
+  // ═══════════════════════════════════════════
+
+  // ── Çarkıfelek ──
+  "wheel.title": { tr: "ÇARKIFELEK", de: "GLÜCKSRAD", en: "WHEEL OF FORTUNE" },
+  "wheel.hostTitle": { tr: "ŞANS ÇARKI • GECE ÖDÜLLERİ", de: "GLÜCKSRAD • PREISE DES ABENDS", en: "WHEEL OF FORTUNE • TONIGHT'S PRIZES" },
+  "wheel.pickRandom": { tr: "RASTGELE ŞANSLI SEÇ", de: "ZUFÄLLIG AUSWÄHLEN", en: "PICK A RANDOM GUEST" },
+  "wheel.waitingForPick": { tr: "Şanslı masa seçilmeyi bekliyor...", de: "Der Glückstisch wird gleich ausgelost...", en: "Waiting for the lucky table to be picked..." },
+  "wheel.luckyPlayer": { tr: "ŞANSLI OYUNCU:", de: "GLÜCKSPILZ:", en: "LUCKY GUEST:" },
+  "wheel.prizeWon": { tr: "KAZANILAN ÖDÜL", de: "GEWONNENER PREIS", en: "PRIZE WON" },
+  "wheel.prizeWonColon": { tr: "KAZANILAN ÖDÜL:", de: "GEWONNENER PREIS:", en: "PRIZE WON:" },
+  "wheel.youWereChosen": { tr: "ŞANSLI SEÇİLDİN!", de: "DU WURDEST AUSGEWÄHLT!", en: "YOU WERE CHOSEN!" },
+  "wheel.tapToSpin": { tr: "Dokun ve çarkı tüm gücünle döndür!", de: "Tippe und dreh das Rad mit voller Kraft!", en: "Tap and spin the wheel with all you've got!" },
+  "wheel.spinning": { tr: "ÇARK DÖNÜYOR...", de: "DAS RAD DREHT SICH...", en: "SPINNING..." },
+  "wheel.watchOnTV": { tr: "Çarkın dönüşünü TV ekranından izle!", de: "Verfolge die Drehung auf dem TV-Bildschirm!", en: "Watch the spin on the TV screen!" },
+  "wheel.otherTable": { tr: "Sıra Başka Masada!", de: "Ein anderer Tisch ist dran!", en: "Another table's turn!" },
+  "wheel.waitingRoom": { tr: "Oyunun başlamasını bekliyoruz. Ana ekranı takip edin.", de: "Wir warten auf den Spielstart. Achte auf den Hauptbildschirm.", en: "Waiting for the game to start. Watch the main screen." },
+  "wheel.watchTVSoon": { tr: "TV ekranına bak! Şanslı masa birazdan seçilecek...", de: "Schau auf den TV! Der Glückstisch wird gleich ausgelost...", en: "Look at the TV! The lucky table is about to be picked..." },
+  "wheel.heldBreath": { tr: "Nefesler tutuldu!", de: "Alle halten den Atem an!", en: "Everyone's holding their breath!" },
+
+  // ── Overload ──
+  "overload.title": { tr: "AŞIRI YÜKLEME", de: "ÜBERLASTUNG", en: "OVERLOAD" },
+  "overload.whoHasVoltage": { tr: "VOLTAJ KİMDE:", de: "WER HAT DIE SPANNUNG:", en: "WHO HOLDS THE CHARGE:" },
+  "overload.overloaded": { tr: "AŞIRI YÜKLENDİ!", de: "ÜBERLASTET!", en: "OVERLOADED!" },
+  "overload.youOverloaded": { tr: "AŞIRI YÜKLENDİN!", de: "DU BIST ÜBERLASTET!", en: "YOU OVERLOADED!" },
+  "overload.survivor": { tr: "HAYATTA KALAN ŞAMPİYON", de: "ÜBERLEBENDER CHAMPION", en: "SURVIVING CHAMPION" },
+  "overload.endGame": { tr: "OYUNU BİTİR", de: "SPIEL BEENDEN", en: "END GAME" },
+  "overload.deflect": { tr: "SAVUŞTUR!", de: "ABWEHREN!", en: "DEFLECT!" },
+  "overload.safe": { tr: "GÜVENDESİN", de: "DU BIST SICHER", en: "YOU'RE SAFE" },
+  "overload.focusNext": { tr: "Sıradaki kurbana odaklan", de: "Konzentrier dich auf das nächste Opfer", en: "Focus on the next victim" },
+  "overload.watchSurvivors": { tr: "Hayatta kalanları izle", de: "Beobachte die Überlebenden", en: "Watch the survivors" },
+  "overload.gameOver": { tr: "OYUN BİTTİ", de: "SPIEL VORBEI", en: "GAME OVER" },
+  "overload.resultsOnScreen": { tr: "Sonuçlar ekranda!", de: "Die Ergebnisse sind auf dem Bildschirm!", en: "Results are on the screen!" },
+  "overload.champion": { tr: "ŞAMPİYON!", de: "CHAMPION!", en: "CHAMPION!" },
+  "pulse.early": { tr: "ERKEN!", de: "ZU FRÜH!", en: "EARLY!" },
+  "overload.tapAndPass": { tr: "DOKUN VE HEMEN PASLA!", de: "TIPPEN UND SOFORT WEITERGEBEN!", en: "TAP AND PASS IT ON!" },
+
+  // ── Echo (masa anketi) ──
+  "echo.prepare": { tr: "Telefonlarınızı Hazırlayın", de: "Macht eure Handys bereit", en: "Get your phones ready" },
+  "echo.votesUsed": { tr: "Kullanılan Oy", de: "Abgegebene Stimmen", en: "Votes cast" },
+  "echo.scapegoat": { tr: "GÜNAH KEÇİSİ", de: "DER SÜNDENBOCK", en: "THE SCAPEGOAT" },
+  "echo.calculating": { tr: "Hesaplanıyor...", de: "Wird berechnet...", en: "Calculating..." },
+  "echo.noVotes": { tr: "Hiç Oy Verilmedi", de: "Keine Stimmen abgegeben", en: "No votes cast" },
+  "echo.backToLobby": { tr: "Lobiye Dön", de: "Zurück zur Lobby", en: "Back to lobby" },
+  "echo.pickSomeone": { tr: "Birini Seç", de: "Wähle jemanden", en: "Pick someone" },
+  "echo.waitingOthers": { tr: "Diğerlerinin oyları bekleniyor...", de: "Warte auf die anderen Stimmen...", en: "Waiting for the other votes..." },
+  "echo.resultsOnScreen": { tr: "Sonuçlar Ekranda", de: "Ergebnisse auf dem Bildschirm", en: "Results on screen" },
+  "echo.lookUp": { tr: "Yukarıya Bak!", de: "Schau nach oben!", en: "Look up!" },
+  "echo.voteFailed": { tr: "Oy gönderilemedi!", de: "Stimme konnte nicht gesendet werden!", en: "Could not send your vote!" },
+  // Echo soruları — bileşenin içine gömülüydü, bu yüzden yalnızca Türkçeydi.
+  "echo.q1": { tr: "Bir zombi istilasında ilk kim yem olur?", de: "Wer wird bei einer Zombie-Apokalypse zuerst gefressen?", en: "Who gets eaten first in a zombie apocalypse?" },
+  "echo.q2": { tr: "En kötü eski sevgiliye sahip olan kim?", de: "Wer hat den schlimmsten Ex?", en: "Who has the worst ex?" },
+  "echo.q3": { tr: "En çok 'Yarın diyete başlıyorum' diyen kim?", de: "Wer sagt am häufigsten \"Morgen fange ich mit der Diät an\"?", en: "Who says \"I'll start my diet tomorrow\" the most?" },
+  "echo.q4": { tr: "Mekandaki en iyi giyinen kişi kim?", de: "Wer ist hier am besten angezogen?", en: "Who's the best dressed in the room?" },
+  "echo.q5": { tr: "Gizli bir ajan olma ihtimali en yüksek kim?", de: "Wer könnte am ehesten ein Geheimagent sein?", en: "Who's most likely to be a secret agent?" },
+  "echo.q6": { tr: "Issız adaya düşse ilk kimi yer?", de: "Wen würde man auf einer einsamen Insel zuerst essen?", en: "Who'd get eaten first on a desert island?" },
+
+  // ── Pulse ──
+  "pulse.hostTitle": { tr: "PULSE: SENKRONİZASYON", de: "PULSE: SYNCHRONISATION", en: "PULSE: SYNC" },
+  "pulse.hostHint": { tr: "Çekirdek patladığı an butona basın!", de: "Drückt genau dann, wenn der Kern explodiert!", en: "Tap the moment the core bursts!" },
+  "pulse.perfectSync": { tr: "KUSURSUZ!", de: "PERFEKT!", en: "FLAWLESS!" },
+  "pulse.perfectSyncDesc": { tr: "Mükemmel Uyum Sağlandı", de: "Perfekter Gleichklang erreicht", en: "Perfect harmony achieved" },
+  "pulse.cracked": { tr: "ÇATLADI!", de: "ZERSPRUNGEN!", en: "CRACKED!" },
+  "pulse.crackedDesc": { tr: "Senkronizasyon Başarısız", de: "Synchronisation fehlgeschlagen", en: "Sync failed" },
+  "pulse.avgError": { tr: "Ortalama Hata", de: "Durchschnittlicher Fehler", en: "Average error" },
+  "pulse.participation": { tr: "Katılım", de: "Beteiligung", en: "Participation" },
+  "pulse.none": { tr: "Yok", de: "Keine", en: "None" },
+  "pulse.tapAtBurst": { tr: "Tam Patlama Anında Dokun!", de: "Tippe genau im Moment der Explosion!", en: "Tap at the exact moment it bursts!" },
+  "pulse.eyesOnScreen": { tr: "Gözünü Ekrana Dik", de: "Augen auf den Bildschirm", en: "Eyes on the screen" },
+  "pulse.yourResult": { tr: "BİREYSEL SONUÇ", de: "DEIN ERGEBNIS", en: "YOUR RESULT" },
+  "pulse.perfect": { tr: "MÜKEMMEL!", de: "PERFEKT!", en: "PERFECT!" },
+  "pulse.tooEarly": { tr: "ÇOK ERKEN!", de: "ZU FRÜH!", en: "TOO EARLY!" },
+  "pulse.tooLate": { tr: "ÇOK GEÇ!", de: "ZU SPÄT!", en: "TOO LATE!" },
+  "pulse.missed": { tr: "GEÇ!", de: "VERPASST!", en: "MISSED!" },
+
+  // ── Unity (birlik) ──
+  "unity.title": { tr: "NEON BİRLİK", de: "NEON EINHEIT", en: "NEON UNITY" },
+  "unity.hostHint": { tr: "MEKANIN TÜM ENERJİSİNİ KULLANARAK BATARYAYI PATLATIN!", de: "NUTZT DIE GESAMTE ENERGIE DES LADENS UND SPRENGT DIE BATTERIE!", en: "USE THE WHOLE VENUE'S ENERGY AND BLOW THE BATTERY!" },
+  "unity.tapLikeCrazy": { tr: "TELEFONA DELİ GİBİ BAS!", de: "HAU WIE VERRÜCKT AUFS HANDY!", en: "TAP YOUR PHONE LIKE CRAZY!" },
+  "unity.success": { tr: "BAŞARILI!", de: "GESCHAFFT!", en: "SUCCESS!" },
+  "unity.successDesc": { tr: "MEKAN ENERJİ PATLAMASI YAŞADI!", de: "DER LADEN HAT EINEN ENERGIESCHUB ERLEBT!", en: "THE VENUE JUST HAD AN ENERGY SURGE!" },
+  "unity.failed": { tr: "BAŞARISIZ", de: "FEHLGESCHLAGEN", en: "FAILED" },
+  "unity.failedDesc": { tr: "ENERJİ YETERSİZ KALDI", de: "DIE ENERGIE HAT NICHT GEREICHT", en: "NOT ENOUGH ENERGY" },
+  "unity.surgeHappened": { tr: "Enerji patlaması gerçekleşti.", de: "Der Energieschub ist gelungen.", en: "The energy surge went off." },
+  "unity.notEnough": { tr: "Yeterli enerji toplanamadı.", de: "Es wurde nicht genug Energie gesammelt.", en: "Not enough energy was gathered." },
+  "unity.watchTimer": { tr: "TV Ekranına Bakarak Süreyi Takip Et", de: "Verfolge die Zeit auf dem TV-Bildschirm", en: "Watch the timer on the TV screen" },
+
+  // ── Kasa (vault) ──
+  "vault.title": { tr: "NEON ŞİFRE", de: "NEON-TRESOR", en: "NEON VAULT" },
+  "vault.hostHint": { tr: "KASAYI İLK AÇAN KAZANIR", de: "WER DEN TRESOR ZUERST KNACKT, GEWINNT", en: "FIRST TO CRACK THE VAULT WINS" },
+  "vault.opened": { tr: "KASA AÇILDI!", de: "TRESOR GEÖFFNET!", en: "VAULT OPENED!" },
+  "vault.crackIt": { tr: "ŞİFREYİ ÇÖZ", de: "KNACK DEN CODE", en: "CRACK THE CODE" },
+  "vault.crackItBang": { tr: "ŞİFREYİ ÇÖZ!", de: "KNACK DEN CODE!", en: "CRACK THE CODE!" },
+  "vault.delete": { tr: "SİL", de: "LÖSCHEN", en: "DELETE" },
+  "vault.success": { tr: "BAŞARILI!", de: "GESCHAFFT!", en: "CRACKED!" },
+  "vault.successDesc": { tr: "Kasa kırıldı. TV ekranına bak!", de: "Der Tresor ist geknackt. Schau auf den TV!", en: "The vault is open. Look at the TV!" },
+
+  // ── Bar (kafe barista modu) ──
+  "bar.hostRecipe": { tr: "İSTENEN TARİF (4 KATMAN)", de: "GEWÜNSCHTES REZEPT (4 SCHICHTEN)", en: "REQUESTED RECIPE (4 LAYERS)" },
+  "bar.serviceTime": { tr: "SERVİS SÜRESİ:", de: "SERVIERZEIT:", en: "SERVING TIME:" },
+  "bar.topBarista": { tr: "GECENİN BAŞ BARİSTASI!", de: "BARISTA DES ABENDS!", en: "BARISTA OF THE NIGHT!" },
+  "bar.unknown": { tr: "BİLİNMİYOR", de: "UNBEKANNT", en: "UNKNOWN" },
+  "bar.yourDrink": { tr: "SENİN İÇECEĞİN", de: "DEIN GETRÄNK", en: "YOUR DRINK" },
+  "bar.tagline": { tr: "HENGAME BARİSTA • DOĞRU SIRAYLA DÖK", de: "HENGAME BARISTA • IN DER RICHTIGEN REIHENFOLGE EINGIESSEN", en: "HENGAME BARISTA • POUR IN THE RIGHT ORDER" },
+  "bar.hint": { tr: "TV'deki tarife bak ve doğru sırayla dök!", de: "Schau aufs Rezept im TV und gieß in der richtigen Reihenfolge ein!", en: "Check the recipe on the TV and pour in order!" },
+  "bar.served": { tr: "SERVİS EDİLDİ! +1", de: "SERVIERT! +1", en: "SERVED! +1" },
+  "bar.nice": { tr: "HARİKA!", de: "SUPER!", en: "NICE!" },
+  "bar.wrongPour": { tr: "YANLIŞ MALZEME!", de: "FALSCHE ZUTAT!", en: "WRONG INGREDIENT!" },
+  "bar.nextOrder": { tr: "Sıradaki sipariş hazırlanıyor...", de: "Die nächste Bestellung kommt...", en: "Next order coming up..." },
+  // Malzemeler — kafe konumlandırması gereği alkolsüz (bkz. commit c688924,
+  // "remove alcohol references"; bar modu o temizlikte atlanmıştı).
+  "bar.ing.strawberry": { tr: "ÇİLEK ŞURUBU", de: "ERDBEERSIRUP", en: "STRAWBERRY SYRUP" },
+  "bar.ing.blue": { tr: "MAVİ LİMONATA", de: "BLAUE LIMONADE", en: "BLUE LEMONADE" },
+  "bar.ing.lime": { tr: "LİME & NANE", de: "LIMETTE & MINZE", en: "LIME & MINT" },
+  "bar.ing.orange": { tr: "PORTAKAL SUYU", de: "ORANGENSAFT", en: "ORANGE JUICE" },
+  "bar.ing.violet": { tr: "MENEKŞE ŞURUBU", de: "VEILCHENSIRUP", en: "VIOLET SYRUP" },
+  "bar.ing.strawberryShort": { tr: "ÇİLEK", de: "ERDBEERE", en: "STRAWBERRY" },
+  "bar.ing.blueShort": { tr: "LİMONATA", de: "LIMONADE", en: "LEMONADE" },
+  "bar.ing.violetShort": { tr: "MENEKŞE", de: "VEILCHEN", en: "VIOLET" },
+  "bar.completed": { tr: "TAMAMLANDI", de: "FERTIG", en: "COMPLETED" },
+  "bar.layer": { tr: "KATMAN", de: "SCHICHT", en: "LAYER" },
+  "bar.servedToast": { tr: "SERVİS EDİLDİ! +1", de: "SERVIERT! +1", en: "SERVED! +1" },
+  "bar.wrongDrink": { tr: "YANLIŞ İÇECEK!", de: "FALSCHES GETRÄNK!", en: "WRONG DRINK!" },
+  "colors.yourTapCount": { tr: "SENİN TIK SAYIN", de: "DEINE TIPPS", en: "YOUR TAPS" },
+  "overload.youAreSafe": { tr: "GÜVENDESİN", de: "DU BIST SICHER", en: "YOU'RE SAFE" },
+  "spectrum.youLostCaps": { tr: "KAYBETTİNİZ", de: "IHR HABT VERLOREN", en: "YOU LOST" },
+  "bar.ing.limeShort": { tr: "LİME", de: "LIMETTE", en: "LIME" },
+  "bar.ing.orangeShort": { tr: "PORTAKAL", de: "ORANGE", en: "ORANGE" },
+
+  // ── Spectrum / Neon Savaşları ──
+  "spectrum.takeScreen": { tr: "EKRANI ELE GEÇİR", de: "EROBERT DEN BILDSCHIRM", en: "TAKE THE SCREEN" },
+  "spectrum.champion": { tr: "ŞAMPİYON", de: "CHAMPION", en: "CHAMPION" },
+  "spectrum.teamSet": { tr: "TAKIMIN BELLİ OLDU", de: "DEIN TEAM STEHT FEST", en: "YOUR TEAM IS SET" },
+  "spectrum.youLost": { tr: "KAYBETTİNİZ", de: "IHR HABT VERLOREN", en: "YOU LOST" },
+  "spectrum.waitTV": { tr: "TV Ekranını Bekle", de: "Warte auf den TV-Bildschirm", en: "Wait for the TV screen" },
+  "colors.teamAssigned": { tr: "TAKIMIN BELİRLENDİ", de: "DEIN TEAM WURDE ZUGETEILT", en: "YOUR TEAM IS ASSIGNED" },
+  "colors.tapFast": { tr: "Tüm parmaklarınla olabildiğince hızlı tıkla!", de: "Tippe mit allen Fingern so schnell du kannst!", en: "Tap as fast as you can with every finger!" },
+  "colors.hostHint": { tr: "TAKIMIN İÇİN EN HIZLI SEN TIKLA!", de: "TIPP AM SCHNELLSTEN FÜR DEIN TEAM!", en: "TAP FASTEST FOR YOUR TEAM!" },
+  "colors.battleOver": { tr: "SAVAŞ TAMAMLANDI!", de: "DER KAMPF IST VORBEI!", en: "THE BATTLE IS OVER!" },
+  "colors.yourTaps": { tr: "SENİN TIK SAYIN", de: "DEINE TIPPS", en: "YOUR TAPS" },
+  "colors.resultsOnTV": { tr: "Sonuçlar TV Ekranında!", de: "Die Ergebnisse sind auf dem TV!", en: "Results are on the TV!" },
+  "colors.championTeam": { tr: "Tebrikler Şampiyon Takım! (+150 Puan)", de: "Glückwunsch, Siegerteam! (+150 Punkte)", en: "Congratulations, champion team! (+150 points)" },
+
+  // ── Kablo ──
+  "kablo.gridConnected": { tr: "ENERJİ ŞEBEKESİ BAĞLANDI!", de: "STROMNETZ VERBUNDEN!", en: "POWER GRID CONNECTED!" },
+  "kablo.leadTechnician": { tr: "BAŞ TEKNİSYEN:", de: "CHEFTECHNIKER:", en: "LEAD TECHNICIAN:" },
+  "kablo.connecting": { tr: "DEVRE BAĞLANTILARI TAMAMLANIYOR", de: "SCHALTKREISE WERDEN VERBUNDEN", en: "CONNECTING THE CIRCUITS" },
+
+  // ── Ortak ──
+  "common.loadingDots": { tr: "Yükleniyor...", de: "Wird geladen...", en: "Loading..." },
+  "common.followMainScreen": { tr: "Ana Ekranı Takip Et", de: "Achte auf den Hauptbildschirm", en: "Watch the main screen" },
+  "common.backToLobby": { tr: "Lobiye Dön", de: "Zurück zur Lobby", en: "Back to lobby" },
+
+  // ═══════════════════════════════════════════
   // AUTH — sayfa başlıkları
   // ═══════════════════════════════════════════
   "auth.loginHeading": { tr: "SİSTEME GİRİŞ", de: "SYSTEM-ANMELDUNG", en: "SYSTEM LOGIN" },
@@ -1522,7 +1688,15 @@ export function setLocale(locale: Locale): void {
  */
 export function t(key: TranslationKey, ...args: (string | number)[]): string {
   const entry = translations[key];
-  if (!entry) return key;
+  if (!entry) {
+    // Kod tabanında `t("bir.anahtar", "Yedek Metin")` deseni yaygın: çağıran
+    // taraf ikinci argümanı YEDEK metin sanıyor, oysa o interpolasyon
+    // argümanı. Anahtar tanımlıyken zararsız, ama bir yazım hatasında ekrana
+    // ham anahtar ("player.unityTitle") basılırdı. Niyete uyuyoruz: anahtar
+    // yoksa ve metin bir yedek verilmişse onu döndür.
+    const fallback = args[0];
+    return typeof fallback === "string" ? fallback : key;
+  }
 
   const val = entry[currentLocale] as TranslationValue;
   if (typeof val === "function") {

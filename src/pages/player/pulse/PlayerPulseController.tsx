@@ -65,14 +65,14 @@ export function PlayerPulseController({ room, player }: Props) {
       const diff = myClickTime - targetTime;
       const absDiff = Math.abs(diff);
       
-      let message = "MÜKEMMEL!";
+      let message = t("pulse.perfect");
       let colorClass = "text-neon-blue";
       
       if (absDiff > 1500) {
-        message = diff < 0 ? "ÇOK ERKEN!" : "ÇOK GEÇ!";
+        message = diff < 0 ? t("pulse.tooEarly") : t("pulse.tooLate");
         colorClass = "text-[#ff003c]";
       } else if (absDiff > 500) {
-        message = diff < 0 ? "ERKEN!" : "GEÇ!";
+        message = diff < 0 ? t("pulse.early") : t("pulse.missed");
         colorClass = "text-yellow-400";
       }
 
@@ -99,7 +99,7 @@ export function PlayerPulseController({ room, player }: Props) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center relative z-10">
         <h2 className="text-xl font-bold text-white/50 mb-4 uppercase tracking-[0.3em]">
-          BİREYSEL SONUÇ
+          {t("pulse.yourResult")}
         </h2>
         {resultNode}
       </div>
@@ -113,7 +113,7 @@ export function PlayerPulseController({ room, player }: Props) {
           HAZIR OL
         </h2>
         <p className="text-gray-400 uppercase tracking-widest font-bold">
-          Ana Ekranı Takip Et
+          {t("common.followMainScreen")}
         </p>
       </div>
     );
@@ -124,10 +124,10 @@ export function PlayerPulseController({ room, player }: Props) {
       <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10 min-h-[70vh]">
         <div className="text-center mb-12">
           <h3 className="text-sm text-neon-blue uppercase tracking-[0.4em] font-bold mb-2">
-            Gözünü Ekrana Dik
+            {t("pulse.eyesOnScreen")}
           </h3>
           <p className="text-white/50 text-xs uppercase tracking-widest font-mono">
-            Tam Patlama Anında Dokun!
+            {t("pulse.tapAtBurst")}
           </p>
         </div>
 
