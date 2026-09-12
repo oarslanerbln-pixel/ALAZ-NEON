@@ -13,13 +13,22 @@ interface Props {
   player: Player;
 }
 
+/**
+ * Malzeme etiketleri artık çeviri ANAHTARI: bu dizi modül seviyesinde, yani
+ * t() burada çağrılamaz (dil değişince yeniden hesaplanmazdı). Etiket render
+ * anında çözülüyor.
+ *
+ * İçerikler kafe konumlandırmasına uygun şekilde alkolsüz — likör/curaçao
+ * yerine şurup, limonata ve meyve suyu (bkz. commit c688924, alkol
+ * referanslarının temizliği; bar modu o geçişte atlanmıştı).
+ */
 const BOTTLE_ITEMS = [
-  { color: "#ff0055", label: "ÇİLEK", emoji: "🍓" },
-  { color: "#00e5ff", label: "CURAÇAO", emoji: "🫐" },
-  { color: "#aeff00", label: "LIME", emoji: "🍏" },
-  { color: "#ffaa00", label: "PORTAKAL", emoji: "🍊" },
-  { color: "#b700ff", label: "VİYOLA", emoji: "🍇" },
-];
+  { color: "#ff0055", labelKey: "bar.ing.strawberryShort", emoji: "🍓" },
+  { color: "#00e5ff", labelKey: "bar.ing.blueShort", emoji: "🫐" },
+  { color: "#aeff00", labelKey: "bar.ing.limeShort", emoji: "🍏" },
+  { color: "#ffaa00", labelKey: "bar.ing.orangeShort", emoji: "🍊" },
+  { color: "#b700ff", labelKey: "bar.ing.violetShort", emoji: "🍇" },
+] as const;
 
 export function PlayerBarController({ room, player }: Props) {
   const { t } = useLocale();
@@ -90,7 +99,7 @@ export function PlayerBarController({ room, player }: Props) {
           {t("player.barTitle")}
         </h1>
         <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">
-          TV'deki kokteyl tarifine bak ve doğru sırayla dök!
+          {t("bar.hint")}
         </p>
       </div>
     );
@@ -103,10 +112,10 @@ export function PlayerBarController({ room, player }: Props) {
       <div className="w-full flex flex-col items-center">
         <div className="flex justify-between items-center w-full px-2 mb-4">
           <span className="text-xs font-mono text-pink-400 uppercase tracking-widest font-bold">
-            🍹 SENİN KOKTEYLİN
+            🍹 {t("bar.yourDrink")}
           </span>
           <span className="text-sm font-black text-white font-mono bg-pink-500/20 px-3 py-1 rounded-full border border-pink-500/40">
-            {player.bar_score || 0} TAMAMLANDI
+            {player.bar_score || 0} {t("bar.completed")}
           </span>
         </div>
 
@@ -149,7 +158,7 @@ export function PlayerBarController({ room, player }: Props) {
           >
             <X className="w-28 h-28 text-red-500 mb-2 drop-shadow-[0_0_25px_rgba(255,0,0,0.9)]" />
             <span className="text-2xl font-black text-red-400 uppercase tracking-widest">
-              YANLIŞ İÇECEK!
+              {t("bar.wrongDrink")}
             </span>
           </motion.div>
         )}
@@ -164,7 +173,7 @@ export function PlayerBarController({ room, player }: Props) {
           >
             <Check className="w-28 h-28 text-emerald-400 mb-2 drop-shadow-[0_0_25px_rgba(74,222,128,0.9)]" />
             <span className="text-2xl font-black text-emerald-300 uppercase tracking-widest">
-              KOKTEYL SERVİS EDİLDİ! +1
+              {t("bar.servedToast")}
             </span>
           </motion.div>
         )}
@@ -179,8 +188,8 @@ export function PlayerBarController({ room, player }: Props) {
           >
             <div className="text-center">
               <span className="text-5xl mb-2 block">✨</span>
-              <div className="text-2xl font-black text-cyan-400 mb-1">HARİKA!</div>
-              <div className="text-gray-400 text-xs font-mono">Sıradaki sipariş hazırlanıyor...</div>
+              <div className="text-2xl font-black text-cyan-400 mb-1">{t("bar.nice")}</div>
+              <div className="text-gray-400 text-xs font-mono">{t("bar.nextOrder")}</div>
             </div>
           </motion.div>
         )}
@@ -188,7 +197,7 @@ export function PlayerBarController({ room, player }: Props) {
 
       {/* Bottom section: 5 Ergonomic Neon Cocktail Bottles */}
       <div className="w-full max-w-sm grid grid-cols-5 gap-2 my-auto">
-        {BOTTLE_ITEMS.map(({ color, label, emoji }) => (
+        {BOTTLE_ITEMS.map(({ color, labelKey, emoji }) => (
           <motion.button
             key={color}
             whileTap={{ scale: 0.9 }}
@@ -210,14 +219,14 @@ export function PlayerBarController({ room, player }: Props) {
             />
 
             <span className="text-[10px] font-black text-white z-10 text-center uppercase leading-tight drop-shadow-md">
-              {label}
+              {t(labelKey)}
             </span>
           </motion.button>
         ))}
       </div>
 
       <div className="text-center text-[10px] font-mono text-gray-500 py-1">
-        ALAZ NEON BAR MIXOLOGY • DOĞRU SIRAYLA DÖK
+        {t("bar.tagline")}
       </div>
     </div>
   );

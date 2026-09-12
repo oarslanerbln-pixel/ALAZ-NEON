@@ -83,10 +83,10 @@ export function HostPulseDisplay({ room, players, updateRoomStatus }: Props) {
         <>
           <div className="absolute top-16 text-center z-20">
             <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-[0.5em] mb-4">
-              PULSE: Senkronizasyon
+              {t("pulse.hostTitle")}
             </h2>
             <p className="text-neon-blue font-bold uppercase tracking-widest animate-pulse">
-              Çekirdek patladığı an butona basın!
+              {t("pulse.hostHint")}
             </p>
           </div>
 
@@ -118,28 +118,28 @@ export function HostPulseDisplay({ room, players, updateRoomStatus }: Props) {
           {syncResult.success ? (
             <>
               <h1 className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-neon-blue uppercase tracking-widest drop-shadow-[0_0_50px_rgba(0,243,255,0.6)] mb-6">
-                KUSURSUZ!
+                {t("pulse.perfectSync")}
               </h1>
               <p className="text-white/70 text-xl uppercase tracking-[0.4em] font-medium mb-12">
-                Mükemmel Uyum Sağlandı
+                {t("pulse.perfectSyncDesc")}
               </p>
             </>
           ) : (
             <>
               <h1 className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-[#ff003c] uppercase tracking-widest drop-shadow-[0_0_50px_rgba(255,0,60,0.6)] mb-6">
-                ÇATLADI!
+                {t("pulse.cracked")}
               </h1>
               <p className="text-white/70 text-xl uppercase tracking-[0.4em] font-medium mb-12">
-                Senkronizasyon Başarısız
+                {t("pulse.crackedDesc")}
               </p>
             </>
           )}
 
           <div className="flex gap-12 bg-white/[0.03] border border-white/10 p-8 rounded-3xl backdrop-blur-md">
             <div>
-              <p className="text-white/30 text-xs uppercase tracking-widest mb-2">Ortalama Hata</p>
+              <p className="text-white/30 text-xs uppercase tracking-widest mb-2">{t("pulse.avgError")}</p>
               <p className={`text-3xl font-black ${syncResult.success ? 'text-neon-blue' : 'text-[#ff003c]'}`}>
-                {syncResult.avgDiff === 9999 ? "Yok" : `${Math.round(syncResult.avgDiff)}ms`}
+                {syncResult.avgDiff === 9999 ? t("pulse.none") : `${Math.round(syncResult.avgDiff)}ms`}
               </p>
             </div>
             <div>

@@ -103,10 +103,10 @@ export function HostUnityDisplay({ room, players, updateRoomStatus }: Props) {
               >
                 <NeonIcon type="flame" color="orange" className="w-40 h-40 mb-8 animate-pulse" />
                 <h1 className="text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-amber-400 to-orange-600 uppercase tracking-widest drop-shadow-[0_0_30px_rgba(245,158,11,0.5)]">
-                  {t("host.unityIntroTitle", "NEON BİRLİK")}
+                  {t("host.unityIntroTitle")}
                 </h1>
                 <p className="text-white/50 text-2xl mt-4 uppercase tracking-[0.5em] text-center max-w-3xl">
-                  {t("host.unityIntroDesc", "MEKANIN TÜM ENERJİSİNİ KULLANARAK BATARYAYI PATLATIN!")}
+                  {t("host.unityIntroDesc")}
                 </p>
               </motion.div>
             )}
@@ -120,7 +120,7 @@ export function HostUnityDisplay({ room, players, updateRoomStatus }: Props) {
                 className="flex flex-col items-center w-full max-w-4xl"
               >
                 <h2 className="text-5xl font-black text-amber-400 tracking-widest uppercase mb-12">
-                  TELEFONA DELİ GİBİ BAS!
+                  {t("unity.tapLikeCrazy")}
                 </h2>
                 
                 <div className="w-full h-32 bg-white/5 rounded-full border-4 border-white/10 relative overflow-hidden flex items-center p-2 shadow-[inset_0_0_50px_rgba(0,0,0,0.5)]">
@@ -156,16 +156,16 @@ export function HostUnityDisplay({ room, players, updateRoomStatus }: Props) {
                       OVERCHARGE!
                     </h1>
                     <p className="text-4xl text-white font-black tracking-widest uppercase mb-16">
-                      MEKAN ENERJİ PATLAMASI YAŞADI!
+                      {t("unity.successDesc")}
                     </p>
                   </>
                 ) : (
                   <>
                     <h1 className="text-8xl text-red-500 font-black uppercase drop-shadow-[0_0_30px_rgba(239,68,68,0.5)] mb-4">
-                      BAŞARISIZ
+                      {t("unity.failed")}
                     </h1>
                     <p className="text-3xl text-white/50 font-black tracking-widest uppercase mb-16">
-                      ENERJİ YETERSİZ KALDI
+                      {t("unity.failedDesc")}
                     </p>
                   </>
                 )}
@@ -174,7 +174,7 @@ export function HostUnityDisplay({ room, players, updateRoomStatus }: Props) {
                   onClick={() => updateRoomStatus("lobby", { active_game: "none", unity_current: 0 })}
                   className="px-12 py-4 bg-amber-500 hover:bg-amber-400 text-black font-black rounded-full uppercase tracking-widest transition-colors shadow-[0_0_30px_rgba(245,158,11,0.4)]"
                 >
-                  Lobiye Dön
+                  {t("common.backToLobby")}
                 </button>
               </motion.div>
             )}

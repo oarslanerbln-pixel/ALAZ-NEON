@@ -91,7 +91,7 @@ export function HostKabloDisplay({ room, players, updateRoomStatus }: Props) {
               >
                 <div className="text-center">
                   <span className="text-xs font-mono font-bold text-amber-400 uppercase tracking-[0.4em] block mb-2">
-                    ⚡ DEVRE BAĞLANTILARI TAMAMLANIYOR
+                    ⚡ {t("kablo.connecting")}
                   </span>
                   <h2 className="text-5xl font-black text-yellow-400 font-mono drop-shadow-[0_0_20px_rgba(255,200,0,0.6)] tracking-wider">
                     ENERJİ ŞARJI: %{progressPercent}
@@ -138,12 +138,12 @@ export function HostKabloDisplay({ room, players, updateRoomStatus }: Props) {
                 <KineticSpark playAudio={false} />
                 <span className="text-8xl mb-4 animate-bounce">🔋</span>
                 <h1 className="text-6xl font-black text-yellow-400 uppercase tracking-widest mb-2 drop-shadow-[0_0_30px_rgba(255,200,0,0.8)]">
-                  ENERJİ ŞEBEKESİ BAĞLANDI!
+                  {t("kablo.gridConnected")}
                 </h1>
                 
                 {mvp && (
                   <p className="text-3xl text-white font-mono uppercase tracking-widest mb-10">
-                    ⚡ BAŞ TEKNİSYEN: <span className="text-amber-400 font-black">{mvp.nickname}</span> ({mvp.kablo_score || 0} Devre)
+                    ⚡ {t("kablo.leadTechnician")} <span className="text-amber-400 font-black">{mvp.nickname}</span> ({mvp.kablo_score || 0} Devre)
                   </p>
                 )}
 

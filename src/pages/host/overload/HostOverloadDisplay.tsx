@@ -142,7 +142,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
             <div className="flex items-center gap-2">
               <span className="text-2xl animate-pulse">⚡</span>
               <span className="text-cyan-400 font-mono font-black tracking-[0.3em] uppercase text-xl">
-                AŞIRI YÜKLEME (OVERLOAD)
+                {t("overload.title")}
               </span>
             </div>
             
@@ -202,7 +202,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
             >
               <span className="text-8xl mb-4 animate-bounce">👑</span>
               <h1 className="text-4xl text-cyan-400 font-mono font-black uppercase tracking-widest mb-2">
-                HAYATTA KALAN ŞAMPİYON
+                {t("overload.survivor")}
               </h1>
               <h2 className="text-7xl md:text-8xl text-white font-black uppercase drop-shadow-[0_0_40px_rgba(0,255,255,0.9)] mb-10">
                 {activePlayers[0]?.nickname || "KAZANAN"}
@@ -211,7 +211,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
                 onClick={() => updateRoomStatus("lobby", { active_game: "none", overload_eliminated_ids: [], overload_target_id: null })}
                 className="px-10 py-5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:brightness-110 text-black font-black uppercase tracking-widest text-xl rounded-2xl transition-all shadow-[0_0_40px_rgba(0,255,255,0.5)] transform active:scale-95"
               >
-                {t("quiz.finishGame", "OYUNU BİTİR")}
+                {t("quiz.finishGame")}
               </button>
             </motion.div>
           ) : isExploding ? (
@@ -225,7 +225,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
               <div className="w-[800px] h-[800px] bg-red-600 rounded-full blur-[120px]" />
               <span className="text-9xl mb-4">💥</span>
               <h1 className="text-8xl md:text-9xl font-black text-white uppercase drop-shadow-[0_0_40px_rgba(255,0,0,1)] tracking-widest">
-                AŞIRI YÜKLENDİ!
+                {t("overload.overloaded")}
               </h1>
             </motion.div>
           ) : (
@@ -244,7 +244,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
                   className="flex flex-col items-center text-center mb-6"
                 >
                   <span className="text-red-500 text-sm font-mono font-bold tracking-[0.5em] mb-1 animate-pulse">
-                    ⚡ VOLTAJ KİMDE:
+                    ⚡ {t("overload.whoHasVoltage")}
                   </span>
                   <h1 className="text-6xl md:text-8xl font-black text-white uppercase tracking-tight drop-shadow-[0_0_30px_rgba(255,0,0,0.8)]">
                     {targetPlayer.nickname}

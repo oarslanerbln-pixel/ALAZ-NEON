@@ -47,7 +47,7 @@ export function HostSpectrumIntro({ onNext }: Props) {
           NEON WAR
         </span>
         <h1 className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/70 uppercase tracking-widest drop-shadow-[0_0_30px_rgba(255,255,255,0.3)] leading-tight mb-8">
-          EKRANI ELE GEÇİR
+          {t("spectrum.takeScreen")}
         </h1>
         
         <div className="flex items-center justify-center gap-12 mt-12">
@@ -59,7 +59,7 @@ export function HostSpectrumIntro({ onNext }: Props) {
             <div className="w-24 h-24 rounded-full bg-[#ff003c]/20 border-4 border-[#ff003c] flex items-center justify-center shadow-[0_0_50px_rgba(255,0,60,0.5)] mb-4">
               <span className="text-4xl">🔥</span>
             </div>
-            <span className="text-[#ff003c] font-black tracking-widest uppercase">{t("host.redTeam", "Kırmızı Takım")}</span>
+            <span className="text-[#ff003c] font-black tracking-widest uppercase">{t("host.redTeam")}</span>
           </motion.div>
 
           <span className="text-white/30 text-4xl font-black italic">VS</span>
@@ -72,7 +72,7 @@ export function HostSpectrumIntro({ onNext }: Props) {
             <div className="w-24 h-24 rounded-full bg-neon-blue/20 border-4 border-neon-blue flex items-center justify-center shadow-[0_0_50px_rgba(0,243,255,0.5)] mb-4">
               <span className="text-4xl">⚡</span>
             </div>
-            <span className="text-neon-blue font-black tracking-widest uppercase">{t("host.blueTeam", "Mavi Takım")}</span>
+            <span className="text-neon-blue font-black tracking-widest uppercase">{t("host.blueTeam")}</span>
           </motion.div>
         </div>
 

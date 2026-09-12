@@ -73,7 +73,7 @@ export function HostSpectrumReveal({ room, players, onFinish }: Props) {
           className="relative z-10 flex flex-col items-center"
         >
           <span className="text-white/50 uppercase tracking-[0.5em] text-2xl font-bold mb-4">
-            {t("host.champion", "ŞAMPİYON")}
+            {t("host.champion")}
           </span>
           <h1 
             className="text-7xl md:text-9xl font-black uppercase tracking-widest mb-12 drop-shadow-2xl"

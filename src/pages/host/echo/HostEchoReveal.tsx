@@ -3,6 +3,7 @@ import { useMemo, useEffect, useState } from "react";
 
 import type { Room, Player } from "../../../types/database";
 import { SoundManager, sounds } from "../../../lib/audio";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface Props {
   room: Room;
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function HostEchoReveal({ room, players, onFinish }: Props) {
+  const { t } = useLocale();
   
   const [showWinner, setShowWinner] = useState(false);
 
@@ -56,7 +58,7 @@ export function HostEchoReveal({ room, players, onFinish }: Props) {
           transition={{ duration: 1, repeat: Infinity }}
           className="text-white/50 text-2xl font-black uppercase tracking-[1em]"
         >
-          Hesaplanıyor...
+          {t("echo.calculating")}
         </motion.div>
       ) : (
         <motion.div
@@ -66,7 +68,7 @@ export function HostEchoReveal({ room, players, onFinish }: Props) {
           className="relative z-10 flex flex-col items-center"
         >
           <span className="text-white/50 uppercase tracking-[0.5em] text-xl font-bold mb-8">
-            GÜNAH KEÇİSİ
+            {t("echo.scapegoat")}
           </span>
           {topVotedPlayer ? (
             <>
@@ -83,7 +85,7 @@ export function HostEchoReveal({ room, players, onFinish }: Props) {
             </>
           ) : (
             <h1 className="text-5xl font-black text-white/50 uppercase tracking-widest">
-              Hiç Oy Verilmedi
+              {t("echo.noVotes")}
             </h1>
           )}
           
@@ -94,7 +96,7 @@ export function HostEchoReveal({ room, players, onFinish }: Props) {
             onClick={onFinish}
             className="mt-20 px-12 py-4 bg-white/5 border border-white/20 text-white/70 rounded-full uppercase tracking-[0.3em] font-bold hover:bg-white/10 hover:text-white transition-all"
           >
-            Lobiye Dön
+            {t("common.backToLobby")}
           </motion.button>
         </motion.div>
       )}

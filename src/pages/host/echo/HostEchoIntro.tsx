@@ -2,6 +2,8 @@ import { motion } from 'framer-motion';
 import { useEffect } from "react";
 
 import type { Room } from "../../../types/database";
+import { echoQuestionText } from "../../../lib/echoQuestions";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface Props {
   room: Room;
@@ -9,6 +11,7 @@ interface Props {
 }
 
 export function HostEchoIntro({ room, onNext }: Props) {
+  const { t } = useLocale();
   
 
   useEffect(() => {
@@ -47,7 +50,7 @@ export function HostEchoIntro({ room, onNext }: Props) {
           ECHO: Vibe Check
         </span>
         <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/70 uppercase tracking-widest drop-shadow-[0_0_30px_rgba(255,255,255,0.3)] leading-tight">
-          {room.echo_question}
+          {echoQuestionText(room.echo_question)}
         </h1>
         <motion.p
           initial={{ opacity: 0 }}
@@ -55,7 +58,7 @@ export function HostEchoIntro({ room, onNext }: Props) {
           transition={{ delay: 2 }}
           className="mt-12 text-white/40 uppercase tracking-[0.5em] text-lg font-medium"
         >
-          Telefonlarınızı Hazırlayın
+          {t("echo.prepare")}
         </motion.p>
       </motion.div>
     </div>

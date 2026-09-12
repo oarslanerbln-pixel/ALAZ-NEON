@@ -170,7 +170,7 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                   {t("colors.title")}
                 </h1>
                 <p className="text-2xl text-gray-300 font-mono tracking-widest uppercase mb-10">
-                  ⚡ TAKIMIN İÇİN EN HIZLI SEN TIKLA! ⚡
+                  ⚡ {t("colors.hostHint")} ⚡
                 </p>
 
                 {/* Team Rosters Preview */}
@@ -312,7 +312,7 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                   {redPercentage >= 100 ? t("colors.red") : t("colors.blue")} KAZANDI!
                 </motion.h1>
                 <p className="text-3xl text-white/90 font-bold uppercase tracking-widest mb-12">
-                  Tebrikler Şampiyon Takım! (+150 Puan)
+                  {t("colors.championTeam")}
                 </p>
 
                 <button

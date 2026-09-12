@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { useLocale } from "../../../hooks/useLocale";
+import { echoQuestionText } from "../../../lib/echoQuestions";
 
 interface Props {
   room: Room;
@@ -40,7 +41,7 @@ export function HostEchoActive({ room, players, onNext }: Props) {
       {/* Header */}
       <div className="relative z-10 text-center mb-16 mt-8">
         <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-widest drop-shadow-[0_0_20px_rgba(255,255,255,0.2)] mb-4 max-w-5xl leading-tight">
-          {room.echo_question}
+          {echoQuestionText(room.echo_question)}
         </h2>
         <div className="inline-flex items-center gap-4 bg-white/5 border border-white/10 px-8 py-3 rounded-full backdrop-blur-md">
           <span className="text-alaz-orange animate-pulse">●</span>
@@ -81,7 +82,7 @@ export function HostEchoActive({ room, players, onNext }: Props) {
       
       <div className="absolute bottom-12 left-1/2 -translate-x-1/2 text-center">
         <p className="text-white/30 uppercase tracking-[0.4em] text-xs font-bold mb-2">
-          {t("host.totalVotes", "Kullanılan Oy")}
+          {t("host.totalVotes")}
         </p>
         <p className="text-4xl font-black text-white/50 tracking-widest">
           {totalVotes} / {players.length}

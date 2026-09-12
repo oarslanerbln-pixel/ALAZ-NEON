@@ -66,7 +66,7 @@ export function PlayerEchoController({ room, player }: Props) {
       setHasVoted(true);
     } catch (err) {
       console.error(err);
-      showToast(t("game.submitError", "Oy gönderilemedi!"), "error");
+      showToast(t("echo.voteFailed"), "error");
     } finally {
       isSubmittingRef.current = false;
       setIsSubmitting(false);
@@ -80,7 +80,7 @@ export function PlayerEchoController({ room, player }: Props) {
           Soru Geliyor
         </h2>
         <p className="text-gray-400 uppercase tracking-widest font-bold animate-pulse">
-          Ana Ekranı Takip Et
+          {t("common.followMainScreen")}
         </p>
       </div>
     );
@@ -101,7 +101,7 @@ export function PlayerEchoController({ room, player }: Props) {
             Oy Kaydedildi
           </h2>
           <p className="text-gray-400 font-medium">
-            Diğerlerinin oyları bekleniyor...
+            {t("echo.waitingOthers")}
           </p>
         </div>
       );
@@ -110,7 +110,7 @@ export function PlayerEchoController({ room, player }: Props) {
     return (
       <div className="flex-1 flex flex-col items-center justify-start pt-6 pb-24 px-4 relative z-10 w-full max-w-lg mx-auto">
         <h3 className="text-xs text-alaz-orange uppercase tracking-[0.3em] font-bold mb-6 text-center w-full">
-          Birini Seç
+          {t("echo.pickSomeone")}
         </h3>
         
         <div className="w-full flex flex-col gap-3">
@@ -144,10 +144,10 @@ export function PlayerEchoController({ room, player }: Props) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center relative z-10">
         <h2 className="text-3xl font-black text-white mb-4 uppercase tracking-[0.3em]">
-          Sonuçlar Ekranda
+          {t("echo.resultsOnScreen")}
         </h2>
         <p className="text-alaz-orange font-bold uppercase tracking-widest">
-          Yukarıya Bak!
+          {t("echo.lookUp")}
         </p>
       </div>
     );
