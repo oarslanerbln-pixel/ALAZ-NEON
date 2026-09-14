@@ -1,0 +1,3 @@
+## 2024-03-24 - Missing localized ARIA labels on common actions
+**Learning:** In a multi-lingual application like Alaz Neon, icon-only buttons (like mute/unmute) often have hardcoded tooltips or lack ARIA labels entirely. When adding accessibility attributes like `aria-label`, it's critical to tie them into the existing i18n system so screen readers announce the action in the user's selected language, rather than a hardcoded string.
+**Action:** When adding `aria-label`s to interactive elements in multi-lingual apps, always verify if there is an existing translation function (like `t()`) and create new localized keys if necessary, rather than using hardcoded text.
