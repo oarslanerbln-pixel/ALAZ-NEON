@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #000000;
+  --color-foreground: #ffff00;
+  --color-primary: #00ffff;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-size: 18px; /* Minimum 16px as per requirements, defaulting to 18px for better readability */
+    font-family: Arial, sans-serif;
+  }
+}
