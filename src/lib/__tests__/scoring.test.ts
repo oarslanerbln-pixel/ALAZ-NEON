@@ -172,3 +172,100 @@ describe("calculateRoundScores — joker ve erken gönderim", () => {
     expect(results[0].totalScore).toBe(120);
   });
 });
+
+describe("dil ve yazım denetimi", () => {
+  const deRoom = (): Room =>
+    makeRoom({ locale: "de", categories: ["Tier", "Stadt"] });
+
+  it("yazım hatası KISMİ puan alıyor, doğru yazan tam puan", () => {
+    // Asıl hata buydu: "Vgel" ile "Vögel" benzerliği %80'de kaldığı için
+    // AYRI cevap sayılıyor, ikisi de benzersizlik bonusu (20) alıyordu —
+    // yani yanlış yazan, doğru yazandan az almıyordu bile.
+    const results = calculateRoundScores(
+      deRoom(),
+      [makePlayer("p1", "DOĞRU"), makePlayer("p2", "HATALI")],
+      [
+        makeAnswer("p1", { Tier: "Vögel", Stadt: "" }),
+        makeAnswer("p2", { Tier: "Vgel", Stadt: "" }),
+      ],
+      "V",
+    );
+    const correct = results.find((r) => r.playerId === "p1")!.answers["Tier"];
+    const typo = results.find((r) => r.playerId === "p2")!.answers["Tier"];
+
+    expect(typo.isTypo).toBe(true);
+    expect(typo.typoSuggestion).toBe("vogel");
+    // Aynı cevap sayıldıkları için ikisi de benzersiz değil: 10 ve yarısı 5.
+    expect(correct.points).toBe(10);
+    expect(typo.points).toBe(5);
+    expect(typo.points).toBeLessThan(correct.points);
+  });
+
+  it("tek başına yazılan yazım hatası da kırpılıyor", () => {
+    const results = calculateRoundScores(
+      deRoom(),
+      [makePlayer("p1", "TEK")],
+      [makeAnswer("p1", { Tier: "Vgel", Stadt: "" })],
+      "V",
+    );
+    const ans = results[0].answers["Tier"];
+    expect(ans.isValid).toBe(true);
+    expect(ans.isTypo).toBe(true);
+    expect(ans.points).toBe(10); // benzersiz 20'nin yarısı
+  });
+
+  it("oyunun dilinde olmayan cevap geçersiz", () => {
+    const results = calculateRoundScores(
+      deRoom(),
+      [makePlayer("p1", "YABANCI")],
+      [makeAnswer("p1", { Tier: "Kedi", Stadt: "" })],
+      "K",
+    );
+    const ans = results[0].answers["Tier"];
+    expect(ans.isForeign).toBe(true);
+    expect(ans.foreignLanguage).toBe("tr");
+    expect(ans.isValid).toBe(false);
+    expect(ans.points).toBe(0);
+  });
+
+  it("yabancı cevap, doğru cevap yazanın benzersizlik bonusunu çalmıyor", () => {
+    const results = calculateRoundScores(
+      deRoom(),
+      [makePlayer("p1", "DOĞRU"), makePlayer("p2", "YABANCI")],
+      [
+        makeAnswer("p1", { Tier: "Katze", Stadt: "" }),
+        makeAnswer("p2", { Tier: "Kedi", Stadt: "" }),
+      ],
+      "K",
+    );
+    const correct = results.find((r) => r.playerId === "p1")!.answers["Tier"];
+    expect(correct.isUnique).toBe(true);
+    expect(correct.points).toBe(20);
+  });
+
+  it("özel isim kategorisinde dil kontrolü uygulanmıyor", () => {
+    // "İsimler uluslararası": Almanca turda bir şehir adı Türkçe görünse de
+    // geçerli olmalı.
+    const results = calculateRoundScores(
+      deRoom(),
+      [makePlayer("p1", "ŞEHİR")],
+      [makeAnswer("p1", { Tier: "", Stadt: "Kedi" })],
+      "K",
+    );
+    const ans = results[0].answers["Stadt"];
+    expect(ans.isForeign).toBeFalsy();
+    expect(ans.isValid).toBe(true);
+  });
+
+  it("umlautsuz yazım tam puan alıyor", () => {
+    const results = calculateRoundScores(
+      deRoom(),
+      [makePlayer("p1", "UMLAUTSUZ")],
+      [makeAnswer("p1", { Tier: "Kase", Stadt: "" })],
+      "K",
+    );
+    const ans = results[0].answers["Tier"];
+    expect(ans.isTypo).toBeFalsy();
+    expect(ans.points).toBe(20);
+  });
+});

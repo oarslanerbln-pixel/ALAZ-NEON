@@ -639,6 +639,20 @@ const translations = {
   "review.autoRejectNoVowel": { tr: "ÜNLÜ HARF YOK", de: "KEIN VOKAL", en: "NO VOWEL" },
   "review.autoRejectConsonantRun": { tr: "ÜNSÜZ YIĞILMASI", de: "KONSONANTENHÄUFUNG", en: "CONSONANT PILEUP" },
   "review.autoRejectSuspicious": { tr: "ŞÜPHELİ CEVAP", de: "VERDÄCHTIGE ANTWORT", en: "SUSPICIOUS ANSWER" },
+  "review.autoRejectForeign": {
+    tr: (lang: string) => `OYUNUN DİLİNDE DEĞİL (${lang})`,
+    de: (lang: string) => `NICHT IN DER SPIELSPRACHE (${lang})`,
+    en: (lang: string) => `NOT IN THE GAME LANGUAGE (${lang})`,
+  },
+  "review.typoLabel": {
+    tr: (suggestion: string) => `YAZIM HATASI → ${suggestion}`,
+    de: (suggestion: string) => `TIPPFEHLER → ${suggestion}`,
+    en: (suggestion: string) => `TYPO → ${suggestion}`,
+  },
+  "review.typoHalfPoints": { tr: "YARIM PUAN", de: "HALBE PUNKTE", en: "HALF POINTS" },
+  "lang.tr": { tr: "Türkçe", de: "Türkisch", en: "Turkish" },
+  "lang.de": { tr: "Almanca", de: "Deutsch", en: "German" },
+  "lang.en": { tr: "İngilizce", de: "Englisch", en: "English" },
   "review.jokerPenalty": { tr: "-10 PUAN CEZASI", de: "-10 PUNKTE STRAFE", en: "-10 POINT PENALTY" },
 
   // ═══════════════════════════════════════════

@@ -15,6 +15,12 @@ function autoRejectLabel(
 ): string | null {
   if (!ans) return null;
   if (ans.isProfane) return t("review.autoRejectProfane");
+  // Oyunun dilinde yazilmamis cevap: host'a hangi dil oldugunu da soyluyoruz,
+  // cunku "isimler uluslararasi" istisnasini elle uygulamak isteyebilir.
+  if (ans.isForeign) {
+    const languageKey = `lang.${ans.foreignLanguage ?? "tr"}` as Parameters<typeof t>[0];
+    return t("review.autoRejectForeign", t(languageKey));
+  }
   if (!ans.isGibberish) return null;
   switch (ans.gibberishReason) {
     case "tooShort":
@@ -389,6 +395,18 @@ export function HostReview({
                             </span>
                           )}
                         </div>
+                        {/* Yazim hatasi reddedilmiyor, yarim puan aliyor —
+                            bu yuzden red gerekcesinden ayri bir rozet. Host
+                            "bunu mu demek istedi" bilgisini gorup isterse
+                            tiklayip tamamen reddedebiliyor. */}
+                        {ans?.isTypo && !isRejected && (
+                          <div className="text-[10px] font-black uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-1 rounded-sm mb-2 truncate">
+                            {t("review.typoLabel", safeForDisplay(ans.typoSuggestion || ""))}
+                            <span className="text-amber-300/70 ml-1">
+                              · {t("review.typoHalfPoints")}
+                            </span>
+                          </div>
+                        )}
                         <div
                           className={`text-xs font-black uppercase flex items-center gap-1.5 mt-2 ${
                             ans?.isJoker 
