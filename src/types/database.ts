@@ -248,6 +248,14 @@ export interface AnswerBreakdown {
   isProfane?: boolean;
   isGibberish?: boolean;
   gibberishReason?: string;
+  /** Cevap oyunun dilinde yazilmamis — puan almaz. */
+  isForeign?: boolean;
+  /** Tespit edilen dil ("tr" | "de" | "en"), host'a gosterilmek uzere. */
+  foreignLanguage?: string;
+  /** Yazim hatasi — tam degil KISMI puan alir. */
+  isTypo?: boolean;
+  /** Sozlukteki en yakin karsilik; host'a "bunu mu demek istedi" diye gosterilir. */
+  typoSuggestion?: string;
 }
 
 export interface BusinessReport {

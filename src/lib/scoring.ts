@@ -3,6 +3,7 @@ import { getSimilarity } from "./fuzzyMatch";
 import { toMillis } from "./timestamps";
 import { containsProfanity } from "./profanity";
 import { analyzeGibberish } from "./wordValidation";
+import { foldForLookup, judgeAnswer, type AnswerJudgement } from "./answerLanguage";
 import type {
   Room,
   RoundResultInfo,
@@ -11,6 +12,14 @@ import type {
   PlayerPersona,
   AnswerBreakdown,
 } from "../types/database";
+
+/**
+ * Yazim hatasi olan cevabin aldigi puan carpani.
+ *
+ * Sifir degil, cunku oyuncu dogru kelimeyi biliyordu — yalnizca telefonda
+ * yanlis yazdi; tam puan da degil, cunku dogru yazani odullendirmek gerek.
+ */
+export const TYPO_SCORE_MULTIPLIER = 0.5;
 
 /**
  * Calculates scores for a round of answers with Fuzzy Logic and Cognitive Profiling.
@@ -45,6 +54,31 @@ export function calculateRoundScores(
     categoryCounts[cat] = {};
   });
 
+  /**
+   * Dil/yazim degerlendirmesi cevap+kategori basina BIR KEZ yapilip iki
+   * gecise de veriliyor: hem sozluk aramasi hem de iki turlu hesaplamanin
+   * ayni sonucu uretmesi garanti oluyor.
+   */
+  const judgements = new Map<string, AnswerJudgement>();
+  const judgementFor = (answerId: string, cat: string, valRaw: string): AnswerJudgement => {
+    const key = `${answerId}|${cat}`;
+    const cached = judgements.get(key);
+    if (cached) return cached;
+    const verdict = judgeAnswer(valRaw, locale, cat);
+    judgements.set(key, verdict);
+    return verdict;
+  };
+
+  /**
+   * Benzersizlik sayimi icin kanonik anahtar.
+   *
+   * Yazim hatasi, duzeltilmis haliyle sayiliyor. Aksi halde "Vgel" ile
+   * "Vögel" AYRI cevap sayilir ve ikisi de benzersizlik bonusu alirdi —
+   * yani yanlis yazan, dogru yazandan FAZLA puan aliyordu.
+   */
+  const canonicalKey = (valRaw: string, verdict: AnswerJudgement): string =>
+    verdict.kind === "typo" ? verdict.suggestion : foldForLookup(valRaw);
+
   rawAnswers.forEach((answer) => {
     const ansData = answer.data as Record<string, string>;
     room.categories.forEach((cat) => {
@@ -52,13 +86,19 @@ export function calculateRoundScores(
       const val = normalizeTL(valRaw, locale);
       // Geçersiz cevaplar sayıma girmemeli: aksi hâlde küfür ya da anlamsız
       // bir giriş, aynı kategoriye gerçek cevap yazan oyuncunun benzersizlik
-      // bonusunu çalabiliyor.
-      const isRejected = containsProfanity(valRaw) || analyzeGibberish(valRaw).isGibberish;
+      // bonusunu çalabiliyor. Yabancı dilde yazılmış cevap da aynı sebeple
+      // sayıma girmiyor.
+      const verdict = judgementFor(answer.id || answer.player_id, cat, valRaw);
+      const isRejected =
+        containsProfanity(valRaw) ||
+        analyzeGibberish(valRaw).isGibberish ||
+        verdict.kind === "foreign";
       if (val && val.startsWith(normalizedLetter) && !isRejected) {
+        const key = canonicalKey(valRaw, verdict);
         // Fuzzy grouping: Check if a similar word already exists in counts
-        let foundKey = val;
+        let foundKey = key;
         for (const existingVal of Object.keys(categoryCounts[cat])) {
-          if (getSimilarity(val, existingVal) > 0.85) {
+          if (getSimilarity(key, existingVal) > 0.85) {
             foundKey = existingVal;
             break;
           }
@@ -103,15 +143,25 @@ export function calculateRoundScores(
         // ama host inceleme ekranından geri onaylayabilir.
         const isProfane = containsProfanity(valRaw);
         const gibberish = analyzeGibberish(valRaw);
+        const verdict = judgementFor(answer.id || answer.player_id, cat, valRaw);
+        const isForeign = verdict.kind === "foreign";
+        const isTypo = verdict.kind === "typo";
 
-        if (val && val.startsWith(normalizedLetter) && !isProfane && !gibberish.isGibberish) {
+        if (
+          val &&
+          val.startsWith(normalizedLetter) &&
+          !isProfane &&
+          !gibberish.isGibberish &&
+          !isForeign
+        ) {
           isValid = true;
           validCount++;
 
           // Use Fuzzy logic to check uniqueness
-          let fuzzyMatchKey = val;
+          const key = canonicalKey(valRaw, verdict);
+          let fuzzyMatchKey = key;
           for (const existingVal of Object.keys(categoryCounts[cat])) {
-            if (getSimilarity(val, existingVal) > 0.85) {
+            if (getSimilarity(key, existingVal) > 0.85) {
               fuzzyMatchKey = existingVal;
               break;
             }
@@ -124,6 +174,11 @@ export function calculateRoundScores(
           } else {
             pts = 10;
           }
+
+          // Yazim hatasi: oyuncu kelimeyi biliyordu ama yanlis yazdi. Cevap
+          // gecerli sayiliyor (benzersizlik sayimina da giriyor) ama puani
+          // kirpiliyor — dogru yazan one gecsin.
+          if (isTypo) pts = Math.round(pts * TYPO_SCORE_MULTIPLIER);
         }
 
         // Apply Joker Logic
@@ -147,6 +202,10 @@ export function calculateRoundScores(
           isProfane,
           isGibberish: gibberish.isGibberish,
           gibberishReason: gibberish.reason,
+          isForeign,
+          foreignLanguage: verdict.kind === "foreign" ? verdict.language : undefined,
+          isTypo,
+          typoSuggestion: verdict.kind === "typo" ? verdict.suggestion : undefined,
         };
       });
 
