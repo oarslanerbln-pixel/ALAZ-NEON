@@ -532,6 +532,8 @@ const translations = {
   // COMMON / SHELL
   // ═══════════════════════════════════════════
   "common.loading": { tr: "YÜKLENİYOR...", de: "WIRD GELADEN...", en: "LOADING..." },
+  "common.mute": { tr: "Sesi Kapat", de: "Stummschalten", en: "Mute" },
+  "common.unmute": { tr: "Sesi Aç", de: "Stummschaltung aufheben", en: "Unmute" },
   "wheel.spin": { tr: "ÇEVİR", de: "DREHEN", en: "SPIN" },
   "pulse.connectionError": { tr: "Bağlantı hatası!", de: "Verbindungsfehler!", en: "Connection error!" },
   "pulse.waiting": { tr: "BEKLENİYOR", de: "WARTEN", en: "WAITING" },
