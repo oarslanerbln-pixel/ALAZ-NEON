@@ -97,8 +97,15 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     let extraUpdates: Partial<Room> = { active_game: game, ...settings };
 
     if (game === "quiz") {
-      import("../../../lib/quizQuestions").then(({ getQuizQuestions }) => {
-        const questions = getQuizQuestions(room.locale || "tr", settings?.total_rounds || 3);
+      Promise.all([
+        import("../../../lib/quizQuestions"),
+        import("../../../lib/questionHistory"),
+      ]).then(([{ getQuizQuestions }, { recentQuestionIds, rememberQuestions }]) => {
+        const questions = getQuizQuestions(room.locale || "tr", settings?.total_rounds || 3, {
+          topics: settings?.quiz_topics,
+          recentIds: recentQuestionIds(),
+        });
+        rememberQuestions(questions.map((q) => q.id));
         const startState = (settings?.current_round === 0 || room.current_round === 0) ? "tutorial" : "quiz_intro";
         updateRoomStatus(startState, {
           ...extraUpdates,

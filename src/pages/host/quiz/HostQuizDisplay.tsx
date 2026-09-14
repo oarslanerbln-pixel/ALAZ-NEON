@@ -7,6 +7,7 @@ import { ParticleBackground } from "../../../components/ParticleBackground";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { getQuizQuestions } from "../../../lib/quizQuestions";
+import { recentQuestionIds, rememberQuestions } from "../../../lib/questionHistory";
 import { toMillis } from "../../../lib/timestamps";
 import { KineticSpark } from "../../../components/KineticSpark";
 
@@ -107,7 +108,14 @@ export function HostQuizDisplay({
     streaksRef.current = {};
     setPlayerStreaks({});
 
-    const questions = getQuizQuestions(room.locale || "tr", totalRounds);
+    // Ikinci tur da ayni secim ve hafizayi kullanmali: aksi halde host'un
+    // kategori secimi yalnizca ilk turda gecerli olur ve tekrar hafizasi
+    // gece icinde delinirdi.
+    const questions = getQuizQuestions(room.locale || "tr", totalRounds, {
+      topics: room.quiz_topics,
+      recentIds: recentQuestionIds(),
+    });
+    rememberQuestions(questions.map((q) => q.id));
 
     if (room.current_round === 0) {
       await updateRoomStatus("tutorial", {
