@@ -133,6 +133,14 @@ function nearestDictionaryWord(folded: string, locale: AnswerLocale): string | n
     // Oyunun kuralı gereği cevap belirli bir harfle başlıyor; ilk harfi
     // tutmayan aday zaten yazım hatası adayı değil.
     if (candidate[0] !== folded[0]) continue;
+    // Biri diğerinin ÖN EKİ ise bu bir yazım hatası değil, başka bir
+    // kelimedir: çekim eki ("Hund"/"Hunde"), çoğul ("Katze"/"Katzen") ya da
+    // bileşik ("Dach"/"Dachs" — çatı ve porsuk). Gerçek bir yazım hatası
+    // genellikle kelimenin ORTASINDA eksik/yanlış harftir ("Vgel"/"Vögel").
+    // Bu kural, sondan tek harf düşmüş gerçek hataları kaçırma pahasına
+    // bütün bir yanlış pozitif sınıfını kapatıyor — geçerli cevabı
+    // reddetmek, kaçırmaktan çok daha pahalı.
+    if (candidate.startsWith(folded) || folded.startsWith(candidate)) continue;
     const distance = editDistance(folded, candidate);
     if (distance < bestDistance) {
       bestDistance = distance;

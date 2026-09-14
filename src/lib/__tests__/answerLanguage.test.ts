@@ -63,6 +63,30 @@ describe("yazım hatası — kısmi puan", () => {
     expect(judgeAnswer("kaz", "tr", "Hayvan").kind).toBe("ok");
   });
 
+  it("çekim eki / bileşik kelime yazım hatası SAYILMIYOR", () => {
+    // Gerçek bir yanlış pozitifti: "Dachs" (porsuk) sözlükteki "dach"
+    // (çatı) kelimesinin yazım hatası sanılıyordu. Biri diğerinin ön ekiyse
+    // bu bir hata değil, başka bir kelimedir — çoğul, çekim ya da bileşik.
+    expect(judgeAnswer("Dachs", "de", "Tier").kind).toBe("ok");
+    expect(judgeAnswer("Hunde", "de", "Tier").kind).toBe("ok");
+    expect(judgeAnswer("Katzen", "de", "Tier").kind).toBe("ok");
+    expect(judgeAnswer("Kediler", "tr", "Hayvan").kind).toBe("ok");
+  });
+
+  it("listede olmayan ama geçerli kelimeler temiz geçiyor", () => {
+    // Sözlük ~550 kelime; kapsamadığı geçerli cevaplar cezalandırılmamalı.
+    const valid: Array<[string, string, string]> = [
+      ["de", "Tier", "Waschbär"], ["de", "Tier", "Luchs"], ["de", "Essen", "Brezel"],
+      ["de", "Essen", "Schnitzel"], ["de", "Gegenstand", "Kerze"], ["de", "Beruf", "Barkeeper"],
+      ["tr", "Hayvan", "Sincap"], ["tr", "Yiyecek", "Menemen"], ["tr", "Eşya", "Vazo"],
+      ["en", "Animal", "Raccoon"], ["en", "Food", "Pancake"], ["en", "Object", "Candle"],
+    ];
+    const flagged = valid
+      .filter(([loc, cat, word]) => judgeAnswer(word, loc, cat).kind !== "ok")
+      .map(([loc, , word]) => `${loc}/${word}`);
+    expect(flagged).toEqual([]);
+  });
+
   it("sözlükte hiç olmayan ve hiçbir şeye benzemeyen kelime dokunulmadan geçiyor", () => {
     // Sözlük kapsayıcı değil; tanımadığı kelimeyi geçersiz saymamalı.
     expect(judgeAnswer("Zwirbelfux", "de", "Tier").kind).toBe("ok");
