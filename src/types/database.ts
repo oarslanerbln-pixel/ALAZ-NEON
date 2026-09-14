@@ -111,6 +111,12 @@ export interface Room {
   used_bomb_categories?: string[];
   locale?: Locale;
   quiz_questions?: QuizQuestion[];
+  /**
+   * Host'un kurulum modalinde sectigi quiz konulari. Onceden bu secim
+   * toplaniyordu ama hicbir yere yazilmiyordu — host kategori seciyor,
+   * hicbir sey olmuyordu.
+   */
+  quiz_topics?: string[];
   current_question_index?: number;
   next_letter?: string;
   // Bomb Game Fields

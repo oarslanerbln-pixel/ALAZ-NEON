@@ -235,6 +235,9 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
     } else if (game === "quiz") {
       baseSettings.total_rounds = parseInt(quizQuestionsCount, 10);
       baseSettings.timer_setting = parseInt(quizTimePerQuestion, 10);
+      // Secim onceden yalnizca ekranda isaretli gorunuyordu; hicbir yere
+      // gecmiyordu. Artik odaya yaziliyor ve soru secimi bunu uyguluyor.
+      baseSettings.quiz_topics = selectedQuizCategories;
     } else if (game === "bomb") {
       baseSettings.timer_setting = parseInt(bombFuseTime, 10);
       baseSettings.bomb_speed_multiplier = bombSpeedMultiplier;
