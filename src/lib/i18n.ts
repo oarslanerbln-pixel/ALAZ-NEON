@@ -21,6 +21,8 @@ const translations = {
   "common.leaveGame": { tr: "AYRIL", de: "VERLASSEN", en: "LEAVE" },
   "common.confirmLeaveGame": { tr: "Oyundan ayrılmak istediğinizden emin misiniz?", de: "Bist du sicher, dass du das Spiel verlassen möchtest?", en: "Are you sure you want to leave the game?" },
   "common.cancel": { tr: "İPTAL", de: "ABBRECHEN", en: "CANCEL" },
+  "common.mute": { tr: "Sesi Kapat", de: "Stummschalten", en: "Mute" },
+  "common.unmute": { tr: "Sesi Aç", de: "Stummschaltung aufheben", en: "Unmute" },
   "common.offline": { tr: "BAĞLANTI KOPTU, YENİDEN BAĞLANILIYOR...", de: "VERBINDUNG VERLOREN, VERBINDE NEU...", en: "CONNECTION LOST, RECONNECTING..." },
   "landing.hostLabel": { tr: "Yayıncı / Kurucu", de: "Moderator / Gastgeber", en: "Broadcaster / Host" },
   "join.hostOffline": { tr: "HOST ÇEVRİMDIŞI", de: "HOST OFFLINE", en: "HOST OFFLINE" },
