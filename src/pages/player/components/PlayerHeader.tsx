@@ -166,7 +166,8 @@ export function PlayerHeader({
         <button
           onClick={handleToggleMute}
           className="shrink-0 w-8 h-8 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all active:scale-95 ml-1"
-          title={isMuted ? "Sesi Aç" : "Sesi Kapat"}
+          title={isMuted ? t("common.unmute", "Sesi Aç") : t("common.mute", "Sesi Kapat")}
+          aria-label={isMuted ? t("common.unmute", "Sesi Aç") : t("common.mute", "Sesi Kapat")}
         >
           {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
         </button>
@@ -181,6 +182,7 @@ export function PlayerHeader({
           }}
           className="shrink-0 w-8 h-8 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-500/30 flex items-center justify-center text-red-400 hover:text-red-200 transition-all active:scale-95 ml-0.5"
           title={t("common.leaveGame", "AYRIL")}
+          aria-label={t("common.leaveGame", "AYRIL")}
         >
           <LogOut className="w-3.5 h-3.5" />
         </button>
