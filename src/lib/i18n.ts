@@ -569,6 +569,11 @@ const translations = {
   "playerHeader.critical": { tr: "⚡ KRİTİK", de: "⚡ KRITISCH", en: "⚡ CRITICAL" },
   "playerHeader.active": { tr: "◉ AKTİF", de: "◉ AKTIV", en: "◉ ACTIVE" },
   "playerHeader.points": { tr: "PUAN", de: "PUNKTE", en: "POINTS" },
+  // Ses düğmesi ikon-only: ekran okuyucu için erişilebilir ada ihtiyacı var.
+  // Etiket eylemi anlatıyor ("sesi aç"), durumu değil — düğmeye basınca ne
+  // olacağını söylemek, o anki durumu okumaktan daha yararlı.
+  "common.soundOn": { tr: "Sesi aç", de: "Ton einschalten", en: "Turn sound on" },
+  "common.soundOff": { tr: "Sesi kapat", de: "Ton ausschalten", en: "Turn sound off" },
   "playerHeader.submittingAnswers": {
     tr: "Cevaplar Gönderiliyor...",
     de: "Antworten werden gesendet...",

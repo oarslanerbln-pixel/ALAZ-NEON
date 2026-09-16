@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useId, useState, useEffect } from "react";
 import { auth } from "../lib/firebase";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import type { ConfirmationResult } from "firebase/auth";
@@ -71,6 +71,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
   const { t, locale } = useLocale();
   const [country, setCountry] = useState<Country>(() => defaultCountryForLocale(locale));
   const [phoneNumber, setPhoneNumber] = useState("");
+  const fieldIdPrefix = useId();
   const [verificationCode, setVerificationCode] = useState("");
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [error, setError] = useState("");
@@ -186,7 +187,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
         <div className="flex flex-col gap-5">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">
+              <label htmlFor={`${fieldIdPrefix}-phone`} className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">
                 {t("phoneAuth.phoneLabel")}
               </label>
               {/* Ülke seçici: Berlin'de hem yerel (+49) hem çok büyük Türk
@@ -215,6 +216,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
             <div className={fieldWrapClass}>
               <span className="pl-4 text-white/40 font-semibold text-base">+{country.dialCode}</span>
               <input
+                id={`${fieldIdPrefix}-phone`}
                 type="tel"
                 required
                 maxLength={country.maxDigits + 1}
@@ -252,11 +254,12 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
       ) : (
         <div className="flex flex-col gap-5">
           <div>
-            <label className="block text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-2">
+            <label htmlFor={`${fieldIdPrefix}-code`} className="block text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-2">
               {t("phoneAuth.codeLabel")}
             </label>
             <div className={fieldWrapClass}>
               <input
+                id={`${fieldIdPrefix}-code`}
                 type="text"
                 required
                 maxLength={6}

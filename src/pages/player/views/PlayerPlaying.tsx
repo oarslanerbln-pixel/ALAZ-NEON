@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { motion } from "framer-motion";
 import { HoldButton } from "../../../components/HoldButton";
 import { useLocale } from "../../../hooks/useLocale";
@@ -37,6 +37,7 @@ export function PlayerPlaying({
 }: PlayerPlayingProps) {
   const { t } = useLocale();
   const [focusedCategory, setFocusedCategory] = useState<string | null>(null);
+  const fieldIdPrefix = useId();
 
   const toggleJoker = (cat: string) => {
     if (isLocked) return;
@@ -54,6 +55,10 @@ export function PlayerPlaying({
       className="space-y-4"
     >
       {categories.map((cat, idx) => {
+        // Etiket ile alani programatik olarak bagliyoruz: ekran okuyucu alana
+        // gelince kategori adini okusun, ve etikete dokunmak alani odaklasin.
+        // Kategori adi dogrudan id olamaz (bosluk ve Turkce karakter iceriyor).
+        const inputId = `${fieldIdPrefix}-answer-${idx}`;
         const isFocused = focusedCategory === cat;
         const isOthersFocused = focusedCategory !== null && !isFocused;
         const isJoker = jokerCategory === cat;
@@ -66,7 +71,7 @@ export function PlayerPlaying({
               className="space-y-3 origin-top"
             >
               <div className="flex items-center justify-between ml-2 mb-2">
-                <label className="text-xs text-hacker-green/80 font-black font-mono uppercase tracking-[0.3em]">
+                <label htmlFor={inputId} className="text-xs text-hacker-green/80 font-black font-mono uppercase tracking-[0.3em]">
                   &gt; {idx + 1}. {cat}
                 </label>
                 <motion.button
@@ -89,6 +94,7 @@ export function PlayerPlaying({
               </div>
               <div className="relative group">
                 <input
+                  id={inputId}
                   type="text"
                   value={answers[cat] || ""}
                   onChange={(e) => onAnswerChange(cat, e.target.value)}
