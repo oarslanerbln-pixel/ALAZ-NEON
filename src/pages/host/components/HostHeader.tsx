@@ -75,6 +75,7 @@ export function HostHeader({
         {isMiniGameActive && onReturnToLobby && (
           <button
             onClick={handleReturnToLobby}
+            aria-label={t("common.returnToLobby")}
             className="flex items-center gap-2 text-xs font-mono font-bold text-alaz-orange hover:text-white bg-alaz-orange/10 hover:bg-alaz-orange border border-alaz-orange/40 hover:border-alaz-orange px-3.5 py-2 rounded-2xl transition-all active:scale-95 cursor-pointer shadow-[0_0_15px_rgba(255,85,0,0.25)]"
             title={t("common.returnToLobby", "LOBİYE DÖN")}
           >
@@ -86,6 +87,7 @@ export function HostHeader({
         {/* Ana Sayfa Çıkış Butonu */}
         <button
           onClick={handleExitHome}
+          aria-label={t("common.back")}
           className="flex items-center gap-1.5 text-xs font-mono font-bold text-white/70 hover:text-white bg-white/5 hover:bg-white/15 border border-white/15 hover:border-white/40 px-3.5 py-2 rounded-2xl transition-all active:scale-95 cursor-pointer"
           title={t("common.back", "ANA SAYFA")}
         >
@@ -146,6 +148,8 @@ export function HostHeader({
         {onTriggerAdBreak && (
           <button
             onClick={onTriggerAdBreak}
+            aria-label={t("hostHeader.adBreak")}
+            title={t("hostHeader.adBreak")}
             className="text-[11px] text-white/80 hover:text-white border border-white/15 hover:border-white/40 bg-white/5 hover:bg-white/15 px-3.5 py-2 rounded-2xl uppercase tracking-[0.15em] font-bold transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
           >
             <Radio className="w-3.5 h-3.5 text-amber-400" />
@@ -158,7 +162,8 @@ export function HostHeader({
         <button
           onClick={handleToggleMute}
           className="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/80 hover:text-white transition-all active:scale-95 cursor-pointer"
-          title={isMuted ? "Sesi Aç" : "Sesi Kapat"}
+          aria-label={isMuted ? t("common.soundOn") : t("common.soundOff")}
+          title={isMuted ? t("common.soundOn") : t("common.soundOff")}
         >
           {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
         </button>
