@@ -470,7 +470,10 @@ const translations = {
   "phoneAuth.verifying": { tr: "Doğrulanıyor...", de: "Wird bestätigt...", en: "Verifying..." },
   "phoneAuth.reenterNumber": { tr: "Numarayı değiştir", de: "Nummer ändern", en: "Change number" },
   "phoneAuth.cancel": { tr: "Vazgeç", de: "Abbrechen", en: "Cancel" },
-  "phoneAuth.countryPrefix": { tr: "Ülke kodu: +", de: "Ländervorwahl: +", en: "Country code: +" },
+  // "+" bilerek çeviri dışında, JSX tarafında: değer `+90` gibi bir
+  // önektir, çeviren kişinin metin sonundaki artıyı korumasına
+  // bel bağlamak istemiyoruz.
+  "phoneAuth.countryPrefix": { tr: "Ülke kodu", de: "Ländervorwahl", en: "Country code" },
   "phoneAuth.errRecaptcha": {
     tr: "Doğrulama hazır değil, tekrar deneyin.",
     de: "Verifizierung nicht bereit, bitte erneut versuchen.",
@@ -575,6 +578,10 @@ const translations = {
   // olacağını söylemek, o anki durumu okumaktan daha yararlı.
   "common.soundOn": { tr: "Sesi aç", de: "Ton einschalten", en: "Turn sound on" },
   "common.soundOff": { tr: "Sesi kapat", de: "Ton ausschalten", en: "Turn sound off" },
+  // Dil seçicinin düğmeleri kendi dillerinde ("Deutsch", "Türkçe"),
+  // yani gruba gelen ekran okuyucu bunların ne olduğunu ancak grup
+  // adından anlıyor.
+  "common.languageSwitcher": { tr: "Arayüz dili", de: "Anzeigesprache", en: "Interface language" },
   "playerHeader.submittingAnswers": {
     tr: "Cevaplar Gönderiliyor...",
     de: "Antworten werden gesendet...",
