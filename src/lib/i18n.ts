@@ -470,6 +470,7 @@ const translations = {
   "phoneAuth.verifying": { tr: "Doğrulanıyor...", de: "Wird bestätigt...", en: "Verifying..." },
   "phoneAuth.reenterNumber": { tr: "Numarayı değiştir", de: "Nummer ändern", en: "Change number" },
   "phoneAuth.cancel": { tr: "Vazgeç", de: "Abbrechen", en: "Cancel" },
+  "phoneAuth.countryPrefix": { tr: "Ülke kodu: +", de: "Ländervorwahl: +", en: "Country code: +" },
   "phoneAuth.errRecaptcha": {
     tr: "Doğrulama hazır değil, tekrar deneyin.",
     de: "Verifizierung nicht bereit, bitte erneut versuchen.",

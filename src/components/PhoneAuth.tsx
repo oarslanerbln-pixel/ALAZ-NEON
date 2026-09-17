@@ -202,6 +202,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
                       setError("");
                     }}
                     aria-pressed={country.iso === c.iso}
+                    aria-label={`${c.label} ${t("phoneAuth.countryPrefix")}${c.dialCode}`}
                     className={`px-2.5 py-1 text-[11px] font-bold rounded-full transition-colors flex items-center gap-1 ${
                       country.iso === c.iso
                         ? "bg-alaz-orange text-black"

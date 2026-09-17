@@ -1,10 +1,10 @@
 import { useLocale } from "../hooks/useLocale";
 import type { Locale } from "../lib/i18n";
 
-const LANGUAGES: { code: Locale; label: string }[] = [
-  { code: "de", label: "DE" },
-  { code: "tr", label: "TR" },
-  { code: "en", label: "EN" },
+const LANGUAGES: { code: Locale; label: string; ariaLabel: string }[] = [
+  { code: "de", label: "DE", ariaLabel: "Deutsch" },
+  { code: "tr", label: "TR", ariaLabel: "Türkçe" },
+  { code: "en", label: "EN", ariaLabel: "English" },
 ];
 
 interface LanguageSwitcherProps {
@@ -34,7 +34,7 @@ export function LanguageSwitcher({ className = "", onSwitch, fullWidth = false }
     // kazanacağı Tailwind'in dahili kural sırasına kalır, öngörülemez olurdu.
     // Tam genişlik ihtiyacı `fullWidth` ile karşılanıyor.
     <div className={`flex items-center gap-2 p-1 bg-black/40 border border-white/5 rounded-sm shadow-inner ${className}`}>
-      {LANGUAGES.map(({ code, label }) => (
+      {LANGUAGES.map(({ code, label, ariaLabel }) => (
         <button
           key={code}
           type="button"
@@ -43,6 +43,7 @@ export function LanguageSwitcher({ className = "", onSwitch, fullWidth = false }
             onSwitch?.(code);
           }}
           aria-pressed={locale === code}
+          aria-label={ariaLabel}
           className={`relative px-4 py-2 text-xs font-black uppercase tracking-[0.2em] rounded-sm transition-all duration-300 ${
             fullWidth ? "flex-1 py-4" : ""
           } ${
