@@ -23,6 +23,14 @@ model User {
   medicalReports MedicalReport[]
 }
 
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
 model Medication {
   id        String   @id @default(uuid())
   name      String
@@ -37,7 +45,7 @@ model Medication {
 
 model MedicalReport {
   id        String   @id @default(uuid())
-  content   String
+  // This summary MUST be encrypted with AES-256 before saving to the DB.
   summary   String
   userId    String
   user      User     @relation(fields: [userId], references: [id])
