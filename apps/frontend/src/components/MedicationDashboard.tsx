@@ -31,21 +31,26 @@ export default function MedicationDashboard() {
                 backgroundColor: med.taken ? "#00ffff" : "#000000",
                 color: med.taken ? "#000000" : "#00ffff",
                 border: "2px solid #00ffff",
-                padding: "16px 24px",
-                fontSize: "20px",
+                padding: "24px 32px",
+                fontSize: "24px",
                 display: "flex",
                 alignItems: "center",
-                gap: "8px",
+                gap: "12px",
                 cursor: "pointer",
-                borderRadius: "8px"
+                borderRadius: "8px",
+                fontWeight: "bold"
               }}
               aria-label={`${med.name} alındı olarak işaretle`}
             >
-              <CheckCircle size={24} />
+              <CheckCircle size={32} />
               {med.taken ? "Alındı" : "Alınmadı"}
             </button>
           </div>
         ))}
+      </div>
+
+      <div style={{ marginTop: "32px", padding: "16px", backgroundColor: "#333333", color: "#ffff00", fontSize: "16px", borderRadius: "8px", textAlign: "center" }}>
+        <p><strong>Dikkat:</strong> Bu bir tıbbi tavsiye değildir, yalnızca dil sadeleştirme aracıdır. Lütfen doktorunuza danışın.</p>
       </div>
     </div>
   );
