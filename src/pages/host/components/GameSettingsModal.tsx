@@ -313,6 +313,7 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
 
             <button
               onClick={onClose}
+              aria-label={t("common.close") || "Close"}
               className="w-11 h-11 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-gray-300 hover:text-white transition-all active:scale-95 shrink-0 ml-3 cursor-pointer"
             >
               <X className="w-6 h-6 stroke-[2.5]" />

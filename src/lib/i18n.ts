@@ -9,6 +9,7 @@ const translations = {
   // ═══════════════════════════════════════════
   // LANDING PAGE
   // ═══════════════════════════════════════════
+  "common.close": { tr: "KAPAT", de: "SCHLIESSEN", en: "CLOSE" },
   "common.back": { tr: "ANA SAYFA", de: "STARTSEITE", en: "HOME" },
   "common.returnToLobby": { tr: "LOBİYE DÖN", de: "ZUR LOBBY", en: "LOBBY" },
   "common.confirmReturnLobby": { tr: "Mevcut oyunu bitirip lobiye dönmek istiyor musunuz?", de: "Möchtest du das aktuelle Spiel beenden und zur Lobby zurückkehren?", en: "Do you want to end the game and return to lobby?" },
