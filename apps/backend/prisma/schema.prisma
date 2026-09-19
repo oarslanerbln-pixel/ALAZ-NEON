@@ -36,11 +36,10 @@ model Medication {
 }
 
 model MedicalReport {
-  id        String   @id @default(uuid())
-  content   String
-  summary   String
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String   @id @default(uuid())
+  encryptedSummary String
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }

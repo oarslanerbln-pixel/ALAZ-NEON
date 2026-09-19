@@ -16,43 +16,42 @@ export default function UploadDocument() {
   };
 
   return (
-    <div style={{ padding: "24px", border: "2px solid #ffff00", borderRadius: "8px", marginBottom: "24px" }}>
-      <h2 style={{ fontSize: "24px", marginBottom: "16px" }}>Rapor Yükle (Kamera / Dosya)</h2>
+    <div className="p-6 border-2 border-[#ffff00] rounded-lg mb-6">
+      <h2 className="text-2xl mb-4">Rapor Yükle (Kamera / Dosya)</h2>
 
-      <div style={{ marginBottom: "16px" }}>
-        <label htmlFor="lang-select" style={{ marginRight: "8px" }}>Özet Dili:</label>
-        <select
-          id="lang-select"
-          value={language}
-          onChange={(e) => setLanguage(e.target.value)}
-          style={{ backgroundColor: "#000000", color: "#00ffff", border: "2px solid #00ffff", padding: "8px", fontSize: "16px" }}
-        >
-          <option value="en">İngilizce (English)</option>
-          <option value="ar">Arapça (Arabic)</option>
-        </select>
+      <div className="mb-4">
+        <p className="mr-2 mb-2">Özet Dili:</p>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setLanguage("en")}
+            className={`border-2 border-[#00ffff] p-3 text-base cursor-pointer flex-1 ${
+              language === "en" ? "bg-[#00ffff] text-black" : "bg-black text-[#00ffff]"
+            }`}
+            aria-label="Özet dili İngilizce olarak seç"
+          >
+            İngilizce
+          </button>
+          <button
+            onClick={() => setLanguage("ar")}
+            className={`border-2 border-[#00ffff] p-3 text-base cursor-pointer flex-1 ${
+              language === "ar" ? "bg-[#00ffff] text-black" : "bg-black text-[#00ffff]"
+            }`}
+            aria-label="Özet dili Arapça olarak seç"
+          >
+            Arapça
+          </button>
+        </div>
       </div>
 
       {isScanning ? (
-        <div style={{ fontSize: "20px", color: "#00ffff", display: "flex", alignItems: "center", gap: "8px" }}>
+        <div className="text-xl text-[#00ffff] flex items-center gap-2">
           <span>Raporunuz taranıyor...</span>
           <span className="animate-pulse">⏳</span>
         </div>
       ) : (
         <button
           onClick={handleUpload}
-          style={{
-            backgroundColor: "#000000",
-            color: "#00ffff",
-            border: "2px solid #00ffff",
-            padding: "16px",
-            fontSize: "20px",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            cursor: "pointer",
-            width: "100%",
-            justifyContent: "center"
-          }}
+          className="bg-black text-[#00ffff] border-2 border-[#00ffff] p-4 text-xl flex items-center gap-2 cursor-pointer w-full justify-center"
           aria-label="Rapor yüklemek için tıklayın"
         >
           <Upload size={24} />

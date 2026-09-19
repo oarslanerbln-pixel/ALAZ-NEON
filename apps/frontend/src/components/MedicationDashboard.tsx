@@ -16,29 +16,20 @@ export default function MedicationDashboard() {
   };
 
   return (
-    <div style={{ padding: "24px", border: "2px solid #ffff00", borderRadius: "8px" }}>
-      <h2 style={{ fontSize: "24px", marginBottom: "16px" }}>İlaç Takibi</h2>
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+    <div className="p-6 border-2 border-[#ffff00] rounded-lg">
+      <h2 className="text-2xl mb-4">İlaç Takibi</h2>
+      <div className="flex flex-col gap-4">
         {medications.map(med => (
-          <div key={med.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #ffff00", paddingBottom: "16px" }}>
+          <div key={med.id} className="flex justify-between items-center border-b border-[#ffff00] pb-4">
             <div>
-              <div style={{ fontSize: "20px" }}>{med.name}</div>
-              <div style={{ fontSize: "16px" }}>{med.time}</div>
+              <div className="text-xl">{med.name}</div>
+              <div className="text-base">{med.time}</div>
             </div>
             <button
               onClick={() => toggleTaken(med.id)}
-              style={{
-                backgroundColor: med.taken ? "#00ffff" : "#000000",
-                color: med.taken ? "#000000" : "#00ffff",
-                border: "2px solid #00ffff",
-                padding: "16px 24px",
-                fontSize: "20px",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                cursor: "pointer",
-                borderRadius: "8px"
-              }}
+              className={`border-2 border-[#00ffff] px-6 py-4 text-xl flex items-center gap-2 cursor-pointer rounded-lg ${
+                med.taken ? "bg-[#00ffff] text-black" : "bg-black text-[#00ffff]"
+              }`}
               aria-label={`${med.name} alındı olarak işaretle`}
             >
               <CheckCircle size={24} />
