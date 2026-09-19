@@ -29,18 +29,10 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        style={{
-          backgroundColor: "#000000",
-          color: "#ffff00",
-          fontSize: "16px",
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-        }}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-[#ffff00] text-base min-h-screen flex flex-col`}
       >
-        <div style={{ flex: 1 }}>{children}</div>
-        <footer style={{ padding: "16px", borderTop: "2px solid #ffff00", textAlign: "center", fontSize: "16px" }}>
+        <div className="flex-1">{children}</div>
+        <footer className="p-4 border-t-2 border-[#ffff00] text-center text-base">
           Bu bir tıbbi tavsiye değildir, yalnızca dil sadeleştirme aracıdır. Lütfen doktorunuza danışın.
         </footer>
       </body>
