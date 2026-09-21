@@ -20,16 +20,29 @@ export default function UploadDocument() {
       <h2 style={{ fontSize: "24px", marginBottom: "16px" }}>Rapor Yükle (Kamera / Dosya)</h2>
 
       <div style={{ marginBottom: "16px" }}>
-        <label htmlFor="lang-select" style={{ marginRight: "8px" }}>Özet Dili:</label>
-        <select
-          id="lang-select"
-          value={language}
-          onChange={(e) => setLanguage(e.target.value)}
-          style={{ backgroundColor: "#000000", color: "#00ffff", border: "2px solid #00ffff", padding: "8px", fontSize: "16px" }}
-        >
-          <option value="en">İngilizce (English)</option>
-          <option value="ar">Arapça (Arabic)</option>
-        </select>
+        <div style={{ marginBottom: "8px", fontSize: "16px" }}>Özet Dili:</div>
+        <div style={{ display: "flex", gap: "8px", flexDirection: "column" }}>
+          {["tr", "en", "ar"].map((lang) => (
+            <button
+              key={lang}
+              onClick={() => setLanguage(lang)}
+              style={{
+                backgroundColor: language === lang ? "#00ffff" : "#000000",
+                color: language === lang ? "#000000" : "#00ffff",
+                border: "2px solid #00ffff",
+                padding: "16px",
+                fontSize: "20px",
+                cursor: "pointer",
+                borderRadius: "8px",
+                textAlign: "left"
+              }}
+              aria-label={`${lang === "tr" ? "Türkçe" : lang === "en" ? "İngilizce" : "Arapça"} seçeneği`}
+              aria-pressed={language === lang}
+            >
+              {lang === "tr" ? "Türkçe" : lang === "en" ? "İngilizce (English)" : "Arapça (Arabic)"}
+            </button>
+          ))}
+        </div>
       </div>
 
       {isScanning ? (
