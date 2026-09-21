@@ -30,19 +30,23 @@ export default function MedicationDashboard() {
               style={{
                 backgroundColor: med.taken ? "#00ffff" : "#000000",
                 color: med.taken ? "#000000" : "#00ffff",
-                border: "2px solid #00ffff",
-                padding: "16px 24px",
-                fontSize: "20px",
+                border: "4px solid #00ffff",
+                padding: "24px 32px",
+                fontSize: "24px",
+                fontWeight: "bold",
                 display: "flex",
                 alignItems: "center",
-                gap: "8px",
+                gap: "12px",
                 cursor: "pointer",
-                borderRadius: "8px"
+                borderRadius: "12px",
+                minWidth: "180px",
+                justifyContent: "center"
               }}
               aria-label={`${med.name} alındı olarak işaretle`}
+              aria-pressed={med.taken}
             >
-              <CheckCircle size={24} />
-              {med.taken ? "Alındı" : "Alınmadı"}
+              <CheckCircle size={32} />
+              Alındı
             </button>
           </div>
         ))}
