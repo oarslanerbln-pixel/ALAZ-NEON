@@ -10,6 +10,9 @@ const translations = {
   // LANDING PAGE
   // ═══════════════════════════════════════════
   "common.back": { tr: "ANA SAYFA", de: "STARTSEITE", en: "HOME" },
+  "common.previous": { tr: "Önceki", de: "Zurück", en: "Previous" },
+  "common.next": { tr: "Sonraki", de: "Weiter", en: "Next" },
+
   "common.returnToLobby": { tr: "LOBİYE DÖN", de: "ZUR LOBBY", en: "LOBBY" },
   "common.confirmReturnLobby": { tr: "Mevcut oyunu bitirip lobiye dönmek istiyor musunuz?", de: "Möchtest du das aktuelle Spiel beenden und zur Lobby zurückkehren?", en: "Do you want to end the game and return to lobby?" },
   "common.confirmExitHome": { tr: "Ana sayfaya dönmek istediğinizden emin misiniz?", de: "Möchtest du wirklich zur Startseite zurückkehren?", en: "Are you sure you want to return to home?" },
