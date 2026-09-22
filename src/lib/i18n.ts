@@ -21,6 +21,9 @@ const translations = {
   "common.leaveGame": { tr: "AYRIL", de: "VERLASSEN", en: "LEAVE" },
   "common.confirmLeaveGame": { tr: "Oyundan ayrılmak istediğinizden emin misiniz?", de: "Bist du sicher, dass du das Spiel verlassen möchtest?", en: "Are you sure you want to leave the game?" },
   "common.cancel": { tr: "İPTAL", de: "ABBRECHEN", en: "CANCEL" },
+  "common.previous": { tr: "ÖNCEKİ", de: "ZURÜCK", en: "PREVIOUS" },
+  "common.next": { tr: "SONRAKİ", de: "WEITER", en: "NEXT" },
+  "common.close": { tr: "KAPAT", de: "SCHLIESSEN", en: "CLOSE" },
   "common.offline": { tr: "BAĞLANTI KOPTU, YENİDEN BAĞLANILIYOR...", de: "VERBINDUNG VERLOREN, VERBINDE NEU...", en: "CONNECTION LOST, RECONNECTING..." },
   "landing.hostLabel": { tr: "Yayıncı / Kurucu", de: "Moderator / Gastgeber", en: "Broadcaster / Host" },
   "join.hostOffline": { tr: "HOST ÇEVRİMDIŞI", de: "HOST OFFLINE", en: "HOST OFFLINE" },
@@ -748,6 +751,7 @@ const translations = {
   },
   "dashboard.startGame": { tr: "Oyun Başlat", de: "Spiel starten", en: "Start Game" },
   "dashboard.startSession": { tr: "Oturumu Başlat", de: "Session starten", en: "Start Session" },
+  "dashboard.startKioskMode": { tr: "Kiosk Modunu Başlat", de: "Kiosk-Modus Starten", en: "Start Kiosk Mode" },
   "dashboard.modeSensorDesc": {
     tr: "Hızlı olan kazanır! Gizemli görseli ilk sen bil, devasa neon butonla yarış.",
     de: "Wer schnell ist, gewinnt! Errate das mysteriöse Bild als Erster, hau auf den riesigen Neon-Buzzer.",
