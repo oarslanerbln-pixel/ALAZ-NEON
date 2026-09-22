@@ -307,7 +307,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                     onClick={() => setIsKioskMode(true)}
                     className="mt-8 w-full py-3 bg-white/5 hover:bg-white/15 border border-white/20 rounded-xl text-white font-bold uppercase tracking-widest text-[10px] transition-colors"
                   >
-                    Kiosk Modunu Başlat
+                    {t("dashboard.startKioskMode")}
                   </button>
                 )}
               </div>
@@ -348,6 +348,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                 {/* Carousel Left Arrow */}
                 <button
                   onClick={() => paginate(-1)}
+                  aria-label={t("common.previous")}
                   className="absolute left-0 z-20 w-16 h-16 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 transition-all hover:scale-110 shadow-xl -ml-8"
                 >
                   <ChevronLeft className="w-8 h-8 text-slate-800 opacity-80" />
@@ -410,6 +411,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                 {/* Carousel Right Arrow */}
                 <button
                   onClick={() => paginate(1)}
+                  aria-label={t("common.next")}
                   className="absolute right-0 z-20 w-16 h-16 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 transition-all hover:scale-110 shadow-xl -mr-8"
                 >
                   <ChevronRight className="w-8 h-8 text-slate-800 opacity-80" />
@@ -445,7 +447,16 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsKioskMode(false)}
-            className="fixed inset-0 z-[999] bg-black cursor-pointer flex items-center justify-center"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setIsKioskMode(false);
+              }
+            }}
+            tabIndex={0}
+            role="button"
+            aria-label={t("common.close")}
+            className="fixed inset-0 z-[999] bg-black cursor-pointer flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
           >
             <AnimatePresence mode="wait">
               <motion.img
