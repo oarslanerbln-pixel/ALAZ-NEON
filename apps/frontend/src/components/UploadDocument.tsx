@@ -20,16 +20,41 @@ export default function UploadDocument() {
       <h2 style={{ fontSize: "24px", marginBottom: "16px" }}>Rapor Yükle (Kamera / Dosya)</h2>
 
       <div style={{ marginBottom: "16px" }}>
-        <label htmlFor="lang-select" style={{ marginRight: "8px" }}>Özet Dili:</label>
-        <select
-          id="lang-select"
-          value={language}
-          onChange={(e) => setLanguage(e.target.value)}
-          style={{ backgroundColor: "#000000", color: "#00ffff", border: "2px solid #00ffff", padding: "8px", fontSize: "16px" }}
-        >
-          <option value="en">İngilizce (English)</option>
-          <option value="ar">Arapça (Arabic)</option>
-        </select>
+        <p style={{ marginBottom: "8px", fontSize: "16px" }}>Özet Dili:</p>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button
+            onClick={() => setLanguage("en")}
+            style={{
+              backgroundColor: language === "en" ? "#00ffff" : "#000000",
+              color: language === "en" ? "#000000" : "#00ffff",
+              border: "2px solid #00ffff",
+              padding: "12px 16px",
+              fontSize: "16px",
+              cursor: "pointer",
+              borderRadius: "4px"
+            }}
+            aria-label="İngilizce Özet Seçimi"
+            aria-pressed={language === "en"}
+          >
+            İngilizce (English)
+          </button>
+          <button
+            onClick={() => setLanguage("ar")}
+            style={{
+              backgroundColor: language === "ar" ? "#00ffff" : "#000000",
+              color: language === "ar" ? "#000000" : "#00ffff",
+              border: "2px solid #00ffff",
+              padding: "12px 16px",
+              fontSize: "16px",
+              cursor: "pointer",
+              borderRadius: "4px"
+            }}
+            aria-label="Arapça Özet Seçimi"
+            aria-pressed={language === "ar"}
+          >
+            Arapça (Arabic)
+          </button>
+        </div>
       </div>
 
       {isScanning ? (
