@@ -1,64 +1,63 @@
 "use client";
 
 import { useState } from "react";
-import { Upload } from "lucide-react";
+import { Upload, Camera, Loader2 } from "lucide-react";
 
 export default function UploadDocument() {
   const [isScanning, setIsScanning] = useState(false);
-  const [language, setLanguage] = useState("en");
 
-  const handleUpload = () => {
-    setIsScanning(true);
-    // Simulate OCR scanning process
-    setTimeout(() => {
-      setIsScanning(false);
-    }, 3000);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setIsScanning(true);
+      // Simulate scanning process
+      setTimeout(() => {
+        setIsScanning(false);
+      }, 3000);
+    }
   };
 
   return (
-    <div style={{ padding: "24px", border: "2px solid #ffff00", borderRadius: "8px", marginBottom: "24px" }}>
-      <h2 style={{ fontSize: "24px", marginBottom: "16px" }}>Rapor Yükle (Kamera / Dosya)</h2>
-
-      <div style={{ marginBottom: "16px" }}>
-        <label htmlFor="lang-select" style={{ marginRight: "8px" }}>Özet Dili:</label>
-        <select
-          id="lang-select"
-          value={language}
-          onChange={(e) => setLanguage(e.target.value)}
-          style={{ backgroundColor: "#000000", color: "#00ffff", border: "2px solid #00ffff", padding: "8px", fontSize: "16px" }}
-        >
-          <option value="en">İngilizce (English)</option>
-          <option value="ar">Arapça (Arabic)</option>
-        </select>
-      </div>
+    <section className="border-4 border-interactive p-6 rounded-lg my-6" aria-labelledby="upload-heading">
+      <h2 id="upload-heading" className="text-2xl font-bold mb-4">Rapor Yükle / Çek</h2>
+      <p className="mb-6 text-lg">Tıbbi raporunuzun fotoğrafını çekin veya dosya olarak yükleyin.</p>
 
       {isScanning ? (
-        <div style={{ fontSize: "20px", color: "#00ffff", display: "flex", alignItems: "center", gap: "8px" }}>
-          <span>Raporunuz taranıyor...</span>
-          <span className="animate-pulse">⏳</span>
+        <div className="flex flex-col items-center justify-center p-8 border-4 border-dashed border-interactive rounded-lg bg-background" aria-live="polite">
+          <Loader2 className="w-16 h-16 animate-spin text-interactive mb-4" />
+          <p className="text-xl font-bold">Raporunuz taranıyor...</p>
         </div>
       ) : (
-        <button
-          onClick={handleUpload}
-          style={{
-            backgroundColor: "#000000",
-            color: "#00ffff",
-            border: "2px solid #00ffff",
-            padding: "16px",
-            fontSize: "20px",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            cursor: "pointer",
-            width: "100%",
-            justifyContent: "center"
-          }}
-          aria-label="Rapor yüklemek için tıklayın"
-        >
-          <Upload size={24} />
-          <span>Fotoğraf Çek veya Yükle</span>
-        </button>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <label className="flex-1 cursor-pointer">
+            <div className="flex items-center justify-center gap-3 p-6 border-4 border-interactive bg-background hover:bg-interactive hover:text-background transition-colors rounded-lg font-bold text-xl" role="button" tabIndex={0}>
+              <Camera size={32} />
+              <span>Kamera ile Çek</span>
+            </div>
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="sr-only"
+              onChange={handleFileChange}
+              aria-label="Kamera ile fotoğraf çek"
+            />
+          </label>
+
+          <label className="flex-1 cursor-pointer">
+            <div className="flex items-center justify-center gap-3 p-6 border-4 border-interactive bg-background hover:bg-interactive hover:text-background transition-colors rounded-lg font-bold text-xl" role="button" tabIndex={0}>
+              <Upload size={32} />
+              <span>Dosya Seç</span>
+            </div>
+            <input
+              type="file"
+              accept="image/*,.pdf"
+              className="sr-only"
+              onChange={handleFileChange}
+              aria-label="Dosya seç"
+            />
+          </label>
+        </div>
       )}
-    </div>
+    </section>
   );
 }
