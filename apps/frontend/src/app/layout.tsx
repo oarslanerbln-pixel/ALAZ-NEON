@@ -1,20 +1,22 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const geistSans = Geist({
+const geistSans = localFont({
+  src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  weight: "100 900",
 });
-
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: "./fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: "100 900",
 });
 
 export const metadata: Metadata = {
   title: "MediSade",
   description: "Tıbbi rapor sadeleştirme aracı",
+  manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {
@@ -29,20 +31,14 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        style={{
-          backgroundColor: "#000000",
-          color: "#ffff00",
-          fontSize: "16px",
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-        }}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
-        <div style={{ flex: 1 }}>{children}</div>
-        <footer style={{ padding: "16px", borderTop: "2px solid #ffff00", textAlign: "center", fontSize: "16px" }}>
+        <div className="bg-[#000000] text-[#ffff00] border-b-2 border-[#ffff00] p-4 text-center font-bold text-lg sticky top-0 z-50">
           Bu bir tıbbi tavsiye değildir, yalnızca dil sadeleştirme aracıdır. Lütfen doktorunuza danışın.
-        </footer>
+        </div>
+        <main className="flex-1 flex flex-col p-4">
+          {children}
+        </main>
       </body>
     </html>
   );
