@@ -1,63 +1,74 @@
 "use client";
 
 import { useState } from "react";
-import { Upload } from "lucide-react";
+import Tesseract from "tesseract.js";
+import { t } from "@/lib/i18n";
+import { Camera } from "lucide-react";
 
 export default function UploadDocument() {
   const [isScanning, setIsScanning] = useState(false);
-  const [language, setLanguage] = useState("en");
+  const [summary, setSummary] = useState<string | null>(null);
 
-  const handleUpload = () => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
     setIsScanning(true);
-    // Simulate OCR scanning process
-    setTimeout(() => {
+    setSummary(null);
+
+    try {
+      // Simulate reading/scanning
+      const result = await Tesseract.recognize(file, 'tur', {
+        logger: m => console.log(m) // for dev/debug
+      });
+
+      const rawText = result.data.text;
+
+      // LLM API Stub
+      // System prompt: "Tıbbi metni 70 yaşındaki birinin anlayacağı sadelikte 3 başlıkta özetle: 1. Durumunuz Nedir? 2. Doktorunuz Ne Demek İstiyor? 3. Dikkat Etmeniz Gerekenler."
+
+      console.log("Raw OCR Text:", rawText);
+      console.log("Using system prompt for simplification...");
+
+      // Simulate LLM delay and response
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setSummary(`ÖZET SONUCU:\n\n1. Durumunuz Nedir?\nBelgeleriniz incelendi.\n\n2. Doktorunuz Ne Demek İstiyor?\nHer şey yolunda gözüküyor.\n\n3. Dikkat Etmeniz Gerekenler\nİlaçlarınızı düzenli alın.`);
+
+    } catch (error) {
+      console.error("OCR Failed:", error);
+      setSummary("Okuma sırasında bir hata oluştu.");
+    } finally {
       setIsScanning(false);
-    }, 3000);
+    }
   };
 
   return (
-    <div style={{ padding: "24px", border: "2px solid #ffff00", borderRadius: "8px", marginBottom: "24px" }}>
-      <h2 style={{ fontSize: "24px", marginBottom: "16px" }}>Rapor Yükle (Kamera / Dosya)</h2>
+    <div className="flex flex-col gap-6 border-4 border-[#ffff00] p-6 rounded-xl mt-8">
+      <h2 className="text-3xl font-bold">Rapor Yükle / Tara</h2>
 
-      <div style={{ marginBottom: "16px" }}>
-        <label htmlFor="lang-select" style={{ marginRight: "8px" }}>Özet Dili:</label>
-        <select
-          id="lang-select"
-          value={language}
-          onChange={(e) => setLanguage(e.target.value)}
-          style={{ backgroundColor: "#000000", color: "#00ffff", border: "2px solid #00ffff", padding: "8px", fontSize: "16px" }}
-        >
-          <option value="en">İngilizce (English)</option>
-          <option value="ar">Arapça (Arabic)</option>
-        </select>
-      </div>
+      <label className="flex flex-col items-center justify-center p-8 border-4 border-dashed border-[#00ffff] rounded-xl cursor-pointer hover:bg-[#111111] transition-colors focus-within:ring-4 focus-within:ring-[#00ffff]">
+        <Camera size={64} className="text-[#00ffff] mb-4" />
+        <span className="text-2xl font-bold text-[#00ffff]">{t("upload_button")}</span>
+        <input
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="sr-only"
+          onChange={handleFileUpload}
+        />
+      </label>
 
-      {isScanning ? (
-        <div style={{ fontSize: "20px", color: "#00ffff", display: "flex", alignItems: "center", gap: "8px" }}>
-          <span>Raporunuz taranıyor...</span>
-          <span className="animate-pulse">⏳</span>
+      {isScanning && (
+        <div className="flex flex-col items-center gap-4 mt-4 p-4 border-2 border-[#ffff00] rounded-lg">
+          <div className="w-12 h-12 border-4 border-[#00ffff] border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-2xl font-bold animate-pulse">{t("scanning")}</span>
         </div>
-      ) : (
-        <button
-          onClick={handleUpload}
-          style={{
-            backgroundColor: "#000000",
-            color: "#00ffff",
-            border: "2px solid #00ffff",
-            padding: "16px",
-            fontSize: "20px",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            cursor: "pointer",
-            width: "100%",
-            justifyContent: "center"
-          }}
-          aria-label="Rapor yüklemek için tıklayın"
-        >
-          <Upload size={24} />
-          <span>Fotoğraf Çek veya Yükle</span>
-        </button>
+      )}
+
+      {summary && (
+        <div className="mt-4 p-6 bg-[#111111] border-2 border-[#00ffff] rounded-xl whitespace-pre-wrap text-xl leading-relaxed">
+          {summary}
+        </div>
       )}
     </div>
   );
