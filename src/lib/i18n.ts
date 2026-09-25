@@ -964,6 +964,8 @@ const translations = {
   "common.loadingDots": { tr: "Yükleniyor...", de: "Wird geladen...", en: "Loading..." },
   "common.followMainScreen": { tr: "Ana Ekranı Takip Et", de: "Achte auf den Hauptbildschirm", en: "Watch the main screen" },
   "common.backToLobby": { tr: "Lobiye Dön", de: "Zurück zur Lobby", en: "Back to lobby" },
+  "common.previous": { tr: "Önceki", de: "Zurück", en: "Previous" },
+  "common.next": { tr: "Sonraki", de: "Weiter", en: "Next" },
 
   // ═══════════════════════════════════════════
   // AUTH — sayfa başlıkları

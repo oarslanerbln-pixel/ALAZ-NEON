@@ -348,6 +348,8 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                 {/* Carousel Left Arrow */}
                 <button
                   onClick={() => paginate(-1)}
+                  aria-label={t("common.previous")}
+                  title={t("common.previous")}
                   className="absolute left-0 z-20 w-16 h-16 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 transition-all hover:scale-110 shadow-xl -ml-8"
                 >
                   <ChevronLeft className="w-8 h-8 text-slate-800 opacity-80" />
@@ -410,6 +412,8 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                 {/* Carousel Right Arrow */}
                 <button
                   onClick={() => paginate(1)}
+                  aria-label={t("common.next")}
+                  title={t("common.next")}
                   className="absolute right-0 z-20 w-16 h-16 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 transition-all hover:scale-110 shadow-xl -mr-8"
                 >
                   <ChevronRight className="w-8 h-8 text-slate-800 opacity-80" />
