@@ -24,7 +24,8 @@ const GAME_LABEL: Record<GameType, string> = {
   vault: "Neon Şifre",
   unity: "Neon Birlik",
   bar: "Neon Bar",
-  kablo: "Neon Kablo"
+  kablo: "Neon Kablo",
+  ayna: "Ayna"
 };
 
 function rangeFor(preset: RangePreset): { start: number; end: number } {

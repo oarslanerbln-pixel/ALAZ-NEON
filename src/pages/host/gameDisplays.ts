@@ -31,6 +31,7 @@ const HOST_GAME_LOADERS: Record<RoutedGame, Loader> = {
   unity: () => import("./unity/HostUnityDisplay").then((m) => ({ default: m.HostUnityDisplay })),
   bar: () => import("./bar/HostBarDisplay").then((m) => ({ default: m.HostBarDisplay })),
   kablo: () => import("./kablo/HostKabloDisplay").then((m) => ({ default: m.HostKabloDisplay })),
+  ayna: () => import("./ayna/HostAynaDisplay").then((m) => ({ default: m.HostAynaDisplay })),
 };
 
 /**

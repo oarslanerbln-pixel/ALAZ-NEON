@@ -27,4 +27,5 @@ export const PLAYER_GAME_CONTROLLERS: Record<RoutedGame, ComponentType<PlayerGam
   unity: lazy(() => import("./unity/PlayerUnityController").then((m) => ({ default: m.PlayerUnityController }))),
   bar: lazy(() => import("./bar/PlayerBarController").then((m) => ({ default: m.PlayerBarController }))),
   kablo: lazy(() => import("./kablo/PlayerKabloController").then((m) => ({ default: m.PlayerKabloController }))),
+  ayna: lazy(() => import("./ayna/PlayerAynaController").then((m) => ({ default: m.PlayerAynaController }))),
 };

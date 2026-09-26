@@ -225,6 +225,20 @@ export const GAME_CARDS = [
     hoverBgAccent: "group-hover:bg-yellow-500/40",
     iconAccent: "bg-yellow-500/10 border-yellow-500/40",
     borderAccent: "hover:border-yellow-500/60"
+  },
+  {
+    id: "ayna",
+    titlePrefix: "HENGAME",
+    titleHighlight: "AYNA",
+    gradientText: "from-cyan-300 via-sky-300 to-violet-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.35)]",
+    shadowColor: "rgba(34,211,238,0.35)",
+    icon: "lightbulb",
+    iconColor: "blue",
+    descKey: "dashboard.modeAynaDesc",
+    bgAccent: "bg-cyan-400/20",
+    hoverBgAccent: "group-hover:bg-cyan-400/40",
+    iconAccent: "bg-cyan-400/10 border-cyan-300/40",
+    borderAccent: "hover:border-cyan-300/60"
   }
 ] as const satisfies readonly GameCard[];
 

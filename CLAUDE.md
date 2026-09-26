@@ -39,7 +39,7 @@ Firestore koleksiyonları: `rooms` (durum makinesi), `players` (skorlar),
 | `src/App.tsx` | Rotalar; Landing hariç hepsi `lazy` |
 | `src/pages/host/HostDisplay.tsx` | TV durum makinesi yönlendiricisi |
 | `src/pages/player/PlayerGame.tsx` | Telefon durum makinesi yönlendiricisi |
-| `src/pages/{host,player}/<oyun>/` | Oyun başına ekran çiftleri (quiz, bomb, sensor, wheel, overload, echo, pulse, spectrum, colors, vault, unity, bar, kablo) |
+| `src/pages/{host,player}/<oyun>/` | Oyun başına ekran çiftleri (quiz, bomb, sensor, wheel, overload, echo, pulse, spectrum, colors, vault, unity, bar, kablo, ayna) |
 | `src/pages/{host,player}/views/` | Oyun bağımsız ekranlar (lobby, playing, review, podium) |
 | `src/hooks/` | `useHostRoom`, `useRoom`, `usePlayer`, `useAuth`, `useLocale`, `useSound` … |
 | `src/lib/` | Saf mantık: `scoring`, `fuzzyMatch`, `wordValidation`, `league`, `retention`, `rewards`, `roomCodes`, `liveness`, `gameRouting` |
