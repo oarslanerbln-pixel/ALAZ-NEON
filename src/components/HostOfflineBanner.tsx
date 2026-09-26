@@ -15,17 +15,29 @@ import type { Room } from "../types/database";
  * Kendi sayacı var: host öldüğünde artık yeni oda snapshot'ı gelmiyor,
  * dolayısıyla bileşen kendiliğinden yeniden render olmazdı ve uyarı hiç
  * görünmezdi. Beş saniyede bir tazeleniyor.
+ *
+ * TV'nin saatini telefonun saatiyle kıyaslamıyor (bkz. isHostOnline):
+ * `host_last_active` değerinin en son değiştiğini BU cihazın saatiyle ne
+ * zaman gördüğümüzü tutuyor. Sayfa açıldığında sayaç o andan başlıyor;
+ * yani zaten ölmüş bir host en geç eşik süresi sonunda fark ediliyor.
  */
 export function HostOfflineBanner({ room }: { room: Room | null }) {
   const { t } = useLocale();
   const [now, setNow] = useState(() => Date.now());
+  const beat = room?.host_last_active;
+  const [seen, setSeen] = useState(() => ({ beat, at: now }));
+
+  // Yeni sinyal geldi — render sırasında izlenen değeri güncelle (React'in
+  // "prop değişince state'i ayarla" deseni; effect zincirleme render doğurur).
+  if (beat !== seen.beat) setSeen({ beat, at: now });
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 5000);
     return () => clearInterval(interval);
   }, []);
 
-  if (!room || isHostOnline(room, now)) return null;
+  const lastChangeSeenAt = typeof beat === "number" ? seen.at : null;
+  if (!room || isHostOnline(lastChangeSeenAt, now)) return null;
 
   return (
     <div

@@ -41,15 +41,22 @@ describe("activePlayers", () => {
 });
 
 describe("isHostOnline", () => {
-  it("yeni sinyal varsa çevrimiçi", () => {
-    expect(isHostOnline({ host_last_active: NOW - 10_000 }, NOW)).toBe(true);
+  it("sinyal değişikliği yakın zamanda görüldüyse çevrimiçi", () => {
+    expect(isHostOnline(NOW - 10_000, NOW)).toBe(true);
   });
 
-  it("45 saniyedir sinyal yoksa çevrimdışı", () => {
-    expect(isHostOnline({ host_last_active: NOW - 46_000 }, NOW)).toBe(false);
+  it("75 saniyedir yeni sinyal görülmediyse çevrimdışı", () => {
+    expect(isHostOnline(NOW - 76_000, NOW)).toBe(false);
+  });
+
+  it("iki saati kıyaslamıyor — yalnızca misafirin kendi saatiyle geçen süre", () => {
+    // TV saati dakikalarca geride olsa bile, değişikliği az önce gördüysek
+    // host oradadır. Eskiden bu durum kalıcı "HOST ÇEVRİMDIŞI" uyarısıydı.
+    const seenJustNow = NOW - 1_000;
+    expect(isHostOnline(seenJustNow, NOW)).toBe(true);
   });
 
   it("alan hiç yoksa ÇEVRİMİÇİ sayılıyor — eski odalar yanlış uyarı almasın", () => {
-    expect(isHostOnline({ host_last_active: undefined }, NOW)).toBe(true);
+    expect(isHostOnline(null, NOW)).toBe(true);
   });
 });

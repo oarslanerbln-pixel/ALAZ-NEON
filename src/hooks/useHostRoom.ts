@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { doc, collection, query, where, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { Sentinel } from "../lib/sentinel";
+import { HOST_HEARTBEAT_MS } from "../lib/liveness";
+import { useHeartbeat } from "./useHeartbeat";
 import type { Room, Player, Answer } from "../types/database";
 
 export function useHostRoom(roomId: string | null) {
@@ -26,28 +28,10 @@ export function useHostRoom(roomId: string | null) {
     setNotFound(!roomId);
   }
 
-  /**
-   * Host canlılık sinyali.
-   *
-   * TV tarayıcısı kapanır ya da çökerse oda sonsuza kadar donuk kalıyor,
-   * misafirlerin telefonunda hiçbir açıklama çıkmıyordu. Oyuncu tarafında
-   * 15 sn'lik aynı sinyal zaten vardı (bkz. PlayerGame); host tarafında
-   * hiç yoktu. Okuyan taraf: lib/liveness.ts → isHostOnline().
-   *
-   * Bu hook yalnızca host ekranlarında kullanılıyor (HostDisplay /
-   * HostDisplayClassic), yani sinyali gerçekten TV atıyor.
-   */
-  useEffect(() => {
-    if (!roomId) return;
-    const roomRef = doc(db, "rooms", roomId);
-    const ping = () => {
-      updateDoc(roomRef, { host_last_active: Date.now() }).catch(() => {});
-    };
-
-    ping(); // Ekran açılır açılmaz
-    const interval = setInterval(ping, 15000);
-    return () => clearInterval(interval);
-  }, [roomId]);
+  // Host canlılık sinyali — misafir telefonundaki "host çevrimdışı" uyarısı
+  // buna bakıyor (bkz. lib/liveness.ts → isHostOnline). Bu hook yalnızca
+  // HostDisplay'de kullanılıyor, yani sinyali gerçekten TV atıyor.
+  useHeartbeat("rooms", "host_last_active", roomId, HOST_HEARTBEAT_MS);
 
   useEffect(() => {
     if (!roomId) return;
