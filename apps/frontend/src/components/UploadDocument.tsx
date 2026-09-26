@@ -19,18 +19,35 @@ export default function UploadDocument() {
     <div style={{ padding: "24px", border: "2px solid #ffff00", borderRadius: "8px", marginBottom: "24px" }}>
       <h2 style={{ fontSize: "24px", marginBottom: "16px" }}>Rapor Yükle (Kamera / Dosya)</h2>
 
-      <div style={{ marginBottom: "16px" }}>
-        <label htmlFor="lang-select" style={{ marginRight: "8px" }}>Özet Dili:</label>
-        <select
-          id="lang-select"
-          value={language}
-          onChange={(e) => setLanguage(e.target.value)}
-          style={{ backgroundColor: "#000000", color: "#00ffff", border: "2px solid #00ffff", padding: "8px", fontSize: "16px" }}
-        >
-          <option value="en">İngilizce (English)</option>
-          <option value="ar">Arapça (Arabic)</option>
-        </select>
-      </div>
+      <fieldset style={{ marginBottom: "16px", border: "none", padding: 0 }}>
+        <legend style={{ marginBottom: "8px", fontSize: "16px", fontWeight: "bold" }}>Özet Dili:</legend>
+        <div style={{ display: "flex", gap: "16px" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "18px" }}>
+            <input
+              type="radio"
+              name="language"
+              value="en"
+              checked={language === "en"}
+              onChange={() => setLanguage("en")}
+              style={{ width: "24px", height: "24px", accentColor: "#00ffff" }}
+              aria-label="İngilizce (English)"
+            />
+            İngilizce (English)
+          </label>
+          <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "18px" }}>
+            <input
+              type="radio"
+              name="language"
+              value="ar"
+              checked={language === "ar"}
+              onChange={() => setLanguage("ar")}
+              style={{ width: "24px", height: "24px", accentColor: "#00ffff" }}
+              aria-label="Arapça (Arabic)"
+            />
+            Arapça (Arabic)
+          </label>
+        </div>
+      </fieldset>
 
       {isScanning ? (
         <div style={{ fontSize: "20px", color: "#00ffff", display: "flex", alignItems: "center", gap: "8px" }}>
