@@ -1,4 +1,4 @@
-import type { Player, Room } from "../types/database";
+import type { Player } from "../types/database";
 
 /**
  * "Kim hâlâ orada?" sorusunun tek cevap yeri.
@@ -16,11 +16,22 @@ import type { Player, Room } from "../types/database";
  *    kadar kilitleniyordu.
  */
 
-/** Oyuncu telefonu 15 sn'de bir ping atıyor (bkz. PlayerGame). */
+/**
+ * Oyuncu telefonu 15 sn'de bir ping atıyor (bkz. PlayerGame → useHeartbeat).
+ * Bomba/voltaj hedefi buna bakıyor; kısa tutulmalı.
+ */
+export const PLAYER_HEARTBEAT_MS = 15_000;
 const PLAYER_STALE_MS = 30_000;
 
-/** Host ekranı da 15 sn'de bir ping atıyor (bkz. useHostRoom). */
-const HOST_STALE_MS = 45_000;
+/**
+ * Host ekranı 30 sn'de bir ping atıyor (bkz. useHostRoom → useHeartbeat).
+ * Her ping oda dokümanını değiştirdiği için odadaki HER telefonda bir okuma
+ * demek: 30 misafirli 3 saatlik bir gecede 15 sn aralık ~21.600 okuma
+ * ediyordu (Spark planın günlük kotası 50.000). Uyarı yalnızca
+ * bilgilendirme amaçlı, 75 sn gecikme kabul edilebilir.
+ */
+export const HOST_HEARTBEAT_MS = 30_000;
+const HOST_STALE_MS = 75_000;
 
 /**
  * Oyuncu hâlâ oyunda mı.
@@ -54,16 +65,19 @@ export function activePlayers<T extends Pick<Player, "last_active">>(
 }
 
 /**
- * Host ekranı hâlâ bağlı mı.
+ * Host ekranı hâlâ bağlı mı — saat kaymasına dayanıklı.
  *
- * `host_last_active` yoksa ÇEVRİMİÇİ sayılıyor — bu alan eklenmeden önce
- * açılmış odalar ve host'un henüz güncellenmemiş bir sürümü çalıştırdığı
- * durumlar, yanlışlıkla "host gitti" uyarısı göstermemeli.
+ * `host_last_active` TV'nin saatiyle yazılıyor. Eskiden misafir bunu kendi
+ * telefonunun saatiyle kıyaslıyordu; saati birkaç dakika geri kalmış bir
+ * akıllı TV'de odadaki herkes host yanıbaşında dururken kalıcı bir "HOST
+ * ÇEVRİMDIŞI" uyarısı görüyordu. Artık iki farklı saati hiç kıyaslamıyoruz:
+ * misafir, değerin en son DEĞİŞTİĞİNİ kendi saatiyle ne zaman gördüğüne
+ * bakıyor (`lastChangeSeenAt`).
+ *
+ * `lastChangeSeenAt` `null` ise (alan hiç yok) ÇEVRİMİÇİ sayılıyor — bu alan
+ * eklenmeden önce açılmış odalar yanlışlıkla "host gitti" uyarısı almasın.
  */
-export function isHostOnline(
-  room: Pick<Room, "host_last_active">,
-  now: number = Date.now(),
-): boolean {
-  if (typeof room.host_last_active !== "number") return true;
-  return now - room.host_last_active < HOST_STALE_MS;
+export function isHostOnline(lastChangeSeenAt: number | null, now: number = Date.now()): boolean {
+  if (lastChangeSeenAt === null) return true;
+  return now - lastChangeSeenAt < HOST_STALE_MS;
 }

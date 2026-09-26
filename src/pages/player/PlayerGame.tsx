@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { collection, addDoc, doc } from "firebase/firestore";
+import { useSearchParams, useNavigate, Navigate } from "react-router-dom";
+import { collection, addDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { retentionExpiry } from "../../lib/retention";
 import { NeonIcon } from "../../components/NeonIcon";
 import { HostOfflineBanner } from "../../components/HostOfflineBanner";
 import { DatabaseStatus } from "../../components/DatabaseStatus";
+import { RoomStatusScreen } from "../../components/RoomStatusScreen";
+import { resolvePlayerGameRoute } from "../../lib/gameRouting";
 import { useToast } from "../../contexts/ToastContextCore";
 import { sounds, SoundManager } from "../../lib/audio";
 import { useLocale } from "../../hooks/useLocale";
@@ -15,6 +17,8 @@ import { useLocale } from "../../hooks/useLocale";
 import { useRoom } from "../../hooks/useRoom";
 import { usePlayer } from "../../hooks/usePlayer";
 import { useEmojiPulse } from "../../hooks/useEmojiPulse";
+import { useHeartbeat } from "../../hooks/useHeartbeat";
+import { PLAYER_HEARTBEAT_MS } from "../../lib/liveness";
 
 // Extracted Components
 import { PlayerHeader } from "./components/PlayerHeader";
@@ -26,21 +30,8 @@ import { PlayerStandings } from "./views/PlayerStandings";
 import { BackgroundSlider } from "../../components/BackgroundSlider";
 import { PlayerTutorial } from "./components/PlayerTutorial";
 
-import { Suspense, lazy } from "react";
-const PlayerQuizController = lazy(() => import("./quiz/PlayerQuizController").then(m => ({ default: m.PlayerQuizController })));
-const PlayerBombController = lazy(() => import("./bomb/PlayerBombController").then(m => ({ default: m.PlayerBombController })));
-const PlayerSensorController = lazy(() => import("./sensor/PlayerSensorController").then(m => ({ default: m.PlayerSensorController })));
-const PlayerWheelController = lazy(() => import("./wheel/PlayerWheelController").then(m => ({ default: m.PlayerWheelController })));
-const PlayerOverloadGame = lazy(() => import("./overload/PlayerOverloadGame").then(m => ({ default: m.PlayerOverloadGame })));
-const PlayerEchoController = lazy(() => import("./echo/PlayerEchoController").then(m => ({ default: m.PlayerEchoController })));
-const PlayerPulseController = lazy(() => import("./pulse/PlayerPulseController").then(m => ({ default: m.PlayerPulseController })));
-const PlayerSpectrumController = lazy(() => import("./spectrum/PlayerSpectrumController").then(m => ({ default: m.PlayerSpectrumController })));
-const PlayerColorsController = lazy(() => import("./colors/PlayerColorsController").then(m => ({ default: m.PlayerColorsController })));
-const PlayerVaultController = lazy(() => import("./vault/PlayerVaultController").then(m => ({ default: m.PlayerVaultController })));
-const PlayerUnityController = lazy(() => import("./unity/PlayerUnityController").then(m => ({ default: m.PlayerUnityController })));
-const PlayerBarController = lazy(() => import("./bar/PlayerBarController").then(m => ({ default: m.PlayerBarController })));
-const PlayerKabloController = lazy(() => import("./kablo/PlayerKabloController").then(m => ({ default: m.PlayerKabloController })));
-
+import { Suspense } from "react";
+import { PLAYER_GAME_CONTROLLERS } from "./gameControllers";
 
 export function PlayerGame() {
   const [searchParams] = useSearchParams();
@@ -50,8 +41,8 @@ export function PlayerGame() {
   const playerId = searchParams.get("playerId") || localStorage.getItem("cafe_game_playerId");
 
   // Centralized State Management via Hooks
-  const { room } = useRoom(roomId);
-  const { player } = usePlayer(playerId);
+  const { room, loading: roomLoading, error: roomError } = useRoom(roomId);
+  const { player, loading: playerLoading, error: playerError } = usePlayer(playerId);
   const { sendReaction } = useEmojiPulse(roomId);
   const { t } = useLocale();
   const isScattegories = !room?.active_game || room?.active_game === "scattegories" || room?.active_game === "none";
@@ -85,21 +76,8 @@ export function PlayerGame() {
     }
   }, [player]);
 
-  // Liveness Ping (Heartbeat) - prevents ghost players from receiving bomb
-  useEffect(() => {
-    if (!playerId) return;
-    const playerRef = doc(db, "players", playerId);
-    const ping = () => {
-      import("firebase/firestore").then(({ updateDoc }) => {
-        updateDoc(playerRef, { last_active: Date.now() }).catch(() => {});
-      });
-    };
-    
-    ping(); // Immediate ping on mount
-    const interval = setInterval(ping, 15000); // Every 15 seconds
-    
-    return () => clearInterval(interval);
-  }, [playerId]);
+  // Canlılık sinyali — hayalet oyuncuya bomba/voltaj geçmesini önlüyor.
+  useHeartbeat("players", "last_active", playerId, PLAYER_HEARTBEAT_MS);
 
   // Derived States
   const gameState = room?.status || "lobby";
@@ -216,45 +194,16 @@ export function PlayerGame() {
     }
   }, [isLocked, gameState, submitAnswers, isScattegories]);
 
-  const renderGame = () => {
-    if (!room || !player) return null;
-    const isGame = (name: string) => (room.active_game === name || room.game_type === name) && room.status !== "tutorial" && room.status !== "ad_break";
-    if (isGame("quiz")) return <PlayerQuizController room={room} player={player} />;
-    if (isGame("bomb")) return <PlayerBombController room={room} player={player} />;
-    if (isGame("sensor")) return <PlayerSensorController room={room} player={player} />;
-    if (isGame("wheel")) return <PlayerWheelController room={room} player={player} />;
-    if (isGame("overload")) return <PlayerOverloadGame room={room} player={player} />;
-    if (isGame("echo")) return <PlayerEchoController room={room} player={player} />;
-    if (isGame("pulse")) return <PlayerPulseController room={room} player={player} />;
-    if (isGame("spectrum")) return <PlayerSpectrumController room={room} player={player} />;
-    if (isGame("colors")) return <PlayerColorsController room={room} player={player} />;
-    if (isGame("vault")) return <PlayerVaultController room={room} player={player} />;
-    if (isGame("unity")) return <PlayerUnityController room={room} player={player} />;
-    if (isGame("bar")) return <PlayerBarController room={room} player={player} />;
-    if (isGame("kablo")) return <PlayerKabloController room={room} player={player} />;
-    return null;
-  };
-  const activeGameComponent = renderGame();
-  if (activeGameComponent) {
-    return (
-      <>
-        <HostOfflineBanner room={room} />
-        <Suspense
-          fallback={
-            <div className="flex-1 flex items-center justify-center bg-black">
-              <span className="text-white animate-pulse">{t("common.loadingDots")}</span>
-            </div>
-          }
-        >
-          {activeGameComponent}
-        </Suspense>
-      </>
-    );
-  }
-
-  // Render tutorial for all game modes if status is tutorial
-  if (room?.status === "tutorial") {
-    return <PlayerTutorial room={room} />;
+  // Durum kapıları — tüm hook'lardan SONRA. Eskiden oda/oyuncu yokken
+  // (silinmiş oda, eski bağlantı, başka odanın oyuncu kaydı) misafir sessizce
+  // sonsuz bir lobide bekliyordu; artık ne olduğunu ve ne yapacağını görüyor.
+  if (!roomId || !playerId) return <Navigate to="/join" replace />;
+  const listenError = roomError ?? playerError;
+  if (listenError) return <RoomStatusScreen kind="error" audience="player" />;
+  if (roomLoading || playerLoading) return <RoomStatusScreen kind="loading" audience="player" />;
+  if (!room) return <RoomStatusScreen kind="notfound" audience="player" />;
+  if (!player || player.room_id !== room.id) {
+    return <RoomStatusScreen kind="playerMissing" audience="player" roomCode={room.code} />;
   }
 
   if (gameState === "closed") {
@@ -273,6 +222,24 @@ export function PlayerGame() {
         </button>
       </div>
     );
+  }
+
+  const routedGame = resolvePlayerGameRoute(room);
+  if (routedGame) {
+    const GameController = PLAYER_GAME_CONTROLLERS[routedGame];
+    return (
+      <>
+        <HostOfflineBanner room={room} />
+        <Suspense fallback={<RoomStatusScreen kind="loading" audience="player" />}>
+          <GameController room={room} player={player} />
+        </Suspense>
+      </>
+    );
+  }
+
+  // Render tutorial for all game modes if status is tutorial
+  if (room?.status === "tutorial") {
+    return <PlayerTutorial room={room} />;
   }
 
   return (

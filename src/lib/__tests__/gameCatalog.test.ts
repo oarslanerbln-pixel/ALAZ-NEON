@@ -21,7 +21,7 @@ const LOCALES: Locale[] = ["tr", "de", "en"];
  */
 const EXPECTED_GAME_IDS = [
   "scattegories", "quiz", "bomb", "sensor", "wheel", "overload", "echo",
-  "pulse", "spectrum", "colors", "vault", "unity", "bar", "kablo",
+  "pulse", "spectrum", "colors", "vault", "unity", "bar", "kablo", "ayna",
 ] as const;
 
 describe("oyun katalogu", () => {

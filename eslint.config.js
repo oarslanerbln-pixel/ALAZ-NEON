@@ -11,6 +11,9 @@ export default defineConfig([
   // kez yaptı ve lint'i anlamsız hatalarla doldurdu) — lint'e sokma.
   globalIgnores([
     'dist',
+    // apps/ ayrı bir Next.js monoreposu; kendi eslint.config.mjs'i var. Vite'a
+    // özgü react-refresh kuralları orada yanlış alarm veriyordu.
+    'apps',
     'src/**/*.js',
     'src/**/*.d.ts',
     'src/**/*.js.map',

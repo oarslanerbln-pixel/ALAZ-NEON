@@ -231,6 +231,30 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       };
     }
 
+    // AYNA: soru sirasi baslangicta bir kez secilip odaya KIMLIK olarak
+    // yaziliyor (metin degil — her misafir kendi dilinde okusun). Havuz ve
+    // gecmis dinamik yukleniyor; dashboard paketini sisirmesin.
+    if (game === "ayna") {
+      const [{ pickQuestionIds }, { AYNA_QUESTIONS }, { recentQuestionIds, rememberQuestions }] = await Promise.all([
+        import("../../../lib/ayna"),
+        import("../../../lib/aynaQuestions"),
+        import("../../../lib/questionHistory"),
+      ]);
+      const ids = pickQuestionIds(AYNA_QUESTIONS.map((q) => q.id), settings?.total_rounds || 7, recentQuestionIds());
+      rememberQuestions(ids);
+      initialStatus = "ayna_intro";
+      extraUpdates = {
+        ...extraUpdates,
+        ayna_question_ids: ids,
+        ayna_index: 0,
+        ayna_scored_through: -1,
+        ayna_round_guesses: {},
+        ayna_round_points: {},
+        ayna_totals: {},
+        round_end_time: 0,
+      };
+    }
+
     // Bar ve Kablo skorlari oyuncu dokumaninda birikiyor ve hicbir yerde
     // sifirlanmiyordu: ikinci Kablo turu, onceki turun toplami zaten hedefin
     // ustunde oldugu icin aninca "kazanildi" ekranina duserdi.
