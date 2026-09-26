@@ -5,6 +5,7 @@ import { useLocale } from "../../../hooks/useLocale";
 import { getCategoryPresets } from "../../../lib/categoryPresets";
 import { NeonIcon } from "../../../components/NeonIcon";
 import type { GameType, Room } from "../../../types/database";
+import type { TranslationKey } from "../../../lib/i18n";
 import { X, Play, Check, Clock, RotateCcw, HelpCircle, Heart, Eye, Users } from "lucide-react";
 
 interface Props {
@@ -22,6 +23,8 @@ interface GameMeta {
   glow: string;
   icon: "flame" | "lightbulb" | "rocket" | "dashboard" | "users" | "crown" | "settings";
   description: string;
+  /** Varsa açıklama bu anahtardan, host'un dilinde gösterilir. */
+  descKey?: TranslationKey;
 }
 
 const GAME_METAS: Record<string, GameMeta> = {
@@ -113,6 +116,15 @@ const GAME_METAS: Record<string, GameMeta> = {
     icon: "users",
     description: "Alle Spieler klicken im Takt, um die Club-Batterie zur maximalen Entladung zu bringen."
   },
+  ayna: {
+    title: "HENGAME AYNA",
+    badge: "WELT & EMPATHIE",
+    color: "#22d3ee",
+    glow: "rgba(34,211,238,0.5)",
+    icon: "lightbulb",
+    description: "",
+    descKey: "dashboard.modeAynaDesc",
+  },
   echo: {
     title: "HENGAME ECHO",
     badge: "CLUB-VOTING",
@@ -197,6 +209,9 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
       setSensorUnblurDuration("25");
     } else if (game === "bar") {
       setBarTime("60");
+    } else if (game === "ayna") {
+      setTotalRounds("7");
+      setTimerValue("25");
     }
   }
 
@@ -324,7 +339,7 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
             
             {/* Description Banner */}
             <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.05] border border-white/15 text-gray-200 text-sm sm:text-base font-semibold leading-relaxed shadow-inner">
-              {meta.description}
+              {meta.descKey ? t(meta.descKey) : meta.description}
             </div>
 
             {/* ════════════════ SCATTEGORIES SETTINGS ════════════════ */}
@@ -510,6 +525,58 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
                       className="w-6 h-6 rounded-full bg-black shadow-md"
                     />
                   </button>
+                </div>
+              </div>
+            )}
+
+            {/* ════════════════ AYNA SETTINGS ════════════════ */}
+            {game === "ayna" && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-gray-300 font-black flex items-center gap-1.5 mb-2.5">
+                    <HelpCircle className="w-4 h-4 text-cyan-400" />
+                    <span>{t("gameSettings.quizQuestionsCount")}</span>
+                  </label>
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {["5", "7", "10"].map(qVal => (
+                      <button
+                        key={qVal}
+                        type="button"
+                        aria-pressed={totalRounds === qVal}
+                        onClick={() => setTotalRounds(qVal)}
+                        className={`py-3.5 rounded-xl font-mono font-black text-sm transition-all border-2 cursor-pointer ${
+                          totalRounds === qVal
+                            ? "bg-cyan-400 text-black border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.5)] scale-105"
+                            : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
+                        }`}
+                      >
+                        {qVal} {t("gameSettings.quizQuestionsSuffix")}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-gray-300 font-black flex items-center gap-1.5 mb-2.5">
+                    <Clock className="w-4 h-4 text-cyan-400" />
+                    <span>{t("gameSettings.quizTimePerQuestion")}</span>
+                  </label>
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {["20", "25", "35"].map(tVal => (
+                      <button
+                        key={tVal}
+                        type="button"
+                        aria-pressed={timerValue === tVal}
+                        onClick={() => setTimerValue(tVal)}
+                        className={`py-3.5 rounded-xl font-mono font-black text-sm transition-all border-2 cursor-pointer ${
+                          timerValue === tVal
+                            ? "bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.5)] scale-105"
+                            : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
+                        }`}
+                      >
+                        {tVal} {t("gameSettings.secondsSuffix")}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}

@@ -945,6 +945,57 @@
   animation: pulse-slow 3s ease-in-out infinite;
 }
 
+/* ── AYNA tahmin kaydırıcısı ─────────────────────────────────────────────
+   Yerel <input type="range"> (klavye/ekran okuyucu erişimi bedava) ama
+   bar ortamında parmakla tutulabilecek 34px'lik bir tutamakla. */
+.ayna-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 44px;
+  background: transparent;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+.ayna-range:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+  border-radius: 9999px;
+}
+.ayna-range::-webkit-slider-runnable-track {
+  height: 10px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #22d3ee, #ffffff 50%, #a78bfa);
+  opacity: 0.85;
+}
+.ayna-range::-moz-range-track {
+  height: 10px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #22d3ee, #ffffff 50%, #a78bfa);
+  opacity: 0.85;
+}
+.ayna-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 34px;
+  height: 34px;
+  margin-top: -12px;
+  border-radius: 9999px;
+  background: #000;
+  border: 4px solid #fff;
+  box-shadow: 0 0 18px rgba(34, 211, 238, 0.8);
+}
+.ayna-range::-moz-range-thumb {
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  background: #000;
+  border: 4px solid #fff;
+  box-shadow: 0 0 18px rgba(34, 211, 238, 0.8);
+}
+.ayna-range:disabled {
+  opacity: 0.5;
+}
+
 /* ── Reduced motion (WCAG 2.3.3 / Apple "Reduce Motion") ─────────────────
    framer-motion tarafı App.tsx'teki <MotionConfig reducedMotion="user"> ile
    çözülüyor; burası CSS keyframe'leri kapsıyor. Dekoratif sonsuz döngüler

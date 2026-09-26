@@ -55,10 +55,14 @@ export type RoomStatus =
   | "bar_reveal"
   | "kablo_intro"
   | "kablo_active"
-  | "kablo_reveal";
+  | "kablo_reveal"
+  | "ayna_intro"
+  | "ayna_active"
+  | "ayna_reveal"
+  | "ayna_final";
 
 export type GameMode = "individual" | "team";
-export type GameType = "scattegories" | "quiz" | "bomb" | "sensor" | "wheel" | "overload" | "echo" | "pulse" | "spectrum" | "colors" | "vault" | "unity" | "bar" | "kablo";
+export type GameType = "scattegories" | "quiz" | "bomb" | "sensor" | "wheel" | "overload" | "echo" | "pulse" | "spectrum" | "colors" | "vault" | "unity" | "bar" | "kablo" | "ayna";
 
 export interface QuizQuestion {
   id: string;
@@ -182,6 +186,16 @@ export interface Room {
   bar_end_time?: number;
   // Kablo Game Fields
   kablo_winner_id?: string | null;
+  // AYNA Game Fields (bkz. lib/ayna.ts). Soru METNİ değil kimliği saklanıyor:
+  // her misafir soruyu kendi dilinde görsün.
+  ayna_question_ids?: string[];
+  ayna_index?: number;
+  /** Puanı dağıtılmış son soru — açıklama iki kez puan vermesin. */
+  ayna_scored_through?: number;
+  ayna_round_guesses?: Record<string, number>;
+  ayna_round_points?: Record<string, number>;
+  /** Yalnızca bu AYNA oyununun puan toplamı (total_score gece boyu birikir). */
+  ayna_totals?: Record<string, number>;
   // Mekan markalaması — oda açılırken o anki aktif mekan profilinden
   // KOPYALANIR (canlı referans değil). Böylece bir mekana satış sonrası
   // marka değiştirilse bile geçmiş odaların/demoların markası değişmez.
