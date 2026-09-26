@@ -6,6 +6,7 @@ import type { Player } from "../types/database";
 export function usePlayer(playerId: string | null) {
   const [player, setPlayer] = useState<Player | null>(null);
   const [loading, setLoading] = useState(Boolean(playerId));
+  const [error, setError] = useState<Error | null>(null);
   const [trackedPlayerId, setTrackedPlayerId] = useState(playerId);
   // Bu playerId için en son users/{uid}.total_lifetime_score'a senkronize
   // edilmiş total_score değeri. null = henüz senkron başlangıcı yapılmadı.
@@ -16,6 +17,7 @@ export function usePlayer(playerId: string | null) {
   if (playerId !== trackedPlayerId) {
     setTrackedPlayerId(playerId);
     setPlayer(null);
+    setError(null);
     setLoading(Boolean(playerId));
   }
 
@@ -42,6 +44,7 @@ export function usePlayer(playerId: string | null) {
       },
       (err) => {
         console.error("Error fetching player:", err);
+        setError(err);
         setLoading(false);
       }
     );
@@ -83,7 +86,7 @@ export function usePlayer(playerId: string | null) {
     if (delta === 0) return;
 
     // "Tekrar Oyna" (host resetGame) HER modda total_score'u 0'a
-    // sıfırlıyor (bkz. HostDisplayClassic/HostQuizDisplay/
+    // sıfırlıyor (bkz. HostDisplay/HostQuizDisplay/
     // HostSensorDisplay/HostBombDisplay resetGame). Bu, buradan bakınca
     // dev bir NEGATİF delta gibi görünür — kontrol etmezsek her "yeni oyun"
     // oyuncunun kalıcı lig puanından o ana kadar kazandığını SİLERDİ. 0'a
@@ -100,5 +103,5 @@ export function usePlayer(playerId: string | null) {
     });
   }, [player]);
 
-  return { player, loading, totalScore: player?.total_score || 0 };
+  return { player, loading, error, totalScore: player?.total_score || 0 };
 }

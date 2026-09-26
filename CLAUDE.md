@@ -39,10 +39,10 @@ Firestore koleksiyonları: `rooms` (durum makinesi), `players` (skorlar),
 | `src/App.tsx` | Rotalar; Landing hariç hepsi `lazy` |
 | `src/pages/host/HostDisplay.tsx` | TV durum makinesi yönlendiricisi |
 | `src/pages/player/PlayerGame.tsx` | Telefon durum makinesi yönlendiricisi |
-| `src/pages/{host,player}/<oyun>/` | Oyun başına ekran çiftleri (quiz, bomb, sensor, wheel, overload, echo, pulse, spectrum, colors, vault, unity, bar, kablo) |
+| `src/pages/{host,player}/<oyun>/` | Oyun başına ekran çiftleri (quiz, bomb, sensor, wheel, overload, echo, pulse, spectrum, colors, vault, unity, bar, kablo, ayna) |
 | `src/pages/{host,player}/views/` | Oyun bağımsız ekranlar (lobby, playing, review, podium) |
 | `src/hooks/` | `useHostRoom`, `useRoom`, `usePlayer`, `useAuth`, `useLocale`, `useSound` … |
-| `src/lib/` | Saf mantık: `scoring`, `fuzzyMatch`, `wordValidation`, `league`, `retention`, `rewards`, `roomCodes`, `liveness` |
+| `src/lib/` | Saf mantık: `scoring`, `fuzzyMatch`, `wordValidation`, `league`, `retention`, `rewards`, `roomCodes`, `liveness`, `gameRouting` |
 | `src/types/database.ts` | `RoomStatus`, `GameType`, tüm Firestore modelleri |
 | `firestore.rules` + `test/firestore.rules.test.ts` | Güvenlik kuralları ve testleri |
 
@@ -60,6 +60,9 @@ Bunları baştan sona okuma, hedefli `grep` ile gir:
   üçü birden doldurulur. `i18nKeys.test.ts` eksik anahtarı yakalar.
 - Yeni bir `RoomStatus` eklediğinde hem `HostDisplay` hem `PlayerGame`
   tarafında ele al — karşılıksız status **siyah ekran** demektir.
+- Yeni oyun modu: `GameType` + `gameCatalog.ts` kartı + `host/gameDisplays.ts`
+  + `player/gameControllers.ts`. Hangi oyunun oynandığını yalnızca
+  `lib/gameRouting.ts` çözer; eksik kayıt derleme hatası verir.
 - Oyun mantığını `src/lib/` içinde saf fonksiyon olarak yaz ve birim testle;
   bileşenlerin içine gömme.
 - Firebase v9+ modüler SDK; `firebase/compat` yasak. Çok dokümanlı güncellemede

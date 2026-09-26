@@ -3,6 +3,8 @@
  * Supports: German (de), Turkish (tr), English (en)
  */
 
+import { trPossessiveSuffix } from "./trSuffix";
+
 export type Locale = "tr" | "de" | "en";
 
 const translations = {
@@ -542,6 +544,101 @@ const translations = {
 
 
   // ═══════════════════════════════════════════
+  // AYNA (dünyayı ve salonu tahmin et — bkz. lib/ayna.ts)
+  // ═══════════════════════════════════════════
+  "ayna.title": { tr: "AYNA", de: "SPIEGEL", en: "MIRROR" },
+  "ayna.tagline": {
+    tr: "Dünyayı ne kadar tanıyorsun? Peki bu salonu?",
+    de: "Wie gut kennst du die Welt? Und diesen Raum?",
+    en: "How well do you know the world? And this room?",
+  },
+  "ayna.step1": { tr: "Soruyu oku", de: "Lies die Frage", en: "Read the question" },
+  "ayna.step2": { tr: "Telefonunda kaydır ve kilitle", de: "Schieb am Handy und leg dich fest", en: "Slide on your phone and lock in" },
+  "ayna.step3": { tr: "Gerçek ekrana düşsün", de: "Sieh die Wahrheit fallen", en: "Watch the truth drop" },
+  "ayna.questionOf": {
+    tr: (n: number, total: number) => `SORU ${n} / ${total}`,
+    de: (n: number, total: number) => `FRAGE ${n} / ${total}`,
+    en: (n: number, total: number) => `QUESTION ${n} / ${total}`,
+  },
+  "ayna.lockedCount": {
+    tr: (n: number, total: number) => `${n} / ${total} kilitledi`,
+    de: (n: number, total: number) => `${n} / ${total} festgelegt`,
+    en: (n: number, total: number) => `${n} / ${total} locked in`,
+  },
+  "ayna.truth": { tr: "GERÇEK", de: "WAHRHEIT", en: "TRUTH" },
+  "ayna.roomMedian": {
+    tr: (v: string) => `Salonun ortancası: ${v}`,
+    de: (v: string) => `Median des Raums: ${v}`,
+    en: (v: string) => `Room median: ${v}`,
+  },
+  "ayna.verdictUnder": {
+    tr: (p: number) => `Salonun %${p}'${trPossessiveSuffix(p)} gerçeği olduğundan DÜŞÜK tahmin etti`,
+    de: (p: number) => `${p} % des Raums haben zu NIEDRIG geschätzt`,
+    en: (p: number) => `${p}% of the room guessed too LOW`,
+  },
+  "ayna.verdictOver": {
+    tr: (p: number) => `Salonun %${p}'${trPossessiveSuffix(p)} gerçeği olduğundan YÜKSEK tahmin etti`,
+    de: (p: number) => `${p} % des Raums haben zu HOCH geschätzt`,
+    en: (p: number) => `${p}% of the room guessed too HIGH`,
+  },
+  "ayna.verdictSplit": { tr: "Salon ikiye bölündü", de: "Der Raum ist gespalten", en: "The room is split" },
+  "ayna.source": {
+    tr: (src: string) => `Kaynak: ${src}`,
+    de: (src: string) => `Quelle: ${src}`,
+    en: (src: string) => `Source: ${src}`,
+  },
+  "ayna.closest": { tr: "EN YAKINLAR", de: "AM NÄCHSTEN DRAN", en: "CLOSEST" },
+  "ayna.exact": { tr: "TAM İSABET", de: "VOLLTREFFER", en: "BULLSEYE" },
+  "ayna.finalTitle": { tr: "GECENİN AYNASI", de: "SPIEGEL DES ABENDS", en: "MIRROR OF THE NIGHT" },
+  "ayna.bestReader": { tr: "Dünyayı en iyi okuyan", de: "Liest die Welt am besten", en: "Reads the world best" },
+  "ayna.backToLobby": { tr: "LOBİYE DÖN", de: "ZURÜCK ZUR LOBBY", en: "BACK TO LOBBY" },
+  "ayna.next": { tr: "SONRAKİ SORU", de: "NÄCHSTE FRAGE", en: "NEXT QUESTION" },
+  "ayna.seeResults": { tr: "SONUÇLAR", de: "ERGEBNISSE", en: "RESULTS" },
+  "ayna.revealNow": { tr: "ŞİMDİ AÇIKLA", de: "JETZT AUFDECKEN", en: "REVEAL NOW" },
+  "ayna.lockIn": { tr: "TAHMİNİ KİLİTLE", de: "TIPP FESTLEGEN", en: "LOCK IN GUESS" },
+  "ayna.lockedWait": {
+    tr: "Kilitlendi. Gerçek TV'de açıklanacak.",
+    de: "Festgelegt. Die Wahrheit erscheint auf dem TV.",
+    en: "Locked in. The truth drops on the TV.",
+  },
+  "ayna.yourGuess": { tr: "SENİN TAHMİNİN", de: "DEIN TIPP", en: "YOUR GUESS" },
+  "ayna.diff": {
+    tr: (v: string) => `Fark: ${v}`,
+    de: (v: string) => `Abstand: ${v}`,
+    en: (v: string) => `Off by ${v}`,
+  },
+  "ayna.noPoints": {
+    tr: "Bu tur puan yok — bir sonrakinde!",
+    de: "Diese Runde keine Punkte – nächstes Mal!",
+    en: "No points this round – get the next one!",
+  },
+  "ayna.timeUp": { tr: "Süre doldu", de: "Zeit abgelaufen", en: "Time's up" },
+  "ayna.noGuess": { tr: "Bu tur tahmin gelmedi", de: "Kein Tipp in dieser Runde", en: "No guess this round" },
+  "ayna.watchTv": {
+    tr: "Soru TV'de. Tahminini buradan kilitle.",
+    de: "Die Frage läuft auf dem TV. Leg deinen Tipp hier fest.",
+    en: "The question is on the TV. Lock in your guess here.",
+  },
+  "ayna.decrease": { tr: "Azalt", de: "Verringern", en: "Decrease" },
+  "ayna.increase": { tr: "Artır", de: "Erhöhen", en: "Increase" },
+  "ayna.sliderLabel": { tr: "Tahminin", de: "Dein Tipp", en: "Your guess" },
+  "ayna.yourRank": {
+    tr: (rank: number, total: number) => `${total} kişi arasında ${rank}. sıradasın`,
+    de: (rank: number, total: number) => `Platz ${rank} von ${total}`,
+    en: (rank: number, total: number) => `You placed ${rank} of ${total}`,
+  },
+  "ayna.totalPoints": {
+    tr: (p: number) => `${p} AYNA puanı`,
+    de: (p: number) => `${p} SPIEGEL-Punkte`,
+    en: (p: number) => `${p} MIRROR points`,
+  },
+  "ayna.category.health": { tr: "SAĞLIK", de: "GESUNDHEIT", en: "HEALTH" },
+  "ayna.category.society": { tr: "TOPLUM", de: "GESELLSCHAFT", en: "SOCIETY" },
+  "ayna.category.environment": { tr: "ÇEVRE", de: "UMWELT", en: "ENVIRONMENT" },
+  "ayna.category.science": { tr: "BİLİM", de: "WISSENSCHAFT", en: "SCIENCE" },
+  "ayna.category.history": { tr: "TARİH", de: "GESCHICHTE", en: "HISTORY" },
+
+  // ═══════════════════════════════════════════
   // ROOM STATUS (siyah ekran yerine oda yükleme/hata durumları)
   // ═══════════════════════════════════════════
   "roomStatus.loadingTitle": { tr: "ODA YÜKLENİYOR", de: "RAUM WIRD GELADEN", en: "LOADING ROOM" },
@@ -564,6 +661,30 @@ const translations = {
   },
   "roomStatus.newRoom": { tr: "Yeni Oda Aç", de: "Neuen Raum erstellen", en: "Open New Room" },
   "roomStatus.retry": { tr: "Tekrar Dene", de: "Erneut versuchen", en: "Retry" },
+  // Misafir telefonu için aynı durumlar — host metinleri (Firestore, kurallar,
+  // "yeni oda aç") misafire bir şey ifade etmiyor.
+  "roomStatus.playerLoadingBody": {
+    tr: "Oyuna bağlanılıyor...",
+    de: "Verbindung zum Spiel wird hergestellt...",
+    en: "Connecting to the game...",
+  },
+  "roomStatus.playerNotfoundBody": {
+    tr: "Bu oda artık yok ya da bağlantı eski. Masadaki QR kodu yeniden okut.",
+    de: "Diesen Raum gibt es nicht mehr oder der Link ist veraltet. Scanne den QR-Code am Tisch erneut.",
+    en: "This room no longer exists or the link is outdated. Scan the QR code at your table again.",
+  },
+  "roomStatus.playerErrorBody": {
+    tr: "Bağlantı kurulamadı. İnternetini kontrol edip tekrar dene.",
+    de: "Keine Verbindung möglich. Prüfe dein Internet und versuche es erneut.",
+    en: "Couldn't connect. Check your internet and try again.",
+  },
+  "roomStatus.playerMissingTitle": { tr: "KAYDIN BULUNAMADI", de: "SPIELER NICHT GEFUNDEN", en: "PLAYER NOT FOUND" },
+  "roomStatus.playerMissingBody": {
+    tr: "Bu odadaki oyuncu kaydına ulaşılamadı. Aynı kodla yeniden katılabilirsin.",
+    de: "Dein Spielerprofil in diesem Raum wurde nicht gefunden. Du kannst mit demselben Code erneut beitreten.",
+    en: "We couldn't find your player entry in this room. You can rejoin with the same code.",
+  },
+  "roomStatus.joinRoom": { tr: "Odaya Katıl", de: "Raum beitreten", en: "Join Room" },
 
   // ═══════════════════════════════════════════
   // MISC CHROME (XP bar, emoji toolbar, hold button, player header)
@@ -802,6 +923,11 @@ const translations = {
     tr: "Takım işi: kabloları doğru uçlara bağlayıp mekanın jeneratörünü birlikte ateşleyin.",
     de: "Teamarbeit: Verbindet die Kabel richtig und startet gemeinsam den Generator des Ladens.",
     en: "Teamwork: connect the wires correctly and fire up the venue's generator together.",
+  },
+  "dashboard.modeAynaDesc": {
+    tr: "Dünyayı ne kadar tanıyorsun? Gerçek verilerle tahmin et, salonun aynasında kendini gör.",
+    de: "Wie gut kennst du die Welt? Schätze echte Daten und sieh dich im Spiegel des Raums.",
+    en: "How well do you know the world? Guess real data and see yourself in the room's mirror.",
   },
 
   // ═══════════════════════════════════════════

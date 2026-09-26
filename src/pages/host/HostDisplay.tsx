@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import { collection, query, where, getDocs, doc, writeBatch } from "firebase/firestore";
@@ -29,20 +29,9 @@ import { HostReview } from "./views/HostReview";
 import { HostStandings } from "./views/HostStandings";
 import { HostPodium } from "./views/HostPodium";
 import { HostAdBreak } from "./views/HostAdBreak";
-import { HostQuizDisplay } from "./quiz/HostQuizDisplay";
-import { HostBombDisplay } from "./bomb/HostBombDisplay";
-import { HostSensorDisplay } from "./sensor/HostSensorDisplay";
-import { HostWheelDisplay } from "./wheel/HostWheelDisplay";
-import { HostOverloadDisplay } from "./overload/HostOverloadDisplay";
-import { HostEchoDisplay } from "./echo/HostEchoDisplay";
-import { HostPulseDisplay } from "./pulse/HostPulseDisplay";
-import { HostSpectrumDisplay } from "./spectrum/HostSpectrumDisplay";
-import { HostColorsDisplay } from "./colors/HostColorsDisplay";
-import { HostVaultDisplay } from "./vault/HostVaultDisplay";
-import { HostUnityDisplay } from "./unity/HostUnityDisplay";
-import { HostBarDisplay } from "./bar/HostBarDisplay";
-import { HostKabloDisplay } from "./kablo/HostKabloDisplay";
 import { HostDashboard } from "./dashboard/HostDashboard";
+import { HOST_GAME_DISPLAYS, preloadHostGameDisplays } from "./gameDisplays";
+import { resolveRoutedGame } from "../../lib/gameRouting";
 import { HostTutorial } from "./components/HostTutorial";
 import { DatabaseStatus } from "../../components/DatabaseStatus";
 import { RoomStatusScreen } from "../../components/RoomStatusScreen";
@@ -61,6 +50,17 @@ export function HostDisplay() {
   const hostRoom = useHostRoom(roomId);
   const { room, loading, notFound, error } = hostRoom;
 
+  // Oyun ekranlarını TV boştayken önceden indir (bkz. preloadHostGameDisplays).
+  // Erken dönüşlerden ÖNCE: hook sırası her render'da aynı kalmalı.
+  useEffect(() => {
+    if (typeof window.requestIdleCallback === "function") {
+      const id = window.requestIdleCallback(preloadHostGameDisplays, { timeout: 10_000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const timer = setTimeout(preloadHostGameDisplays, 3_000);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Oda durum kapıları. HostDisplay'in kendi hook sayısı sabit olduğu için
   // buradaki erken dönüşler hook sırasını bozmuyor. Eskiden burada çıplak bir
   // siyah div dönülüyordu ve hatalı/silinmiş oda sonsuz siyah ekran demekti.
@@ -68,140 +68,20 @@ export function HostDisplay() {
   if (loading) return <RoomStatusScreen kind="loading" roomId={roomId} />;
   if (notFound || room === null) return <RoomStatusScreen kind="notfound" roomId={roomId} />;
 
-  // Route to Quiz Display if active_game is quiz. This must happen before any
-  // of the classic-game-only hooks below are declared, so the quiz view
-  // never runs those hooks at all (keeps hook order stable either way).
-  if (room.active_game === "quiz" || room.game_type === "quiz") {
+  // Kendi ekran çifti olan modlar. Bu dönüş, aşağıdaki klasik oyun
+  // hook'ları tanımlanmadan önce yapılmalı ki hook sırası sabit kalsın.
+  const routedGame = resolveRoutedGame(room);
+  if (routedGame) {
+    const GameDisplay = HOST_GAME_DISPLAYS[routedGame];
     return (
-      <HostQuizDisplay
-        room={room}
-        players={hostRoom.players}
-        updateRoomStatus={hostRoom.updateRoomStatus}
-        updatePlayerScore={hostRoom.updatePlayerScore}
-      />
-    );
-  }
-
-  // Route to Bomb Display if active_game is bomb. 
-  if (room.active_game === "bomb" || room.game_type === "bomb") {
-    return (
-      <HostBombDisplay 
-        room={room} 
-        players={hostRoom.players} 
-        updateRoomStatus={hostRoom.updateRoomStatus} 
-        updatePlayerScore={hostRoom.updatePlayerScore}
-      />
-    );
-  }
-
-  if (room.active_game === "sensor" || room.game_type === "sensor") {
-    return (
-      <HostSensorDisplay
-        room={room}
-        players={hostRoom.players}
-        updateRoomStatus={hostRoom.updateRoomStatus}
-        updatePlayerScore={hostRoom.updatePlayerScore}
-      />
-    );
-  }
-
-  if (room.active_game === "wheel" || room.game_type === "wheel") {
-    return (
-      <HostWheelDisplay
-        room={room}
-        players={hostRoom.players}
-        updateRoomStatus={hostRoom.updateRoomStatus}
-      />
-    );
-  }
-
-  if (room.active_game === "overload" || room.game_type === "overload") {
-    return (
-      <HostOverloadDisplay
-        room={room}
-        players={hostRoom.players}
-        updateRoomStatus={hostRoom.updateRoomStatus}
-      />
-    );
-  }
-
-  if (room.active_game === "echo" || room.game_type === "echo") {
-    return (
-      <HostEchoDisplay
-        room={room}
-        players={hostRoom.players}
-        updateRoomStatus={hostRoom.updateRoomStatus}
-      />
-    );
-  }
-
-  if (room.active_game === "pulse" || room.game_type === "pulse") {
-    return (
-      <HostPulseDisplay
-        room={room}
-        players={hostRoom.players}
-        updateRoomStatus={hostRoom.updateRoomStatus}
-      />
-    );
-  }
-
-  if (room.active_game === "spectrum" || room.game_type === "spectrum") {
-    return (
-      <HostSpectrumDisplay
-        room={room}
-        players={hostRoom.players}
-        updateRoomStatus={hostRoom.updateRoomStatus}
-      />
-    );
-  }
-
-  if (room.active_game === "colors" || room.game_type === "colors") {
-    return (
-      <HostColorsDisplay
-        room={room}
-        players={hostRoom.players}
-        updateRoomStatus={hostRoom.updateRoomStatus}
-      />
-    );
-  }
-
-  if (room.active_game === "vault" || room.game_type === "vault") {
-    return (
-      <HostVaultDisplay
-        room={room}
-        players={hostRoom.players}
-        updateRoomStatus={hostRoom.updateRoomStatus}
-      />
-    );
-  }
-
-  if (room.active_game === "unity" || room.game_type === "unity") {
-    return (
-      <HostUnityDisplay
-        room={room}
-        players={hostRoom.players}
-        updateRoomStatus={hostRoom.updateRoomStatus}
-      />
-    );
-  }
-
-  if (room.active_game === "bar" || room.game_type === "bar") {
-    return (
-      <HostBarDisplay
-        room={room}
-        players={hostRoom.players}
-        updateRoomStatus={hostRoom.updateRoomStatus}
-      />
-    );
-  }
-
-  if (room.active_game === "kablo" || room.game_type === "kablo") {
-    return (
-      <HostKabloDisplay
-        room={room}
-        players={hostRoom.players}
-        updateRoomStatus={hostRoom.updateRoomStatus}
-      />
+      <Suspense fallback={<RoomStatusScreen kind="loading" roomId={roomId} />}>
+        <GameDisplay
+          room={room}
+          players={hostRoom.players}
+          updateRoomStatus={hostRoom.updateRoomStatus}
+          updatePlayerScore={hostRoom.updatePlayerScore}
+        />
+      </Suspense>
     );
   }
 

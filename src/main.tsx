@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import * as Sentry from "@sentry/react";
 import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { shouldReloadForStaleChunk } from "./lib/staleChunk";
 import "./index.css";
 
 // DSN yoksa init() çağrılmıyor — Sentry tamamen no-op kalıyor, hesap
@@ -42,6 +43,14 @@ if (!firebaseApiKey || !firebaseProjectId) {
     </div>
   `;
 } else {
+  // Yayın sonrası eski chunk 404 → bir kez yenile (bkz. lib/staleChunk.ts).
+  window.addEventListener("vite:preloadError", (event) => {
+    if (shouldReloadForStaleChunk(() => window.sessionStorage, Date.now())) {
+      event.preventDefault();
+      window.location.reload();
+    }
+  });
+
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <ErrorBoundary>
