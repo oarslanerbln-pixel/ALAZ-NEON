@@ -564,6 +564,30 @@ const translations = {
   },
   "roomStatus.newRoom": { tr: "Yeni Oda Aç", de: "Neuen Raum erstellen", en: "Open New Room" },
   "roomStatus.retry": { tr: "Tekrar Dene", de: "Erneut versuchen", en: "Retry" },
+  // Misafir telefonu için aynı durumlar — host metinleri (Firestore, kurallar,
+  // "yeni oda aç") misafire bir şey ifade etmiyor.
+  "roomStatus.playerLoadingBody": {
+    tr: "Oyuna bağlanılıyor...",
+    de: "Verbindung zum Spiel wird hergestellt...",
+    en: "Connecting to the game...",
+  },
+  "roomStatus.playerNotfoundBody": {
+    tr: "Bu oda artık yok ya da bağlantı eski. Masadaki QR kodu yeniden okut.",
+    de: "Diesen Raum gibt es nicht mehr oder der Link ist veraltet. Scanne den QR-Code am Tisch erneut.",
+    en: "This room no longer exists or the link is outdated. Scan the QR code at your table again.",
+  },
+  "roomStatus.playerErrorBody": {
+    tr: "Bağlantı kurulamadı. İnternetini kontrol edip tekrar dene.",
+    de: "Keine Verbindung möglich. Prüfe dein Internet und versuche es erneut.",
+    en: "Couldn't connect. Check your internet and try again.",
+  },
+  "roomStatus.playerMissingTitle": { tr: "KAYDIN BULUNAMADI", de: "SPIELER NICHT GEFUNDEN", en: "PLAYER NOT FOUND" },
+  "roomStatus.playerMissingBody": {
+    tr: "Bu odadaki oyuncu kaydına ulaşılamadı. Aynı kodla yeniden katılabilirsin.",
+    de: "Dein Spielerprofil in diesem Raum wurde nicht gefunden. Du kannst mit demselben Code erneut beitreten.",
+    en: "We couldn't find your player entry in this room. You can rejoin with the same code.",
+  },
+  "roomStatus.joinRoom": { tr: "Odaya Katıl", de: "Raum beitreten", en: "Join Room" },
 
   // ═══════════════════════════════════════════
   // MISC CHROME (XP bar, emoji toolbar, hold button, player header)
