@@ -5,7 +5,7 @@ import {
   assertSucceeds,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, setDoc, updateDoc, addDoc, collection, getDoc, deleteDoc } from "firebase/firestore";
+import { doc, setDoc, updateDoc, addDoc, collection, getDoc, getDocs, deleteDoc, query, where } from "firebase/firestore";
 import { beforeAll, afterAll, beforeEach, describe, it } from "vitest";
 
 /**
@@ -757,3 +757,86 @@ describe("users koleksiyonu (ALAZ League)", () => {
   });
 });
 
+
+describe("ayna_survey — anonim salon anketi", () => {
+  const SURVEY_ID = `${ROOM_ID}_${PLAYER_UID}`;
+  const asStranger = () => testEnv.authenticatedContext(STRANGER_UID).firestore();
+  const survey = (overrides: Record<string, unknown> = {}) => ({
+    room_id: ROOM_ID,
+    host_uid: HOST_UID,
+    player_id: PLAYER_ID,
+    answers: { "salon-bilingual": true, "salon-morning": false },
+    created_at: Date.now(),
+    ...overrides,
+  });
+
+  beforeEach(() => seed({ status: "ayna_survey" }));
+
+  it("oyuncu anket açıkken kendi cevabını gönderebilir", async () => {
+    await assertSucceeds(setDoc(doc(asPlayer(), "ayna_survey", SURVEY_ID), survey()));
+  });
+
+  it("aynı oyuncu ikinci kez gönderemez — oy çoğaltma yok", async () => {
+    await assertSucceeds(setDoc(doc(asPlayer(), "ayna_survey", SURVEY_ID), survey()));
+    await assertFails(
+      setDoc(doc(asPlayer(), "ayna_survey", SURVEY_ID), survey({ answers: { "salon-bilingual": false } }))
+    );
+  });
+
+  it("anket kapandıktan sonra cevap gönderilemez", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), { status: "ayna_active" });
+    });
+    await assertFails(setDoc(doc(asPlayer(), "ayna_survey", SURVEY_ID), survey()));
+  });
+
+  it("başka bir hesabın belge kimliğiyle gönderilemez", async () => {
+    await assertFails(setDoc(doc(asPlayer(), "ayna_survey", `${ROOM_ID}_${STRANGER_UID}`), survey()));
+  });
+
+  it("başka oyuncunun player_id'si ile gönderilemez", async () => {
+    await assertFails(
+      setDoc(doc(asPlayer(), "ayna_survey", SURVEY_ID), survey({ player_id: OTHER_PLAYER_ID }))
+    );
+  });
+
+  it("host_uid sahte olamaz — okuma yetkisi ona dayanıyor", async () => {
+    await assertFails(
+      setDoc(doc(asPlayer(), "ayna_survey", SURVEY_ID), survey({ host_uid: PLAYER_UID }))
+    );
+  });
+
+  it("şemaya ek alan sokulamaz", async () => {
+    await assertFails(
+      setDoc(doc(asPlayer(), "ayna_survey", SURVEY_ID), survey({ nickname: "OYUNCU" }))
+    );
+  });
+
+  it("diğer misafirler kimin ne dediğini okuyamaz", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "ayna_survey", SURVEY_ID), survey());
+    });
+    await assertFails(getDoc(doc(asStranger(), "ayna_survey", SURVEY_ID)));
+    await assertFails(getDoc(doc(asPlayer(), "ayna_survey", SURVEY_ID)));
+  });
+
+  it("host toplamı hesaplamak için cevapları okuyabilir", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "ayna_survey", SURVEY_ID), survey());
+    });
+    await assertSucceeds(getDoc(doc(asHost(), "ayna_survey", SURVEY_ID)));
+  });
+
+  it("host'un sayaç sorgusu (room_id + host_uid) kurallardan geçer", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "ayna_survey", SURVEY_ID), survey());
+    });
+    await assertSucceeds(
+      getDocs(query(collection(asHost(), "ayna_survey"), where("room_id", "==", ROOM_ID), where("host_uid", "==", HOST_UID)))
+    );
+  });
+
+  it("misafir odanın tüm anketini sorgulayamaz", async () => {
+    await assertFails(getDocs(query(collection(asPlayer(), "ayna_survey"), where("room_id", "==", ROOM_ID))));
+  });
+});

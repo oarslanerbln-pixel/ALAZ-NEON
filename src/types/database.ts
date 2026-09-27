@@ -57,6 +57,7 @@ export type RoomStatus =
   | "kablo_active"
   | "kablo_reveal"
   | "ayna_intro"
+  | "ayna_survey"
   | "ayna_active"
   | "ayna_reveal"
   | "ayna_final";
@@ -196,6 +197,17 @@ export interface Room {
   ayna_round_points?: Record<string, number>;
   /** Yalnızca bu AYNA oyununun puan toplamı (total_score gece boyu birikir). */
   ayna_totals?: Record<string, number>;
+  /** Gizli salon anketinde sorulan sorular (bkz. lib/aynaSalon.ts). */
+  ayna_survey_ids?: string[];
+  /** Yetersiz cevaplı salon sorusunun yerine geçecek yedek dünya soruları. */
+  ayna_reserve_ids?: string[];
+  /**
+   * Açıklanan salon sorusunun gerçeği ve kaç kişiden hesaplandığı. Dünya
+   * sorularında `null` — onların cevabı soru havuzunda. Açıklamadan ÖNCE
+   * yazılmıyor: oda dokümanı herkese açık.
+   */
+  ayna_round_truth?: number | null;
+  ayna_round_sample?: number | null;
   // Mekan markalaması — oda açılırken o anki aktif mekan profilinden
   // KOPYALANIR (canlı referans değil). Böylece bir mekana satış sonrası
   // marka değiştirilse bile geçmiş odaların/demoların markası değişmez.

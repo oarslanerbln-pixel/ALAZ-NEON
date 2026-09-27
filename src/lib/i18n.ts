@@ -637,6 +637,33 @@ const translations = {
   "ayna.category.environment": { tr: "ÇEVRE", de: "UMWELT", en: "ENVIRONMENT" },
   "ayna.category.science": { tr: "BİLİM", de: "WISSENSCHAFT", en: "SCIENCE" },
   "ayna.category.history": { tr: "TARİH", de: "GESCHICHTE", en: "HISTORY" },
+  "ayna.category.salon": { tr: "BU SALON", de: "DIESER RAUM", en: "THIS ROOM" },
+  "ayna.surveyTitle": { tr: "SALON ANKETİ", de: "RAUM-UMFRAGE", en: "ROOM SURVEY" },
+  "ayna.surveyLead": {
+    tr: "Telefonuna gelen kısa soruları yanıtla. Birazdan bu salonu tahmin edeceksiniz.",
+    de: "Beantworte die kurzen Fragen auf deinem Handy. Gleich schätzt ihr diesen Raum.",
+    en: "Answer the short questions on your phone. Soon you'll be guessing this room.",
+  },
+  // Bilerek "anonim" değil "gizli": diğer misafirler cevabı göremez, ama
+  // toplamı hesaplayan TV (host hesabı) kuralları gereği okuyabilir.
+  "ayna.surveyPrivacy": {
+    tr: "Gizli: diğer misafirler cevabını göremez, ekranda yalnızca toplam görünür.",
+    de: "Privat: Andere Gäste sehen deine Antwort nicht, auf dem Bildschirm erscheint nur die Summe.",
+    en: "Private: other guests can't see your answer, only the total appears on screen.",
+  },
+  "ayna.surveyDone": {
+    tr: (n: number, total: number) => `${n} / ${total} yanıtladı`,
+    de: (n: number, total: number) => `${n} / ${total} haben geantwortet`,
+    en: (n: number, total: number) => `${n} / ${total} answered`,
+  },
+  "ayna.yes": { tr: "EVET", de: "JA", en: "YES" },
+  "ayna.no": { tr: "HAYIR", de: "NEIN", en: "NO" },
+  "ayna.skip": { tr: "Geç", de: "Überspringen", en: "Skip" },
+  "ayna.surveyThanks": {
+    tr: "Teşekkürler! Salonun geri kalanını bekliyoruz.",
+    de: "Danke! Wir warten auf den Rest des Raums.",
+    en: "Thanks! Waiting for the rest of the room.",
+  },
 
   // ═══════════════════════════════════════════
   // ROOM STATUS (siyah ekran yerine oda yükleme/hata durumları)
