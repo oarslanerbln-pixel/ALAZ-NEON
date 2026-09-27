@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { addDoc, collection, getDocs, limit, query, serverTimestamp, where } from "firebase/firestore";
-import { Lock, Minus, Plus } from "lucide-react";
+import { addDoc, collection, doc, getDocs, limit, query, serverTimestamp, setDoc, where } from "firebase/firestore";
+import { Check, Lock, Minus, Plus } from "lucide-react";
 
 import { useToast } from "../../../contexts/ToastContextCore";
 import { useLocale } from "../../../hooks/useLocale";
-import { db } from "../../../lib/firebase";
+import { auth, db } from "../../../lib/firebase";
 import { haptics } from "../../../lib/haptics";
 import { retentionExpiry } from "../../../lib/retention";
 import { AYNA_MAX, AYNA_MIN, aynaRoundKey, parseGuess, topScorers } from "../../../lib/ayna";
-import { AYNA_CATEGORY_KEY, aynaQuestionById, formatAynaDelta, formatAynaValue, type AynaQuestion } from "../../../lib/aynaQuestions";
+import { AYNA_CATEGORY_KEY, aynaRoundQuestion, formatAynaDelta, formatAynaValue, type AynaQuestion } from "../../../lib/aynaQuestions";
+import { salonQuestionById } from "../../../lib/aynaSalon";
 import type { Player, Room } from "../../../types/database";
 
 interface Props {
@@ -22,13 +23,17 @@ interface Props {
  * durumuna dokunmaz (host tek yazar).
  */
 export function PlayerAynaController({ room, player }: Props) {
+  const { locale } = useLocale();
   const index = room.ayna_index ?? 0;
   const total = room.ayna_question_ids?.length ?? 0;
-  const question = aynaQuestionById(room.ayna_question_ids?.[index]);
+  const question = aynaRoundQuestion(room.ayna_question_ids?.[index], room, locale);
 
   let body: ReactNode;
   let key: string;
-  if (room.status === "ayna_active" && question) {
+  if (room.status === "ayna_survey") {
+    key = "survey";
+    body = <SurveyCard room={room} player={player} />;
+  } else if (room.status === "ayna_active" && question) {
     key = `active-${index}`;
     // `key` sayesinde her soruda tahmin/kilit durumu sıfırdan başlıyor.
     body = <ActiveRound key={key} room={room} player={player} question={question} index={index} total={total} />;
@@ -93,6 +98,134 @@ function IntroCard() {
         ))}
       </ol>
       <p className="text-sm text-cyan-200/80 motion-safe:animate-pulse">{t("ayna.watchTv")}</p>
+    </div>
+  );
+}
+
+/**
+ * Gizli salon anketi. Cevaplar tek dokümanda, yalnızca host'un
+ * okuyabildiği `ayna_survey` koleksiyonuna yazılıyor; doküman kimliği
+ * oda + hesap, yani her misafir bir kez yanıtlayabiliyor (bkz.
+ * firestore.rules). "Geç" her zaman serbest — kimse cevaba zorlanmıyor.
+ */
+function SurveyCard({ room, player }: { room: Room; player: Player }) {
+  const { t, locale } = useLocale();
+  const ids = room.ayna_survey_ids ?? [];
+  const storageKey = `ayna_survey_done_${room.id}`;
+  const [step, setStep] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, boolean>>({});
+  const [sending, setSending] = useState(false);
+  const [done, setDone] = useState(() => {
+    try {
+      return sessionStorage.getItem(storageKey) === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  const finish = async (final: Record<string, boolean>) => {
+    setSending(true);
+    const uid = auth.currentUser?.uid;
+    if (uid) {
+      try {
+        await setDoc(doc(db, "ayna_survey", `${room.id}_${uid}`), {
+          room_id: room.id,
+          host_uid: room.host_uid ?? "",
+          player_id: player.id,
+          answers: final,
+          created_at: serverTimestamp(),
+          expires_at: retentionExpiry(),
+        });
+      } catch (err) {
+        // Sayfa yenilenip ikinci kez gönderildiyse ya da anket az önce
+        // kapandıysa kural yazmayı reddeder. İkisi de misafirin sorunu değil.
+        console.warn("[AYNA] Anket kaydedilmedi:", err);
+      }
+    }
+    try {
+      sessionStorage.setItem(storageKey, "1");
+    } catch {
+      // Depolama kapalıysa yalnızca yenilemede soru tekrar görünür.
+    }
+    haptics.success();
+    setSending(false);
+    setDone(true);
+  };
+
+  const respond = (value: boolean | null) => {
+    if (sending) return;
+    const id = ids[step];
+    const next = value === null || !id ? answers : { ...answers, [id]: value };
+    setAnswers(next);
+    if (step + 1 >= ids.length) void finish(next);
+    else setStep(step + 1);
+  };
+
+  if (done || ids.length === 0) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center text-center gap-6" role="status">
+        <span className="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-400 to-violet-500 text-black flex items-center justify-center">
+          <Check className="w-10 h-10" aria-hidden="true" />
+        </span>
+        <p className="text-xl font-bold max-w-xs">{t("ayna.surveyThanks")}</p>
+        <p className="text-sm text-cyan-200/80 motion-safe:animate-pulse">{t("ayna.watchTv")}</p>
+      </div>
+    );
+  }
+
+  const current = salonQuestionById(ids[step]);
+  return (
+    <div className="flex-1 flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <Wordmark />
+        <span className="px-3 py-1.5 rounded-full bg-white/10 text-xs font-black tracking-widest tabular-nums">
+          {step + 1} / {ids.length}
+        </span>
+      </div>
+      <span className="text-[11px] font-black tracking-[0.25em] text-cyan-200/80">{t("ayna.surveyTitle")}</span>
+
+      <AnimatePresence mode="wait">
+        <motion.h1
+          key={ids[step]}
+          initial={{ opacity: 0, x: 24 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -24 }}
+          className="flex-1 flex items-center text-3xl font-black leading-tight"
+        >
+          {current?.prompt[locale]}
+        </motion.h1>
+      </AnimatePresence>
+
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          type="button"
+          disabled={sending}
+          onClick={() => respond(true)}
+          className="min-h-16 rounded-2xl bg-cyan-400 text-black text-xl font-black tracking-widest active:scale-[0.98] disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+        >
+          {t("ayna.yes")}
+        </button>
+        <button
+          type="button"
+          disabled={sending}
+          onClick={() => respond(false)}
+          className="min-h-16 rounded-2xl bg-violet-400 text-black text-xl font-black tracking-widest active:scale-[0.98] disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+        >
+          {t("ayna.no")}
+        </button>
+      </div>
+      <button
+        type="button"
+        disabled={sending}
+        onClick={() => respond(null)}
+        className="self-center min-h-11 px-6 text-sm font-bold text-white/60 underline underline-offset-4 disabled:opacity-60"
+      >
+        {t("ayna.skip")}
+      </button>
+      <p className="flex items-start gap-2 text-xs text-white/60">
+        <Lock className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+        {t("ayna.surveyPrivacy")}
+      </p>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Lock } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { useLocale } from "../../../hooks/useLocale";
@@ -25,6 +26,16 @@ function labelShift(pct: number): string {
   return `translateX(${pct < 12 ? -10 : pct > 88 ? -90 : -50}%)`;
 }
 
+/**
+ * Ortanca etiketi gerçek çizgisinden UZAK tarafa uzanır; ikisi yakınsa
+ * (ör. %60 ve %64) etiket gerçek çizgisinin üstüne binmesin. Kenarda yer
+ * yoksa taşmamak için diğer tarafa döner.
+ */
+function medianLabelShift(median: number, truth: number): string {
+  const extendLeft = median <= truth ? median > 18 : median > 82;
+  return extendLeft ? "translateX(calc(-100% - 12px))" : "translateX(12px)";
+}
+
 export function AynaBackdrop({ children }: { children: ReactNode }) {
   return (
     <div className="relative w-full h-full overflow-hidden bg-black text-white font-sans">
@@ -42,12 +53,12 @@ export function AynaBackdrop({ children }: { children: ReactNode }) {
 }
 
 /** Yansımalı logo — "ayna" fikrinin görsel karşılığı. */
-export function AynaWordmark({ size = 200 }: { size?: number }) {
+export function AynaWordmark({ size = 200, align = "center" }: { size?: number; align?: "center" | "start" }) {
   const { t } = useLocale();
   const text = t("ayna.title");
   const style = { fontSize: size, lineHeight: 1 } as const;
   return (
-    <div className="flex flex-col items-center select-none" aria-label={text}>
+    <div className={`flex flex-col select-none ${align === "start" ? "items-start" : "items-center"}`} aria-label={text}>
       <span
         style={style}
         className="font-black tracking-[0.12em] bg-gradient-to-r from-cyan-200 via-white to-violet-300 bg-clip-text text-transparent drop-shadow-[0_0_40px_rgba(34,211,238,0.35)]"
@@ -104,6 +115,55 @@ export function AynaIntroScreen({ durationMs }: { durationMs: number }) {
           animate={{ width: "100%" }}
           transition={{ duration: durationMs / 1000, ease: "linear" }}
         />
+      </div>
+    </div>
+  );
+}
+
+/** Gizli salon anketi sürerken TV: yalnızca kaç kişinin yanıtladığı görünür. */
+export function AynaSurveyScreen({ answered, playerCount, secondsLeft }: { answered: number; playerCount: number; secondsLeft: number }) {
+  const { t } = useLocale();
+  const RADIUS = 150;
+  const circumference = 2 * Math.PI * RADIUS;
+  const ratio = playerCount > 0 ? Math.min(1, answered / playerCount) : 0;
+  return (
+    <div className="h-full flex items-center justify-center gap-28 px-24">
+      <div className="max-w-[900px] flex flex-col gap-10">
+        <AynaWordmark size={90} align="start" />
+        <h2 className="text-7xl font-black tracking-[0.15em] -mt-4">{t("ayna.surveyTitle")}</h2>
+        <p className="text-4xl font-bold leading-snug text-white/85">{t("ayna.surveyLead")}</p>
+        <p className="flex items-center gap-4 text-2xl font-semibold text-cyan-100/90 rounded-2xl border border-cyan-300/30 bg-cyan-400/[0.06] px-6 py-4">
+          <Lock className="w-8 h-8 shrink-0" aria-hidden="true" />
+          {t("ayna.surveyPrivacy")}
+        </p>
+      </div>
+      <div className="relative w-[380px] h-[380px] shrink-0 flex items-center justify-center">
+        <svg viewBox="0 0 380 380" className="absolute inset-0 -rotate-90" aria-hidden="true">
+          <circle cx="190" cy="190" r={RADIUS} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="18" />
+          <motion.circle
+            cx="190"
+            cy="190"
+            r={RADIUS}
+            fill="none"
+            stroke="url(#ayna-survey-ring)"
+            strokeWidth="18"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            animate={{ strokeDashoffset: circumference * (1 - ratio) }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          />
+          <defs>
+            <linearGradient id="ayna-survey-ring" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#22d3ee" />
+              <stop offset="100%" stopColor="#a78bfa" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <div className="flex flex-col items-center gap-3 text-center">
+          <span className="text-8xl font-black tabular-nums">{answered}</span>
+          <span className="text-2xl font-bold text-white/70">{t("ayna.surveyDone", answered, playerCount)}</span>
+          <span className="mt-2 text-3xl font-black tabular-nums text-cyan-200">{secondsLeft}s</span>
+        </div>
       </div>
     </div>
   );
@@ -284,7 +344,7 @@ export function AynaRevealScreen({ question, index, total, guesses, points, play
           >
             <span
               className="absolute top-0 whitespace-nowrap pb-1 text-xl font-bold text-violet-200"
-              style={{ transform: `${labelShift(summary.median)} translateY(-100%)` }}
+              style={{ transform: `${medianLabelShift(summary.median, truthPct)} translateY(-100%)` }}
             >
               {t("ayna.roomMedian", formatAynaValue(summary.median, question.unit, locale))}
             </span>
