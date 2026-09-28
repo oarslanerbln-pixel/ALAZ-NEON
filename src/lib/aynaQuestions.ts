@@ -1,4 +1,6 @@
 import type { Locale, TranslationKey } from "./i18n";
+import type { Room } from "../types/database";
+import { SALON_INSIGHT, salonQuestionById, salonSourceLabel } from "./aynaSalon";
 
 /**
  * AYNA soru havuzu.
@@ -17,7 +19,7 @@ import type { Locale, TranslationKey } from "./i18n";
  * misafir soruyu kendi telefonunda seçtiği dilde görüyor.
  */
 
-export type AynaCategory = "health" | "society" | "environment" | "science" | "history";
+export type AynaCategory = "health" | "society" | "environment" | "science" | "history" | "salon";
 export type AynaUnit = "percent" | "years";
 
 export const AYNA_CATEGORY_KEY: Record<AynaCategory, TranslationKey> = {
@@ -26,6 +28,7 @@ export const AYNA_CATEGORY_KEY: Record<AynaCategory, TranslationKey> = {
   environment: "ayna.category.environment",
   science: "ayna.category.science",
   history: "ayna.category.history",
+  salon: "ayna.category.salon",
 };
 
 export interface AynaQuestion {
@@ -671,4 +674,29 @@ export function formatAynaDelta(value: number, unit: AynaUnit, locale: Locale): 
   if (unit === "years") return formatAynaValue(value, unit, locale);
   const n = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(value);
   return { tr: `${n}\u00A0yüzde puan`, de: `${n}\u00A0Prozentpunkte`, en: `${n}\u00A0percentage points` }[locale];
+}
+
+/**
+ * Turdaki soruyu, türünden bağımsız tek biçimde verir. Salon sorusunun
+ * gerçeği ve kaynak satırı odadan geliyor (host açıklama anında yazar);
+ * açıklamadan önce `answer` 0'dır ve kullanılmamalıdır.
+ */
+export function aynaRoundQuestion(
+  id: string | undefined | null,
+  room: Pick<Room, "ayna_round_truth" | "ayna_round_sample">,
+  locale: Locale,
+): AynaQuestion | undefined {
+  const world = aynaQuestionById(id);
+  if (world) return world;
+  const salon = salonQuestionById(id);
+  if (!salon) return undefined;
+  return {
+    id: salon.id,
+    category: "salon",
+    unit: "percent",
+    answer: room.ayna_round_truth ?? 0,
+    source: salonSourceLabel(room.ayna_round_sample ?? 0, locale),
+    text: salon.text,
+    insight: SALON_INSIGHT,
+  };
 }

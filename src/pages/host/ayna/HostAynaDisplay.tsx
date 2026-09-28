@@ -6,10 +6,11 @@ import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { db } from "../../../lib/firebase";
 import { sounds, SoundManager } from "../../../lib/audio";
 import { aynaRoundKey } from "../../../lib/ayna";
-import { aynaQuestionById } from "../../../lib/aynaQuestions";
+import { aynaRoundQuestion } from "../../../lib/aynaQuestions";
+import { useLocale } from "../../../hooks/useLocale";
 import type { Player, Room } from "../../../types/database";
-import { advanceAyna, revealAynaRound, startAynaQuestions } from "./aynaActions";
-import { AynaActiveScreen, AynaBackdrop, AynaFinalScreen, AynaIntroScreen, AynaRevealScreen } from "./HostAynaScreens";
+import { advanceAyna, finishAynaSurvey, revealAynaRound, startAynaAfterIntro } from "./aynaActions";
+import { AynaActiveScreen, AynaBackdrop, AynaFinalScreen, AynaIntroScreen, AynaRevealScreen, AynaSurveyScreen } from "./HostAynaScreens";
 
 interface Props {
   room: Room;
@@ -44,9 +45,10 @@ function scheduleWithRetry(fn: () => void, delayMs: number): () => void {
  * zamanlayıcılar ne kadar tetiklenirse tetiklensin bir soru bir kez açıklanır.
  */
 export function HostAynaDisplay({ room, players, updateRoomStatus }: Props) {
+  const { locale } = useLocale();
   const index = room.ayna_index ?? 0;
   const total = room.ayna_question_ids?.length ?? 0;
-  const question = aynaQuestionById(room.ayna_question_ids?.[index]);
+  const question = aynaRoundQuestion(room.ayna_question_ids?.[index], room, locale);
   const status = room.status;
 
   // Zamanlayıcılar her oda snapshot'ında (ör. canlılık sinyali) yeniden
@@ -69,17 +71,28 @@ export function HostAynaDisplay({ room, players, updateRoomStatus }: Props) {
     advanceAyna(latest.current.room).catch((err) => console.error("[AYNA] İlerleme başarısız:", err));
   }, []);
 
-  // Tanıtım → ilk soru
+  // Tanıtım → salon anketi (ya da anket yoksa doğrudan ilk soru)
   useEffect(() => {
     if (status !== "ayna_intro") return;
     return scheduleWithRetry(() => {
-      startAynaQuestions(latest.current.room)
-        .then((changed) => {
-          if (changed) SoundManager.getInstance().playSFX(sounds.START);
-        })
-        .catch((err) => console.error("[AYNA] Başlatma başarısız:", err));
+      startAynaAfterIntro(latest.current.room).catch((err) => console.error("[AYNA] Başlatma başarısız:", err));
     }, INTRO_MS);
   }, [status]);
+
+  // Anketi tamamlayanların sayısı. Yalnızca SAYI okunuyor — kimin ne dediği
+  // ekrana hiç gelmiyor; sorgu host_uid filtresiyle kurallardan geçiyor.
+  const [surveyCount, setSurveyCount] = useState<{ roomId: string; n: number }>({ roomId: "", n: 0 });
+  useEffect(() => {
+    if (status !== "ayna_survey" || !room.host_uid) return;
+    const q = query(collection(db, "ayna_survey"), where("room_id", "==", room.id), where("host_uid", "==", room.host_uid));
+    return onSnapshot(
+      q,
+      (snap) => setSurveyCount({ roomId: room.id, n: snap.size }),
+      (err) => console.error("[AYNA] Anket dinlenemedi:", err),
+    );
+  }, [status, room.id, room.host_uid]);
+  const surveyAnswered = surveyCount.roomId === room.id ? surveyCount.n : 0;
+  const everyoneSurveyed = players.length > 0 && surveyAnswered >= players.length;
 
   // Bu soruyu kilitleyenler — canlı sayaç ve "herkes kilitledi" erken açıklaması.
   const [locked, setLocked] = useState<{ key: string; ids: string[] }>({ key: "", ids: [] });
@@ -99,10 +112,10 @@ export function HostAynaDisplay({ room, players, updateRoomStatus }: Props) {
   }, [players, locked, roundKey]);
   const everyoneLocked = players.length > 0 && lockedPlayers.length >= players.length;
 
-  // Soru süresi
+  // Soru ve anket süresi
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    if (status !== "ayna_active") return;
+    if (status !== "ayna_active" && status !== "ayna_survey") return;
     const interval = setInterval(() => setNow(Date.now()), 250);
     return () => clearInterval(interval);
   }, [status]);
@@ -114,6 +127,19 @@ export function HostAynaDisplay({ room, players, updateRoomStatus }: Props) {
     const wait = everyoneLocked ? Math.min(ALL_LOCKED_GRACE_MS, endAt - Date.now()) : endAt - Date.now();
     return scheduleWithRetry(reveal, wait);
   }, [status, index, endAt, everyoneLocked, reveal]);
+
+  // Anket → ilk soru (süre dolunca ya da herkes yanıtlayınca)
+  useEffect(() => {
+    if (status !== "ayna_survey" || !endAt) return;
+    const wait = everyoneSurveyed ? Math.min(ALL_LOCKED_GRACE_MS, endAt - Date.now()) : endAt - Date.now();
+    return scheduleWithRetry(() => {
+      finishAynaSurvey(latest.current.room)
+        .then((changed) => {
+          if (changed) SoundManager.getInstance().playSFX(sounds.START);
+        })
+        .catch((err) => console.error("[AYNA] Anket kapatılamadı:", err));
+    }, wait);
+  }, [status, endAt, everyoneSurveyed]);
 
   // Açıklama → sonraki soru
   useEffect(() => {
@@ -128,6 +154,9 @@ export function HostAynaDisplay({ room, players, updateRoomStatus }: Props) {
   if (status === "ayna_intro") {
     screenKey = "intro";
     screen = <AynaIntroScreen durationMs={INTRO_MS} />;
+  } else if (status === "ayna_survey") {
+    screenKey = "survey";
+    screen = <AynaSurveyScreen answered={surveyAnswered} playerCount={players.length} secondsLeft={secondsLeft} />;
   } else if (status === "ayna_active" && question) {
     screenKey = `active-${index}`;
     screen = (

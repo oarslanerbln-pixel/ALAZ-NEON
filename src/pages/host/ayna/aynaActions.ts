@@ -3,6 +3,7 @@ import { collection, doc, getDocs, increment, query, runTransaction, where } fro
 import { db } from "../../../lib/firebase";
 import { aynaRoundKey, parseGuess, scoreGuess } from "../../../lib/ayna";
 import { aynaQuestionById } from "../../../lib/aynaQuestions";
+import { AYNA_SURVEY_MS, applySurveyResults, isSalonId, salonTruth, tallySurvey } from "../../../lib/aynaSalon";
 import { toMillis } from "../../../lib/timestamps";
 import type { Answer, Room } from "../../../types/database";
 
@@ -28,13 +29,58 @@ async function guardedUpdate(roomId: string, expect: Expectation, updates: Parti
   });
 }
 
-/** Tanıtım bitti → ilk soru. */
-export function startAynaQuestions(room: Room): Promise<boolean> {
-  return guardedUpdate(room.id, { status: "ayna_intro", index: room.ayna_index ?? 0 }, {
+/** İlk sorunun başlangıç alanları. */
+function firstQuestionUpdates(room: Room): Partial<Room> {
+  return {
     status: "ayna_active",
+    ayna_index: 0,
     round_end_time: Date.now() + (room.timer_setting || 25) * 1000,
     ayna_round_guesses: {},
     ayna_round_points: {},
+    ayna_round_truth: null,
+    ayna_round_sample: null,
+  };
+}
+
+/**
+ * Anket cevapları. Yalnızca host okuyabiliyor (bkz. firestore.rules →
+ * ayna_survey); sorgu, kuralın doğrulayabilmesi için host_uid'i de filtreler.
+ * Okunamazsa (ör. TV odanın sahibi olmayan bir hesapla açıldıysa) boş liste
+ * döner: salon soruları yedek dünya sorularıyla değişir, oyun durmaz.
+ */
+async function fetchSurvey(room: Room): Promise<{ answers?: unknown }[]> {
+  if (!room.host_uid) return [];
+  try {
+    const snap = await getDocs(
+      query(collection(db, "ayna_survey"), where("room_id", "==", room.id), where("host_uid", "==", room.host_uid)),
+    );
+    return snap.docs.map((d) => d.data());
+  } catch (err) {
+    console.error("[AYNA] Anket okunamadı:", err);
+    return [];
+  }
+}
+
+/** Tanıtım bitti → anket (salon sorusu varsa) ya da doğrudan ilk soru. */
+export function startAynaAfterIntro(room: Room): Promise<boolean> {
+  const expect = { status: "ayna_intro" as const, index: room.ayna_index ?? 0 };
+  if ((room.ayna_survey_ids?.length ?? 0) > 0) {
+    return guardedUpdate(room.id, expect, { status: "ayna_survey", round_end_time: Date.now() + AYNA_SURVEY_MS });
+  }
+  return guardedUpdate(room.id, expect, firstQuestionUpdates(room));
+}
+
+/**
+ * Anket kapandı → sonuçlara göre son soru sırası ve ilk soru. Yeterli cevap
+ * gelmeyen salon soruları burada yedek dünya sorularıyla değişiyor.
+ */
+export async function finishAynaSurvey(room: Room): Promise<boolean> {
+  const ids = room.ayna_survey_ids ?? [];
+  const tally = tallySurvey(await fetchSurvey(room), ids);
+  const order = applySurveyResults(room.ayna_question_ids ?? [], room.ayna_reserve_ids ?? [], tally);
+  return guardedUpdate(room.id, { status: "ayna_survey", index: room.ayna_index ?? 0 }, {
+    ...firstQuestionUpdates(room),
+    ayna_question_ids: order,
   });
 }
 
@@ -49,8 +95,24 @@ export function startAynaQuestions(room: Room): Promise<boolean> {
  */
 export async function revealAynaRound(room: Room, playerIds: ReadonlySet<string>): Promise<boolean> {
   const index = room.ayna_index ?? 0;
-  const question = aynaQuestionById(room.ayna_question_ids?.[index]);
-  if (!question) return false;
+  const questionId = room.ayna_question_ids?.[index];
+
+  // Gerçek: dünya sorusunda havuzdan, salon sorusunda anketin toplamından.
+  let truth: number | null = null;
+  let sample: number | null = null;
+  if (isSalonId(questionId)) {
+    const tally = tallySurvey(await fetchSurvey(room), [questionId as string])[questionId as string];
+    truth = salonTruth(tally);
+    sample = tally?.total ?? 0;
+  } else {
+    truth = aynaQuestionById(questionId)?.answer ?? null;
+  }
+  // Gerçeği bilinmeyen tur (havuzdan kalkmış kimlik ya da eşiğin altında
+  // kalmış salon sorusu — anket sonrası elendiği için beklenmez) TV'de
+  // yanıltıcı bir "GERÇEK %0" göstermek yerine puansız atlanıyor.
+  if (truth === null) {
+    return guardedUpdate(room.id, { status: "ayna_active", index }, nextQuestionUpdates(room, index));
+  }
 
   const snapshot = await getDocs(
     query(collection(db, "answers"), where("room_id", "==", room.id), where("round_letter", "==", aynaRoundKey(index))),
@@ -68,7 +130,7 @@ export async function revealAynaRound(room: Room, playerIds: ReadonlySet<string>
 
   const points: Record<string, number> = {};
   for (const [playerId, guess] of Object.entries(guesses)) {
-    points[playerId] = scoreGuess(guess, question.answer);
+    points[playerId] = scoreGuess(guess, truth);
   }
 
   return runTransaction(db, async (tx) => {
@@ -90,25 +152,31 @@ export async function revealAynaRound(room: Room, playerIds: ReadonlySet<string>
       ayna_round_guesses: guesses,
       ayna_round_points: points,
       ayna_scored_through: index,
+      ayna_round_truth: isSalonId(questionId) ? truth : null,
+      ayna_round_sample: sample,
       ...totals,
     });
     return true;
   });
 }
 
-/** Açıklama bitti → sonraki soru ya da gecenin aynası. */
-export function advanceAyna(room: Room): Promise<boolean> {
-  const index = room.ayna_index ?? 0;
+/** `index`'ten sonraki soru ya da sorular bittiyse gecenin aynası. */
+function nextQuestionUpdates(room: Room, index: number): Partial<Room> {
   const total = room.ayna_question_ids?.length ?? 0;
-  const expect = { status: "ayna_reveal" as const, index };
-  if (index + 1 >= total) {
-    return guardedUpdate(room.id, expect, { status: "ayna_final" });
-  }
-  return guardedUpdate(room.id, expect, {
+  if (index + 1 >= total) return { status: "ayna_final" };
+  return {
     status: "ayna_active",
     ayna_index: index + 1,
     round_end_time: Date.now() + (room.timer_setting || 25) * 1000,
     ayna_round_guesses: {},
     ayna_round_points: {},
-  });
+    ayna_round_truth: null,
+    ayna_round_sample: null,
+  };
+}
+
+/** Açıklama bitti → sonraki soru ya da gecenin aynası. */
+export function advanceAyna(room: Room): Promise<boolean> {
+  const index = room.ayna_index ?? 0;
+  return guardedUpdate(room.id, { status: "ayna_reveal", index }, nextQuestionUpdates(room, index));
 }

@@ -235,17 +235,28 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     // yaziliyor (metin degil — her misafir kendi dilinde okusun). Havuz ve
     // gecmis dinamik yukleniyor; dashboard paketini sisirmesin.
     if (game === "ayna") {
-      const [{ pickQuestionIds }, { AYNA_QUESTIONS }, { recentQuestionIds, rememberQuestions }] = await Promise.all([
+      const [{ pickQuestionIds }, { AYNA_QUESTIONS }, salon, { recentQuestionIds, rememberQuestions }] = await Promise.all([
         import("../../../lib/ayna"),
         import("../../../lib/aynaQuestions"),
+        import("../../../lib/aynaSalon"),
         import("../../../lib/questionHistory"),
       ]);
-      const ids = pickQuestionIds(AYNA_QUESTIONS.map((q) => q.id), settings?.total_rounds || 7, recentQuestionIds());
-      rememberQuestions(ids);
+      // Dünya soruları + salon soruları. Fazladan seçilen dünya soruları
+      // YEDEK: anket yeterli cevap toplamazsa salon sorusunun yerine geçer.
+      const total = settings?.total_rounds || 7;
+      const recent = recentQuestionIds();
+      const salonIds = pickQuestionIds(salon.SALON_QUESTIONS.map((q) => q.id), salon.salonQuestionCount(total), recent);
+      const worldIds = pickQuestionIds(AYNA_QUESTIONS.map((q) => q.id), total, recent);
+      const { order, reserves } = salon.buildQuestionOrder(worldIds, salonIds, total);
+      rememberQuestions(order);
       initialStatus = "ayna_intro";
       extraUpdates = {
         ...extraUpdates,
-        ayna_question_ids: ids,
+        ayna_question_ids: order,
+        ayna_survey_ids: salonIds,
+        ayna_reserve_ids: reserves,
+        ayna_round_truth: null,
+        ayna_round_sample: null,
         ayna_index: 0,
         ayna_scored_through: -1,
         ayna_round_guesses: {},

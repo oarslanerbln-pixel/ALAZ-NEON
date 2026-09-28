@@ -95,6 +95,7 @@ per collection:
 | `rooms`    | `expires_at` |
 | `players`  | `expires_at` |
 | `answers`  | `expires_at` |
+| `ayna_survey` | `expires_at` |
 
 Or with the gcloud CLI:
 

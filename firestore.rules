@@ -170,6 +170,37 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    /**
+     * AYNA salon anketi (bkz. src/lib/aynaSalon.ts). Herkese açık `answers`
+     * koleksiyonuna yazılsaydı her misafir kimin ne dediğini okuyabilirdi;
+     * bu yüzden ayrı ve yalnızca host'a (TV) okunur bir koleksiyon.
+     *
+     * - Kimlik `<room_id>_<uid>`: misafir oda başına TEK kez yanıtlar;
+     *   ikinci yazma bir güncellemedir ve reddedilir.
+     * - Yazma yalnızca oda `ayna_survey` durumundayken: anket kapandıktan
+     *   sonra sonucu kaydıracak geç cevap gelemez.
+     * - `player_id` gerçekten bu hesabın o odadaki oyuncusu olmalı: odaya
+     *   katılmamış biri anketi dolduramaz.
+     * - `host_uid` odanın host'uyla aynı olmalı: okuma kuralı buna dayanıyor,
+     *   host sorguyu `host_uid` filtresiyle atıyor.
+     */
+    match /ayna_survey/{docId} {
+      allow read: if isAuth() && resource.data.host_uid == request.auth.uid;
+
+      allow create: if isAuth() &&
+        docId == request.resource.data.room_id + '_' + request.auth.uid &&
+        request.resource.data.keys().hasOnly(['room_id', 'host_uid', 'player_id', 'answers', 'created_at', 'expires_at']) &&
+        request.resource.data.answers is map &&
+        request.resource.data.answers.size() <= 5 &&
+        get(/databases/$(database)/documents/rooms/$(request.resource.data.room_id)).data.status == 'ayna_survey' &&
+        get(/databases/$(database)/documents/rooms/$(request.resource.data.room_id)).data.host_uid == request.resource.data.host_uid &&
+        get(/databases/$(database)/documents/players/$(request.resource.data.player_id)).data.uid == request.auth.uid &&
+        get(/databases/$(database)/documents/players/$(request.resource.data.player_id)).data.room_id == request.resource.data.room_id;
+
+      allow update: if false;
+      allow delete: if isAuth() && resource.data.host_uid == request.auth.uid;
+    }
+
     match /answers/{answerId} {
       // Anyone can read answers (host needs to tally scores; players see their own review).
       allow read: if true;
