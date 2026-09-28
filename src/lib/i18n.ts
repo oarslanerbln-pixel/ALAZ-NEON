@@ -198,6 +198,12 @@ const translations = {
   "lobby.playerReady": { tr: "Savaşçı Hazır", de: "Krieger Bereit", en: "Warrior Ready" },
   "lobby.startGame": { tr: "OYUNU BAŞLAT →", de: "SPIEL STARTEN →", en: "START GAME →" },
   "lobby.noCategory": { tr: "Kategori Eksik!", de: "Kategorien Fehlen!", en: "Missing Category!" },
+  "lobby.readyTitle": { tr: "Hazırsın!", de: "Du bist dabei!", en: "You're in!" },
+  "lobby.readyBody": {
+    tr: "Oyun TV'de başlayınca bu ekran kumandana dönüşecek.",
+    de: "Sobald das Spiel auf dem TV startet, wird dieser Bildschirm zu deinem Controller.",
+    en: "When the game starts on the TV, this screen becomes your controller.",
+  },
   "lobby.networkConnected": { tr: "> AĞA_BAĞLANILDI", de: "> NETZWERK_VERBUNDEN", en: "> NETWORK_CONNECTED" },
   "lobby.waitingSystems": {
     tr: "Diğer sistemler bekleniyor. Veri akışı başlamak üzere...",
@@ -546,6 +552,13 @@ const translations = {
   // ═══════════════════════════════════════════
   // AYNA (dünyayı ve salonu tahmin et — bkz. lib/ayna.ts)
   // ═══════════════════════════════════════════
+  "spectrum.youWon": { tr: "KAZANDINIZ!", de: "GEWONNEN!", en: "YOU WON!" },
+  "spectrum.tap": { tr: "BAS!", de: "TIPP!", en: "TAP!" },
+  "spectrum.power": {
+    tr: (n: number) => `+${n} güç`,
+    de: (n: number) => `+${n} Power`,
+    en: (n: number) => `+${n} power`,
+  },
   "ayna.title": { tr: "AYNA", de: "SPIEGEL", en: "MIRROR" },
   "ayna.tagline": {
     tr: "Dünyayı ne kadar tanıyorsun? Peki bu salonu?",
@@ -1009,6 +1022,13 @@ const translations = {
   "echo.calculating": { tr: "Hesaplanıyor...", de: "Wird berechnet...", en: "Calculating..." },
   "echo.noVotes": { tr: "Hiç Oy Verilmedi", de: "Keine Stimmen abgegeben", en: "No votes cast" },
   "echo.backToLobby": { tr: "Lobiye Dön", de: "Zurück zur Lobby", en: "Back to lobby" },
+  "echo.questionComing": { tr: "Soru Geliyor", de: "Die Frage kommt", en: "Question incoming" },
+  "echo.voteSaved": { tr: "Oy Kaydedildi", de: "Stimme gespeichert", en: "Vote saved" },
+  "echo.noOthers": {
+    tr: "Oylanacak başka oyuncu yok.",
+    de: "Keine anderen Spieler zum Abstimmen.",
+    en: "No other players to vote for.",
+  },
   "echo.pickSomeone": { tr: "Birini Seç", de: "Wähle jemanden", en: "Pick someone" },
   "echo.waitingOthers": { tr: "Diğerlerinin oyları bekleniyor...", de: "Warte auf die anderen Stimmen...", en: "Waiting for the other votes..." },
   "echo.resultsOnScreen": { tr: "Sonuçlar Ekranda", de: "Ergebnisse auf dem Bildschirm", en: "Results on screen" },
@@ -1366,6 +1386,14 @@ const translations = {
   },
   "bomb.yourTurn": { tr: "BOMBA SENDE!", de: "DU HAST DIE BOMBE!", en: "YOU HAVE THE BOMB!" },
   "bomb.wordPlaceholder": { tr: "KELİME YAZ", de: "WORT EINGEBEN", en: "TYPE A WORD" },
+  "bomb.typeAndThrow": {
+    tr: "Geçerli bir kelime yaz ve bombayı fırlat!",
+    de: "Schreib ein gültiges Wort und wirf die Bombe weiter!",
+    en: "Type a valid word and throw the bomb!",
+  },
+  "bomb.atAnotherTable": { tr: "Bomba başka masada!", de: "Die Bombe ist an einem anderen Tisch!", en: "The bomb is at another table!" },
+  "bomb.lastWord": { tr: "SON SÖYLENEN KELİME", de: "ZULETZT GESAGTES WORT", en: "LAST WORD SAID" },
+  "sensor.title": { tr: "SENSÖR", de: "SENSOR", en: "SENSOR" },
   "bomb.throwing": { tr: "ATIYOR...", de: "WIRD GEWORFEN...", en: "THROWING..." },
   "bomb.throwBomb": { tr: "BOMBAYI AT!", de: "BOMBE WERFEN!", en: "THROW THE BOMB!" },
   "bomb.elsewhereLabel": { tr: "BOMBA", de: "BOMBE", en: "BOMB" },

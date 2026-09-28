@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { Check } from "lucide-react";
 import { db } from "../../../lib/firebase";
 import { useLocale } from "../../../hooks/useLocale";
 import { PlayerBackground } from "../../../components/PlayerBackground";
@@ -25,19 +26,20 @@ const TIPS = [
   { icon: "💡", key: "tips.validLetter" },
 ] as const;
 
+/**
+ * Misafirin katıldıktan sonra gördüğü bekleme ekranı.
+ *
+ * Sade tutuldu: misafirin bilmesi gereken üç şey var — bağlandı mı, kaç kişi
+ * var, sırada ne var. Eski tasarımdaki "ID_AUTH_01", barkod, "SYNCING /
+ * ETA: --:--" ve "RND/TMR" gibi süsler hiçbir şey anlatmıyordu; üstelik
+ * dil seçici `absolute` olduğu için başlığın üstüne biniyordu.
+ */
 export function PlayerLobby({ room, roomId }: PlayerLobbyProps) {
   const { t } = useLocale();
   const [playerCount, setPlayerCount] = useState(0);
   const [tipIdx, setTipIdx] = useState(0);
 
-  const [barcodeLines] = useState(() => {
-    return [...Array(40)].map(() => ({
-      widthClass: Math.random() > 0.5 ? 'w-0.5' : 'w-1',
-      marginClass: Math.random() > 0.7 ? 'mx-1' : 'mx-0.5'
-    }));
-  });
-
-  // Live player count
+  // Canlı oyuncu sayısı
   useEffect(() => {
     if (!roomId) return;
     const q = query(collection(db, "players"), where("room_id", "==", roomId));
@@ -45,143 +47,85 @@ export function PlayerLobby({ room, roomId }: PlayerLobbyProps) {
     return () => unsub();
   }, [roomId]);
 
-  // Rotate tips every 3.5s
+  // İpucu her 4 sn'de bir değişir
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTipIdx((i) => (i + 1) % TIPS.length);
-    }, 3500);
+    const timer = setInterval(() => setTipIdx((i) => (i + 1) % TIPS.length), 4000);
     return () => clearInterval(timer);
   }, []);
+
+  // Kategoriler ve tur bilgisi yalnızca klasik oyun seçiliyken anlamlı; gece
+  // lobisinde (oyun henüz seçilmemişken) göstermek kafa karıştırıyordu.
+  const isClassic = room?.active_game === "scattegories";
+  const categories = isClassic ? room?.categories ?? [] : [];
 
   return (
     <motion.div
       key="lobby"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, filter: "blur(10px)" }}
-      className="flex flex-col items-center justify-between text-center p-6 relative overflow-hidden min-h-[100dvh]"
+      exit={{ opacity: 0 }}
+      className="relative flex flex-col min-h-[calc(100dvh-8rem)] text-center overflow-hidden"
     >
       <PlayerBackground />
-      {/* Darker background overlay for the cyberpunk vibe */}
-      <div className="absolute inset-0 bg-black/70 z-0 pointer-events-none" />
+      <div className="absolute inset-0 bg-black/80 pointer-events-none" />
 
-      {/* --- HEADER (ID CARD / SECURITY CLEARANCE) --- */}
-      <div className="relative z-10 w-full max-w-sm mt-4">
-        <LanguageSwitcher className="absolute top-2 right-2 opacity-70 hover:opacity-100 transition-opacity z-50" />
-        <div className="border border-cyan-500/30 bg-cyan-950/20 backdrop-blur-md rounded-xl p-5 shadow-[0_0_20px_rgba(0,229,255,0.1)] text-left flex flex-col gap-2 relative overflow-hidden">
-          {/* Glitch CRT lines overlay */}
-          <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,255,255,0.05)_50%)] bg-[length:100%_4px] pointer-events-none opacity-50" />
-          
-          <div className="flex justify-between items-start pt-1">
-             <h1 className="text-2xl font-black text-white tracking-[0.2em] font-premium drop-shadow-[0_0_10px_rgba(0,229,255,0.8)]" style={{ animation: "text-glitch-slight 4s infinite" }}>
-               HENGAME
-             </h1>
-             <span className="text-[8px] text-cyan-400 uppercase tracking-widest font-mono bg-cyan-950/80 px-2 py-1 rounded border border-cyan-500/30 mt-1 shadow-[0_0_10px_rgba(0,229,255,0.2)]">
-               ID_AUTH_01
-             </span>
-          </div>
-
-          <div className="flex flex-col mt-3">
-            <span className="text-[10px] text-white/40 uppercase tracking-widest font-mono mb-1">Status:</span>
-            <span className="text-xs text-green-400 font-mono tracking-widest uppercase shadow-[0_0_10px_rgba(0,255,0,0.1)]" style={{ animation: "text-glitch-slight 3s infinite" }}>
-              [ {t("lobby.networkConnected")} ]
-            </span>
-          </div>
-
-          {/* Barcode section */}
-          <div className="mt-5 w-full h-10 bg-black/60 border border-white/10 rounded flex relative overflow-hidden">
-             {/* Simple vertical lines for barcode */}
-             <div className="flex items-end w-full h-full opacity-60 px-1 py-1">
-                {barcodeLines.map((line, i) => (
-                  <div key={i} className={`h-full bg-white ${line.widthClass} ${line.marginClass}`} />
-                ))}
-             </div>
-             {/* Scanning laser */}
-             <div className="absolute top-0 left-0 w-full h-[2px] bg-cyan-400 shadow-[0_0_10px_#00e5ff]" style={{ animation: "barcode-scan 2s linear infinite" }} />
-          </div>
-        </div>
+      <div className="relative z-10 flex justify-end">
+        <LanguageSwitcher />
       </div>
 
-      {/* --- MIDDLE (NEON PULSE RADAR) --- */}
-      <div className="relative z-10 flex-1 flex items-center justify-center w-full my-8 min-h-[250px]">
-        {/* Radar Rings */}
-        <div className="absolute inset-0 flex items-center justify-center">
-           <div className="absolute w-32 h-32 rounded-full border border-orange-500 shadow-[0_0_30px_#ff5500]" style={{ animation: "radar-pulse 4s ease-out infinite" }} />
-           <div className="absolute w-32 h-32 rounded-full border border-cyan-500 shadow-[0_0_30px_#00e5ff]" style={{ animation: "radar-pulse 4s ease-out infinite 1.3s" }} />
-           <div className="absolute w-32 h-32 rounded-full border border-pink-500 shadow-[0_0_30px_#ff00ff]" style={{ animation: "radar-pulse 4s ease-out infinite 2.6s" }} />
-           
-           {/* Static glowing core */}
-           <div className="absolute w-36 h-36 rounded-full border border-white/20 bg-black/40 backdrop-blur-md shadow-[0_0_40px_rgba(0,229,255,0.15)] flex flex-col items-center justify-center gap-1 z-10">
-             <motion.div animate={{ rotate: 360 }} transition={{ duration: 15, repeat: Infinity, ease: "linear" }} className="absolute inset-0 rounded-full border-2 border-dashed border-cyan-500/30 opacity-70" />
-             <motion.div animate={{ rotate: -360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} className="absolute inset-2 rounded-full border border-dotted border-orange-500/40 opacity-50" />
-             
-             <span className="text-white/95 text-sm font-black tracking-[0.3em] uppercase drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] z-20 mt-1">
-               SYNCING
-             </span>
-             <span className="text-[9px] text-cyan-300 font-mono tracking-widest z-20 bg-black/60 px-2 py-0.5 rounded-sm border border-cyan-500/30 mt-1">
-               ETA: --:--
-             </span>
-           </div>
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center gap-5 py-8">
+        <div className="relative w-28 h-28 flex items-center justify-center" aria-hidden="true">
+          <span className="absolute inset-0 rounded-full border border-alaz-orange/40 motion-safe:animate-ping [animation-duration:2.4s]" />
+          <span className="absolute inset-2 rounded-full bg-alaz-orange/10 border border-alaz-orange/50 shadow-[0_0_40px_rgba(255,85,0,0.35)]" />
+          <Check className="relative w-12 h-12 text-alaz-orange" strokeWidth={2.5} />
         </div>
+
+        <h1 className="text-4xl font-black text-white tracking-wide">{t("lobby.readyTitle")}</h1>
+        <p className="text-base text-white/70 max-w-xs leading-relaxed">{t("lobby.readyBody")}</p>
+
+        <span
+          className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm font-bold text-emerald-300"
+          role="status"
+          aria-live="polite"
+        >
+          <span className="w-2 h-2 rounded-full bg-emerald-400 motion-safe:animate-pulse" aria-hidden="true" />
+          {t("waitingRoom.playersConnected", playerCount)}
+        </span>
       </div>
 
-      {/* --- FOOTER (GLASS TERMINAL) --- */}
-      <div className="relative z-10 w-full max-w-sm mb-4">
-        {/* Categories */}
-        {room && room.categories?.length > 0 && (
-          <div className="flex flex-wrap gap-2 justify-center mb-5">
-            {room.categories.map((cat) => (
-              <span
-                key={cat}
-                className="text-[9px] text-white/80 font-mono tracking-widest uppercase border border-white/20 px-2.5 py-1 rounded bg-black/50 shadow-[0_0_10px_rgba(0,0,0,0.5)]"
-              >
-                #{cat}
-              </span>
-            ))}
+      <div className="relative z-10 flex flex-col gap-3 pb-2">
+        {isClassic && room && (
+          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-md">
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-white/50 mb-3">
+              {t("waitingRoom.categoriesTitle")}
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {categories.map((cat) => (
+                <span key={cat} className="rounded-full bg-white/10 px-3 py-1.5 text-sm font-bold text-white">
+                  {cat}
+                </span>
+              ))}
+            </div>
+            <p className="mt-3 text-sm font-semibold text-white/60">
+              {t("waitingRoom.roundsLabel", String(room.total_rounds))} · {t("waitingRoom.timerLabel", String(room.timer_setting))}
+            </p>
           </div>
         )}
 
-        {/* Terminal panel */}
-        <div className="w-full bg-black/70 border border-white/10 rounded-lg p-5 backdrop-blur-xl relative font-mono text-left shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
-          {/* Decorative corner brackets */}
-          <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-cyan-500/50 rounded-tl-sm" />
-          <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-cyan-500/50 rounded-tr-sm" />
-          <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-cyan-500/50 rounded-bl-sm" />
-          <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-cyan-500/50 rounded-br-sm" />
-          
-          <div className="flex justify-between items-center mb-4 pb-3 border-b border-white/10">
-             <div className="flex items-center gap-2">
-               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_#00ff00]" />
-               <span className="text-[10px] text-green-400 uppercase tracking-widest">
-                  {t("waitingRoom.playersConnected", playerCount)}
-               </span>
-             </div>
-             
-             {room && (
-               <div className="flex gap-3 text-[9px] text-white/40 uppercase tracking-widest">
-                 <span>RND: {room.total_rounds}</span>
-                 <span>TMR: {room.timer_setting}s</span>
-               </div>
-             )}
-          </div>
-          
-          <div className="h-10 flex items-center relative overflow-hidden">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={tipIdx}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 10 }}
-                transition={{ duration: 0.3 }}
-                className="text-[10px] md:text-[11px] text-white/90 leading-relaxed flex gap-2 w-full"
-              >
-                <span className="text-cyan-500 font-bold shrink-0">{">"}</span>
-                <span className="break-words">
-                  {TIPS[tipIdx].icon} {t(TIPS[tipIdx].key)}
-                </span>
-              </motion.div>
-            </AnimatePresence>
-          </div>
+        <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 min-h-16 flex items-center backdrop-blur-md">
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={tipIdx}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.25 }}
+              className="w-full text-sm text-white/85 leading-snug text-left flex gap-3"
+            >
+              <span className="text-lg leading-none" aria-hidden="true">{TIPS[tipIdx].icon}</span>
+              <span>{t(TIPS[tipIdx].key)}</span>
+            </motion.p>
+          </AnimatePresence>
         </div>
       </div>
     </motion.div>

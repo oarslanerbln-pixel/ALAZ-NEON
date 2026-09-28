@@ -108,12 +108,12 @@ export function PlayerSpectrumController({ room, player }: Props) {
         >
           {isTie ? (
             <h1 className="text-4xl font-black text-white uppercase tracking-widest drop-shadow-lg">
-              BERABERE!
+              {t("spectrum.tie")}
             </h1>
           ) : weWon ? (
             <>
-              <h1 className="text-6xl font-black text-white uppercase tracking-widest drop-shadow-2xl mb-4">
-                KAZANDINIZ!
+              <h1 className="text-5xl font-black text-white uppercase tracking-widest drop-shadow-2xl mb-4">
+                {t("spectrum.youWon")}
               </h1>
               <span className="text-6xl">🏆</span>
             </>
@@ -151,12 +151,12 @@ export function PlayerSpectrumController({ room, player }: Props) {
             `}
           >
             <span className="text-4xl font-black text-white uppercase tracking-widest">
-              BAS!
+              {t("spectrum.tap")}
             </span>
           </motion.div>
           
-          <p className="mt-12 text-white/30 font-mono text-xl tracking-widest">
-            +{clickCount} güç
+          <p className="mt-12 text-white/40 font-mono text-xl tracking-widest">
+            {t("spectrum.power", clickCount)}
           </p>
         </button>
       </div>
