@@ -153,7 +153,8 @@ export function PlayerVaultController({ room, player }: Props) {
             <button
               key={key}
               onClick={() => handleKeyPress(key)}
-              className="aspect-square bg-white/5 hover:bg-white/10 active:bg-white/20 rounded-2xl flex items-center justify-center text-3xl font-bold text-white transition-colors"
+              aria-label={key}
+              className="aspect-square bg-white/5 hover:bg-white/10 active:bg-white/20 rounded-2xl flex items-center justify-center text-3xl font-bold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
             >
               {key}
             </button>
@@ -161,13 +162,15 @@ export function PlayerVaultController({ room, player }: Props) {
           <div className="aspect-square" />
           <button
             onClick={() => handleKeyPress("0")}
-            className="aspect-square bg-white/5 hover:bg-white/10 active:bg-white/20 rounded-2xl flex items-center justify-center text-3xl font-bold text-white transition-colors"
+            aria-label={"0"}
+            className="aspect-square bg-white/5 hover:bg-white/10 active:bg-white/20 rounded-2xl flex items-center justify-center text-3xl font-bold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
           >
             0
           </button>
           <button
             onClick={() => handleKeyPress("DEL")}
-            className="aspect-square bg-red-500/20 hover:bg-red-500/30 active:bg-red-500/40 rounded-2xl flex items-center justify-center text-xl font-bold text-red-400 transition-colors"
+            aria-label={t("vault.delete")}
+            className="aspect-square bg-red-500/20 hover:bg-red-500/30 active:bg-red-500/40 rounded-2xl flex items-center justify-center text-xl font-bold text-red-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
           >
             {t("vault.delete")}
           </button>
@@ -176,7 +179,7 @@ export function PlayerVaultController({ room, player }: Props) {
         <button
           onClick={handleSubmit}
           disabled={currentGuess.length !== maxDigits || isSubmitting || hasWon}
-          className="w-full py-5 rounded-2xl bg-emerald-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-black font-black uppercase tracking-widest text-xl transition-colors shadow-[0_0_20px_rgba(16,185,129,0.3)] disabled:shadow-none"
+          className="w-full py-5 rounded-2xl bg-emerald-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-black font-black uppercase tracking-widest text-xl transition-colors shadow-[0_0_20px_rgba(16,185,129,0.3)] disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
         >
           {isSubmitting ? "..." : t("player.vaultSubmit", "ONAYLA")}
         </button>
