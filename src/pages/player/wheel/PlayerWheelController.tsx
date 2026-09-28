@@ -21,7 +21,10 @@ export function PlayerWheelController({ room, player }: Props) {
   const isSpinningRef = useRef(false);
 
   const isMyTurn = room.wheel_spinner_id === player.id;
-  const showSpinButton = room.status === "wheel_active" && isMyTurn && room.wheel_result_index === null;
+  // `== null` değil `?? null`: alan hiç yazılmamış (undefined) bir odada da
+  // çevirme düğmesi görünmeli. Eskiden katı `=== null` karşılaştırması
+  // çevirecek misafiri ortasında tek bir emoji olan boş bir ekranda bırakıyordu.
+  const showSpinButton = room.status === "wheel_active" && isMyTurn && (room.wheel_result_index ?? null) === null;
   const winningSlice = room.wheel_result_index !== null && room.wheel_result_index !== undefined
     ? slices[room.wheel_result_index]
     : null;

@@ -5,6 +5,7 @@ import { db } from "../../../lib/firebase";
 import { doc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { useToast } from "../../../contexts/ToastContextCore";
 import { useLocale } from "../../../hooks/useLocale";
+import { echoQuestionText } from "../../../lib/echoQuestions";
 
 interface Props {
   room: Room;
@@ -13,6 +14,7 @@ interface Props {
 
 export function PlayerEchoController({ room, player }: Props) {
   const [players, setPlayers] = useState<Player[]>([]);
+  const [playersLoaded, setPlayersLoaded] = useState(false);
   const [hasVoted, setHasVoted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSubmittingRef = useRef(false);
@@ -35,7 +37,11 @@ export function PlayerEchoController({ room, player }: Props) {
       try {
         const q = query(collection(db, "players"), where("room_id", "==", room.id));
         const snap = await getDocs(q);
-        const pList = snap.docs.map(d => d.data() as Player);
+        // Kimlik belgenin ADI, alanlarında yok. Eskiden `d.data()` ile her
+        // oyuncunun id'si undefined kalıyordu: misafir kendini de listede
+        // görüyor, verdiği her oy `echo_votes.<ben> = undefined` yazmaya
+        // çalışıp Firestore'dan reddediliyordu — oylama hiç çalışmıyordu.
+        const pList = snap.docs.map(d => ({ ...d.data(), id: d.id }) as Player);
         
         const now = Date.now();
         setPlayers(pList.filter(p => 
@@ -44,6 +50,8 @@ export function PlayerEchoController({ room, player }: Props) {
         )); // Exclude self and ghosts
       } catch (err) {
         console.error("Error fetching players:", err);
+      } finally {
+        setPlayersLoaded(true);
       }
     };
     fetchPlayers();
@@ -77,7 +85,7 @@ export function PlayerEchoController({ room, player }: Props) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center relative z-10">
         <h2 className="text-3xl font-black text-white mb-4 uppercase tracking-widest">
-          Soru Geliyor
+          {t("echo.questionComing")}
         </h2>
         <p className="text-gray-400 uppercase tracking-widest font-bold animate-pulse">
           {t("common.followMainScreen")}
@@ -98,7 +106,7 @@ export function PlayerEchoController({ room, player }: Props) {
             <span className="text-4xl">✓</span>
           </motion.div>
           <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-widest">
-            Oy Kaydedildi
+            {t("echo.voteSaved")}
           </h2>
           <p className="text-gray-400 font-medium">
             {t("echo.waitingOthers")}
@@ -109,10 +117,26 @@ export function PlayerEchoController({ room, player }: Props) {
 
     return (
       <div className="flex-1 flex flex-col items-center justify-start pt-6 pb-24 px-4 relative z-10 w-full max-w-lg mx-auto">
+        {room.echo_question && (
+          <h2 className="text-2xl font-black text-white leading-snug text-center mb-4">
+            {echoQuestionText(room.echo_question)}
+          </h2>
+        )}
         <h3 className="text-xs text-alaz-orange uppercase tracking-[0.3em] font-bold mb-6 text-center w-full">
           {t("echo.pickSomeone")}
         </h3>
-        
+
+        {!playersLoaded && (
+          <div className="w-full flex flex-col gap-3" aria-hidden="true">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-16 rounded-2xl bg-white/[0.04] border border-white/5 motion-safe:animate-pulse" />
+            ))}
+          </div>
+        )}
+        {playersLoaded && players.length === 0 && (
+          <p className="text-gray-400 font-medium text-center" role="status">{t("echo.noOthers")}</p>
+        )}
+
         <div className="w-full flex flex-col gap-3">
           <AnimatePresence>
             {players.map((p, i) => (

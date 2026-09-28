@@ -180,7 +180,7 @@ export function PlayerBombController({ room, player }: Props) {
         </div>
         <div className="text-right">
           <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">
-            KATEGORİ
+            {t("bomb.category")}
           </span>
           <span className="text-sm font-black text-red-400 uppercase tracking-wider">
             {room.active_letter || "GENEL"}
@@ -204,7 +204,7 @@ export function PlayerBombController({ room, player }: Props) {
             </div>
             
             <p className="text-xs text-gray-300 mb-5 font-medium">
-              Geçerli bir kelime yaz ve bombayı fırlat!
+              {t("bomb.typeAndThrow")}
             </p>
 
             <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
@@ -226,7 +226,7 @@ export function PlayerBombController({ room, player }: Props) {
                     : 'bg-gradient-to-r from-red-600 to-amber-600 text-white hover:brightness-110'
                 }`}
               >
-                {isSubmitting ? t("bomb.throwing") : "🔥 BOMBAYI AT! (PASLA)"}
+                {isSubmitting ? t("bomb.throwing") : `🔥 ${t("bomb.throwBomb")}`}
               </button>
             </form>
           </motion.div>
@@ -237,11 +237,11 @@ export function PlayerBombController({ room, player }: Props) {
               {t("bomb.elsewhereLabel")}
             </h2>
             <p className="text-2xl font-black text-white uppercase tracking-tight mb-4">
-              Bomba Başka Masada!
+              {t("bomb.atAnotherTable")}
             </p>
             {latestWord && (
               <div className="bg-white/5 border border-white/10 rounded-xl p-3 inline-block max-w-full">
-                <span className="text-[10px] text-gray-400 font-mono block">SON SÖYLENEN KELİME:</span>
+                <span className="text-[10px] text-gray-400 font-mono block">{t("bomb.lastWord")}</span>
                 <span className="text-lg font-black text-amber-400 uppercase">{latestWord}</span>
               </div>
             )}

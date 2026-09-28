@@ -99,7 +99,7 @@ export function PlayerSensorController({ room, player }: Props) {
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center z-10">
           <div className="text-7xl mb-4 animate-bounce">👁️</div>
           <h2 className="text-3xl font-black text-purple-400 mb-2 uppercase tracking-widest">
-            SENSÖR
+            {t("sensor.title")}
           </h2>
           <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">
             {t("common.followMainScreen")}
