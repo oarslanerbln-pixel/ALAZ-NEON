@@ -32,6 +32,7 @@ import { PlayerTutorial } from "./components/PlayerTutorial";
 
 import { Suspense } from "react";
 import { PLAYER_GAME_CONTROLLERS } from "./gameControllers";
+import { PlayerGameShell } from "./components/PlayerGameShell";
 
 export function PlayerGame() {
   const [searchParams] = useSearchParams();
@@ -230,9 +231,11 @@ export function PlayerGame() {
     return (
       <>
         <HostOfflineBanner room={room} />
-        <Suspense fallback={<RoomStatusScreen kind="loading" audience="player" />}>
-          <GameController room={room} player={player} />
-        </Suspense>
+        <PlayerGameShell>
+          <Suspense fallback={<RoomStatusScreen kind="loading" audience="player" />}>
+            <GameController room={room} player={player} />
+          </Suspense>
+        </PlayerGameShell>
       </>
     );
   }
