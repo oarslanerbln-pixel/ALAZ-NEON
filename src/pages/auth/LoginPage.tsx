@@ -141,11 +141,12 @@ export function LoginPage() {
           </AnimatePresence>
           <div className="space-y-8 relative z-20" style={{ transform: "translateZ(30px)" }}>
             <div className="space-y-3 relative group">
-              <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest ml-2 group-focus-within:text-alaz-orange transition-colors">
+              <label htmlFor="email" className="text-[10px] text-gray-400 font-black uppercase tracking-widest ml-2 group-focus-within:text-alaz-orange transition-colors">
                 {t("auth.email")}
               </label>
               <div className="relative">
                 <input
+                  id="email"
                   type="email"
                   required
                   value={email}
@@ -158,11 +159,12 @@ export function LoginPage() {
             </div>
 
             <div className="space-y-3 relative group">
-              <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest ml-2 group-focus-within:text-neon-blue transition-colors">
+              <label htmlFor="password" className="text-[10px] text-gray-400 font-black uppercase tracking-widest ml-2 group-focus-within:text-neon-blue transition-colors">
                 {t("auth.password")}
               </label>
               <div className="relative">
                 <input
+                  id="password"
                   type="password"
                   required
                   value={password}
