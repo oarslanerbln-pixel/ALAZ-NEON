@@ -19,6 +19,7 @@ import { activePlayers as activePlayersOf } from "../../../lib/liveness";
 import { useLocale } from "../../../hooks/useLocale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useVenue } from "../../../contexts/VenueContextCore";
+import { deleteAynaSurvey, deleteRoomAnswers } from "../../../lib/roomCleanup";
 
 
 
@@ -86,6 +87,18 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
 
   const executeStartGame = async (game: GameType, settings?: Partial<Room>) => {
     SoundManager.getInstance().playSFX(sounds.START);
+    // Yeni oyun temiz bir cevap koleksiyonuyla başlamalı: tur anahtarları
+    // oyunlar arasında tekrarlanıyor ve eski cevaplar yeni oyunun cevabı
+    // sanılıyordu (bkz. lib/roomCleanup.ts). Silme başarısız olsa bile oyun
+    // açılmalı; bu yüzden hata yalnızca loglanıyor.
+    await deleteRoomAnswers(room.id).catch((err) =>
+      console.error("[HostDashboard] Önceki cevaplar silinemedi:", err),
+    );
+    if (game === "ayna" && room.host_uid) {
+      await deleteAynaSurvey(room.id, room.host_uid).catch((err) =>
+        console.error("[HostDashboard] Önceki anket silinemedi:", err),
+      );
+    }
     // Scattegories "lobby" ile başlar. Buraya kalıcı olarak "intro" yazmak
     // oyunu tamamen kilitliyordu: "intro" host'un YEREL sinematik animasyonu,
     // odaya ait bir durum değil. Yerel animasyon bitip gameState "lobby"ye
