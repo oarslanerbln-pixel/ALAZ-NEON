@@ -129,6 +129,10 @@ export interface Room {
   previous_bomb_target_player?: string | null;
   used_words?: string[];
   bomb_speed_multiplier?: number;
+  /** Oyun örneğinin başladığı an; gece puanının tek seferlik anahtarı (lib/nightScore.ts). */
+  game_started_at?: number;
+  /** En son gece puanı dağıtılmış oyun örneği (`<oyun>:<game_started_at>`). */
+  night_awarded_key?: string | null;
   /** Bomba: oyun başındaki can sayısı (kurulum ayarı, 1–5). */
   bomb_lives?: number;
   /** Quiz: son soru çift puan mı (kurulum ayarı; yoksa açık kabul edilir). */

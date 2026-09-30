@@ -207,6 +207,8 @@ export function HostBombDisplay({
         await updateDoc(doc(db, "rooms", room.id), {
           status: "lobby",
           current_round: 0,
+          // Yeni oyun örneği: gece puanı bu oyun için de verilsin.
+          game_started_at: Date.now(),
         });
       });
     } catch (err) {

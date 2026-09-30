@@ -11,6 +11,8 @@ import type { Room } from "../../../types/database";
 interface PlayerLobbyProps {
   room: Room | null;
   roomId: string | null;
+  /** Gece sırasını göstermek için bu cihazın oyuncu kimliği. */
+  playerId?: string | null;
 }
 
 /**
@@ -34,18 +36,31 @@ const TIPS = [
  * ETA: --:--" ve "RND/TMR" gibi süsler hiçbir şey anlatmıyordu; üstelik
  * dil seçici `absolute` olduğu için başlığın üstüne biniyordu.
  */
-export function PlayerLobby({ room, roomId }: PlayerLobbyProps) {
+export function PlayerLobby({ room, roomId, playerId = null }: PlayerLobbyProps) {
   const { t } = useLocale();
   const [playerCount, setPlayerCount] = useState(0);
+  // Gecenin Şampiyonu: oyunlar arasında misafir kendi gece sırasını görsün
+  // (sonraki oyuna katılmak için en güçlü sebep "sıramı yükselteyim").
+  const [nightStanding, setNightStanding] = useState<{ rank: number; score: number } | null>(null);
   const [tipIdx, setTipIdx] = useState(0);
 
   // Canlı oyuncu sayısı
   useEffect(() => {
     if (!roomId) return;
     const q = query(collection(db, "players"), where("room_id", "==", roomId));
-    const unsub = onSnapshot(q, (snap) => setPlayerCount(snap.size));
+    const unsub = onSnapshot(q, (snap) => {
+      setPlayerCount(snap.size);
+      const me = snap.docs.find((d) => d.id === playerId);
+      const myScore = (me?.data().night_score as number | undefined) ?? 0;
+      if (!me || myScore <= 0) {
+        setNightStanding(null);
+        return;
+      }
+      const ahead = snap.docs.filter((d) => ((d.data().night_score as number | undefined) ?? 0) > myScore).length;
+      setNightStanding({ rank: ahead + 1, score: myScore });
+    });
     return () => unsub();
-  }, [roomId]);
+  }, [roomId, playerId]);
 
   // İpucu her 4 sn'de bir değişir
   useEffect(() => {
@@ -91,6 +106,13 @@ export function PlayerLobby({ room, roomId }: PlayerLobbyProps) {
           <span className="w-2 h-2 rounded-full bg-emerald-400 motion-safe:animate-pulse" aria-hidden="true" />
           {t("waitingRoom.playersConnected", playerCount)}
         </span>
+
+        {nightStanding && (
+          <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-400/10 px-4 py-2 text-sm font-bold text-amber-200">
+            <span aria-hidden="true">{nightStanding.rank === 1 ? "👑" : "🏁"}</span>
+            {t("lobby.nightStanding", nightStanding.rank, nightStanding.score)}
+          </span>
+        )}
       </div>
 
       <div className="relative z-10 flex flex-col gap-3 pb-2">

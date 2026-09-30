@@ -221,7 +221,9 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
                   await updateRoomStatus("playing", {
                     overload_target_id: nextTarget?.id || null,
                     overload_start_time: Date.now(),
-                    overload_eliminated_ids: []
+                    overload_eliminated_ids: [],
+                    // Yeni oyun örneği: gece puanı bu oyun için de verilsin.
+                    game_started_at: Date.now(),
                   });
                 }}
                 onUpdateCategories={async () => {}}

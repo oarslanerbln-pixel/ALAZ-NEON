@@ -589,6 +589,16 @@ const translations = {
     de: "Wenn die Zeit abläuft, gewinnt das Team, auf dessen Seite die Linie steht.",
     en: "When time runs out, the team the line leans towards wins.",
   },
+  "dashboard.nightChampionHint": {
+    tr: "Gecenin Şampiyonu — her oyun sıralama puanı verir",
+    de: "Champion der Nacht — jedes Spiel bringt Platzierungspunkte",
+    en: "Champion of the Night — every game awards placement points",
+  },
+  "lobby.nightStanding": {
+    tr: (rank: number, pts: number) => `Gece sıran: ${rank}. · ${pts} puan`,
+    de: (rank: number, pts: number) => `Dein Platz heute: ${rank}. · ${pts} Punkte`,
+    en: (rank: number, pts: number) => `Tonight you're #${rank} · ${pts} pts`,
+  },
   "unity.tap": { tr: "BAS!", de: "TIPPEN!", en: "TAP!" },
   "unity.yourContribution": {
     tr: (n: number) => `Senin katkın: ${n}`,

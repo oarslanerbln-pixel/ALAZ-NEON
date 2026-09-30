@@ -17,6 +17,7 @@ import { useVenue } from "../../contexts/VenueContextCore";
 
 // Hooks
 import { useHostRoom } from "../../hooks/useHostRoom";
+import { useNightScoreAward } from "../../hooks/useNightScoreAward";
 import { useLocale } from "../../hooks/useLocale";
 
 // Types
@@ -51,6 +52,10 @@ export function HostDisplay() {
   const roomId = searchParams.get("roomId");
   const hostRoom = useHostRoom(roomId);
   const { room, loading, notFound, error } = hostRoom;
+
+  // Gecenin Şampiyonu: hangi oyun bitirse bitirsin gece puanı buradan, tek
+  // yerden dağıtılır. Erken dönüşlerden ÖNCE (hook sırası sabit kalmalı).
+  useNightScoreAward(room, hostRoom.players);
 
   // Oyun ekranlarını TV boştayken önceden indir (bkz. preloadHostGameDisplays).
   // Erken dönüşlerden ÖNCE: hook sırası her render'da aynı kalmalı.
@@ -535,7 +540,13 @@ function HostDisplayGame({
     rewardsGrantedRef.current = false;
     endedRoundRef.current = null;
     Sentinel.radar.clearRadar(); // Clear bans on reset
-    await updateRoomStatus("lobby", { current_round: 0, active_letter: "?", used_letters: [] });
+    await updateRoomStatus("lobby", {
+      current_round: 0,
+      active_letter: "?",
+      used_letters: [],
+      // Yeni oyun örneği: gece puanı bu oyun için de verilsin.
+      game_started_at: Date.now(),
+    });
     setGameState("lobby");
   };
 

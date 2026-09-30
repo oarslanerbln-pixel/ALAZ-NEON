@@ -367,7 +367,8 @@ export function HostQuizDisplay({
     await batch.commit();
     streaksRef.current = {};
     setPlayerStreaks({});
-    await updateRoomStatus("quiz_lobby", { current_round: 0, current_question_index: 0 });
+    // Yeni oyun örneği: gece puanı bu oyun için de verilsin (lib/nightScore.ts).
+    await updateRoomStatus("quiz_lobby", { current_round: 0, current_question_index: 0, game_started_at: Date.now() });
   };
 
   // Color scheme mappings for options

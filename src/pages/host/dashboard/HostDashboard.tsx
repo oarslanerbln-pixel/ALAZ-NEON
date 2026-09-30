@@ -109,6 +109,10 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     // onlarda böyle bir sorun yok.
     let initialStatus: Room["status"] = "lobby";
     let extraUpdates: Partial<Room> = { active_game: game, ...settings };
+    // Oyun örneğinin kimliği (gece puanı tek seferlik dağıtılsın, bkz.
+    // lib/nightScore.ts). Aşağıdaki dallar extraUpdates'i yeniden kursa da
+    // yazımdan hemen önce ekleniyor.
+    const gameStartedAt = Date.now();
 
     if (game === "quiz") {
       Promise.all([
@@ -123,6 +127,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
         const startState = (settings?.current_round === 0 || room.current_round === 0) ? "tutorial" : "quiz_intro";
         updateRoomStatus(startState, {
           ...extraUpdates,
+          game_started_at: gameStartedAt,
           current_question_index: 0,
           quiz_questions: questions,
           ...(startState === "tutorial" ? { tutorial_step: 0 } : {})
@@ -310,7 +315,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       await batch.commit();
     }
 
-    await updateRoomStatus(initialStatus, extraUpdates);
+    await updateRoomStatus(initialStatus, { ...extraUpdates, game_started_at: gameStartedAt });
   };
 
   const joinUrl = `${window.location.protocol}//${window.location.host}/join?code=${room.code}`;
@@ -384,21 +389,38 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
               <h3 className="text-gray-300 font-black text-sm uppercase tracking-widest mb-4">
                 {t("dashboard.playersCount", players.length)}
               </h3>
+              <p className="text-amber-300/80 text-[10px] font-bold uppercase tracking-[0.2em] -mt-3 mb-3">
+                👑 {t("dashboard.nightChampionHint")}
+              </p>
               <div className="flex-1 overflow-y-auto pr-2 space-y-2">
                 {players.length === 0 ? (
                   <div className="text-gray-500 text-sm text-center mt-10">{t("dashboard.waiting")}</div>
                 ) : (
-                  players.map((p) => (
-                    <motion.div
-                      key={p.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="bg-white/5 border border-white/10 p-3 rounded-xl flex justify-between items-center"
-                    >
-                      <span className="font-bold text-white">{p.nickname}</span>
-                      <span className="text-alaz-orange font-mono text-sm">{t("dashboard.pointsSuffix", p.night_score || 0)}</span>
-                    </motion.div>
-                  ))
+                  // Gecenin Şampiyonu: liste gece puanına göre (bkz. lib/nightScore.ts).
+                  // Lider taç alıyor; oyunlar arası rekabeti görünür kılan tek yer TV.
+                  [...players]
+                    .sort((a, b) => (b.night_score || 0) - (a.night_score || 0))
+                    .map((p, i) => {
+                      const isLeader = i === 0 && (p.night_score || 0) > 0;
+                      return (
+                        <motion.div
+                          key={p.id}
+                          layout
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className={`p-3 rounded-xl flex justify-between items-center border ${
+                            isLeader ? "bg-amber-400/15 border-amber-400/60" : "bg-white/5 border-white/10"
+                          }`}
+                        >
+                          <span className="font-bold text-white flex items-center gap-2">
+                            <span className="text-gray-400 font-mono text-xs w-5">{i + 1}.</span>
+                            {isLeader && <span aria-hidden>👑</span>}
+                            {p.nickname}
+                          </span>
+                          <span className="text-alaz-orange font-mono text-sm">{t("dashboard.pointsSuffix", p.night_score || 0)}</span>
+                        </motion.div>
+                      );
+                    })
                 )}
               </div>
             </div>
