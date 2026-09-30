@@ -73,5 +73,7 @@ Bunları baştan sona okuma, hedefli `grep` ile gir:
 - Commit mesajları Türkçe ve `tip(kapsam): özet` biçiminde (`feat(quiz): …`).
 
 Ayrıntılı kodlama standartları: `docs/coding-standards.md`.
+Oyun tasarım durumu ve geliştirme yol haritası: `docs/game-design-notes.md` —
+bir oyuna dokunmadan önce ilgili bölümü oku, bitirince güncelle.
 Mimari ve hata ayıklama derinliği için `.claude/skills/` altındaki iki yetenek
 paketi gerektiğinde otomatik yüklenir.
