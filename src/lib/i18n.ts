@@ -161,6 +161,12 @@ const translations = {
     de: "Bitte geben Sie mindestens eine Kategorie ein.",
     en: "Please enter at least one category.",
   },
+  "setup.rewardsNeedStaff": {
+    tr: "Ödül sistemi açık, ama bu ekran personel hesabıyla açılmamış: kazananlara kupon yazılamaz. Önce bu cihazda personel hesabıyla giriş yapın.",
+    de: "Das Prämiensystem ist aktiv, aber dieser Bildschirm ist nicht mit einem Mitarbeiterkonto angemeldet: Gewinner erhalten keine Gutscheine. Bitte melden Sie sich auf diesem Gerät zuerst mit einem Mitarbeiterkonto an.",
+    en: "Rewards are enabled, but this screen is not signed in with a staff account: winners cannot receive vouchers. Sign in with a staff account on this device first.",
+  },
+  "setup.rewardsNeedStaffAction": { tr: "PERSONEL GİRİŞİ", de: "MITARBEITER-LOGIN", en: "STAFF SIGN-IN" },
   "setup.errorCreate": {
     tr: "Oda oluşturulurken bir hata oluştu: ",
     de: "Fehler beim Erstellen des Raums: ",

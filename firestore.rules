@@ -118,8 +118,22 @@ service cloud.firestore {
       // Anyone can see the players
       allow read: if true;
       
-      // Authenticated users can join a room (create their player profile)
-      allow create: if isAuth() && request.resource.data.uid == request.auth.uid;
+      // Misafir odaya kendi adına katılır. Önceden yalnızca uid kontrol
+      // ediliyordu: katılırken total_score: 999999 yazmak serbestti ve
+      // sıralama (/leaderboard ve TV'deki boşta ekranı) oyuncu dokümanlarının
+      // toplamından hesaplandığı için bu doğrudan mekân ekranına çıkıyordu.
+      // Artık yalnızca PlayerJoin'in yazdığı alanlar, skorlar sıfır, takma ad
+      // makul uzunlukta ve oda gerçekten var.
+      allow create: if isAuth() &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.keys().hasOnly(['room_id', 'uid', 'nickname', 'team_name', 'total_score', 'night_score', 'created_at', 'expires_at']) &&
+        request.resource.data.get('total_score', 0) == 0 &&
+        request.resource.data.get('night_score', 0) == 0 &&
+        request.resource.data.nickname is string &&
+        request.resource.data.nickname.size() > 0 &&
+        request.resource.data.nickname.size() <= 20 &&
+        request.resource.data.room_id is string &&
+        exists(/databases/$(database)/documents/rooms/$(request.resource.data.room_id));
 
       // A player's own game counters (Kablo, Colors, Spectrum, Bar) are
       // updated via increment() directly from the player's device. These
@@ -272,15 +286,20 @@ service cloud.firestore {
       allow read: if isAuth() &&
         (resource.data.uid == request.auth.uid || isStaff());
 
-      // Ödül üretimi host tarafında (kazanan OYUNCULAR adına) oluyor —
-      // host'un kendi kimliği kazananınkinden farklı, bu yüzden "sadece
-      // kendi uid'in için yaz" kısıtı burada uygulanamıyor. Üretimde bu
-      // Cloud Function'a taşınmalı (bkz. app_config'teki benzer not);
-      // MVP için en azından bir client'ın doğrudan "claimed" (kullanılmış)
-      // bir ödül YARATMASI engelleniyor.
-      allow create: if isAuth() &&
-        request.resource.data.status == 'available' &&
-        !('claimed_at' in request.resource.data);
+      // Ödül üretimi host ekranında (kazanan OYUNCULAR adına) oluyor.
+      //
+      // Önceden giriş yapmış HERKES 'available' bir ödül yaratabiliyordu:
+      // misafir tarayıcı konsolundan kendi uid'ine bir kupon yazıp bara
+      // gösteriyor, doğrulama ekranı onu geçerli buluyordu — bedava içecek.
+      // Oda sahibi olmak da yetmez; oda açmak herkese açık (anonim).
+      // Bu yüzden yalnızca personel hesabıyla açılmış host ekranı ödül
+      // yazabiliyor (TV /login ile personel hesabında olmalı, bkz. README).
+      // Blaze plana geçilince doğru yer bir Cloud Function.
+      allow create: if isStaff() &&
+        request.resource.data.keys().hasOnly(['uid', 'nickname', 'type', 'title', 'description', 'status', 'code', 'earned_at', 'expires_at']) &&
+        request.resource.data.uid is string &&
+        request.resource.data.code is string &&
+        request.resource.data.status == 'available';
 
       // Asıl güvenlik sınırı burada: "kullanıldı" işaretlemek yalnızca
       // işletme hesabına (barda doğrulama yapan personel) açık, ve yalnızca

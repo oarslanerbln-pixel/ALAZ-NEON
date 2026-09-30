@@ -72,6 +72,13 @@ so an account cannot grant itself access. To add a staff member:
 
 To revoke access, delete that document.
 
+**Rewards need a staff-signed TV.** Reward vouchers are written by the host
+screen, and only a staff account may create them (otherwise any guest could
+write themselves a voucher from the browser console). If rewards are enabled,
+sign the TV/tablet in once at `/login` with a staff account before opening
+`/host/setup`; the setup screen warns when it isn't. Rooms opened anonymously
+still work — winners just receive no voucher.
+
 > When the project moves to the Blaze plan, a `staff: true` **custom claim** set via
 > the Admin SDK is also accepted, with no rule changes needed — it avoids the
 > per-evaluation `get()` that the allowlist costs.

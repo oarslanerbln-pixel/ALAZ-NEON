@@ -397,6 +397,59 @@ describe("players — skor bütünlüğü", () => {
     );
   });
 
+  it("oyuncu katılırken kendine puan yazamaz — sıralama TV'de görünüyor", async () => {
+    await assertFails(
+      addDoc(collection(asPlayer(), "players"), {
+        room_id: ROOM_ID,
+        uid: PLAYER_UID,
+        nickname: "HİLECİ",
+        team_name: null,
+        total_score: 999999,
+        created_at: Date.now(),
+      })
+    );
+  });
+
+  it("oyuncu katılırken beyaz liste dışı alan (ör. can) yazamaz", async () => {
+    await assertFails(
+      addDoc(collection(asPlayer(), "players"), {
+        room_id: ROOM_ID,
+        uid: PLAYER_UID,
+        nickname: "YENI",
+        team_name: null,
+        total_score: 0,
+        lives: 99,
+        created_at: Date.now(),
+      })
+    );
+  });
+
+  it("olmayan bir odaya oyuncu kaydı açılamaz", async () => {
+    await assertFails(
+      addDoc(collection(asPlayer(), "players"), {
+        room_id: "no-such-room",
+        uid: PLAYER_UID,
+        nickname: "YENI",
+        team_name: null,
+        total_score: 0,
+        created_at: Date.now(),
+      })
+    );
+  });
+
+  it("takma ad 20 karakteri aşamaz", async () => {
+    await assertFails(
+      addDoc(collection(asPlayer(), "players"), {
+        room_id: ROOM_ID,
+        uid: PLAYER_UID,
+        nickname: "X".repeat(21),
+        team_name: null,
+        total_score: 0,
+        created_at: Date.now(),
+      })
+    );
+  });
+
   it("oyuncu başka bir uid adına oyuncu oluşturamaz", async () => {
     await assertFails(
       addDoc(collection(asPlayer(), "players"), {
@@ -506,24 +559,46 @@ describe("rewards koleksiyonu", () => {
     await assertFails(getDoc(doc(asRandomSignup(), "rewards", REWARD_ID)));
   });
 
-  it("host, kazanan oyuncu adına 'available' bir ödül oluşturabilir", async () => {
+  const newReward = (overrides: Record<string, unknown> = {}) => ({
+    uid: PLAYER_UID,
+    nickname: "OYUNCU",
+    type: "drink",
+    title: "Ücretsiz Espresso",
+    description: "",
+    status: "available",
+    code: "X9Y8Z7",
+    earned_at: Date.now(),
+    ...overrides,
+  });
+
+  it("personel hesabıyla açılmış host ekranı kazanan adına ödül oluşturabilir", async () => {
+    await seedStaff();
     await assertSucceeds(
-      setDoc(doc(asHost(), "rewards", "reward-new"), {
-        uid: PLAYER_UID,
-        nickname: "OYUNCU",
-        type: "drink",
-        title: "Ücretsiz Espresso",
-        description: "",
-        status: "available",
-        code: "X9Y8Z7",
-        earned_at: Date.now(),
-      })
+      setDoc(doc(asVenueOwner(), "rewards", "reward-new"), newReward({ expires_at: Date.now() + 86400000 }))
     );
   });
 
-  it("doğrudan 'claimed' durumunda bir ödül oluşturulamaz", async () => {
+  it("MİSAFİR KENDİNE ödül kuponu yazamaz — bedava içecek açığı", async () => {
+    // Önceki kural: giriş yapmış herkes 'available' ödül yaratabiliyordu.
+    await assertFails(setDoc(doc(asPlayer(), "rewards", "reward-self"), newReward()));
+  });
+
+  it("anonim host (oda sahibi ama personel değil) ödül yazamaz — oda açmak herkese açık", async () => {
+    await seed();
+    await assertFails(setDoc(doc(asHost(), "rewards", "reward-host"), newReward()));
+  });
+
+  it("personel bile beyaz liste dışı alan ekleyemez", async () => {
+    await seedStaff();
     await assertFails(
-      setDoc(doc(asHost(), "rewards", "reward-fake-claimed"), {
+      setDoc(doc(asVenueOwner(), "rewards", "reward-extra"), newReward({ claimed_by: "x" }))
+    );
+  });
+
+  it("doğrudan 'claimed' durumunda bir ödül oluşturulamaz (personel dahil)", async () => {
+    await seedStaff();
+    await assertFails(
+      setDoc(doc(asVenueOwner(), "rewards", "reward-fake-claimed"), {
         uid: PLAYER_UID,
         nickname: "OYUNCU",
         type: "drink",
