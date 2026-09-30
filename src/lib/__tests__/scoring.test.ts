@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { calculateRoundScores } from "../scoring";
+import { answerPoints, calculateRoundScores } from "../scoring";
 import type { Room, Player, Answer } from "../../types/database";
 
 const CATEGORIES = ["Şehir", "Hayvan"];
@@ -267,5 +267,41 @@ describe("dil ve yazım denetimi", () => {
     const ans = results[0].answers["Tier"];
     expect(ans.isTypo).toBeFalsy();
     expect(ans.points).toBe(20);
+  });
+});
+
+describe("answerPoints — otomatik puanlama ile host düzeltmesi aynı formül", () => {
+  it("geçerli: benzersiz 20, ortak 10", () => {
+    expect(answerPoints({ isValid: true, isUnique: true })).toBe(20);
+    expect(answerPoints({ isValid: true, isUnique: false })).toBe(10);
+  });
+
+  it("yazım hatası yarım puan, host geçerli sayınca da yarım kalır (regresyon)", () => {
+    // Eski toggle: benzersiz ? 20 : 10 → yazım hatası kesintisi kayboluyordu.
+    expect(answerPoints({ isValid: true, isUnique: true, isTypo: true })).toBe(10);
+  });
+
+  it("joker: doğruysa çift, yanlışsa -10", () => {
+    expect(answerPoints({ isValid: true, isUnique: true, isJoker: true })).toBe(40);
+    expect(answerPoints({ isValid: true, isUnique: false, isTypo: true, isJoker: true })).toBe(10);
+    expect(answerPoints({ isValid: false, isUnique: false, isJoker: true })).toBe(-10);
+  });
+
+  it("geçersiz, joker değilse 0", () => {
+    expect(answerPoints({ isValid: false, isUnique: true })).toBe(0);
+  });
+
+  it("calculateRoundScores kırılımındaki her puan answerPoints ile tutarlı", () => {
+    const room = makeRoom();
+    const players = [makePlayer("p1", "A"), makePlayer("p2", "B")];
+    const answers = [
+      { ...makeAnswer("p1", { Şehir: "Ankara", Hayvan: "Arı", _jokerCategory: "Şehir" }), id: "a1" },
+      { ...makeAnswer("p2", { Şehir: "Ankara", Hayvan: "" }), id: "a2" },
+    ];
+    for (const res of calculateRoundScores(room, players, answers, "A")) {
+      for (const b of Object.values(res.answers)) {
+        expect(b.points).toBe(answerPoints(b));
+      }
+    }
   });
 });
