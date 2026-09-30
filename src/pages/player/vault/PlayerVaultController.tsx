@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { retentionExpiry } from "../../../lib/retention";
 import { SoundManager, sounds } from "../../../lib/audio";
@@ -91,7 +91,8 @@ export function PlayerVaultController({ room, player }: Props) {
         round_letter: "VAULT",
         round_index: 0,
         data: { guess: currentGuess },
-        created_at: new Date().toISOString(),
+        // Sunucu saati: "ilk doğru tahmin" telefon saatine göre değil.
+        created_at: serverTimestamp(),
         expires_at: retentionExpiry(),
       });
     } catch (err) {

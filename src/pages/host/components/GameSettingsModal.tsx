@@ -7,6 +7,7 @@ import { NeonIcon } from "../../../components/NeonIcon";
 import type { GameType, Room } from "../../../types/database";
 import type { TranslationKey } from "../../../lib/i18n";
 import { X, Play, Check, Clock, RotateCcw, HelpCircle, Heart, Eye, Users } from "lucide-react";
+import { SENSOR_MAX_POINTS, SENSOR_MIN_POINTS } from "../../../lib/sensor";
 
 interface Props {
   isOpen: boolean;
@@ -180,7 +181,6 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
 
   // Sensor Specific
   const [sensorUnblurDuration, setSensorUnblurDuration] = useState("25");
-  const [sensorPointReward] = useState("1000");
 
   // Bar Specific
   const [barTime, setBarTime] = useState("60");
@@ -253,13 +253,18 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
       // Secim onceden yalnizca ekranda isaretli gorunuyordu; hicbir yere
       // gecmiyordu. Artik odaya yaziliyor ve soru secimi bunu uyguluyor.
       baseSettings.quiz_topics = selectedQuizCategories;
+      baseSettings.quiz_double_final = quizDoubleFinal;
     } else if (game === "bomb") {
       baseSettings.timer_setting = parseInt(bombFuseTime, 10);
+      baseSettings.bomb_lives = parseInt(bombLives, 10);
       baseSettings.bomb_speed_multiplier = bombSpeedMultiplier;
     } else if (game === "sensor") {
       baseSettings.timer_setting = parseInt(sensorUnblurDuration, 10);
+    } else if (game === "colors") {
+      baseSettings.colors_win_condition = colorsWinCondition;
     } else if (game === "bar") {
       baseSettings.timer_setting = parseInt(barTime, 10);
+      baseSettings.bar_recipe_sec = parseFloat(barRecipeSpeed);
     }
 
     await onStart(game, baseSettings);
@@ -705,7 +710,7 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
                       {t("gameSettings.sensorReward")}
                     </label>
                     <div className="py-3.5 px-4 rounded-xl font-mono font-black text-base bg-pink-500/20 border-2 border-pink-500/50 text-pink-300 text-center shadow-[0_0_15px_rgba(255,0,128,0.2)]">
-                      +{sensorPointReward} XP
+                      {SENSOR_MAX_POINTS} → {SENSOR_MIN_POINTS}
                     </div>
                   </div>
                 </div>
@@ -717,7 +722,7 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
               <div className="space-y-6">
                 <div>
                   <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-pink-400 font-black block mb-2.5">
-                    ⏱️ COCKTAIL-SERVIERZEIT
+                    ⏱️ {t("gameSettings.barTime")}
                   </label>
                   <div className="grid grid-cols-3 gap-2.5">
                     {["45", "60", "90"].map(bVal => (
@@ -738,12 +743,12 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
 
                 <div>
                   <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-gray-300 font-black block mb-2.5">
-                    ⚡ REZEPT-GESCHWINDIGKEIT
+                    ⚡ {t("gameSettings.barRecipeSpeed")}
                   </label>
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      { val: "4.5", label: "Normal (4.5s)" },
-                      { val: "3.0", label: "Turbo Barmen (3.0s)" }
+                      { val: "4.5", label: t("gameSettings.barSpeedNormal") },
+                      { val: "3.0", label: t("gameSettings.barSpeedTurbo") }
                     ].map(item => (
                       <button
                         key={item.val}
@@ -767,7 +772,7 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
               <div className="space-y-6">
                 <div>
                   <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-purple-400 font-black block mb-2.5">
-                    🏆 SIEGBEDINGUNG
+                    🏆 {t("gameSettings.colorsWinCondition")}
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <button
@@ -778,8 +783,8 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
                           : "bg-white/5 border-white/15 text-gray-300 hover:bg-white/10 hover:text-white"
                       }`}
                     >
-                      <div className="font-black text-base text-white mb-1">100% DOMINANZ</div>
-                      <div className="text-xs text-gray-300">Das Team, das die Mittellinie vollständig schiebt, gewinnt sofort.</div>
+                      <div className="font-black text-base text-white mb-1">{t("gameSettings.colorsDomination")}</div>
+                      <div className="text-xs text-gray-300">{t("gameSettings.colorsDominationDesc")}</div>
                     </button>
 
                     <button
@@ -790,8 +795,8 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
                           : "bg-white/5 border-white/15 text-gray-300 hover:bg-white/10 hover:text-white"
                       }`}
                     >
-                      <div className="font-black text-base text-white mb-1">45s ZEIT-DUELL</div>
-                      <div className="text-xs text-gray-300">Nach Ablauf der Zeit siegt das Team mit der größeren Fläche.</div>
+                      <div className="font-black text-base text-white mb-1">{t("gameSettings.colorsTimed")}</div>
+                      <div className="text-xs text-gray-300">{t("gameSettings.colorsTimedDesc")}</div>
                     </button>
                   </div>
                 </div>

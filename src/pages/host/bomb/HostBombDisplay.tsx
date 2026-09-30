@@ -14,6 +14,8 @@ import { grantRewardToPlayers } from "../../../lib/rewards";
 import { useVenue } from "../../../contexts/VenueContextCore";
 import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
+import { bombFuseSec } from "../../../lib/bomb";
+import { clampLives } from "../../../lib/gameLaunch";
 
 interface Props {
   room: Room;
@@ -73,15 +75,14 @@ export function HostBombDisplay({
   const handleIntroComplete = useCallback(async () => {
     try {
       // Start the bomb timer!
-      const initialTime = 15; // 15 seconds
       await updateDoc(doc(db, "rooms", room.id), {
         status: "bomb_active",
-        round_end_time: Date.now() + initialTime * 1000,
+        round_end_time: Date.now() + bombFuseSec(room.timer_setting) * 1000,
       });
     } catch (error) {
       console.error("Error transitioning to active:", error);
     }
-  }, [room.id]);
+  }, [room.id, room.timer_setting]);
 
   const handleBombExploded = useCallback(async (playerId: string) => {
     try {
@@ -199,7 +200,7 @@ export function HostBombDisplay({
         const batch = writeBatch(db);
         players.forEach(p => {
           const pRef = doc(db, "players", p.id);
-          batch.update(pRef, { total_score: 0, lives: 3 });
+          batch.update(pRef, { total_score: 0, lives: clampLives(room.bomb_lives) });
         });
         await batch.commit();
 
@@ -211,7 +212,7 @@ export function HostBombDisplay({
     } catch (err) {
       console.error("Error resetting bomb game:", err);
     }
-  }, [room.id, players]);
+  }, [room.id, room.bomb_lives, players]);
 
   return (
     <TVScaleFrame>

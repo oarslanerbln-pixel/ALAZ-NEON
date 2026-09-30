@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { pickWeightedIndex } from "../../../lib/wheel";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { HostHeader } from "../components/HostHeader";
@@ -26,6 +27,20 @@ export function HostWheelDisplay({ room, players, updateRoomStatus }: Props) {
   const winningSlice = room.wheel_result_index !== null && room.wheel_result_index !== undefined
     ? slices[room.wheel_result_index]
     : null;
+
+  // Misafir çevirme isteği gönderdi: sonucu TV seçer ve yazar; animasyon
+  // aşağıdaki efektte, sonuç odaya düşünce başlar.
+  const pickedForRequestRef = useRef(false);
+  useEffect(() => {
+    if (room.status !== "wheel_spinning") {
+      pickedForRequestRef.current = false;
+      return;
+    }
+    if ((room.wheel_result_index ?? null) !== null || pickedForRequestRef.current) return;
+    pickedForRequestRef.current = true;
+    const index = pickWeightedIndex(slices.map((s) => s.weight || 1));
+    updateRoomStatus("wheel_spinning", { wheel_result_index: index });
+  }, [room.status, room.wheel_result_index, slices, updateRoomStatus]);
 
   useEffect(() => {
     if (room.status === "wheel_spinning" && room.wheel_result_index !== null && room.wheel_result_index !== undefined && !hasSpunRef.current) {

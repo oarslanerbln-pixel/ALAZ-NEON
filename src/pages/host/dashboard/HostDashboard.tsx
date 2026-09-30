@@ -20,6 +20,7 @@ import { useLocale } from "../../../hooks/useLocale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useVenue } from "../../../contexts/VenueContextCore";
 import { deleteAynaSurvey, deleteRoomAnswers } from "../../../lib/roomCleanup";
+import { assignTwoTeams, playerResetForGame } from "../../../lib/gameLaunch";
 
 
 
@@ -131,11 +132,11 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     }
     
     if (game === "bomb") {
-      // Canı olan VE hâlâ sinyal gönderen oyuncular: bomba, telefonu cebine
-      // koyup gitmiş bir misafire verilirse tur süre dolana kadar kilitlenir.
-      const activePlayers = activePlayersOf(
-        players.filter((p) => (p.lives === undefined ? 3 : p.lives) > 0),
-      );
+      // Hâlâ sinyal gönderen oyuncular: bomba, telefonu cebine koyup gitmiş
+      // bir misafire verilirse tur süre dolana kadar kilitlenir. Can süzgeci
+      // yok: canlar aşağıda herkes için yeniden dolduruluyor; önceki bomba
+      // oyununda elenenler de bu oyunun ilk hedefi olabilir.
+      const activePlayers = activePlayersOf(players);
       const randomPlayer = activePlayers.length > 0 ? activePlayers[Math.floor(Math.random() * activePlayers.length)] : null;
       const availableCategories = settings?.categories || room.categories || [];
       const randomCategory = availableCategories.length > 0 ? availableCategories[Math.floor(Math.random() * availableCategories.length)] : "GENEL";
@@ -185,11 +186,29 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
         overload_eliminated_ids: []
       };
     }
+    // Renkler: takım dağılımı ve hedef eskiden yalnızca oyunun kendi
+    // lobisinde yapılıyordu; panel doğrudan "colors_intro" açtığı için o yol
+    // hiç çalışmıyordu (takımlar kimlik harfinden tahmin ediliyor, hedef
+    // oyuncu sayısından bağımsız 100 kalıyordu).
     if (game === "colors") {
       initialStatus = "colors_intro";
       extraUpdates = {
         active_game: game,
+        colors_team_assignments: assignTwoTeams(players.map((p) => p.id)),
+        colors_target_clicks: Math.max(80, players.length * 35),
       };
+    }
+
+    // Şifre ve Birlik ekranları yalnızca *_intro durumunda başlıyor; panel
+    // onları "lobby" ile açtığı için ikisi de tanıtım ekranında sonsuza dek
+    // takılı kalıyordu. Şifre ayrıca önceki oyunun kodunu yeniden kullanıyordu.
+    if (game === "vault") {
+      initialStatus = "vault_intro";
+      extraUpdates = { ...extraUpdates, vault_code: "", vault_winner_id: null };
+    }
+    if (game === "unity") {
+      initialStatus = "unity_intro";
+      extraUpdates = { ...extraUpdates, unity_current: 0, unity_target: Math.max(1, players.length) * 100 };
     }
 
     // Echo / Spectrum / Pulse ekranlari kurulumlarini kendileri yapiyor, ama
@@ -279,14 +298,14 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       };
     }
 
-    // Bar ve Kablo skorlari oyuncu dokumaninda birikiyor ve hicbir yerde
-    // sifirlanmiyordu: ikinci Kablo turu, onceki turun toplami zaten hedefin
-    // ustunde oldugu icin aninca "kazanildi" ekranina duserdi.
-    if (game === "bar" || game === "kablo") {
-      const resetField = game === "bar" ? "bar_score" : "kablo_score";
+    // Oyuncu dokümanındaki oyun sayaçları (Bar, Kablo, Renkler, Spektrum,
+    // Birlik, Bomba canları) gece boyu birikiyordu; sıfırlanmayan sayaç bir
+    // sonraki oyuna taşınıyordu (bkz. lib/gameLaunch.ts).
+    const playerReset = playerResetForGame(game, { bombLives: settings?.bomb_lives });
+    if (playerReset && players.length > 0) {
       const batch = writeBatch(db);
       players.forEach((p) => {
-        batch.update(doc(db, "players", p.id), { [resetField]: 0 });
+        batch.update(doc(db, "players", p.id), playerReset);
       });
       await batch.commit();
     }

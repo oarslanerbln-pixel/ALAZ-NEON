@@ -46,10 +46,14 @@ service cloud.firestore {
     }
 
     // Sensor mode: the first player to hit the buzzer claims the round.
+    // Yanlış cevap veren oyuncu o görselde kilitli (sensor_locked_out):
+    // yeniden basamaz. Eskiden yanlışın bedeli yoktu, en hızlı parmak her
+    // yanlıştan sonra tekrar basıp turu kilitleyebiliyordu.
     function isSensorBuzz() {
       return resource.data.status == 'sensor_active' &&
         request.resource.data.status == 'sensor_buzzed' &&
-        touchesOnly(['status', 'sensor_buzzer_player_id', 'sensor_buzzer_timestamp']);
+        touchesOnly(['status', 'sensor_buzzer_player_id', 'sensor_buzzer_timestamp']) &&
+        !(request.resource.data.sensor_buzzer_player_id in resource.data.get('sensor_locked_out', []));
     }
 
     // Sensor mode: the player who buzzed types in their answer.
@@ -86,6 +90,19 @@ service cloud.firestore {
         touchesOnly(['pulse_clicks']);
     }
 
+    // Çark modu: sırası gelen misafir yalnızca "çevir" İSTEĞİ gönderir.
+    // Sonucu (hangi dilim) TV seçer: dilimler mekânın ödülleri ("Bedava Çay")
+    // ve eskiden sonucu misafirin telefonu Math.random ile seçip yazıyordu —
+    // üstelik bu yazmanın kuralı hiç yoktu, her çevirme reddediliyordu.
+    // İsteği yalnızca odanın seçtiği çevirici gönderebilir.
+    function isWheelSpinRequest() {
+      return resource.data.status == 'wheel_active' &&
+        request.resource.data.status == 'wheel_spinning' &&
+        touchesOnly(['status']) &&
+        resource.data.get('wheel_spinner_id', null) is string &&
+        get(/databases/$(database)/documents/players/$(resource.data.wheel_spinner_id)).data.uid == request.auth.uid;
+    }
+
     match /rooms/{roomId} {
       // Anyone can read the room data
       allow read: if true;
@@ -107,7 +124,8 @@ service cloud.firestore {
         isSensorAnswer() ||
         isOverloadDeflect() ||
         isEchoVote() ||
-        isPulseTap()
+        isPulseTap() ||
+        isWheelSpinRequest()
       );
 
       // Only the host can delete the room.
@@ -146,12 +164,13 @@ service cloud.firestore {
         return (request.resource.data.get('kablo_score', 0) - resource.data.get('kablo_score', 0)) <= 1 &&
                (request.resource.data.get('bar_score', 0) - resource.data.get('bar_score', 0)) <= 1 &&
                (request.resource.data.get('colors_clicks', 0) - resource.data.get('colors_clicks', 0)) <= 30 &&
-               (request.resource.data.get('spectrum_clicks', 0) - resource.data.get('spectrum_clicks', 0)) <= 30;
+               (request.resource.data.get('spectrum_clicks', 0) - resource.data.get('spectrum_clicks', 0)) <= 30 &&
+               (request.resource.data.get('unity_clicks', 0) - resource.data.get('unity_clicks', 0)) <= 30;
       }
 
       function isPlayerSelfUpdate() {
         return resource.data.uid == request.auth.uid &&
-          touchesOnly(['kablo_score', 'colors_clicks', 'spectrum_clicks', 'bar_score', 'last_active']) &&
+          touchesOnly(['kablo_score', 'colors_clicks', 'spectrum_clicks', 'unity_clicks', 'bar_score', 'last_active']) &&
           isValidIncrement();
       }
 

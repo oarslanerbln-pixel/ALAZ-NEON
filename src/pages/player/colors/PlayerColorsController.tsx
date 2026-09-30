@@ -1,8 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
-import { db } from "../../../lib/firebase";
-import { doc, increment, updateDoc } from "firebase/firestore";
+import { useBatchedIncrement } from "../../../hooks/useBatchedIncrement";
 import { haptics } from "../../../lib/haptics";
 import { useLocale } from "../../../hooks/useLocale";
 
@@ -14,48 +13,22 @@ interface Props {
 export function PlayerColorsController({ room, player }: Props) {
   const { t } = useLocale();
   const [localClicks, setLocalClicks] = useState(0);
-  const pendingClicksRef = useRef(0);
-  const isFlushingRef = useRef(false);
-  
+
   const fallbackTeam = player.id.charCodeAt(player.id.length - 1) % 2 === 0 ? "red" : "blue";
   const team = room.colors_team_assignments?.[player.id] || fallbackTeam;
+  // Toplu yazma: yazma başına üst sınır ve sabit aralık (bkz. lib/batchedIncrement.ts).
+  const addClicks = useBatchedIncrement(player.id, "colors_clicks", room.status === "colors_active");
 
   const handleClick = (e: React.TouchEvent | React.MouseEvent) => {
-    if (room.status !== "colors_active" || !team) return;
-    
+    if (room.status !== "colors_active") return;
+
     // Tap haptics
     haptics.tap();
-    
+
     const count = 'touches' in e && e.touches.length > 1 ? e.touches.length : 1;
     setLocalClicks(prev => prev + count);
-    pendingClicksRef.current += count;
+    addClicks(count);
   };
-
-  // Batch updates to Firestore
-  useEffect(() => {
-    if (room.status !== "colors_active" || !team) return;
-
-    const interval = setInterval(() => {
-      const clicksToFlush = pendingClicksRef.current;
-      if (clicksToFlush > 0 && !isFlushingRef.current) {
-        isFlushingRef.current = true;
-        pendingClicksRef.current = 0;
-        
-        const playerRef = doc(db, "players", player.id);
-        
-        updateDoc(playerRef, {
-          colors_clicks: increment(clicksToFlush)
-        }).catch(err => {
-          console.error("Failed to flush clicks to Firestore:", err);
-          pendingClicksRef.current += clicksToFlush;
-        }).finally(() => {
-          isFlushingRef.current = false;
-        });
-      }
-    }, 600);
-
-    return () => clearInterval(interval);
-  }, [room.status, player.id, team]);
 
   const bgClass = team === "red" 
     ? "bg-gradient-to-b from-[#b30027] to-[#ff003c]" 

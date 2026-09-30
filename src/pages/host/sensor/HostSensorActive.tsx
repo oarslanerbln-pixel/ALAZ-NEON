@@ -1,34 +1,43 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useLocale } from "../../../hooks/useLocale";
 import type { Room } from "../../../types/database";
 import type { SensorImage } from "../../../data/sensorImages";
 import { safeForDisplay } from "../../../lib/profanity";
 import { SoundManager, sounds } from "../../../lib/audio";
+import { revealProgress, sensorPoints } from "../../../lib/sensor";
 
 interface Props {
   room: Room;
   currentImage: SensorImage;
   buzzerPlayerName: string | null;
   onEvaluate: (isCorrect: boolean) => void;
+  onSkip: () => void;
+  revealSec: number;
 }
 
-export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvaluate }: Props) {
+export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvaluate, onSkip, revealSec }: Props) {
   const { t } = useLocale();
   const gameState = room.status;
 
+  // Açılma oranı odadaki başlangıç anından türetiliyor: yanlış cevap ya da
+  // TV yenilemesi sonrası görsel baştan bulanıklaşmıyor, kaldığı yerden
+  // devam ediyor. Eskiden animasyon her yeniden yüklemede sıfırdan başlıyordu.
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    if (gameState === "sensor_active") {
-      const start = Date.now();
-      const interval = setInterval(() => {
-        const elapsed = (Date.now() - start) / 1000;
-        if (elapsed % 2 < 0.2) {
-          SoundManager.getInstance().playSFX(sounds.VOTE_TICK);
-        }
-      }, 100);
-      return () => clearInterval(interval);
-    }
+    if (gameState !== "sensor_active") return;
+    let tick = 0;
+    const interval = setInterval(() => {
+      setNow(Date.now());
+      tick++;
+      if (tick % 8 === 0) SoundManager.getInstance().playSFX(sounds.VOTE_TICK);
+    }, 250);
+    return () => clearInterval(interval);
   }, [gameState, currentImage.url]);
+
+  const progress = revealProgress(room.sensor_round_started_at, now, revealSec);
+  const remainingSec = Math.max(0, (1 - progress) * revealSec);
+  const pointsNow = sensorPoints(progress);
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 relative overflow-hidden bg-black w-full h-full">
@@ -39,10 +48,10 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
       {/* TOP HEADER: Category & Clue */}
       <div className="absolute top-8 z-20 flex flex-col items-center">
         <span className="px-5 py-1.5 rounded-full border border-purple-500/40 bg-purple-500/10 text-purple-400 font-mono tracking-widest text-xs uppercase font-bold mb-1">
-          👁️ SENSÖR • GÖRSEL TAHMİN 👁️
+          👁️ {t("sensor.headerTag")} 👁️
         </span>
         <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-wider drop-shadow-md">
-          {currentImage.category || "BU GÖRSELİ İLK KİM BİLECEK?"}
+          {currentImage.category || t("sensor.whoFirst")}
         </h2>
       </div>
 
@@ -52,18 +61,29 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
           
           {/* Animated Image with Progressive Unblur */}
           <motion.img 
-            key={currentImage.url}
+            key={`${currentImage.url}:${room.sensor_round_started_at ?? 0}`}
             src={currentImage.url}
-            initial={{ filter: "blur(40px) contrast(150%)", scale: 1.15, opacity: 0 }}
+            initial={{
+              filter: `blur(${40 * (1 - progress)}px) contrast(${100 + 50 * (1 - progress)}%)`,
+              scale: 1 + 0.15 * (1 - progress),
+              opacity: 0,
+            }}
             animate={{ filter: "blur(0px) contrast(100%)", scale: 1, opacity: 1 }}
             transition={{ 
               opacity: { duration: 0.6 },
-              filter: { duration: 25, ease: "linear" },
-              scale: { duration: 25, ease: "linear" }
+              filter: { duration: remainingSec, ease: "linear" },
+              scale: { duration: remainingSec, ease: "linear" }
             }}
             className="w-full h-full object-cover"
           />
           
+          {/* Anlık değer: görsel açıldıkça eriyor — erken basmanın ödülü görünür olsun. */}
+          <div className="absolute top-6 left-6 bg-black/85 px-6 py-3 rounded-xl border border-amber-400/60 shadow-lg backdrop-blur-md">
+            <span className="text-amber-300 font-mono font-black text-2xl tabular-nums">
+              {t("sensor.worthNow", pointsNow)}
+            </span>
+          </div>
+
           {/* Active Buzzer Ready Badge */}
           <div className="absolute top-6 right-6 bg-black/85 px-6 py-3 text-purple-400 font-mono font-bold uppercase tracking-[0.3em] text-xs rounded-xl border border-purple-500/50 shadow-lg animate-pulse backdrop-blur-md flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-purple-500 animate-ping" />
@@ -73,13 +93,23 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
           {/* Progress / Reveal Bar at the bottom */}
           <div className="absolute bottom-0 inset-x-0 h-2 bg-black/60">
             <motion.div 
-              initial={{ width: "0%" }}
+              key={`${currentImage.url}:${room.sensor_round_started_at ?? 0}`}
+              initial={{ width: `${progress * 100}%` }}
               animate={{ width: "100%" }}
-              transition={{ duration: 25, ease: "linear" }}
+              transition={{ duration: remainingSec, ease: "linear" }}
               className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-amber-400 shadow-[0_0_15px_rgba(168,85,247,0.8)]"
             />
           </div>
         </div>
+      )}
+
+      {gameState === "sensor_active" && (
+        <button
+          onClick={onSkip}
+          className="mt-6 z-20 text-xs text-white/50 hover:text-white uppercase tracking-widest border border-white/20 hover:border-white/50 px-5 py-2 transition-all rounded-full"
+        >
+          {t("sensor.skip")}
+        </button>
       )}
 
       {/* Buzzed State */}
@@ -106,7 +136,7 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
               </div>
               
               <p className="text-2xl text-white font-black mb-6 tracking-wide">
-                ⚡ <span className="text-red-400 uppercase">{buzzerPlayerName || "BİRİ"}</span> BASTI!
+                ⚡ {t("sensor.pressedBuzzer", buzzerPlayerName || "?")}
               </p>
               
               {room.sensor_player_answer ? (
@@ -116,7 +146,7 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
                   className="mb-8 bg-white/5 border border-white/15 rounded-2xl p-6 w-full"
                 >
                   <p className="text-red-400 text-xs mb-2 uppercase tracking-widest font-mono">
-                    OYUNCUNUN TAHMİNİ:
+                    {t("sensor.playerGuess")}
                   </p>
                   <p className="text-4xl md:text-5xl font-black text-white tracking-wide uppercase drop-shadow-[0_0_20px_rgba(255,255,255,0.7)]">
                     "{safeForDisplay(room.sensor_player_answer)}"
@@ -149,7 +179,7 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
                     onClick={() => onEvaluate(true)}
                     className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 border border-emerald-400 text-white rounded-2xl font-black uppercase tracking-wider text-lg transition-all shadow-[0_0_30px_rgba(16,185,129,0.5)] transform active:scale-95 flex items-center justify-center gap-2"
                   >
-                    <span>✅</span> {t("sensor.correct")} (+1000)
+                    <span>✅</span> {t("sensor.correct")} (+{pointsNow})
                   </button>
                   <button 
                     onClick={() => onEvaluate(false)}

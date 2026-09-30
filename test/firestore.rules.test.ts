@@ -239,6 +239,30 @@ describe("rooms — sensör buzzer", () => {
   });
 });
 
+describe("rooms — sensör kilidi", () => {
+  beforeEach(() => seed({ status: "sensor_active", sensor_locked_out: [PLAYER_ID] }));
+
+  it("bu görselde yanılıp kilitlenen oyuncu tekrar basamaz", async () => {
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        status: "sensor_buzzed",
+        sensor_buzzer_player_id: PLAYER_ID,
+        sensor_buzzer_timestamp: Date.now(),
+      })
+    );
+  });
+
+  it("kilitli olmayan oyuncu basabilir", async () => {
+    await assertSucceeds(
+      updateDoc(doc(testEnv.authenticatedContext(STRANGER_UID).firestore(), "rooms", ROOM_ID), {
+        status: "sensor_buzzed",
+        sensor_buzzer_player_id: OTHER_PLAYER_ID,
+        sensor_buzzer_timestamp: Date.now(),
+      })
+    );
+  });
+});
+
 describe("rooms — overload savuşturma", () => {
   beforeEach(() =>
     seed({ status: "playing", overload_target_id: PLAYER_ID, overload_time_allowed: 10 })
@@ -338,6 +362,60 @@ describe("rooms — pulse dokunusu", () => {
         [`pulse_clicks.${PLAYER_ID}`]: Date.now(),
       })
     );
+  });
+});
+
+describe("rooms — çark çevirme isteği", () => {
+  beforeEach(() => seed({ status: "wheel_active", wheel_spinner_id: PLAYER_ID, wheel_result_index: null }));
+
+  it("sırası gelen misafir çevirme isteği gönderebilir", async () => {
+    await assertSucceeds(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { status: "wheel_spinning" })
+    );
+  });
+
+  it("misafir SONUCU yazamaz — hangi ödülün çıkacağını TV seçer", async () => {
+    // Eski istemci sonucu telefonda seçip yazıyordu: istediği dilimi seçebilirdi.
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { status: "wheel_spinning", wheel_result_index: 2 })
+    );
+  });
+
+  it("sırası gelmeyen misafir çeviremez", async () => {
+    await assertFails(
+      updateDoc(doc(testEnv.authenticatedContext(STRANGER_UID).firestore(), "rooms", ROOM_ID), {
+        status: "wheel_spinning",
+      })
+    );
+  });
+
+  it("çark dönerken tekrar istek gönderilemez", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), { status: "wheel_spinning" });
+    });
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { status: "wheel_spinning" })
+    );
+  });
+});
+
+describe("players — birlik dokunuşları", () => {
+  beforeEach(() => seed({ status: "unity_active" }));
+
+  it("oyuncu kendi birlik sayacını artırabilir (eskiden odaya yazılıyordu, kural yoktu)", async () => {
+    await assertSucceeds(updateDoc(doc(asPlayer(), "players", PLAYER_ID), { unity_clicks: 30 }));
+  });
+
+  it("tek yazmada 30'dan fazla artış reddedilir", async () => {
+    await assertFails(updateDoc(doc(asPlayer(), "players", PLAYER_ID), { unity_clicks: 31 }));
+  });
+
+  it("başkasının sayacına yazılamaz", async () => {
+    await assertFails(updateDoc(doc(asPlayer(), "players", OTHER_PLAYER_ID), { unity_clicks: 1 }));
+  });
+
+  it("oyuncu oda dokümanındaki toplamı doğrudan artıramaz", async () => {
+    await assertFails(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { unity_current: 999 }));
   });
 });
 

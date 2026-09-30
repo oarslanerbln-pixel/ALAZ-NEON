@@ -129,6 +129,18 @@ export interface Room {
   previous_bomb_target_player?: string | null;
   used_words?: string[];
   bomb_speed_multiplier?: number;
+  /** Bomba: oyun başındaki can sayısı (kurulum ayarı, 1–5). */
+  bomb_lives?: number;
+  /** Quiz: son soru çift puan mı (kurulum ayarı; yoksa açık kabul edilir). */
+  quiz_double_final?: boolean;
+  /** Bar: tarifin değişme aralığı (sn). */
+  bar_recipe_sec?: number;
+  /** Sensör: görselin açılmaya başladığı an (host saati; buzzer süresi kadar ileri kayar). */
+  sensor_round_started_at?: number;
+  /** Sensör: bu görselde yanlış cevap verip kilitlenen oyuncular. */
+  sensor_locked_out?: string[];
+  /** Sensör: son doğru cevabın kazandırdığı puan (açıklama ekranı için). */
+  sensor_last_points?: number | null;
   // Tutorial Fields
   tutorial_step?: number;
   // Sensor Game Fields
@@ -175,6 +187,8 @@ export interface Room {
   colors_blue_score?: number;
   colors_team_assignments?: Record<string, "red" | "blue">;
   colors_end_time?: number;
+  colors_win_condition?: "domination" | "timed";
+  colors_winner?: "red" | "blue" | "draw" | null;
   // Vault Game Fields
   vault_code?: string;
   vault_winner_id?: string | null;
@@ -237,6 +251,7 @@ export interface Player {
   last_active?: number;
   colors_clicks?: number;
   spectrum_clicks?: number;
+  unity_clicks?: number;
   bar_score?: number;
   kablo_score?: number;
 }

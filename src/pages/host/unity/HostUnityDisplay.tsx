@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../../../lib/firebase";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { SoundManager, sounds } from "../../../lib/audio";
@@ -20,7 +22,29 @@ export function HostUnityDisplay({ room, players, updateRoomStatus }: Props) {
   const [timeLeft, setTimeLeft] = useState(60);
 
   const target = room.unity_target || (players.length || 1) * 100;
-  const current = room.unity_current || 0;
+  // Toplam, oyuncuların kendi sayaçlarından (bkz. PlayerUnityController).
+  const current = players.reduce((sum, p) => sum + (p.unity_clicks || 0), 0);
+
+  // Telefonlar yalnızca oda dokümanını dinliyor: ilerleme çubuğu için toplamı
+  // odaya yansıt. Host tek yazar; en fazla saniyede bir yazma.
+  // Yazma yalnızca unity_current alanına: durum alanına dokunmuyor ki bu
+  // aralık, kazanma anındaki "unity_reveal" geçişini geri almasın.
+  const latestCurrent = useRef(current);
+  useEffect(() => {
+    latestCurrent.current = current;
+  }, [current]);
+  const mirroredRef = useRef(-1);
+  useEffect(() => {
+    if (room.status !== "unity_active") return;
+    const interval = setInterval(() => {
+      if (mirroredRef.current === latestCurrent.current) return;
+      mirroredRef.current = latestCurrent.current;
+      updateDoc(doc(db, "rooms", room.id), { unity_current: latestCurrent.current }).catch((err) =>
+        console.error("[HostUnityDisplay] İlerleme yazılamadı:", err),
+      );
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [room.status, room.id]);
   const percentage = Math.min(100, Math.max(0, (current / target) * 100));
 
   useEffect(() => {
