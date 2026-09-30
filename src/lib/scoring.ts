@@ -22,6 +22,27 @@ import type {
 export const TYPO_SCORE_MULTIPLIER = 0.5;
 
 /**
+ * Tek bir kategori cevabının puanı — otomatik puanlama ile host'un inceleme
+ * ekranındaki elle düzeltmesi AYNI formülü kullanmalı.
+ *
+ * Eskiden host bir cevabı geçersiz → geçerli çevirdiğinde puan yeniden
+ * `benzersiz ? 20 : 10` diye hesaplanıyordu: yazım hatası kesintisi ve joker
+ * çarpanı kayboluyor, jokerin -10 cezası da hiç geri verilmiyordu.
+ */
+export function answerPoints(answer: {
+  isValid: boolean;
+  isUnique: boolean;
+  isTypo?: boolean;
+  isJoker?: boolean;
+}): number {
+  if (!answer.isValid) return answer.isJoker ? -10 : 0;
+  let pts = answer.isUnique ? 20 : 10;
+  if (answer.isTypo) pts = Math.round(pts * TYPO_SCORE_MULTIPLIER);
+  if (answer.isJoker) pts *= 2;
+  return pts;
+}
+
+/**
  * Calculates scores for a round of answers with Fuzzy Logic and Cognitive Profiling.
  */
 export function calculateRoundScores(
@@ -135,7 +156,6 @@ export function calculateRoundScores(
         const valRaw = ansData[cat] || "";
         const val = normalizeTL(valRaw, locale);
         let isUnique = false;
-        let pts = 0;
         let isValid = false;
 
         // Otomatik moderasyon: doğru harfle başlamak tek başına yeterli
@@ -170,27 +190,13 @@ export function calculateRoundScores(
           if (categoryCounts[cat][fuzzyMatchKey] === 1) {
             isUnique = true;
             uniqueCount++;
-            pts = 20;
-          } else {
-            pts = 10;
-          }
-
-          // Yazim hatasi: oyuncu kelimeyi biliyordu ama yanlis yazdi. Cevap
-          // gecerli sayiliyor (benzersizlik sayimina da giriyor) ama puani
-          // kirpiliyor — dogru yazan one gecsin.
-          if (isTypo) pts = Math.round(pts * TYPO_SCORE_MULTIPLIER);
-        }
-
-        // Apply Joker Logic
-        let isJoker = false;
-        if (cat === jokerCategory) {
-          isJoker = true;
-          if (isValid) {
-            pts *= 2; // Double points for correct joker
-          } else {
-            pts = -10; // -10 penalty for wrong/empty joker
           }
         }
+
+        // Joker: doğruysa çift puan, yanlış/boşsa -10. Yazım hatası kesintisi
+        // (yarım puan) benzersizlik sayımını etkilemiyor, yalnızca puanı.
+        const isJoker = cat === jokerCategory;
+        const pts = answerPoints({ isValid, isUnique, isTypo, isJoker });
 
         roundScore += pts;
         answersBreakdown[cat] = {

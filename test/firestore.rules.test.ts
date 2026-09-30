@@ -239,6 +239,30 @@ describe("rooms — sensör buzzer", () => {
   });
 });
 
+describe("rooms — sensör kilidi", () => {
+  beforeEach(() => seed({ status: "sensor_active", sensor_locked_out: [PLAYER_ID] }));
+
+  it("bu görselde yanılıp kilitlenen oyuncu tekrar basamaz", async () => {
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        status: "sensor_buzzed",
+        sensor_buzzer_player_id: PLAYER_ID,
+        sensor_buzzer_timestamp: Date.now(),
+      })
+    );
+  });
+
+  it("kilitli olmayan oyuncu basabilir", async () => {
+    await assertSucceeds(
+      updateDoc(doc(testEnv.authenticatedContext(STRANGER_UID).firestore(), "rooms", ROOM_ID), {
+        status: "sensor_buzzed",
+        sensor_buzzer_player_id: OTHER_PLAYER_ID,
+        sensor_buzzer_timestamp: Date.now(),
+      })
+    );
+  });
+});
+
 describe("rooms — overload savuşturma", () => {
   beforeEach(() =>
     seed({ status: "playing", overload_target_id: PLAYER_ID, overload_time_allowed: 10 })
@@ -341,6 +365,60 @@ describe("rooms — pulse dokunusu", () => {
   });
 });
 
+describe("rooms — çark çevirme isteği", () => {
+  beforeEach(() => seed({ status: "wheel_active", wheel_spinner_id: PLAYER_ID, wheel_result_index: null }));
+
+  it("sırası gelen misafir çevirme isteği gönderebilir", async () => {
+    await assertSucceeds(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { status: "wheel_spinning" })
+    );
+  });
+
+  it("misafir SONUCU yazamaz — hangi ödülün çıkacağını TV seçer", async () => {
+    // Eski istemci sonucu telefonda seçip yazıyordu: istediği dilimi seçebilirdi.
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { status: "wheel_spinning", wheel_result_index: 2 })
+    );
+  });
+
+  it("sırası gelmeyen misafir çeviremez", async () => {
+    await assertFails(
+      updateDoc(doc(testEnv.authenticatedContext(STRANGER_UID).firestore(), "rooms", ROOM_ID), {
+        status: "wheel_spinning",
+      })
+    );
+  });
+
+  it("çark dönerken tekrar istek gönderilemez", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), { status: "wheel_spinning" });
+    });
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { status: "wheel_spinning" })
+    );
+  });
+});
+
+describe("players — birlik dokunuşları", () => {
+  beforeEach(() => seed({ status: "unity_active" }));
+
+  it("oyuncu kendi birlik sayacını artırabilir (eskiden odaya yazılıyordu, kural yoktu)", async () => {
+    await assertSucceeds(updateDoc(doc(asPlayer(), "players", PLAYER_ID), { unity_clicks: 30 }));
+  });
+
+  it("tek yazmada 30'dan fazla artış reddedilir", async () => {
+    await assertFails(updateDoc(doc(asPlayer(), "players", PLAYER_ID), { unity_clicks: 31 }));
+  });
+
+  it("başkasının sayacına yazılamaz", async () => {
+    await assertFails(updateDoc(doc(asPlayer(), "players", OTHER_PLAYER_ID), { unity_clicks: 1 }));
+  });
+
+  it("oyuncu oda dokümanındaki toplamı doğrudan artıramaz", async () => {
+    await assertFails(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { unity_current: 999 }));
+  });
+});
+
 describe("rooms — host yetkisi", () => {
   beforeEach(() => seed());
 
@@ -390,6 +468,59 @@ describe("players — skor bütünlüğü", () => {
         room_id: ROOM_ID,
         uid: PLAYER_UID,
         nickname: "YENI",
+        team_name: null,
+        total_score: 0,
+        created_at: Date.now(),
+      })
+    );
+  });
+
+  it("oyuncu katılırken kendine puan yazamaz — sıralama TV'de görünüyor", async () => {
+    await assertFails(
+      addDoc(collection(asPlayer(), "players"), {
+        room_id: ROOM_ID,
+        uid: PLAYER_UID,
+        nickname: "HİLECİ",
+        team_name: null,
+        total_score: 999999,
+        created_at: Date.now(),
+      })
+    );
+  });
+
+  it("oyuncu katılırken beyaz liste dışı alan (ör. can) yazamaz", async () => {
+    await assertFails(
+      addDoc(collection(asPlayer(), "players"), {
+        room_id: ROOM_ID,
+        uid: PLAYER_UID,
+        nickname: "YENI",
+        team_name: null,
+        total_score: 0,
+        lives: 99,
+        created_at: Date.now(),
+      })
+    );
+  });
+
+  it("olmayan bir odaya oyuncu kaydı açılamaz", async () => {
+    await assertFails(
+      addDoc(collection(asPlayer(), "players"), {
+        room_id: "no-such-room",
+        uid: PLAYER_UID,
+        nickname: "YENI",
+        team_name: null,
+        total_score: 0,
+        created_at: Date.now(),
+      })
+    );
+  });
+
+  it("takma ad 20 karakteri aşamaz", async () => {
+    await assertFails(
+      addDoc(collection(asPlayer(), "players"), {
+        room_id: ROOM_ID,
+        uid: PLAYER_UID,
+        nickname: "X".repeat(21),
         team_name: null,
         total_score: 0,
         created_at: Date.now(),
@@ -506,24 +637,46 @@ describe("rewards koleksiyonu", () => {
     await assertFails(getDoc(doc(asRandomSignup(), "rewards", REWARD_ID)));
   });
 
-  it("host, kazanan oyuncu adına 'available' bir ödül oluşturabilir", async () => {
+  const newReward = (overrides: Record<string, unknown> = {}) => ({
+    uid: PLAYER_UID,
+    nickname: "OYUNCU",
+    type: "drink",
+    title: "Ücretsiz Espresso",
+    description: "",
+    status: "available",
+    code: "X9Y8Z7",
+    earned_at: Date.now(),
+    ...overrides,
+  });
+
+  it("personel hesabıyla açılmış host ekranı kazanan adına ödül oluşturabilir", async () => {
+    await seedStaff();
     await assertSucceeds(
-      setDoc(doc(asHost(), "rewards", "reward-new"), {
-        uid: PLAYER_UID,
-        nickname: "OYUNCU",
-        type: "drink",
-        title: "Ücretsiz Espresso",
-        description: "",
-        status: "available",
-        code: "X9Y8Z7",
-        earned_at: Date.now(),
-      })
+      setDoc(doc(asVenueOwner(), "rewards", "reward-new"), newReward({ expires_at: Date.now() + 86400000 }))
     );
   });
 
-  it("doğrudan 'claimed' durumunda bir ödül oluşturulamaz", async () => {
+  it("MİSAFİR KENDİNE ödül kuponu yazamaz — bedava içecek açığı", async () => {
+    // Önceki kural: giriş yapmış herkes 'available' ödül yaratabiliyordu.
+    await assertFails(setDoc(doc(asPlayer(), "rewards", "reward-self"), newReward()));
+  });
+
+  it("anonim host (oda sahibi ama personel değil) ödül yazamaz — oda açmak herkese açık", async () => {
+    await seed();
+    await assertFails(setDoc(doc(asHost(), "rewards", "reward-host"), newReward()));
+  });
+
+  it("personel bile beyaz liste dışı alan ekleyemez", async () => {
+    await seedStaff();
     await assertFails(
-      setDoc(doc(asHost(), "rewards", "reward-fake-claimed"), {
+      setDoc(doc(asVenueOwner(), "rewards", "reward-extra"), newReward({ claimed_by: "x" }))
+    );
+  });
+
+  it("doğrudan 'claimed' durumunda bir ödül oluşturulamaz (personel dahil)", async () => {
+    await seedStaff();
+    await assertFails(
+      setDoc(doc(asVenueOwner(), "rewards", "reward-fake-claimed"), {
         uid: PLAYER_UID,
         nickname: "OYUNCU",
         type: "drink",

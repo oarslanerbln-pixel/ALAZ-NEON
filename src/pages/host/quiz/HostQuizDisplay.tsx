@@ -224,7 +224,9 @@ export function HostQuizDisplay({
 
       if (isCorrect) {
         // Base points (Double if final round)
-        const basePts = isFinalRound ? 2000 : 1000;
+        // Kurulumdaki "final sorusu çift puan" anahtarı eskiden hiçbir yere
+        // bağlı değildi; kapalı olsa da final çift sayılıyordu.
+        const basePts = isFinalRound && room.quiz_double_final !== false ? 2000 : 1000;
 
         // Speed Bonus: 1st: +500, 2nd: +350, 3rd: +200, others: +100
         let speedBonus = 0;
@@ -260,6 +262,12 @@ export function HostQuizDisplay({
         // Wrong answer breaks streak
         streaksRef.current[playerId] = 0;
       }
+    }
+
+    // Cevap vermeyen de seriyi bozar: eskiden yalnızca YANLIŞ cevap
+    // sıfırlıyordu, hiç cevap vermeyen oyuncu seri çarpanını koruyordu.
+    for (const p of players) {
+      if (!playerAnswerMap.has(p.id)) streaksRef.current[p.id] = 0;
     }
 
     setPlayerStreaks({ ...streaksRef.current });
@@ -359,7 +367,8 @@ export function HostQuizDisplay({
     await batch.commit();
     streaksRef.current = {};
     setPlayerStreaks({});
-    await updateRoomStatus("quiz_lobby", { current_round: 0, current_question_index: 0 });
+    // Yeni oyun örneği: gece puanı bu oyun için de verilsin (lib/nightScore.ts).
+    await updateRoomStatus("quiz_lobby", { current_round: 0, current_question_index: 0, game_started_at: Date.now() });
   };
 
   // Color scheme mappings for options
@@ -449,9 +458,9 @@ export function HostQuizDisplay({
                       {currentQuestion.category}
                     </span>
                   )}
-                  {isFinalRound && (
+                  {isFinalRound && room.quiz_double_final !== false && (
                     <span className="px-6 py-2 rounded-full bg-red-600/30 border border-red-500 text-red-400 font-black tracking-widest uppercase text-xl animate-pulse">
-                      💥 2X FİNAL
+                      💥 {t("quiz.doubleFinal")}
                     </span>
                   )}
                 </div>

@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
-import { db } from "../../../lib/firebase";
-import { doc, updateDoc, increment } from "firebase/firestore";
 import { useLocale } from "../../../hooks/useLocale";
+import { useBatchedIncrement } from "../../../hooks/useBatchedIncrement";
 
 interface Props {
   room: Room;
@@ -14,50 +13,19 @@ export function PlayerSpectrumController({ room, player }: Props) {
   const team = room.spectrum_teams?.[player.id] || "red"; // Fallback to red
   const isRed = team === "red";
   
-  // We use local batching to avoid spamming Firestore with too many rapid clicks
-  const [clickCount, setClickCount] = useState(0);
-  const isFlushingRef = useRef(false);
   const { t } = useLocale();
-
-  const flushClicks = useCallback(async () => {
-    if (clickCount === 0 || room.status !== "spectrum_active" || isFlushingRef.current) return;
-    
-    isFlushingRef.current = true;
-    const countToFlush = clickCount;
-    setClickCount(0); // Reset early for responsiveness
-
-    try {
-      // KRİTİK DÜZELTME: Tüm oyuncuların aynı "rooms/id" dokümanına yazması
-      // "Contention" kilitlenmesine neden oluyordu.
-      // Artık her oyuncu kendi dokümanına yazıyor.
-      const playerRef = doc(db, "players", player.id);
-      await updateDoc(playerRef, {
-        spectrum_clicks: increment(countToFlush)
-      });
-    } catch (err) {
-      console.error("Failed to flush spectrum clicks", err);
-      // Put them back if failed (simplified, might lose some if they kept clicking but okay for this game)
-      setClickCount(prev => prev + countToFlush);
-    } finally {
-      isFlushingRef.current = false;
-    }
-  }, [clickCount, player.id, room.status]);
-
-  // Flush clicks every 500ms
-  useEffect(() => {
-    const interval = setInterval(() => {
-      flushClicks();
-    }, 1000);
-    return () => {
-      clearInterval(interval);
-      flushClicks(); // Flush on unmount
-    };
-  }, [flushClicks]);
+  const [clickCount, setClickCount] = useState(0);
+  // Toplu yazma (bkz. lib/batchedIncrement.ts). Eski sürümde bekleyen sayı
+  // state'teydi: her dokunuş aralığı yeniden kuruyor, temizleyici de o anda
+  // yazma tetikliyordu — oyuncu başına saniyede ~10 yazma, ücretsiz planın
+  // günlük yazma kotasını tek oyunda eritebiliyordu.
+  const addClicks = useBatchedIncrement(player.id, "spectrum_clicks", room.status === "spectrum_active");
 
   const handleTap = () => {
     if (room.status !== "spectrum_active") return;
-    setClickCount(prev => prev + 1);
-    
+    addClicks(1);
+    setClickCount((prev) => prev + 1);
+
     // Haptic feedback for each tap
     if (navigator.vibrate) {
       navigator.vibrate(10);

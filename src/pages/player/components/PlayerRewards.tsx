@@ -27,8 +27,18 @@ export function PlayerRewards() {
   // Tek seferlik `getDocs` yerine `onSnapshot` kullanıyoruz: oyun biterken
   // ödül tam bu ekran açıkken kazanılıyor (bkz. lib/rewards.ts), tek seferlik
   // sorgu olsaydı oyuncu sayfayı yenilemeden yeni ödülü hiç göremezdi.
+  //
+  // Ödül dinleyicisinin aboneliği auth geri çağrısından `return` ediliyordu;
+  // onAuthStateChanged dönüş değerini yok sayar. Dinleyici bileşen kapanınca
+  // da açık kalıyor, hesap her değiştiğinde bir tane daha ekleniyordu.
+  // useUserProfile'daki gibi aboneliği kendimiz tutup kapatıyoruz.
   useEffect(() => {
+    let unsubscribeRewards: (() => void) | undefined;
+
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      unsubscribeRewards?.();
+      unsubscribeRewards = undefined;
+
       if (!user) {
         setRewards([]);
         setLoading(false);
@@ -41,7 +51,7 @@ export function PlayerRewards() {
         where("uid", "==", user.uid),
         where("status", "==", "available"),
       );
-      const unsubscribeRewards = onSnapshot(
+      unsubscribeRewards = onSnapshot(
         q,
         (snapshot) => {
           const fetched = snapshot.docs.map(
@@ -55,10 +65,12 @@ export function PlayerRewards() {
           setLoading(false);
         },
       );
-      return unsubscribeRewards;
     });
 
-    return () => unsubscribeAuth();
+    return () => {
+      unsubscribeRewards?.();
+      unsubscribeAuth();
+    };
   }, []);
 
   // Aktif ödül listesi değişince (ör. kullanılan bir ödül artık "available"

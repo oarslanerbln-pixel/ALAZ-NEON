@@ -1,15 +1,26 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { doc, collection, query, where, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { Sentinel } from "../lib/sentinel";
 import { HOST_HEARTBEAT_MS } from "../lib/liveness";
 import { useHeartbeat } from "./useHeartbeat";
+import { isAnswerForRound, submittedPlayerIdsForRound, type RoundAnswerRef } from "../lib/arenaRound";
+import { withoutUndefined } from "../lib/firestoreData";
 import type { Room, Player, Answer } from "../types/database";
 
 export function useHostRoom(roomId: string | null) {
   const [room, setRoom] = useState<Room | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
-  const [submittedPlayerIds, setSubmittedPlayerIds] = useState<string[]>([]);
+  /**
+   * Odadaki cevapların yalnızca "kim, hangi tura" bilgisi (cevap kimliğine
+   * göre). "Bu tura kim cevap verdi" buradan TÜRETİLİYOR — eskiden gelen her
+   * cevap bir listeye ekleniyor, liste de harf değişince sıfırlanıyordu; host
+   * yenilemesinde ilk anlık görüntü gecenin bütün cevaplarını listeye doldurup
+   * turu erken bitiriyordu (bkz. lib/arenaRound.ts).
+   */
+  const [answerRefs, setAnswerRefs] = useState<Record<string, RoundAnswerRef>>({});
+  /** Cevap dinleyicisinin, o anki turu bilmesi için odanın son hâli. */
+  const latestRoomRef = useRef<Room | null>(null);
   const [loading, setLoading] = useState(Boolean(roomId));
   const [notFound, setNotFound] = useState(!roomId);
   const [error, setError] = useState<Error | null>(null);
@@ -22,7 +33,7 @@ export function useHostRoom(roomId: string | null) {
     setTrackedRoomId(roomId);
     setRoom(null);
     setPlayers([]);
-    setSubmittedPlayerIds([]);
+    setAnswerRefs({});
     setError(null);
     setLoading(Boolean(roomId));
     setNotFound(!roomId);
@@ -41,11 +52,14 @@ export function useHostRoom(roomId: string | null) {
       doc(db, "rooms", roomId),
       (docSnap) => {
         if (docSnap.exists()) {
-          setRoom({ id: docSnap.id, ...docSnap.data() } as Room);
+          const next = { id: docSnap.id, ...docSnap.data() } as Room;
+          latestRoomRef.current = next;
+          setRoom(next);
           setNotFound(false);
         } else {
           // Oda silinmiş ya da hiç yok — sessizce null'da kalma, bildir
           console.error("[useHostRoom] Oda bulunamadı:", roomId);
+          latestRoomRef.current = null;
           setRoom(null);
           setNotFound(true);
         }
@@ -79,25 +93,46 @@ export function useHostRoom(roomId: string | null) {
     // 3. Answer Tracking Subscription
     const qAnswers = query(collection(db, "answers"), where("room_id", "==", roomId));
     const answersUnsub = onSnapshot(qAnswers, (snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === "added") {
-          const newAnswer = { id: change.doc.id, ...change.doc.data() } as Answer;
-          
-          let totalAnswerLength = 0;
-          if (newAnswer.data) {
-            Object.values(newAnswer.data).forEach(val => {
-              totalAnswerLength += val ? val.toString().length : 0;
-            });
+      const changes = snapshot.docChanges();
+      if (changes.length === 0) return;
+
+      setAnswerRefs((prev) => {
+        const next = { ...prev };
+        for (const change of changes) {
+          if (change.type === "removed") {
+            delete next[change.doc.id];
+            continue;
           }
-
-          const dummyText = "X".repeat(totalAnswerLength);
-          Sentinel.processIncomingAnswer(newAnswer.player_id, dummyText);
-
-          setSubmittedPlayerIds((prev) => [
-            ...new Set([...prev, newAnswer.player_id]),
-          ]);
+          const data = change.doc.data() as Answer;
+          next[change.doc.id] = {
+            player_id: data.player_id,
+            round_letter: data.round_letter,
+            round_index: data.round_index,
+          };
         }
+        return next;
       });
+
+      // Hız radarı yalnızca O ANKİ TURUN cevaplarına bakmalı. Önceki turdan
+      // kalmış, kafe wifi'si yüzünden kuyrukta bekleyip yeni tur başlarken
+      // ulaşan bir cevap "tur başladıktan 1 sn sonra 30 harf" gibi görünüp
+      // oyuncuyu gece boyunca sessizce yasaklatıyordu.
+      const current = latestRoomRef.current;
+      for (const change of changes) {
+        if (change.type !== "added") continue;
+        const newAnswer = change.doc.data() as Answer;
+        if (!isAnswerForRound(newAnswer, current?.active_letter, current?.current_round)) continue;
+
+        let totalAnswerLength = 0;
+        if (newAnswer.data) {
+          Object.values(newAnswer.data).forEach(val => {
+            totalAnswerLength += val ? val.toString().length : 0;
+          });
+        }
+
+        const dummyText = "X".repeat(totalAnswerLength);
+        Sentinel.processIncomingAnswer(newAnswer.player_id, dummyText);
+      }
     }, (err) => {
       console.error("[useHostRoom] Cevaplar dinlenemedi:", err);
       setError(err);
@@ -110,15 +145,10 @@ export function useHostRoom(roomId: string | null) {
     };
   }, [roomId]);
 
-  // Reset submitted IDs when letter changes
-  useEffect(() => {
-    if (room?.active_letter) {
-      setTimeout(
-        () => setSubmittedPlayerIds((prev) => (prev.length > 0 ? [] : prev)),
-        0,
-      );
-    }
-  }, [room?.active_letter]);
+  const submittedPlayerIds = useMemo(
+    () => submittedPlayerIdsForRound(Object.values(answerRefs), room?.active_letter, room?.current_round),
+    [answerRefs, room?.active_letter, room?.current_round],
+  );
 
   const updateRoomStatus = useCallback(async (
     status: Room["status"],
@@ -126,12 +156,15 @@ export function useHostRoom(roomId: string | null) {
   ) => {
     if (!roomId) return;
     
+    // Firestore `undefined` alanı olan yazmayı senkron reddediyor; tek geçit
+    // burası olduğu için temizlik de burada (bkz. lib/firestoreData.ts).
+    const fields = withoutUndefined(extra);
     // Optimistic UI Update
-    setRoom((prev) => (prev ? { ...prev, status, ...extra } : prev));
+    setRoom((prev) => (prev ? { ...prev, status, ...fields } : prev));
     // Yazma hatası çağıranı patlatmasın: eskiden reject olunca
     // startGame/handleSpinnerComplete yarıda kalıp oyun donuyordu.
     try {
-      await updateDoc(doc(db, "rooms", roomId), { status, ...extra });
+      await updateDoc(doc(db, "rooms", roomId), { status, ...fields });
     } catch (err) {
       console.error("[useHostRoom] Oda güncellenemedi:", status, err);
       setError(err as Error);
@@ -155,6 +188,5 @@ export function useHostRoom(roomId: string | null) {
     error,
     updateRoomStatus,
     updatePlayerScore,
-    setSubmittedPlayerIds,
   };
 }

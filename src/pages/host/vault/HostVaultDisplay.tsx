@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { collection, query, where, onSnapshot, doc, updateDoc, increment } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useLocale } from "../../../hooks/useLocale";
 import type { Room, Player, Answer } from "../../../types/database";
+import { toMillis } from "../../../lib/timestamps";
 import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { NeonIcon } from "../../../components/NeonIcon";
@@ -20,6 +21,7 @@ export function HostVaultDisplay({ room, players, updateRoomStatus }: Props) {
   const [gameState, setGameState] = useState<"intro" | "active" | "reveal">("intro");
   const [guesses, setGuesses] = useState<(Answer & { nickname: string })[]>([]);
   const [isExploding, setIsExploding] = useState(false);
+  const awardedCodeRef = useRef<string | null>(null);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
@@ -57,31 +59,28 @@ export function HostVaultDisplay({ room, players, updateRoomStatus }: Props) {
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
       const newGuesses: (Answer & { nickname: string })[] = [];
-      let winnerId: string | null = null;
 
       snapshot.forEach((docSnap) => {
         const data = docSnap.data() as Answer;
         const player = players.find(p => p.id === data.player_id);
-        if (player) {
-          newGuesses.push({ ...data, nickname: player.nickname });
-          
-          if (data.data.guess === room.vault_code && !winnerId) {
-            winnerId = player.id;
-          }
-        }
+        if (player) newGuesses.push({ ...data, nickname: player.nickname });
       });
 
-      // Sort by creation time so newest is top
-      newGuesses.sort((a, b) => {
-        const timeA = a.created_at ? new Date(a.created_at as string).getTime() : 0;
-        const timeB = b.created_at ? new Date(b.created_at as string).getTime() : 0;
-        return timeB - timeA;
-      });
+      // Kazanan, doğru kodu İLK gönderen: anlık görüntünün iterasyon sırası
+      // zamana göre değil, bu yüzden önce zamana göre sıralıyoruz.
+      newGuesses.sort((a, b) => toMillis(a.created_at) - toMillis(b.created_at));
+      const winnerId = newGuesses.find((g) => g.data?.guess === room.vault_code)?.player_id ?? null;
+      // Ekranda en yeni üstte.
+      newGuesses.reverse();
 
       setGuesses(newGuesses);
 
       // We have a winner!
-      if (winnerId && room.status === "vault_active") {
+      // Tek seferlik: 3 sn'lik kutlama sırasında gelen her yeni tahmin
+      // anlık görüntüyü yeniden tetikliyor ve kazanana her seferinde bir
+      // +500 daha yazılıyordu.
+      if (winnerId && room.status === "vault_active" && awardedCodeRef.current !== room.vault_code) {
+        awardedCodeRef.current = room.vault_code ?? null;
         setIsExploding(true);
         SoundManager.getInstance().playSFX(sounds.SUCCESS);
         SoundManager.getInstance().stopSound(sounds.GAME_PULSE);

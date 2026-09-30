@@ -5,10 +5,12 @@ import type { SensorImage } from "../../../data/sensorImages";
 interface Props {
   currentImage: SensorImage;
   buzzerPlayerName: string | null;
+  /** Kazanılan puan; `null` = kimse bilemedi. */
+  points: number | null;
   onNextRound: () => void;
 }
 
-export function HostSensorReveal({ currentImage, buzzerPlayerName, onNextRound }: Props) {
+export function HostSensorReveal({ currentImage, buzzerPlayerName, points, onNextRound }: Props) {
   const { t } = useLocale();
 
   return (
@@ -44,7 +46,9 @@ export function HostSensorReveal({ currentImage, buzzerPlayerName, onNextRound }
         
         <div className="bg-green-500/10 border border-green-500/30 px-8 py-3 rounded-full mb-12 backdrop-blur-md">
           <p className="text-2xl text-green-400 font-bold tracking-widest uppercase">
-            {t("sensor.wonPoints", buzzerPlayerName || "")}
+            {buzzerPlayerName && points !== null
+              ? t("sensor.wonPoints", buzzerPlayerName, points)
+              : t("sensor.nobodyGotIt")}
           </p>
         </div>
 

@@ -36,22 +36,12 @@ export function PlayerWheelController({ room, player }: Props) {
     haptics.impact();
     SoundManager.getInstance().playSFX(sounds.START);
 
-    const weights = slices.map(s => s.weight || 1);
-    const totalWeight = weights.reduce((a, b) => a + b, 0);
-    let randomVal = Math.random() * totalWeight;
-    let selectedIndex = 0;
-    for (let i = 0; i < slices.length; i++) {
-      randomVal -= weights[i];
-      if (randomVal <= 0) {
-        selectedIndex = i;
-        break;
-      }
-    }
-
     try {
       await updateDoc(doc(db, "rooms", room.id), {
+        // Yalnızca çevirme İSTEĞİ: hangi dilimin çıkacağını TV seçiyor (bkz.
+        // firestore.rules → isWheelSpinRequest, lib/wheel.ts). Dilimler mekânın
+        // ödülleri; sonucu telefonun seçmesi hileye açıktı.
         status: "wheel_spinning",
-        wheel_result_index: selectedIndex
       });
     } catch (error) {
       console.error("Error spinning wheel:", error);

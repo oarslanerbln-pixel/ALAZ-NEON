@@ -19,6 +19,8 @@ import { activePlayers as activePlayersOf } from "../../../lib/liveness";
 import { useLocale } from "../../../hooks/useLocale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useVenue } from "../../../contexts/VenueContextCore";
+import { deleteAynaSurvey, deleteRoomAnswers } from "../../../lib/roomCleanup";
+import { assignTwoTeams, playerResetForGame } from "../../../lib/gameLaunch";
 
 
 
@@ -86,6 +88,18 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
 
   const executeStartGame = async (game: GameType, settings?: Partial<Room>) => {
     SoundManager.getInstance().playSFX(sounds.START);
+    // Yeni oyun temiz bir cevap koleksiyonuyla başlamalı: tur anahtarları
+    // oyunlar arasında tekrarlanıyor ve eski cevaplar yeni oyunun cevabı
+    // sanılıyordu (bkz. lib/roomCleanup.ts). Silme başarısız olsa bile oyun
+    // açılmalı; bu yüzden hata yalnızca loglanıyor.
+    await deleteRoomAnswers(room.id).catch((err) =>
+      console.error("[HostDashboard] Önceki cevaplar silinemedi:", err),
+    );
+    if (game === "ayna" && room.host_uid) {
+      await deleteAynaSurvey(room.id, room.host_uid).catch((err) =>
+        console.error("[HostDashboard] Önceki anket silinemedi:", err),
+      );
+    }
     // Scattegories "lobby" ile başlar. Buraya kalıcı olarak "intro" yazmak
     // oyunu tamamen kilitliyordu: "intro" host'un YEREL sinematik animasyonu,
     // odaya ait bir durum değil. Yerel animasyon bitip gameState "lobby"ye
@@ -95,6 +109,10 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     // onlarda böyle bir sorun yok.
     let initialStatus: Room["status"] = "lobby";
     let extraUpdates: Partial<Room> = { active_game: game, ...settings };
+    // Oyun örneğinin kimliği (gece puanı tek seferlik dağıtılsın, bkz.
+    // lib/nightScore.ts). Aşağıdaki dallar extraUpdates'i yeniden kursa da
+    // yazımdan hemen önce ekleniyor.
+    const gameStartedAt = Date.now();
 
     if (game === "quiz") {
       Promise.all([
@@ -109,6 +127,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
         const startState = (settings?.current_round === 0 || room.current_round === 0) ? "tutorial" : "quiz_intro";
         updateRoomStatus(startState, {
           ...extraUpdates,
+          game_started_at: gameStartedAt,
           current_question_index: 0,
           quiz_questions: questions,
           ...(startState === "tutorial" ? { tutorial_step: 0 } : {})
@@ -118,11 +137,11 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     }
     
     if (game === "bomb") {
-      // Canı olan VE hâlâ sinyal gönderen oyuncular: bomba, telefonu cebine
-      // koyup gitmiş bir misafire verilirse tur süre dolana kadar kilitlenir.
-      const activePlayers = activePlayersOf(
-        players.filter((p) => (p.lives === undefined ? 3 : p.lives) > 0),
-      );
+      // Hâlâ sinyal gönderen oyuncular: bomba, telefonu cebine koyup gitmiş
+      // bir misafire verilirse tur süre dolana kadar kilitlenir. Can süzgeci
+      // yok: canlar aşağıda herkes için yeniden dolduruluyor; önceki bomba
+      // oyununda elenenler de bu oyunun ilk hedefi olabilir.
+      const activePlayers = activePlayersOf(players);
       const randomPlayer = activePlayers.length > 0 ? activePlayers[Math.floor(Math.random() * activePlayers.length)] : null;
       const availableCategories = settings?.categories || room.categories || [];
       const randomCategory = availableCategories.length > 0 ? availableCategories[Math.floor(Math.random() * availableCategories.length)] : "GENEL";
@@ -172,11 +191,29 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
         overload_eliminated_ids: []
       };
     }
+    // Renkler: takım dağılımı ve hedef eskiden yalnızca oyunun kendi
+    // lobisinde yapılıyordu; panel doğrudan "colors_intro" açtığı için o yol
+    // hiç çalışmıyordu (takımlar kimlik harfinden tahmin ediliyor, hedef
+    // oyuncu sayısından bağımsız 100 kalıyordu).
     if (game === "colors") {
       initialStatus = "colors_intro";
       extraUpdates = {
         active_game: game,
+        colors_team_assignments: assignTwoTeams(players.map((p) => p.id)),
+        colors_target_clicks: Math.max(80, players.length * 35),
       };
+    }
+
+    // Şifre ve Birlik ekranları yalnızca *_intro durumunda başlıyor; panel
+    // onları "lobby" ile açtığı için ikisi de tanıtım ekranında sonsuza dek
+    // takılı kalıyordu. Şifre ayrıca önceki oyunun kodunu yeniden kullanıyordu.
+    if (game === "vault") {
+      initialStatus = "vault_intro";
+      extraUpdates = { ...extraUpdates, vault_code: "", vault_winner_id: null };
+    }
+    if (game === "unity") {
+      initialStatus = "unity_intro";
+      extraUpdates = { ...extraUpdates, unity_current: 0, unity_target: Math.max(1, players.length) * 100 };
     }
 
     // Echo / Spectrum / Pulse ekranlari kurulumlarini kendileri yapiyor, ama
@@ -266,19 +303,19 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       };
     }
 
-    // Bar ve Kablo skorlari oyuncu dokumaninda birikiyor ve hicbir yerde
-    // sifirlanmiyordu: ikinci Kablo turu, onceki turun toplami zaten hedefin
-    // ustunde oldugu icin aninca "kazanildi" ekranina duserdi.
-    if (game === "bar" || game === "kablo") {
-      const resetField = game === "bar" ? "bar_score" : "kablo_score";
+    // Oyuncu dokümanındaki oyun sayaçları (Bar, Kablo, Renkler, Spektrum,
+    // Birlik, Bomba canları) gece boyu birikiyordu; sıfırlanmayan sayaç bir
+    // sonraki oyuna taşınıyordu (bkz. lib/gameLaunch.ts).
+    const playerReset = playerResetForGame(game, { bombLives: settings?.bomb_lives });
+    if (playerReset && players.length > 0) {
       const batch = writeBatch(db);
       players.forEach((p) => {
-        batch.update(doc(db, "players", p.id), { [resetField]: 0 });
+        batch.update(doc(db, "players", p.id), playerReset);
       });
       await batch.commit();
     }
 
-    await updateRoomStatus(initialStatus, extraUpdates);
+    await updateRoomStatus(initialStatus, { ...extraUpdates, game_started_at: gameStartedAt });
   };
 
   const joinUrl = `${window.location.protocol}//${window.location.host}/join?code=${room.code}`;
@@ -352,21 +389,38 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
               <h3 className="text-gray-300 font-black text-sm uppercase tracking-widest mb-4">
                 {t("dashboard.playersCount", players.length)}
               </h3>
+              <p className="text-amber-300/80 text-[10px] font-bold uppercase tracking-[0.2em] -mt-3 mb-3">
+                👑 {t("dashboard.nightChampionHint")}
+              </p>
               <div className="flex-1 overflow-y-auto pr-2 space-y-2">
                 {players.length === 0 ? (
                   <div className="text-gray-500 text-sm text-center mt-10">{t("dashboard.waiting")}</div>
                 ) : (
-                  players.map((p) => (
-                    <motion.div
-                      key={p.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="bg-white/5 border border-white/10 p-3 rounded-xl flex justify-between items-center"
-                    >
-                      <span className="font-bold text-white">{p.nickname}</span>
-                      <span className="text-alaz-orange font-mono text-sm">{t("dashboard.pointsSuffix", p.night_score || 0)}</span>
-                    </motion.div>
-                  ))
+                  // Gecenin Şampiyonu: liste gece puanına göre (bkz. lib/nightScore.ts).
+                  // Lider taç alıyor; oyunlar arası rekabeti görünür kılan tek yer TV.
+                  [...players]
+                    .sort((a, b) => (b.night_score || 0) - (a.night_score || 0))
+                    .map((p, i) => {
+                      const isLeader = i === 0 && (p.night_score || 0) > 0;
+                      return (
+                        <motion.div
+                          key={p.id}
+                          layout
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className={`p-3 rounded-xl flex justify-between items-center border ${
+                            isLeader ? "bg-amber-400/15 border-amber-400/60" : "bg-white/5 border-white/10"
+                          }`}
+                        >
+                          <span className="font-bold text-white flex items-center gap-2">
+                            <span className="text-gray-400 font-mono text-xs w-5">{i + 1}.</span>
+                            {isLeader && <span aria-hidden>👑</span>}
+                            {p.nickname}
+                          </span>
+                          <span className="text-alaz-orange font-mono text-sm">{t("dashboard.pointsSuffix", p.night_score || 0)}</span>
+                        </motion.div>
+                      );
+                    })
                 )}
               </div>
             </div>

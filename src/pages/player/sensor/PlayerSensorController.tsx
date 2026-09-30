@@ -30,6 +30,7 @@ export function PlayerSensorController({ room, player }: Props) {
 
   const handleBuzz = async () => {
     if (room.status !== "sensor_active" || isSubmittingRef.current) return;
+    if ((room.sensor_locked_out || []).includes(player.id)) return;
     
     isSubmittingRef.current = true;
     setIsSubmitting(true);
@@ -122,6 +123,21 @@ export function PlayerSensorController({ room, player }: Props) {
       );
     }
 
+    // Bu görselde yanlış cevap verdiyse buzzer yok: bekleme ekranı.
+    if (room.status === "sensor_active" && (room.sensor_locked_out || []).includes(player.id)) {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center p-8 z-10 text-center">
+          <div className="bg-red-950/40 border border-red-500/30 p-8 rounded-3xl backdrop-blur-xl max-w-xs w-full">
+            <span className="text-6xl mb-4 block">🔒</span>
+            <h2 className="text-2xl font-black text-red-500 mb-2 uppercase tracking-wider">
+              {t("sensor.lockedOutTitle")}
+            </h2>
+            <p className="text-gray-300 font-mono text-xs">{t("sensor.lockedOutDesc")}</p>
+          </div>
+        </div>
+      );
+    }
+
     if (room.status === "sensor_active") {
       return (
         <div className="flex-1 flex flex-col items-center justify-center p-6 z-10 w-full max-w-sm mx-auto">
@@ -147,6 +163,9 @@ export function PlayerSensorController({ room, player }: Props) {
           
           <p className="text-red-400 text-xs font-mono font-bold uppercase tracking-widest text-center mt-6 animate-pulse">
             {t("sensor.pressIfYouKnow")}
+          </p>
+          <p className="text-white/50 text-[11px] text-center mt-3 leading-relaxed">
+            {t("sensor.riskHint")}
           </p>
         </div>
       );
@@ -216,7 +235,7 @@ export function PlayerSensorController({ room, player }: Props) {
                   {t("sensor.congrats")}
                 </h2>
                 <span className="text-xs font-mono text-amber-200 uppercase tracking-widest bg-amber-500/20 px-4 py-1.5 rounded-full inline-block">
-                  {t("sensor.correctWonPoints")}
+                  {t("sensor.correctWonPoints", room.sensor_last_points ?? 0)}
                 </span>
               </>
             ) : (

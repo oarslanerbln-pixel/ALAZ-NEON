@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { everyoneLockedOut, resumedStart, revealProgress, sensorPoints, sensorRevealSec } from "../../../lib/sensor";
 import { useSearchParams } from "react-router-dom";
 import { doc, collection, query, where, getDocs, writeBatch } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
@@ -62,12 +63,21 @@ export function HostSensorDisplay({
     ? players.find(pl => pl.id === room.sensor_buzzer_player_id)?.nickname || null
     : null;
 
-  // When somebody buzzes, play sound
+  const revealSec = sensorRevealSec(room.timer_setting);
+
+  // Biri bastığında görselin açılması duraklar. Duraklama anı TV saatiyle
+  // tutuluyor; yanlış cevapta başlangıç bu süre kadar ileri kaydırılır
+  // (bkz. lib/sensor.ts → resumedStart).
+  const pausedAtRef = useRef<number | null>(null);
   useEffect(() => {
     if (gameState === "sensor_buzzed") {
+      pausedAtRef.current = pausedAtRef.current ?? Date.now();
       SoundManager.getInstance().playSFX(sounds.SIREN);
+    } else {
+      pausedAtRef.current = null;
     }
   }, [gameState]);
+  const evaluatingRef = useRef(false);
 
   const startGame = async () => {
     if (!roomId) return;
@@ -102,25 +112,67 @@ export function HostSensorDisplay({
     await updateRoomStatus("sensor_active", {
       sensor_buzzer_player_id: null,
       sensor_buzzer_timestamp: null,
-      sensor_player_answer: null
+      sensor_player_answer: null,
+      sensor_round_started_at: Date.now(),
+      sensor_locked_out: [],
+      sensor_last_points: null,
+    });
+  };
+
+  /** Kimse bilemedi (ya da herkes kilitlendi): görseli puansız açıkla. */
+  const revealWithoutWinner = async () => {
+    SoundManager.getInstance().playSFX(sounds.FAILURE);
+    await updateRoomStatus("sensor_reveal", {
+      sensor_buzzer_player_id: null,
+      sensor_player_answer: null,
+      sensor_last_points: null,
     });
   };
 
   const handleEvaluate = async (isCorrect: boolean) => {
-    if (isCorrect && room.sensor_buzzer_player_id) {
-      SoundManager.getInstance().playSFX(sounds.SUCCESS);
-      // Add 100 points to the buzzer player's EXISTING total, not overwrite it
-      const buzzerPlayer = players.find(p => p.id === room.sensor_buzzer_player_id);
-      const currentScore = buzzerPlayer?.total_score ?? 0;
-      await updatePlayerScore(room.sensor_buzzer_player_id, currentScore + 100);
-      await updateRoomStatus("sensor_reveal");
-    } else {
+    // Hakem düğmesine çift dokunuş iki kez puan/kilit yazmasın.
+    if (evaluatingRef.current) return;
+    evaluatingRef.current = true;
+    try {
+      const now = Date.now();
+      const pausedAt = pausedAtRef.current ?? now;
+      const buzzerId = room.sensor_buzzer_player_id;
+
+      if (isCorrect && buzzerId) {
+        SoundManager.getInstance().playSFX(sounds.SUCCESS);
+        // Puan, basıldığı andaki açılma oranına göre: erken basan çok kazanır.
+        const points = sensorPoints(revealProgress(room.sensor_round_started_at, pausedAt, revealSec));
+        const buzzerPlayer = players.find(p => p.id === buzzerId);
+        const currentScore = buzzerPlayer?.total_score ?? 0;
+        await updatePlayerScore(buzzerId, currentScore + points);
+        await updateRoomStatus("sensor_reveal", { sensor_last_points: points });
+        return;
+      }
+
       SoundManager.getInstance().playSFX(sounds.FAILURE);
+      // Yanlış cevap (ya da cevapsız bırakılan buzzer): o oyuncu bu görselde
+      // kilitlenir, görsel KALDIĞI YERDEN açılmaya devam eder.
+      const lockedOut = buzzerId
+        ? [...new Set([...(room.sensor_locked_out || []), buzzerId])]
+        : room.sensor_locked_out || [];
+      if (everyoneLockedOut(players.map(p => p.id), lockedOut)) {
+        await updateRoomStatus("sensor_reveal", {
+          sensor_buzzer_player_id: null,
+          sensor_player_answer: null,
+          sensor_locked_out: lockedOut,
+          sensor_last_points: null,
+        });
+        return;
+      }
       await updateRoomStatus("sensor_active", {
         sensor_buzzer_player_id: null,
         sensor_buzzer_timestamp: null,
-        sensor_player_answer: null
+        sensor_player_answer: null,
+        sensor_locked_out: lockedOut,
+        sensor_round_started_at: resumedStart(room.sensor_round_started_at || pausedAt, pausedAt, now),
       });
+    } finally {
+      evaluatingRef.current = false;
     }
   };
   
@@ -211,6 +263,8 @@ export function HostSensorDisplay({
               currentImage={currentImage} 
               buzzerPlayerName={buzzerPlayerName} 
               onEvaluate={handleEvaluate} 
+              onSkip={revealWithoutWinner}
+              revealSec={revealSec}
             />
           )}
 
@@ -218,6 +272,7 @@ export function HostSensorDisplay({
             <HostSensorReveal 
               currentImage={currentImage} 
               buzzerPlayerName={buzzerPlayerName} 
+              points={room.sensor_last_points ?? null}
               onNextRound={nextRound} 
             />
           )}

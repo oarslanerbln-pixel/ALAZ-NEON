@@ -5,6 +5,7 @@ import { SoundManager, sounds } from "../../../lib/audio";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { useLocale } from "../../../hooks/useLocale";
+import { nextPassFuse } from "../../../lib/bomb";
 
 interface Props {
   room: Room;
@@ -86,14 +87,13 @@ export function HostBombActive({ room, players, onExplode }: Props) {
       prevTargetPlayer.current = room.bomb_target_player;
 
       // Update timer and multiplier on the HOST side
-      const speedMultiplier = Math.max(0.35, (room.bomb_speed_multiplier || 1.0) * 0.95);
-      const newTime = 14000 * speedMultiplier;
+      const { multiplier, fuseMs } = nextPassFuse(room.timer_setting, room.bomb_speed_multiplier);
       updateDoc(doc(db, "rooms", room.id), {
-        bomb_speed_multiplier: speedMultiplier,
-        round_end_time: Date.now() + newTime
+        bomb_speed_multiplier: multiplier,
+        round_end_time: Date.now() + fuseMs
       }).catch(console.error);
     }
-  }, [room.bomb_target_player, bombControls, room.id, room.bomb_speed_multiplier]);
+  }, [room.bomb_target_player, bombControls, room.id, room.bomb_speed_multiplier, room.timer_setting]);
 
   // Handle Reject Action
   const handleReject = async () => {

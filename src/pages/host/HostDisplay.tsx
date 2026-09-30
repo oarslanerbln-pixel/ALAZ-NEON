@@ -8,13 +8,16 @@ import { TVScaleFrame } from "../../components/TVScaleFrame";
 import { KineticSpark } from "../../components/KineticSpark";
 import { DURATION, EASE } from "../../lib/motion";
 import { sounds, SoundManager } from "../../lib/audio";
-import { calculateRoundScores } from "../../lib/scoring";
+import { answerPoints, calculateRoundScores } from "../../lib/scoring";
+import { haveAllPlayersSubmitted, isAnswerForRound } from "../../lib/arenaRound";
+import { deleteRoomAnswers } from "../../lib/roomCleanup";
 import { Sentinel } from "../../lib/sentinel";
 import { grantGameRewards } from "../../lib/rewards";
 import { useVenue } from "../../contexts/VenueContextCore";
 
 // Hooks
 import { useHostRoom } from "../../hooks/useHostRoom";
+import { useNightScoreAward } from "../../hooks/useNightScoreAward";
 import { useLocale } from "../../hooks/useLocale";
 
 // Types
@@ -49,6 +52,10 @@ export function HostDisplay() {
   const roomId = searchParams.get("roomId");
   const hostRoom = useHostRoom(roomId);
   const { room, loading, notFound, error } = hostRoom;
+
+  // Gecenin Şampiyonu: hangi oyun bitirse bitirsin gece puanı buradan, tek
+  // yerden dağıtılır. Erken dönüşlerden ÖNCE (hook sırası sabit kalmalı).
+  useNightScoreAward(room, hostRoom.players);
 
   // Oyun ekranlarını TV boştayken önceden indir (bkz. preloadHostGameDisplays).
   // Erken dönüşlerden ÖNCE: hook sırası her render'da aynı kalmalı.
@@ -206,6 +213,10 @@ function HostDisplayGame({
     if (!roomId || !room) return;
     setGameState("review");
     setIsAnalyzing(true);
+    // Önceki turun sonuçları temizlenmezse, hiç cevap gelmeyen bir turda
+    // inceleme ve sıralama ekranı GEÇEN TURUN tablosunu bu turunmuş gibi
+    // gösteriyordu (aşağıdaki erken dönüşler state'e dokunmuyor).
+    setRoundResults([]);
 
     await updateRoomStatus("review");
     SoundManager.getInstance().playSFX(sounds.SIREN);
@@ -214,6 +225,7 @@ function HostDisplayGame({
     await new Promise((resolve) => setTimeout(resolve, 2500));
 
     const letterToQuery = room.active_letter || currentLetter;
+    const roundToScore = room.current_round;
 
     const q = query(
       collection(db, "answers"),
@@ -223,7 +235,10 @@ function HostDisplayGame({
     const querySnapshot = await getDocs(q);
     const rawAnswers: Answer[] = [];
     querySnapshot.forEach((docSnap) => {
-      rawAnswers.push({ id: docSnap.id, ...docSnap.data() } as Answer);
+      const answer = { id: docSnap.id, ...docSnap.data() } as Answer;
+      // Aynı harf gecenin başka bir oyununda da çıkmış olabilir: yalnızca bu
+      // turun cevapları (bkz. lib/arenaRound.ts).
+      if (isAnswerForRound(answer, letterToQuery, roundToScore)) rawAnswers.push(answer);
     });
 
     if (!rawAnswers || rawAnswers.length === 0) {
@@ -355,9 +370,11 @@ function HostDisplayGame({
     
     const hasAds = venue.sponsor_ads && venue.sponsor_ads.length > 0;
     const nextState = room.current_round === 0 ? "tutorial" : "countdown";
-    const nextUpdateData = { 
-      tutorial_step: room.current_round === 0 ? 0 : undefined, 
-      used_letters: newUsedLetters 
+    // `tutorial_step: undefined` yazmak Firestore'da senkron hata demekti:
+    // 2. turdan itibaren her geçiş reddedilip TV hata ekranına düşüyordu.
+    const nextUpdateData = {
+      ...(room.current_round === 0 ? { tutorial_step: 0 } : {}),
+      used_letters: newUsedLetters,
     };
 
     if (hasAds) {
@@ -420,64 +437,96 @@ function HostDisplayGame({
 
   const toggleAnswerValidity = (playerId: string, category: string) => {
     SoundManager.getInstance().playSFX(sounds.CLICK);
-    setRoundResults((prev) =>
-      prev.map((res) => {
-        if (res.playerId !== playerId) return res;
-        const targetAns = Reflect.get(res.answers, category);
-        const wasValid = targetAns.isValid;
-        const newValid = !wasValid;
-        const newPoints = newValid ? (targetAns.isUnique ? 20 : 10) : 0;
-        const pointDiff = newPoints - (wasValid ? targetAns.points : 0);
+    const res = roundResults.find((r) => r.playerId === playerId);
+    const targetAns = res && Reflect.get(res.answers, category);
+    if (!res || !targetAns) return;
 
-        const updatedResult = {
-          ...res,
-          roundScore: res.roundScore + pointDiff,
-          totalScore: res.totalScore + pointDiff,
-          answers: {
-            ...res.answers,
-            [category]: { ...targetAns, isValid: newValid, points: newPoints },
-          },
-        };
+    const newValid = !targetAns.isValid;
+    const newPoints = answerPoints({ ...targetAns, isValid: newValid });
+    const pointDiff = newPoints - targetAns.points;
+    const updatedResult = {
+      ...res,
+      roundScore: res.roundScore + pointDiff,
+      totalScore: res.totalScore + pointDiff,
+      answers: {
+        ...res.answers,
+        [category]: { ...targetAns, isValid: newValid, points: newPoints },
+      },
+    };
 
-        updatePlayerScore(res.playerId, updatedResult.totalScore).then();
-        return updatedResult;
-      }),
+    // Yazma, state güncelleyicisinin DIŞINDA: güncelleyici saf olmalı
+    // (StrictMode onu iki kez çalıştırır, yan etki iki kez yazardı).
+    setRoundResults((prev) => prev.map((r) => (r.playerId === playerId ? updatedResult : r)));
+    updatePlayerScore(playerId, updatedResult.totalScore).then();
+  };
+
+  /**
+   * Bir oyun için ödül yalnızca BİR KEZ dağıtılır. "Sonraki" düğmesine
+   * dokunmatik ekranda çift dokunmak ya da oyunu erken bitirmek ile son turu
+   * bitirmenin çakışması, kazanana ikinci bir kupon yazıyordu.
+   */
+  const rewardsGrantedRef = useRef(false);
+  const grantRewardsOnce = () => {
+    if (!room || rewardsGrantedRef.current) return;
+    rewardsGrantedRef.current = true;
+    // Ödül dağıtımı Firestore yazma hatasında bile oyunun bitişini
+    // engellememeli — hata varsa sadece konsola düşer.
+    grantGameRewards(room.game_mode, players, venue).catch((err) =>
+      console.error("[HostDisplay] Ödül dağıtımı başarısız:", err),
     );
   };
 
-  const nextStep = async () => {
-    if (!roomId || !room) return;
-    SoundManager.getInstance().playSFX(sounds.START);
-    
-    // Move from review to standings
-    await updateRoomStatus("standings");
-    setGameState("standings");
-  };
-
-  const proceedFromStandings = async () => {
-    if (!roomId || !room) return;
-    SoundManager.getInstance().playSFX(sounds.START);
-
-    if (room.current_round >= room.total_rounds) {
-      // Evaluate best of night before finishing
-      const finalAwards = evaluateBestOfNight(gameHistory);
-      setAwards(finalAwards);
-
-      // Ödül dağıtımı Firestore yazma hatasında bile oyunun bitişini
-      // engellememeli — hata varsa sadece konsola düşer.
-      grantGameRewards(room.game_mode, players, venue).catch((err) =>
-        console.error("[HostDisplay] Ödül dağıtımı başarısız:", err),
-      );
-
-      await updateRoomStatus("finished");
-      setGameState("finished");
-    } else {
-      startGame();
+  /**
+   * İlerleme düğmeleri (inceleme → sıralama → sonraki tur) async; bitmeden
+   * gelen ikinci dokunuş ikinci bir geçiş başlatıyordu (iki farklı harf
+   * çekilip biri diğerini eziyordu).
+   */
+  const advancingRef = useRef(false);
+  const advanceOnce = async (step: () => Promise<void>) => {
+    if (advancingRef.current) return;
+    advancingRef.current = true;
+    try {
+      await step();
+    } finally {
+      advancingRef.current = false;
     }
   };
 
+  const nextStep = () =>
+    advanceOnce(async () => {
+      if (!roomId || !room) return;
+      SoundManager.getInstance().playSFX(sounds.START);
+
+      // Move from review to standings
+      await updateRoomStatus("standings");
+      setGameState("standings");
+    });
+
+  const proceedFromStandings = () =>
+    advanceOnce(async () => {
+      if (!roomId || !room) return;
+      SoundManager.getInstance().playSFX(sounds.START);
+
+      if (room.current_round >= room.total_rounds) {
+        // Evaluate best of night before finishing
+        const finalAwards = evaluateBestOfNight(gameHistory);
+        setAwards(finalAwards);
+        grantRewardsOnce();
+
+        await updateRoomStatus("finished");
+        setGameState("finished");
+      } else {
+        await startGame();
+      }
+    });
+
   const resetGame = async () => {
     if (!roomId) return;
+    // Yeni oyunun cevapları eskileriyle karışmasın: harf havuzu sıfırlanıyor,
+    // aynı harf aynı tur numarasında yeniden çıkabilir.
+    await deleteRoomAnswers(roomId).catch((err) =>
+      console.error("[HostDisplay] Eski cevaplar silinemedi:", err),
+    );
     const batch = writeBatch(db);
     players.forEach(p => {
       const pRef = doc(db, "players", p.id);
@@ -488,8 +537,16 @@ function HostDisplayGame({
     setRoundResults([]);
     setGameHistory([]);
     setAwards(undefined);
+    rewardsGrantedRef.current = false;
+    endedRoundRef.current = null;
     Sentinel.radar.clearRadar(); // Clear bans on reset
-    await updateRoomStatus("lobby", { current_round: 0, active_letter: "?", used_letters: [] });
+    await updateRoomStatus("lobby", {
+      current_round: 0,
+      active_letter: "?",
+      used_letters: [],
+      // Yeni oyun örneği: gece puanı bu oyun için de verilsin.
+      game_started_at: Date.now(),
+    });
     setGameState("lobby");
   };
 
@@ -499,9 +556,7 @@ function HostDisplayGame({
     if (confirmEnd) {
       const finalAwards = evaluateBestOfNight(gameHistory);
       setAwards(finalAwards);
-      grantGameRewards(room.game_mode, players, venue).catch((err) =>
-        console.error("[HostDisplay] Ödül dağıtımı başarısız:", err),
-      );
+      grantRewardsOnce();
       await updateRoomStatus("finished");
       setGameState("finished");
     }
@@ -548,11 +603,10 @@ function HostDisplayGame({
   // tetiklenmez) iki kez puan yazılmaz.
   useEffect(() => {
     if (gameState !== "playing") return;
-    if (players.length === 0) return;
-    if (submittedPlayerIds.length < players.length) return;
+    if (!haveAllPlayersSubmitted(players, submittedPlayerIds)) return;
     const t = setTimeout(endRoundOnce, 900);
     return () => clearTimeout(t);
-  }, [gameState, submittedPlayerIds.length, players.length, endRoundOnce]);
+  }, [gameState, submittedPlayerIds, players, endRoundOnce]);
 
   // Calculate Aesthetic Tension
   const tensionRatio =
@@ -630,7 +684,7 @@ function HostDisplayGame({
             <HostLobby
               room={room}
               players={players}
-              onStartGame={startGame}
+              onStartGame={() => advanceOnce(startGame)}
               onUpdateCategories={(cats) =>
                 updateRoomStatus("lobby", { categories: cats })
               }

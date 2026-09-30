@@ -78,20 +78,22 @@ export function HostBarDisplay({ room, players, updateRoomStatus }: Props) {
       }
     }, 500);
 
-    // Recipe rotation every 4.5 seconds
+    // Tarif değişim aralığı kurulumdaki "tarif hızı"ndan (Normal 4,5 sn /
+    // Turbo 3 sn). Eskiden sabit 4,5 sn'ydi; ayar hiçbir yere bağlı değildi.
+    const recipeMs = Math.min(10, Math.max(2, room.bar_recipe_sec || 4.5)) * 1000;
     const recipeInterval = setInterval(() => {
       const remaining = Math.max(0, Math.floor((room.bar_end_time! - Date.now()) / 1000));
       if (remaining > 0) {
         const recipe = Array.from({ length: 4 }).map(() => COLORS[Math.floor(Math.random() * COLORS.length)]);
         updateRoomStatus("bar_active", { bar_active_recipe: recipe });
       }
-    }, 4500);
+    }, recipeMs);
 
     return () => {
       clearInterval(timerInterval);
       clearInterval(recipeInterval);
     };
-  }, [gameState, room.bar_end_time, updateRoomStatus]);
+  }, [gameState, room.bar_end_time, room.bar_recipe_sec, updateRoomStatus]);
 
   const sortedPlayers = [...players].sort((a, b) => (b.bar_score || 0) - (a.bar_score || 0));
   const topPlayers = sortedPlayers.slice(0, 5);

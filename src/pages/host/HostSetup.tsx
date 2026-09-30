@@ -11,6 +11,7 @@ import { useLocale } from "../../hooks/useLocale";
 import { useToast } from "../../contexts/ToastContextCore";
 import { errorMessage } from "../../lib/errors";
 import { useVenue } from "../../contexts/VenueContextCore";
+import { useIsStaff } from "../../hooks/useIsStaff";
 
 // Premium Dynamic Glass Panel with Spinning Neon Core
 function GlassPanel({ 
@@ -58,6 +59,11 @@ export function HostSetup() {
   const { t, locale } = useLocale();
   const { showToast } = useToast();
   const { venue } = useVenue();
+  // Ödül kuponlarını yalnızca personel hesabı yazabiliyor (bkz.
+  // firestore.rules → rewards). Mekânda ödül açıkken TV anonim açılırsa
+  // kazananlar sessizce kupon alamazdı; bunu oda açılmadan söylüyoruz.
+  const { isStaff } = useIsStaff();
+  const rewardsBlocked = Boolean(venue.rewards_enabled) && isStaff === false;
   const [isCreating, setIsCreating] = useState(false);
   const isCreatingRef = useRef(false);
 
@@ -158,6 +164,22 @@ export function HostSetup() {
                   />
                 </div>
               </div>
+
+              {rewardsBlocked && (
+                <div
+                  role="status"
+                  className="mt-8 relative z-10 w-full max-w-md mx-auto rounded-xl border border-amber-400/40 bg-amber-500/10 p-4 text-left"
+                >
+                  <p className="text-amber-200 text-xs leading-relaxed font-medium">{t("setup.rewardsNeedStaff")}</p>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/login")}
+                    className="mt-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-300 hover:text-amber-100 underline underline-offset-4"
+                  >
+                    {t("setup.rewardsNeedStaffAction")}
+                  </button>
+                </div>
+              )}
 
               <div className="mt-12 relative z-10 w-full max-w-md mx-auto group">
                 {/* Premium Animated Neon Glow Layer */}

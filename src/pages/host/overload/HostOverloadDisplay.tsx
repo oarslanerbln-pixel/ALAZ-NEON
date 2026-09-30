@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useCallback, useEffect, useState, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { SoundManager, sounds } from "../../../lib/audio";
@@ -22,6 +22,29 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
   const [isExploding, setIsExploding] = useState(false);
   const { venue } = useVenue();
   const hasGrantedReward = useRef(false);
+  /** Gecikmeli patlama yazımının, o arada oyunun bitip bitmediğini görmesi için. */
+  const statusRef = useRef(room.status);
+  useEffect(() => {
+    statusRef.current = room.status;
+  }, [room.status]);
+
+  /**
+   * Ödül yalnızca oyunu gerçekten KAZANANA: en az bir eleme olmuş ve tek
+   * kişi kalmış. Eskiden ayrı bir efekt "uygun oyuncu sayısı 1" olduğu anda
+   * ödül yazıyordu — odada tek başına olan misafir ya da diğerleri telefonunu
+   * kilitlediği için (sinyal kesilince uygun sayılmıyorlar) tek "aktif" kalan
+   * kişi, oyun hiç oynanmadan ücretsiz içecek kazanıyordu.
+   */
+  const grantChampionReward = useCallback(
+    (champion: Player) => {
+      if (hasGrantedReward.current || !champion.uid) return;
+      hasGrantedReward.current = true;
+      grantRewardToPlayers([{ uid: champion.uid, nickname: champion.nickname }], venue).catch((err) =>
+        console.error("[HostOverloadDisplay] Ödül dağıtımı başarısız:", err),
+      );
+    },
+    [venue],
+  );
 
   /**
    * Sirasi gelebilecek oyuncular: elenmemis VE hala sinyal gonderen.
@@ -43,6 +66,12 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
 
   // Host Logic (Server Authoritative)
   useEffect(() => {
+    // Döngü YALNIZCA oyun sürerken çalışır. Eskiden durum kontrolü yoktu:
+    // "finished" ekranındayken son hedefin sayacı akmaya devam ediyor, sıfıra
+    // inince şampiyonu da eleyip odayı yeniden "playing"e çekiyordu — kupa
+    // ekranı 10 sn sonra kayboluyor, oda hedefsiz bir "playing"de kilitli
+    // kalıyordu. "Oyunu bitir" düğmesi de aynı yolla geri alınıyordu.
+    if (room.status !== "playing") return;
     if (eligiblePlayers.length === 0) return;
 
     if (!room.overload_target_id || room.overload_target_id === "passing" || !eligiblePlayers.find(p => p.id === room.overload_target_id)) {
@@ -67,8 +96,9 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
     }
 
     // Win condition (1 survivor)
-    if (eligiblePlayers.length === 1 && (room.overload_eliminated_ids?.length || 0) > 0 && room.status !== "finished") {
+    if (eligiblePlayers.length === 1 && (room.overload_eliminated_ids?.length || 0) > 0) {
       SoundManager.getInstance().playSFX(sounds.FANFARE);
+      grantChampionReward(eligiblePlayers[0]);
       updateRoomStatus("finished");
       return;
     }
@@ -96,6 +126,12 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
         const newEliminated: string[] = [...(room.overload_eliminated_ids || []), room.overload_target_id as string];
         
         setTimeout(() => {
+          // Patlama animasyonu sürerken host oyunu bitirmiş olabilir; bu
+          // yazma onu geri almamalı.
+          if (statusRef.current !== "playing") {
+            setIsExploding(false);
+            return;
+          }
           updateRoomStatus("playing", {
             overload_target_id: null,
             overload_last_target_id: null,
@@ -109,21 +145,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
     }, 100);
 
     return () => clearInterval(interval);
-  }, [room.overload_target_id, room.overload_last_target_id, room.status, room.overload_start_time, room.overload_time_allowed, eligiblePlayers, isExploding, updateRoomStatus, room.overload_eliminated_ids]);
-
-  // Give reward to champion
-  useEffect(() => {
-    if (eligiblePlayers.length !== 1 || hasGrantedReward.current) return;
-    const champion = eligiblePlayers[0];
-    if (!champion?.uid) return;
-    hasGrantedReward.current = true;
-    grantRewardToPlayers(
-      [{ uid: champion.uid, nickname: champion.nickname }],
-      venue,
-    ).catch((err) =>
-      console.error("[HostOverloadDisplay] Ödül dağıtımı başarısız:", err),
-    );
-  }, [eligiblePlayers, venue]);
+  }, [room.overload_target_id, room.overload_last_target_id, room.status, room.overload_start_time, room.overload_time_allowed, eligiblePlayers, isExploding, updateRoomStatus, room.overload_eliminated_ids, grantChampionReward]);
 
   return (
     <TVScaleFrame>
@@ -193,12 +215,15 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
                 room={room}
                 players={players}
                 onStartGame={async () => {
+                  hasGrantedReward.current = false;
                   const pool = activePlayersOf(players);
                   const nextTarget = pool[Math.floor(Math.random() * pool.length)];
                   await updateRoomStatus("playing", {
                     overload_target_id: nextTarget?.id || null,
                     overload_start_time: Date.now(),
-                    overload_eliminated_ids: []
+                    overload_eliminated_ids: [],
+                    // Yeni oyun örneği: gece puanı bu oyun için de verilsin.
+                    game_started_at: Date.now(),
                   });
                 }}
                 onUpdateCategories={async () => {}}
