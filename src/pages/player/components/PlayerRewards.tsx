@@ -116,7 +116,7 @@ export function PlayerRewards() {
             </div>
             <button
               onClick={() => setOpenReward(reward)}
-              className="px-3 py-2 bg-[#ff003c]/20 border border-[#ff003c]/50 text-[#ff003c] text-[10px] uppercase font-bold tracking-widest group-hover:bg-[#ff003c] group-hover:text-black transition-colors"
+              className="px-3 py-2 bg-[#ff003c]/20 border border-[#ff003c]/50 text-[#ff003c] text-[10px] uppercase font-bold tracking-widest group-hover:bg-[#ff003c] group-hover:text-black transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
               {t("rewards.use")}
             </button>
@@ -148,7 +148,7 @@ export function PlayerRewards() {
             >
               <button
                 onClick={() => setOpenReward(null)}
-                className="absolute top-3 right-3 text-white/40 hover:text-white text-xl leading-none"
+                className="absolute top-3 right-3 text-white/40 hover:text-white text-xl leading-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                 aria-label={t("rewards.close")}
               >
                 ✕

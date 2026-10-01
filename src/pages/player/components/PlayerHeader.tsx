@@ -165,7 +165,7 @@ export function PlayerHeader({
         {/* Mute Button */}
         <button
           onClick={handleToggleMute}
-          className="shrink-0 w-8 h-8 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all active:scale-95 ml-1"
+          className="shrink-0 w-8 h-8 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all active:scale-95 ml-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           aria-label={isMuted ? t("common.soundOn") : t("common.soundOff")}
           title={isMuted ? t("common.soundOn") : t("common.soundOff")}
         >
@@ -180,7 +180,7 @@ export function PlayerHeader({
               navigate("/");
             }
           }}
-          className="shrink-0 w-8 h-8 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-500/30 flex items-center justify-center text-red-400 hover:text-red-200 transition-all active:scale-95 ml-0.5"
+          className="shrink-0 w-8 h-8 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-500/30 flex items-center justify-center text-red-400 hover:text-red-200 transition-all active:scale-95 ml-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           aria-label={t("common.leaveGame")}
           title={t("common.leaveGame")}
         >
