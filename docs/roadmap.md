@@ -458,6 +458,20 @@ Uygulama notları:
 > - **Kontrast:** axe, neon arka plan görselleri ve gradyanlar yüzünden
 >   ~13–26 öğe/ekran için karar veremiyor ("incomplete"). Bunlar testte not
 >   olarak raporlanıyor; elle gözden geçirme gerekiyor.
+>
+> **2.7 başladı — `GameSettingsModal` ayrıştırıldı** (868 → 187 satır).
+> - **Önce kalkan:** `e2e/game-settings.spec.ts` klasik oyun ve quiz
+>   ayarlarını seçip odaya yazılanları doğruluyor. Kalkan eski kodda yeşil
+>   olduğu görüldükten sonra ayrıştırmaya geçildi.
+> - **Durum:** 17 `useState` → tek form nesnesi. Oyun varsayılanları ve odaya
+>   yazılan ayarlar `lib/gameSettings.ts`'te (saf, 9 birim testi).
+> - **Görünüm:** 14 kez kopyalanmış seçenek ızgarası → `OptionGrid`. Oyun
+>   başına bölümler iki dosyada, meta veriler ayrı modülde; hepsi < 400
+>   satır.
+> - **Bulgu (davranış korunarak bırakıldı):** "can sayısı" (bomba sabit 3
+>   kullanıyor), "2X final", "tarif hızı" ve "zafer koşulu" seçimleri hiçbir
+>   yere yazılmıyor; ekranda seçilebiliyor ama etkisi yok. Ya bağlanmalı ya
+>   kaldırılmalı (ürün kararı).
 
 | İş | Kapsar | Efor | Kabul kriteri |
 |---|---|---|---|
