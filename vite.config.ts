@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { sentryVitePlugin } from '@sentry/vite-plugin'
 import { execSync } from 'child_process'
+import { readFileSync } from 'fs'
 import os from 'os'
 
 function getLocalIP() {
@@ -43,8 +44,36 @@ const sentryUpload = Boolean(
   process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG && process.env.SENTRY_PROJECT,
 );
 
+/**
+ * `vite preview` yayınla aynı güvenlik başlıklarını versin (tek kaynak:
+ * vercel.json). Uçtan uca testler CSP'yi ZORLAYICI kipte uygular ve ihlal
+ * olmadığını doğrular; üretimde politika şimdilik Report-Only
+ * (docs/roadmap.md, 2.10). Emulator adresleri yalnızca testte eklenir.
+ */
+function previewHeaders(): Record<string, string> {
+  const vercel = JSON.parse(readFileSync(new URL('./vercel.json', import.meta.url), 'utf8')) as {
+    headers: { source: string; headers: { key: string; value: string }[] }[]
+  }
+  const all = vercel.headers.find((h) => h.source === '/(.*)')?.headers ?? []
+  const headers: Record<string, string> = {}
+  for (const { key, value } of all) {
+    if (key === 'Content-Security-Policy-Report-Only') {
+      const extra = process.env.CSP_EXTRA_CONNECT
+      headers['Content-Security-Policy'] = extra
+        ? value.replace("connect-src 'self'", `connect-src 'self' ${extra}`)
+        : value
+    } else {
+      headers[key] = value
+    }
+  }
+  return headers
+}
+
 // https://vite.dev/config/
 export default defineConfig({
+  preview: {
+    headers: previewHeaders(),
+  },
   define: {
     __LOCAL_IP__: JSON.stringify(localIp),
     'import.meta.env.VITE_APP_RELEASE': JSON.stringify(release),

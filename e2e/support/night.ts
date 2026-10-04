@@ -3,6 +3,7 @@ import { expect, type Browser, type Page } from "@playwright/test";
 import { createStaffAccount, readDoc } from "./emulator";
 import { LOCALE_INIT_SCRIPT, t } from "./i18n";
 import { WAKE_LOCK_INIT_SCRIPT } from "./wakeLock";
+import { CSP_INIT_SCRIPT } from "./csp";
 
 export const STAFF_EMAIL = "personel@hengame.test";
 export const STAFF_PASSWORD = "e2e-sifre-123";
@@ -12,6 +13,7 @@ export async function newDevice(browser: Browser): Promise<Page> {
   const context = await browser.newContext();
   await context.addInitScript(LOCALE_INIT_SCRIPT);
   await context.addInitScript(WAKE_LOCK_INIT_SCRIPT);
+  await context.addInitScript(CSP_INIT_SCRIPT);
   return context.newPage();
 }
 

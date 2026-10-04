@@ -393,6 +393,22 @@ Uygulama notları:
 >   hataları hariç, kapsam başına oturumda en fazla 5. Yazma hataları
 >   eskisi gibi yalnızca sözleşme ihlalinde raporlanıyor.
 > - `@sentry/vite-plugin` 5.x (4.x eski `unplugin` zinciri getiriyordu).
+>
+> **2.10 tamamlandı (yayın).**
+> - **Tek hedef Vercel.** `firebase.json`'dan hosting bloğu çıkarıldı:
+>   çıplak `firebase deploy` artık eski bir siteyi Firebase Hosting'e
+>   yayınlayamaz. Kurallar `--only firestore:rules` ile dağıtılıyor.
+> - **Önbellek:** `/assets/*` bir yıl `immutable`; `public/` medyası 1 gün
+>   + `stale-while-revalidate`.
+> - **Güvenlik başlıkları:** `nosniff`, `X-Frame-Options: DENY`,
+>   `Referrer-Policy`, HSTS ve `Permissions-Policy`. Sonuncusu ekran
+>   kilidine (2.5) izin verip kamera/mikrofon/konumu kapatıyor.
+> - **CSP üretimde Report-Only.** `vite preview` aynı politikayı
+>   vercel.json'dan okuyup zorlayıcı kipte uyguluyor. E2E tüm akışlarda
+>   ihlal olmadığını doğruluyor; kırmızı deneme ile toplayıcının çalıştığı
+>   görüldü. reCAPTCHA (telefon girişi, App Check) testte yok; birkaç gece
+>   temiz konsoldan sonra anahtar adı değiştirilerek zorlanacak.
+> - `hostingHeaders.test.ts` başlık sözleşmesini denetliyor.
 
 | İş | Kapsar | Efor | Kabul kriteri |
 |---|---|---|---|
