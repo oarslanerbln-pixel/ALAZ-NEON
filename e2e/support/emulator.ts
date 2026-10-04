@@ -75,6 +75,27 @@ function decode(value: FirestoreValue): unknown {
   );
 }
 
+function encode(value: unknown): FirestoreValue {
+  if (value === null || value === undefined) return { nullValue: null };
+  if (typeof value === "string") return { stringValue: value };
+  if (typeof value === "boolean") return { booleanValue: value };
+  if (typeof value === "number") return Number.isInteger(value) ? { integerValue: String(value) } : { doubleValue: value };
+  if (Array.isArray(value)) return { arrayValue: { values: value.map(encode) } };
+  return { mapValue: { fields: Object.fromEntries(Object.entries(value).map(([k, v]) => [k, encode(v)])) } };
+}
+
+/** Bir dokümanı kurallardan bağımsız yazar (tohum veri; varsa üzerine yazar). */
+export async function writeDoc(path: string, data: Record<string, unknown>): Promise<void> {
+  await ok(
+    await fetch(`${DOCS}/${path}`, {
+      method: "PATCH",
+      headers: { ...OWNER, "Content-Type": "application/json" },
+      body: JSON.stringify({ fields: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, encode(v)])) }),
+    }),
+    `${path} yazılamadı`,
+  );
+}
+
 /** Bir dokümanı kurallardan bağımsız okur; yoksa null. */
 export async function readDoc(path: string): Promise<Record<string, unknown> | null> {
   const res = await fetch(`${DOCS}/${path}`, { headers: OWNER });

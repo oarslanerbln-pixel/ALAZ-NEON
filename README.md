@@ -207,6 +207,7 @@ per collection:
 | `answers`  | `expires_at` |
 | `ayna_survey` | `expires_at` |
 | `events`   | `expires_at` |
+| `ad_impressions` | `expires_at` |
 
 Or with the gcloud CLI:
 

@@ -15,6 +15,7 @@ import type { QuizPack } from "../src/lib/quizPack";
 import {
   COUNTER_MAX_STEP,
   UNITY_MAX_STEP,
+  adImpressionPayload,
   aynaGuessPayload,
   aynaSurveyPayload,
   bombPassPayload,
@@ -1736,5 +1737,45 @@ describe("answers — Şifre ipucunu yalnızca host yazar", () => {
     await assertFails(updateDoc(doc(asPlayer(), "answers", ref.id), vaultFeedbackPayload(["correct", "correct", "correct", "correct"])));
     await assertFails(updateDoc(doc(asHost(), "answers", ref.id), { feedback: [...FEEDBACK], data: { guess: "9999" } }));
     await assertFails(updateDoc(doc(asHost(), "answers", ref.id), vaultFeedbackPayload(["correct"] as never)));
+  });
+});
+
+describe("ad_impressions — sponsor gösterim kaydı (3.3)", () => {
+  beforeEach(() => seed({ status: "ad_break" }));
+  const impression = (hostUid = HOST_UID, over: Partial<Parameters<typeof adImpressionPayload>[0]> = {}) =>
+    adImpressionPayload({
+      ad: { id: "ad1", sponsor_name: "Neon Cola", type: "image" },
+      roomId: ROOM_ID,
+      hostUid,
+      startedAt: 1_760_000_000_000,
+      shownMs: 10_000,
+      plannedMs: 10_000,
+      completed: true,
+      audience: 12,
+      ...over,
+    });
+
+  it("odanın host'u (personel) gösterimi yazar, personel okur", async () => {
+    await seedStaff(HOST_UID);
+    await assertSucceeds(addDoc(collection(asHost(), "ad_impressions"), impression()));
+    await assertSucceeds(getDocs(collection(asHost(), "ad_impressions")));
+  });
+
+  it("oyuncu ve başka odanın personeli yazamaz; oyuncu okuyamaz", async () => {
+    await seedStaff(HOST_UID);
+    await seedStaff(OWNER_UID);
+    await assertFails(addDoc(collection(asPlayer(), "ad_impressions"), impression(PLAYER_UID)));
+    await assertFails(addDoc(collection(asVenueOwner(), "ad_impressions"), impression(OWNER_UID)));
+    await assertFails(getDocs(collection(asPlayer(), "ad_impressions")));
+  });
+
+  it("kayıt değiştirilemez, silinemez; biçim sınırları uygulanır", async () => {
+    await seedStaff(HOST_UID);
+    const ref = await addDoc(collection(asHost(), "ad_impressions"), impression());
+    await assertFails(updateDoc(doc(asHost(), "ad_impressions", ref.id), { completed: false }));
+    await assertFails(deleteDoc(doc(asHost(), "ad_impressions", ref.id)));
+    await assertFails(addDoc(collection(asHost(), "ad_impressions"), { ...impression(), audience: 501 }));
+    await assertFails(addDoc(collection(asHost(), "ad_impressions"), { ...impression(), ad_type: "popup" }));
+    await assertFails(addDoc(collection(asHost(), "ad_impressions"), { ...impression(), clicks: 3 }));
   });
 });

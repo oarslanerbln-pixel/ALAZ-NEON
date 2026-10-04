@@ -573,7 +573,7 @@ Uygulama notları:
 |---|---|---|
 | 3.1 Çok mekan: `venues/{venueId}`, mekan başına personel, oda ↔ mekan bağı, `isStaffOf(venueId)` + veri göçü | A5, B1 | L |
 | 3.2 Telemetri (`events`, host yazar) + mekan KPI paneli / haftalık rapor ✅ | O2, B3 | M |
-| 3.3 Sponsor ekranı + proof-of-play kaydı ve sponsor raporu | B2 | M |
+| 3.3 Sponsor ekranı + proof-of-play kaydı ve sponsor raporu ✅ | B2 | M |
 | 3.4 İçerik hattı: JSON + şema doğrulama + mekan/kurum özel soru paketi ✅ | B4 | M |
 | 3.5 D2: Blaze + Cloud Functions (ödül, puanlama, custom claim, temizlik), bütçe alarmıyla | D2 | L |
 
@@ -657,6 +657,30 @@ Uygulama notları:
 > - **Kalkan:** `hardcodedText.test.ts` (AST taraması). Yalnızca marka/süs
 >   metinlerine izin veriyor.
 > - **Kalan:** `src/pages/admin/` (yalnızca personel) hâlâ sabit Türkçe.
+>
+> **3.3 tamamlandı (sponsor ekranı + proof-of-play).**
+> - **Reklam arası her yerde:** artık yalnızca klasik oyunda değil, TV
+>   panosundan oyunlar arasında da veriliyor (mekanın reklamı varsa).
+>   Telefonlar reklam ekranını gösteriyor.
+> - **Gösterim kaydı (`ad_impressions`):** her reklam için sponsor,
+>   ekranda kalınan süre, planlanan süre, sonuna kadar gösterildi mi
+>   (atlanan ya da kesilen de kaydediliyor) ve bağlı misafir sayısı. Yalnızca
+>   odanın host'u yazar, personel okur; kayıt değiştirilemez, silinemez.
+> - **Rapor:** `/admin/report`'ta sponsor başına gösterim, tam gösterim
+>   oranı, ekran süresi, ortalama izleyici; satır satır döküm CSV olarak
+>   (sponsora ek / fatura). Mantık `lib/sponsorReport.ts`'te.
+> - **Düzeltilen iki hata:**
+>   - Görsel reklamın zamanlayıcısı TV'nin her oda güncellemesinde baştan
+>     başlıyordu; reklam hiç bitmeyebiliyordu.
+>   - Yüklenemeyen video reklam arasını sonsuza dek kilitliyordu.
+> - **Kalkan:**
+>   - 3 kural testi.
+>   - Rapor birim testleri.
+>   - `e2e/sponsor.spec.ts`: reklam arası, kayıt, rapor.
+> - **Yayında gereken:** kural dağıtımı ve `ad_impressions` için TTL
+>   (README).
+>
+> **3.1 tasarımı:** `docs/design/3.1-cok-mekan.md` (onay bekliyor).
 
 ## 6. Başarı metrikleri
 

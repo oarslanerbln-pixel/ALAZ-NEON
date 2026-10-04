@@ -36,7 +36,8 @@ değiştirmez (buzz gibi yarışlı işlemler `runTransaction` ile).
 
 Firestore koleksiyonları: `rooms` (durum makinesi), `players` (skorlar),
 `answers` (cevaplar), `events` (oyun telemetrisi; yalnızca host yazar),
-`quiz_packs` (soru paketleri; yalnızca personel), ayrıca mekan/ödül/rapor
+`quiz_packs` (soru paketleri; yalnızca personel), `ad_impressions`
+(sponsor gösterim kaydı; yalnızca host yazar), ayrıca mekan/ödül/rapor
 koleksiyonları.
 
 ## Dosya haritası
