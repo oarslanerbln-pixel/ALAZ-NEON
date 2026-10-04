@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const captureException = vi.fn();
-vi.mock("@sentry/react", () => ({ captureException: (...args: unknown[]) => captureException(...args) }));
+vi.mock("../monitoring", () => ({ captureException: (...args: unknown[]) => captureException(...args) }));
 
 import { isContractViolation, reportWriteError } from "../writeErrors";
 

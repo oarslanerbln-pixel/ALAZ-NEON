@@ -56,13 +56,18 @@ Firestore koleksiyonları: `rooms` (durum makinesi), `players` (skorlar),
 Bunları baştan sona okuma, hedefli `grep` ile gir:
 
 - `src/lib/quizQuestions.ts` (~2100 satır) — quiz havuzu
-- `src/lib/i18n.ts` (~1700 satır) — tr/de/en çeviri sözlüğü
+- `src/lib/i18n/{de,tr,en}.ts` (~940'ar satır) — dil başına çeviri sözlüğü
+  (`de` kaynak ve girişte; `tr`/`en` seçilince tembel iner, bkz. `lib/i18n.ts`)
 - `src/pages/host/HostDisplay.tsx`, `src/pages/host/quiz/HostQuizDisplay.tsx` (~840'ar satır)
 
 ## Konvansiyonlar
 
 - Kullanıcıya görünen her metin `useLocale().t("anahtar")` üzerinden; tr/de/en
-  üçü birden doldurulur. `i18nKeys.test.ts` eksik anahtarı yakalar.
+  üçü birden doldurulur: anahtar önce `i18n/de.ts`'e, sonra aynı türle
+  `tr.ts`/`en.ts`'e. Eksik ya da fazla anahtar derleme hatasıdır
+  (`satisfies Dictionary`); `i18nKeys.test.ts` tanımsız `t()` çağrısını yakalar.
+- Hata raporu için `@sentry/react`'i doğrudan içe aktarma; `lib/monitoring.ts`
+  (`captureException`) kullan — SDK giriş paketinde değil, boşta iner.
 - Yeni bir `RoomStatus` eklediğinde hem `HostDisplay` hem `PlayerGame`
   tarafında ele al — karşılıksız status **siyah ekran** demektir.
 - Yeni oyun modu: `GameType` + `gameCatalog.ts` kartı + `host/gameDisplays.ts`

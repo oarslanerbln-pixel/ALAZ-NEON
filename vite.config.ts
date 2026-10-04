@@ -32,8 +32,10 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          "vendor-react": ["react", "react-dom", "react-router-dom"],
-          "vendor-firebase": ["firebase/app", "firebase/firestore", "firebase/app-check"],
+          // react-dom/client ve firebase/auth ayrı giriş noktaları: listelenmezse
+          // uygulamanın giriş paketine düşüp her yayında yeniden indiriliyordu.
+          "vendor-react": ["react", "react-dom", "react-dom/client", "react-router-dom"],
+          "vendor-firebase": ["firebase/app", "firebase/firestore", "firebase/app-check", "firebase/auth"],
           "vendor-motion": ["framer-motion"],
         },
       },
