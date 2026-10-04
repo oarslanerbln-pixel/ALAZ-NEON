@@ -210,6 +210,7 @@ export function PlayerBombController({ room, player }: Props) {
 
             <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
               <input
+                aria-label={t("bomb.typeAndThrow")}
                 type="text"
                 value={word}
                 onChange={(e) => setWord(e.target.value)}

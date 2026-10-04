@@ -357,7 +357,16 @@ export function HostReview({
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => onToggleAnswer(res.playerId, cat)}
-                        className={`p-5 rounded-none border cursor-pointer transition-all duration-300 relative overflow-hidden group/ans
+                        role="button"
+                        tabIndex={0}
+                        aria-pressed={!isRejected}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            onToggleAnswer(res.playerId, cat);
+                          }
+                        }}
+                        className={`p-5 rounded-none border cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-alaz-orange transition-all duration-300 relative overflow-hidden group/ans
                                                                             ${
                                                                               !isRejected
                                                                                 ? ans.isUnique

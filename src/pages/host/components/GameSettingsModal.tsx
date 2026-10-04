@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useLocale } from "../../../hooks/useLocale";
+import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { getCategoryPresets } from "../../../lib/categoryPresets";
 import { NeonIcon } from "../../../components/NeonIcon";
 import type { GameType, Room } from "../../../types/database";
@@ -155,6 +156,7 @@ const QUIZ_CATEGORIES = [
 export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
   const { t, locale } = useLocale();
   const presets = getCategoryPresets(locale);
+  useEscapeKey(isOpen, onClose);
 
   // Common States
   const [totalRounds, setTotalRounds] = useState("3");
@@ -276,6 +278,7 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
+          role="presentation"
           className="absolute inset-0 bg-black/85 backdrop-blur-2xl"
         />
 
@@ -327,7 +330,9 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
             </div>
 
             <button
+              type="button"
               onClick={onClose}
+              aria-label={t("common.close")}
               className="w-11 h-11 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-gray-300 hover:text-white transition-all active:scale-95 shrink-0 ml-3 cursor-pointer"
             >
               <X className="w-6 h-6 stroke-[2.5]" />
@@ -515,6 +520,10 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
                     </p>
                   </div>
                   <button
+                    type="button"
+                    role="switch"
+                    aria-checked={quizDoubleFinal}
+                    aria-label={t("gameSettings.quizDoubleFinalTitle")}
                     onClick={() => setQuizDoubleFinal(!quizDoubleFinal)}
                     className={`w-14 h-8 rounded-full transition-colors relative p-1 cursor-pointer shrink-0 ml-4 ${
                       quizDoubleFinal ? "bg-cyan-400 shadow-[0_0_15px_rgba(0,229,255,0.6)]" : "bg-white/20"

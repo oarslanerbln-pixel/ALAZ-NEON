@@ -437,6 +437,27 @@ Uygulama notları:
 > - Lighthouse'un PWA kategorisi kaldırıldığı için kabul ölçütü
 >   `pwaManifest.test.ts`'e taşındı: kurulum alanları ve PNG ikonların
 >   gerçek boyutları (IHDR) denetleniyor.
+>
+> **2.11 tamamlandı (erişilebilirlik).**
+> - **Statik tarama** (`a11yLabels.test.ts`, TS AST) ilk koşuda şunları
+>   buldu, hepsi düzeltildi:
+>   - 5 adsız ikon düğmesi
+>   - 3 `alt`'sız görsel (sensör görseli `alt=""`, cevabı ele vermesin)
+>   - 6 klavyeyle erişilemeyen tıklanabilir öğe
+>   - 11 etiketle ilişkilendirilmemiş girdi
+>
+>   Form içindeki tipsiz düğme de kural oldu (2.1'de bulunan oturum kapatma
+>   hatası).
+> - **Klavye:** inceleme ekranındaki cevap kartları `role="button"`,
+>   `aria-pressed`, Enter/Boşluk ve odak halkası aldı. Modal, ödül, ekran
+>   koruyucu ve kiosk katmanları Escape ile kapanıyor (`useEscapeKey`).
+>   2X anahtarı `role="switch"` oldu.
+> - **Çalışma zamanı** (`@axe-core/playwright`): açılış, katılım, telefon
+>   lobisi, TV panosu ve echo kumandasında WCAG 2.1 A/AA ihlali 0. İlk
+>   koşu QR kodunun adsız `<svg>`'sini yakaladı; QR'lara başlık eklendi.
+> - **Kontrast:** axe, neon arka plan görselleri ve gradyanlar yüzünden
+>   ~13–26 öğe/ekran için karar veremiyor ("incomplete"). Bunlar testte not
+>   olarak raporlanıyor; elle gözden geçirme gerekiyor.
 
 | İş | Kapsar | Efor | Kabul kriteri |
 |---|---|---|---|

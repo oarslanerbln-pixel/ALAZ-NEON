@@ -935,4 +935,13 @@ export const tr = {
   "b2b.roiTitle": "YATIRIM GETİRİSİ (ROI)",
   "b2b.roiDesc": "Oyuncular arası rekabet, mekana bağlılığı ve ekstra siparişleri tetikler.",
   "b2b.ctaButton": "DEMO RANDEVUSU İSTE",
+  // ═══════════════════════════════════════════
+  // ERİŞİLEBİLİRLİK — yalnızca ekran okuyucu adları (2.11)
+  // ═══════════════════════════════════════════
+  "common.close": "Kapat",
+  "dashboard.prevGame": "Önceki oyun",
+  "dashboard.nextGame": "Sonraki oyun",
+  "lobby.removeCategory": "Kategoriyi kaldır",
+  "a11y.joinQr": "Katılmak için QR kod",
+  "a11y.rewardQr": "Ödül QR kodu",
 } satisfies Dictionary;

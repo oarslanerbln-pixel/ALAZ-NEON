@@ -5,6 +5,7 @@ import { t } from "./support/i18n";
 import { joinAsPlayer, openNight } from "./support/night";
 import { activeWakeLocks } from "./support/wakeLock";
 import { cspViolations } from "./support/csp";
+import { expectAccessible } from "./support/a11y";
 
 test.beforeEach(resetEmulators);
 
@@ -39,6 +40,11 @@ test("TV odayı açar, üç oyuncu katılır ve echo oylaması tamamlanır", asy
     expect(await backdrop.evaluate((img: HTMLImageElement) => img.currentSrc)).toMatch(/\.(avif|webp)$/);
   });
 
+  await test.step("lobi ekranlarında WCAG A/AA ihlali yok (2.11)", async () => {
+    await expectAccessible(alfa, "telefon lobisi");
+    await expectAccessible(host, "TV panosu");
+  });
+
   await test.step("TV ve telefonlar ekranı uyanık tutar (2.5)", async () => {
     for (const page of [host, ...phones]) {
       await expect.poll(() => activeWakeLocks(page)).toBe(1);
@@ -56,6 +62,7 @@ test("TV odayı açar, üç oyuncu katılır ve echo oylaması tamamlanır", asy
     await alfa.getByRole("button", { name: "BETA" }).click({ timeout: 30_000 });
     await beta.getByRole("button", { name: "ALFA" }).click();
     await gama.getByRole("button", { name: "ALFA" }).click();
+    await expectAccessible(alfa, "echo kumandası");
   });
 
   await test.step("süre bitince TV sonucu ilan eder: ALFA iki oyla önde", async () => {
