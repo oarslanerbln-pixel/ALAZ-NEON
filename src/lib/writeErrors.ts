@@ -1,4 +1,4 @@
-import * as Sentry from "@sentry/react";
+import { captureException } from "./monitoring";
 
 /**
  * Yazma sözleşmesi ihlali sayılan Firestore hata kodları: kural reddi ya da
@@ -18,11 +18,11 @@ export function isContractViolation(err: unknown): boolean {
  * Kural/istemci uyuşmazlıkları yıllarca yalnızca tarayıcı konsoluna
  * düşüyordu: overload savuşturması, emoji tepkileri, çark ve unity canlıda
  * sessizce reddedildi ve kimse fark etmedi. Sözleşme ihlali artık Sentry'ye
- * yazmanın adıyla gidiyor (DSN yoksa Sentry no-op).
+ * yazmanın adıyla gidiyor (DSN yoksa no-op; bkz. lib/monitoring.ts).
  */
 export function reportWriteError(write: string, err: unknown): void {
   console.error(`[yazma] ${write} başarısız:`, err);
   if (isContractViolation(err)) {
-    Sentry.captureException(err, { tags: { write, code: String((err as { code: string }).code) } });
+    captureException(err, { tags: { write, code: String((err as { code: string }).code) } });
   }
 }

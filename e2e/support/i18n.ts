@@ -1,4 +1,4 @@
-import { setLocale, t } from "../../src/lib/i18n";
+import { loadLocale, setLocale, t } from "../../src/lib/i18n";
 
 /**
  * Testler arayüzü kullanıcının gördüğü metinle buluyor (erişilebilir ad,
@@ -6,7 +6,8 @@ import { setLocale, t } from "../../src/lib/i18n";
  * bir çeviri değişince test sessizce yanlış öğeyi aramıyor.
  */
 export const LOCALE = "tr" as const;
-setLocale(LOCALE);
+await loadLocale(LOCALE);
+await setLocale(LOCALE);
 
 export { t };
 

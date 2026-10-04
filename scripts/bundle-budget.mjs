@@ -6,8 +6,8 @@
  * İlk yük (index.html'in doğrudan yüklediği JS + CSS) telefonun QR'ı
  * okuttuktan sonra beklediği süredir; bar Wi-Fi'ında her KB hissediliyor.
  * Sınırlar bugünkü değerlerin ~%5 üstünde: istemeden eklenen büyük bir
- * bağımlılık PR'ı kırar. 2.3 (i18n/Sentry tembel yükleme) giriş paketini
- * küçülttükçe sınırlar da aşağı çekilir.
+ * bağımlılık PR'ı kırar. Bir iyileştirme gelince sınır da aşağı çekilir
+ * (2.3'te çekildi).
  */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -16,10 +16,10 @@ import { gzipSync } from "node:zlib";
 const KB = 1024;
 const BUDGET = {
   /** index.html'in yüklediği tüm JS (giriş + modulepreload satıcı paketleri). */
-  initialJs: 378 * KB,
+  initialJs: 358 * KB,
   initialCss: 36 * KB,
-  /** Uygulamanın kendi giriş paketi (hedef 2.3 sonrası ≤ 80 KB). */
-  entryJs: 130 * KB,
+  /** Uygulamanın kendi giriş paketi (2.3: 123 → 25 KB; hedef ≤ 80 KB). */
+  entryJs: 27 * KB,
   /** Tembel yüklenen herhangi bir parça (en büyüğü bugün jspdf). */
   lazyChunk: 130 * KB,
 };

@@ -358,6 +358,24 @@ Uygulama notları:
 > - **Bağımlılıklar:** vitest 4.1.11 (kritik açık kapandı) ve uyumlu
 >   güncellemeler; geliştirme açıkları 34 → 16. Kalanlar yalnızca
 >   firebase-tools/firebase zincirinde, düzeltme sürümü yok.
+>
+> **2.3 tamamlandı (tembel yükleme).** Giriş paketi 123 → 25 KB gzip
+> (hedef ≤ 80), ilk yük JS 360 → 341 KB; bütçe sınırları da çekildi.
+> - **i18n:** sözlük dil başına üç dosyaya bölündü (753 anahtar, TS AST ile
+>   mekanik). Açılış dili `de` girişte; `tr`/`en` seçilince ayrı parça.
+>   Kayıtlı dil farklıysa ilk render'dan önce iner (`localeReady`). Arka
+>   arkaya seçimde sonuncusu kazanır, indirme hatasında dil değişmez.
+>   Eksik çeviri artık derleme hatası (`satisfies Dictionary`).
+> - **Sentry:** `lib/monitoring.ts` cephesi. SDK (~29 KB) boşta ya da ilk
+>   hatada iner. Arada yakalanan hatalar (yakalanmamış hata ve reddedilen
+>   sözler dahil) sıraya alınıp gönderilir. Önceden DSN tanımlı üretim
+>   derlemesinde SDK girişteydi; CI'ın DSN'siz ölçümü bunu göremiyordu.
+>   `import("@sentry/react")` tüm ad alanını (156 KB) çektiği için ince bir
+>   yeniden dışa aktarma modülü (`sentrySdk.ts`) kullanılıyor.
+> - **Satıcı parçaları:** `react-dom/client` ve `firebase/auth` uygulama
+>   girişinden satıcı parçalarına taşındı (her yayında yeniden inmiyor).
+> - Firestore paketindeki `re2js` (~141 KB ham) Firestore'un kendi
+>   bağımlılığı; tam SDK gerektiği için (onSnapshot) şimdilik kalıyor.
 
 | İş | Kapsar | Efor | Kabul kriteri |
 |---|---|---|---|
