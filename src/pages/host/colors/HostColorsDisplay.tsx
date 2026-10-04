@@ -198,7 +198,7 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                   {/* Red Team Preview */}
                   <div className="bg-red-950/60 border-2 border-red-500 p-6 rounded-3xl backdrop-blur-md shadow-[0_0_40px_rgba(239,68,68,0.4)]">
                     <h2 className="text-3xl font-black text-red-500 uppercase tracking-widest mb-4">
-                      🔴 KIRMIZI TAKIM ({redMembers.length})
+                      {t("colors.redTeamCount", redMembers.length)}
                     </h2>
                     <div className="flex flex-wrap gap-2 justify-center">
                       {redMembers.map(p => (
@@ -212,7 +212,7 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                   {/* Blue Team Preview */}
                   <div className="bg-blue-950/60 border-2 border-blue-500 p-6 rounded-3xl backdrop-blur-md shadow-[0_0_40px_rgba(59,130,246,0.4)]">
                     <h2 className="text-3xl font-black text-blue-400 uppercase tracking-widest mb-4">
-                      🔵 MAVİ TAKIM ({blueMembers.length})
+                      {t("colors.blueTeamCount", blueMembers.length)}
                     </h2>
                     <div className="flex flex-wrap gap-2 justify-center">
                       {blueMembers.map(p => (

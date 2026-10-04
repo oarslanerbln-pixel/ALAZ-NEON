@@ -322,7 +322,7 @@ export function HostReview({
 
                       {rRes && (
                         <div className="text-[11px] font-black tracking-widest text-green-400 text-right uppercase mt-4">
-                          TUR: {t("review.points", rRes.roundScore)}
+                          {t("review.roundLabel")} {t("review.points", rRes.roundScore)}
                         </div>
                       )}
                     </motion.div>

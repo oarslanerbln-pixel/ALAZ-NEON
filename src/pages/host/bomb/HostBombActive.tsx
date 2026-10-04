@@ -155,7 +155,7 @@ export function HostBombActive({ room, players, onExplode }: Props) {
         {/* Left Side: Players Roster & Lives */}
         <div className="w-72 bg-black/60 border border-white/10 p-5 rounded-2xl backdrop-blur-md hidden lg:flex flex-col gap-3 shadow-[0_0_30px_rgba(0,0,0,0.6)]">
           <h3 className="text-xs font-mono uppercase tracking-widest text-gray-400 font-bold mb-1">
-            ⚡ OYUNCULAR ({players.length})
+            {t("bomb.playersCount", players.length)}
           </h3>
           <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
             {players.map((p) => {
@@ -281,7 +281,7 @@ export function HostBombActive({ room, players, onExplode }: Props) {
                   {t("bomb.rejectWord")}
                 </span>
                 <span className="text-[10px] text-gray-400 font-mono">
-                  (Bombayı geri gönderir - 3.5s)
+                  {t("bomb.reverseHint")}
                 </span>
               </motion.button>
             )}
@@ -294,12 +294,12 @@ export function HostBombActive({ room, players, onExplode }: Props) {
         <div className="bg-black/70 border border-white/15 p-4 rounded-2xl backdrop-blur-md">
           <div className="flex items-center gap-3 mb-2">
             <span className="text-xs font-mono font-bold text-amber-400 uppercase tracking-widest">
-              🔥 KELİME ZİNCİRİ ({usedWords.length})
+              {t("bomb.wordChain", usedWords.length)}
             </span>
           </div>
           <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none">
             {usedWords.length === 0 ? (
-              <span className="text-sm text-gray-500 font-mono">İlk kelime bekleniyor...</span>
+              <span className="text-sm text-gray-500 font-mono">{t("bomb.waitingFirstWord")}</span>
             ) : (
               usedWords.slice(-8).map((w, idx) => (
                 <div key={idx} className="flex items-center gap-2 shrink-0">

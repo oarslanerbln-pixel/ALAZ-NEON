@@ -377,24 +377,24 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                 <div className="flex items-center gap-3 mb-2">
                   <span className="w-2 h-2 bg-alaz-orange rounded-full animate-pulse shadow-[0_0_10px_#ff5500]" />
                   <span className="text-alaz-orange font-black text-[10px] uppercase tracking-[0.3em]">
-                    ADIM 1 / STEP 1
-                  </span>
+                  {t("dashboard.step1")}
+                </span>
                 </div>
                 
                 <h3 className="text-white font-black text-xl mb-1 uppercase tracking-widest text-center leading-tight">
-                  SİSTEME <span className="text-transparent bg-clip-text bg-gradient-to-r from-alaz-orange to-yellow-500">{t("host.login", "GİRİŞ YAP")}</span>
+                {t("dashboard.loginPrefix")} <span className="text-transparent bg-clip-text bg-gradient-to-r from-alaz-orange to-yellow-500">{t("host.login", "GİRİŞ YAP")}</span>
                 </h3>
                 
                 <p className="text-gray-300 text-[11px] font-medium text-center px-2 mb-4 leading-relaxed">
-                  Müşterilerinizin oyunlara katılabilmesi için önce yandaki QR kodu okutması veya oda kodunu girmesi gerekmektedir.
-                </p>
+                {t("dashboard.qrHint")}
+              </p>
 
                 <div className="bg-white p-4 rounded-2xl shadow-[0_0_30px_rgba(255,255,255,0.2)] border-[4px] border-white/5 relative group-hover/qr:scale-105 transition-transform duration-500">
                   <QRCodeSVG title={t("a11y.joinQr")} value={joinUrl} size={140} bgColor="#ffffff" fgColor="#000000" level="H" marginSize={1} />
                 </div>
                 
                 <div className="mt-4 flex flex-col items-center">
-                  <span className="text-white/40 text-[10px] uppercase tracking-[0.3em] font-bold mb-2">ODA KODU</span>
+                  <span className="text-white/40 text-[10px] uppercase tracking-[0.3em] font-bold mb-2">{t("hostHeader.roomCode")}</span>
                   <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-xl flex items-center justify-center">
                     <p className="text-alaz-orange font-mono font-black text-3xl tracking-widest drop-shadow-[0_0_15px_rgba(255,85,0,0.5)]">{room.code}</p>
                   </div>
@@ -405,8 +405,8 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                     onClick={() => setIsKioskMode(true)}
                     className="mt-8 w-full py-3 bg-white/5 hover:bg-white/15 border border-white/20 rounded-xl text-white font-bold uppercase tracking-widest text-[10px] transition-colors"
                   >
-                    Kiosk Modunu Başlat
-                  </button>
+                  {t("dashboard.startKiosk")}
+                </button>
                 )}
               </div>
             </div>
@@ -563,8 +563,8 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
               />
             </AnimatePresence>
             <div className="absolute top-8 right-8 text-white/30 text-[10px] uppercase tracking-widest bg-black/50 px-4 py-2 rounded-lg">
-              Çıkmak için ekrana dokunun
-            </div>
+          {t("dashboard.kioskExitHint")}
+        </div>
             
             {/* Show QR code subtly in corner during kiosk mode */}
             <div className="absolute bottom-8 right-8 bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/20 flex flex-col items-center">

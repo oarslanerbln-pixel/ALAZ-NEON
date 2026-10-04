@@ -113,7 +113,7 @@ export function PlayerColorsController({ room, player }: Props) {
               <span className="text-8xl mb-2 animate-pulse pointer-events-none">⚡</span>
               
               <h1 className="text-white font-black text-6xl md:text-7xl uppercase tracking-wider drop-shadow-[0_0_30px_rgba(0,0,0,0.8)] pointer-events-none">
-                HIZLA BAS!
+                {t("colors.tapFastCta")}
               </h1>
               
               <div className="mt-6 bg-black/40 border border-white/20 px-8 py-3 rounded-3xl backdrop-blur-md pointer-events-none">
@@ -144,8 +144,8 @@ export function PlayerColorsController({ room, player }: Props) {
               {t("colors.resultsOnTV")}
             </p>
             <div className="bg-black/40 border border-white/20 p-6 rounded-2xl backdrop-blur-md">
-              <span className="text-xs font-mono text-gray-300 uppercase block mb-1">TOPLAM KATKIN:</span>
-              <span className="text-5xl font-black text-white">{localClicks} TIK</span>
+              <span className="text-xs font-mono text-gray-300 uppercase block mb-1">{t("colors.yourTotal")}</span>
+              <span className="text-5xl font-black text-white">{t("colors.tapCount", localClicks)}</span>
             </div>
           </motion.div>
         )}

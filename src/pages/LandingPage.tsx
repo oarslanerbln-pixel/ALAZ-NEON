@@ -122,15 +122,11 @@ export function LandingPage() {
               <div className="flex-1 pr-3 relative z-10">
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-black animate-ping" />
-                  <span className="text-[11px] font-mono uppercase tracking-[0.22em] font-black text-black/90">
-                    SPIELER / GAST
-                  </span>
+                  <span className="text-[11px] font-mono uppercase tracking-[0.22em] font-black text-black/90">{t("landing.playerRole")}</span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-black font-sans leading-none drop-shadow-sm">
-                  JETZT BEITRETEN
-                </h2>
+                <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-black font-sans leading-none drop-shadow-sm">{t("landing.joinNow")}</h2>
                 <p className="text-xs text-black/90 font-bold mt-2 font-sans flex items-center gap-1.5">
-                  <span>Mit Smartphone beitreten</span>
+                  <span>{t("landing.joinWithPhone")}</span>
                   <ArrowRight className="w-4 h-4 inline group-hover:translate-x-2 transition-transform stroke-[2.5]" />
                 </p>
               </div>
@@ -162,15 +158,11 @@ export function LandingPage() {
               <div className="flex-1 pr-3 relative z-10">
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-black animate-ping" />
-                  <span className="text-[11px] font-mono uppercase tracking-[0.22em] font-black text-black/90">
-                    MODERATOR / TV
-                  </span>
+                  <span className="text-[11px] font-mono uppercase tracking-[0.22em] font-black text-black/90">{t("landing.hostRole")}</span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-black font-sans leading-none drop-shadow-sm">
-                  RAUM ERSTELLEN
-                </h2>
+                <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-black font-sans leading-none drop-shadow-sm">{t("landing.createRoom")}</h2>
                 <p className="text-xs text-black/90 font-bold mt-2 font-sans flex items-center gap-1.5">
-                  <span>TV-Lobby & Dashboard</span>
+                  <span>{t("landing.hostSubtitle")}</span>
                   <ArrowRight className="w-4 h-4 inline group-hover:translate-x-2 transition-transform stroke-[2.5]" />
                 </p>
               </div>

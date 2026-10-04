@@ -16,10 +16,10 @@ import { gzipSync } from "node:zlib";
 const KB = 1024;
 const BUDGET = {
   /** index.html'in yüklediği tüm JS (giriş + modulepreload satıcı paketleri). */
-  initialJs: 358 * KB,
+  initialJs: 340 * KB,
   initialCss: 36 * KB,
   /** Uygulamanın kendi giriş paketi (2.3: 123 → 25 KB; hedef ≤ 80 KB). */
-  entryJs: 27 * KB,
+  entryJs: 13 * KB,
   /** Tembel yüklenen herhangi bir parça (en büyüğü bugün jspdf). */
   lazyChunk: 130 * KB,
 };

@@ -223,7 +223,7 @@ export function HostVaultDisplay({ room, players, updateRoomStatus }: Props) {
                   {winner?.nickname || t("bar.unknown")}
                 </h1>
                 <p className="text-3xl font-mono text-emerald-400 bg-emerald-400/10 px-8 py-4 rounded-xl border border-emerald-400/30">
-                  ŞİFRE: {room.vault_code}
+                  {t("vault.codeLabel", room.vault_code ?? "")}
                 </p>
                 <button
                   onClick={() => updateRoomStatus("lobby", { active_game: "none", vault_winner_id: null, vault_code: "" })}

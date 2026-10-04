@@ -123,10 +123,10 @@ export function PlayerUnityController({ room, player }: Props) {
               className="w-full max-w-[300px] aspect-square rounded-full bg-gradient-to-b from-amber-400 to-orange-600 shadow-[0_0_50px_rgba(245,158,11,0.5)] flex flex-col items-center justify-center border-8 border-white/20 active:border-white/50 active:shadow-[0_0_100px_rgba(245,158,11,0.8)] relative z-10"
             >
               <span className="text-5xl font-black text-white mix-blend-overlay uppercase tracking-widest">
-                BAS!
+                {t("unity.tapCta")}
               </span>
               <span className="text-white/80 font-bold mt-2">
-                Senin Katkın: {localClicks}
+                {t("unity.yourShare", localClicks)}
               </span>
             </motion.button>
             

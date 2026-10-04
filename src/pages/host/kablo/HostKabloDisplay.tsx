@@ -94,7 +94,7 @@ export function HostKabloDisplay({ room, players, updateRoomStatus }: Props) {
                     ⚡ {t("kablo.connecting")}
                   </span>
                   <h2 className="text-5xl font-black text-yellow-400 font-mono drop-shadow-[0_0_20px_rgba(255,200,0,0.6)] tracking-wider">
-                    ENERJİ ŞARJI: %{progressPercent}
+                    {t("kablo.chargeLabel", progressPercent)}
                   </h2>
                 </div>
 
@@ -121,7 +121,7 @@ export function HostKabloDisplay({ room, players, updateRoomStatus }: Props) {
                   {players.filter(p => (p.kablo_score || 0) > 0).map(p => (
                     <div key={p.id} className="bg-amber-500/20 text-yellow-200 border border-amber-400/50 px-4 py-2 rounded-2xl font-mono text-sm shadow-[0_0_15px_rgba(255,200,0,0.3)] flex items-center gap-2">
                       <span className="font-bold">{p.nickname}:</span>
-                      <span className="font-black text-white">{p.kablo_score} DEVRE 🔌</span>
+                      <span className="font-black text-white">{t("kablo.circuitsCaps", p.kablo_score || 0)}</span>
                     </div>
                   ))}
                 </div>
@@ -143,7 +143,7 @@ export function HostKabloDisplay({ room, players, updateRoomStatus }: Props) {
                 
                 {mvp && (
                   <p className="text-3xl text-white font-mono uppercase tracking-widest mb-10">
-                    ⚡ {t("kablo.leadTechnician")} <span className="text-amber-400 font-black">{mvp.nickname}</span> ({mvp.kablo_score || 0} Devre)
+                    ⚡ {t("kablo.leadTechnician")} <span className="text-amber-400 font-black">{mvp.nickname}</span> ({t("kablo.circuitsShort", mvp.kablo_score || 0)})
                   </p>
                 )}
 
