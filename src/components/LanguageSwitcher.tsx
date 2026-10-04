@@ -54,7 +54,7 @@ export function LanguageSwitcher({ className = "", onSwitch, fullWidth = false }
           }}
           aria-pressed={locale === code}
           aria-label={ariaLabel}
-          className={`relative px-4 py-2 text-xs font-black uppercase tracking-[0.2em] rounded-sm transition-all duration-300 ${
+          className={`relative px-4 py-2 text-xs font-black uppercase tracking-[0.2em] rounded-sm transition-all duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
             fullWidth ? "flex-1 py-4" : ""
           } ${
             locale === code
