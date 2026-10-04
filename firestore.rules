@@ -492,6 +492,28 @@ service cloud.firestore {
       allow delete: if isStaff();
     }
 
+    // Oyun telemetrisi (docs/roadmap.md, 3.2): TV her oyunun başında ve
+    // sonunda bir olay yazar; mekan KPI raporu bunlardan hesaplanır. Yalnızca
+    // kendi odasının host'u (personel) yazar, personel okur. Olaylar
+    // değiştirilemez; TTL (expires_at) ile silinir.
+    match /events/{eventId} {
+      allow read: if isStaff();
+      allow create: if isStaff() &&
+        request.resource.data.keys().hasOnly(['type', 'room_id', 'host_uid', 'game', 'player_count', 'started_at', 'ended_at', 'created_at', 'expires_at']) &&
+        request.resource.data.host_uid == request.auth.uid &&
+        request.resource.data.type in ['game_started', 'game_ended'] &&
+        request.resource.data.game is string &&
+        request.resource.data.player_count is int &&
+        request.resource.data.player_count >= 0 &&
+        request.resource.data.player_count <= 500 &&
+        request.resource.data.started_at is int &&
+        (request.resource.data.ended_at == null || request.resource.data.ended_at is int) &&
+        request.resource.data.created_at is int &&
+        request.resource.data.expires_at is timestamp &&
+        get(/databases/$(database)/documents/rooms/$(request.resource.data.room_id)).data.host_uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
     match /rewards/{rewardId} {
       // Önceden herhangi bir giriş yapmış oturum (anonim oyuncular DAHİL)
       // her ödülü okuyup "claimed" olarak işaretleyebiliyordu — bir oyuncu

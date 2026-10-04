@@ -572,9 +572,9 @@ Uygulama notları:
 | İş | Kapsar | Efor |
 |---|---|---|
 | 3.1 Çok mekan: `venues/{venueId}`, mekan başına personel, oda ↔ mekan bağı, `isStaffOf(venueId)` + veri göçü | A5, B1 | L |
-| 3.2 Telemetri (`events`, host yazar) + mekan KPI paneli / haftalık rapor | O2, B3 | M |
+| 3.2 Telemetri (`events`, host yazar) + mekan KPI paneli / haftalık rapor ✅ | O2, B3 | M |
 | 3.3 Sponsor ekranı + proof-of-play kaydı ve sponsor raporu | B2 | M |
-| 3.4 İçerik hattı: JSON + şema doğrulama + mekan/kurum özel soru paketi | B4 | M |
+| 3.4 İçerik hattı: JSON + şema doğrulama + mekan/kurum özel soru paketi ✅ | B4 | M |
 | 3.5 D2: Blaze + Cloud Functions (ödül, puanlama, custom claim, temizlik), bütçe alarmıyla | D2 | L |
 
 > **3.4 tamamlandı (içerik hattı).**
@@ -599,6 +599,29 @@ Uygulama notları:
 >   koleksiyonun kuralı olmadan yükleme reddedilir.
 > - **Sonraki adım:** paketler şimdilik tüm personele ortak. 3.1 (çok mekan)
 >   ile `venue_id`'ye bağlanacak.
+>
+> **3.2 tamamlandı (telemetri + mekan KPI'ları).**
+> - **Olaylar:** TV her oyunun başında ve sonunda `events`'e bir olay
+>   yazıyor (oyun, oyuncu sayısı, başlangıç/bitiş). Başlangıç panodan
+>   (HostDashboard), bitiş tüm çıkışların geçtiği `useHostRoom` içinden
+>   yazılıyor.
+> - **Erişim:** yalnızca odanın host'u (personel) yazar, personel okur.
+>   Olaylar değiştirilemez; belge kimliği olaydan türediği için iki TV
+>   açıkken de tek kayıt kalıyor. TTL `expires_at` ile.
+> - **KPI'lar:** `lib/venueKpis.ts` (saf, birim testli): oynanan oyun ve
+>   gece başına, en çok oynananlar, oyun başına oyuncu, ortalama süre (90
+>   dk üstü "TV açık kaldı" sayılmıyor), en yoğun saat, tekil ve geri dönen
+>   misafir (son 90 gün). `/admin/report` bunları gösteriyor ve özete
+>   ekliyor.
+> - **Düzeltilen ölçüm hatası:** "en çok oynanan oyun" odanın SON oyunundan
+>   sayılıyordu. Bir gece onlarca oyun barındırdığı için yanıltıcıydı.
+>   Telemetrisi olmayan eski aralıklarda eski döküm gösteriliyor.
+> - **Kalkan:**
+>   - 3 kural testi.
+>   - KPI birim testleri.
+>   - `e2e/telemetry.spec.ts`: olay çifti ve raporda görünüm.
+> - **Yayında gereken:** kural dağıtımı ve `events` için TTL politikası
+>   (README).
 
 ## 6. Başarı metrikleri
 
