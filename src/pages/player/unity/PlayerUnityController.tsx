@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, useAnimation } from "framer-motion";
-import { doc, updateDoc, increment } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
+import { nextUnityReport, unityInputPayload } from "../../../lib/clientWrites";
+import { reportWriteError } from "../../../lib/writeErrors";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useLocale } from "../../../hooks/useLocale";
 import type { Room, Player } from "../../../types/database";
@@ -12,31 +14,52 @@ interface Props {
   player: Player;
 }
 
-export function PlayerUnityController({ room }: Props) {
+export function PlayerUnityController({ room, player }: Props) {
   const { t } = useLocale();
   const [localClicks, setLocalClicks] = useState(0);
   const clickBuffer = useRef(0);
   const controls = useAnimation();
 
+  // Bu tur için en son bildirilen toplam. Dokunuşlar eskiden oda
+  // dokümanındaki unity_current'a increment ile yazılıyordu: kuralda böyle
+  // bir izin yoktu (her dokunuş reddediliyordu) ve olsa da 30 telefonun tek
+  // dokümana saniyede yazması hem yazma sınırını hem okuma kotasını aşardı.
+  // Artık her telefon kendi giriş kaydına bu turdaki toplamını yazıyor;
+  // host toplayıp odaya yazıyor (bkz. lib/roomInputs.ts).
+  const reported = useRef<{ round: number; clicks: number } | null>(null);
+
   // Batch flush clicks every 1 second
   useEffect(() => {
-    if (room.status !== "unity_active") return;
+    const round = room.input_round;
+    if (room.status !== "unity_active" || typeof round !== "number") return;
+    if (reported.current?.round !== round) {
+      // Yeni tur: önceki oyundan kalmış bekleyen dokunuşlar bu tura sayılmasın.
+      reported.current = { round, clicks: 0 };
+      clickBuffer.current = 0;
+    }
 
     const interval = setInterval(() => {
-      if (clickBuffer.current > 0) {
-        const clicksToFlush = clickBuffer.current;
-        clickBuffer.current = 0; // Reset immediately
+      const state = reported.current;
+      if (!state || clickBuffer.current === 0) return;
+      // Kural tek yazmada en fazla UNITY_MAX_STEP artışa izin veriyor;
+      // birikmiş fazlası sonraki saniyelere kalıyor.
+      const next = nextUnityReport(state.clicks, state.clicks + clickBuffer.current);
+      const step = next - state.clicks;
+      clickBuffer.current -= step;
+      state.clicks = next;
 
-        const roomRef = doc(db, "rooms", room.id);
-        updateDoc(roomRef, { unity_current: increment(clicksToFlush) }).catch(err => {
-          console.error("Failed to flush unity clicks:", err);
-          // If it failed, we could theoretically put them back, but for a party game it's okay to drop
-        });
-      }
+      setDoc(doc(db, "rooms", room.id, "inputs", player.id), unityInputPayload(round, next)).catch(
+        (err) => {
+          // Toplam mutlak değer olduğu için geri alıp yeniden denemek güvenli.
+          state.clicks -= step;
+          clickBuffer.current += step;
+          reportWriteError("unity_input", err);
+        },
+      );
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [room.id, room.status]);
+  }, [room.id, room.status, room.input_round, player.id]);
 
   const handleTap = () => {
     if (room.status !== "unity_active") return;

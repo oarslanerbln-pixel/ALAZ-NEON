@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, addDoc } from "firebase/firestore";
 import { db, auth } from "../../lib/firebase";
-import { retentionExpiry } from "../../lib/retention";
+import { roomCreatePayload } from "../../lib/clientWrites";
 import { allocateRoomCode } from "../../lib/roomQueries";
 import { motion } from "framer-motion";
 import { NeonIcon } from "../../components/NeonIcon";
@@ -77,28 +77,15 @@ export function HostSetup() {
     try {
       const roomCode = await allocateRoomCode();
 
-      const docRef = await addDoc(collection(db, "rooms"), {
+      const docRef = await addDoc(
+        collection(db, "rooms"),
+        roomCreatePayload({
           code: roomCode,
-          status: "night_lobby",
-          active_game: "none",
-          categories: [],
-          timer_setting: 60,
-          total_rounds: 3,
-          current_round: 0,
-          time_left: 0,
-          game_mode: "individual",
-          locale: locale,
-          created_at: Date.now(),
-          // Firestore TTL politikasi bu alana bakip dokumani siliyor
-          // (bkz. lib/retention.ts ve README).
-          expires_at: retentionExpiry(),
-          host_uid: auth.currentUser?.uid || "anonymous",
-          // Aktif mekan markasının anlık kopyası — canlı referans değil,
-          // bkz. types/database.ts Room.venue_* alanlarındaki not.
-          venue_name: venue.name,
-          venue_logo_url: venue.logo_url || null,
-          venue_primary_color: venue.primary_color || null,
-        });
+          hostUid: auth.currentUser?.uid || "anonymous",
+          locale,
+          venue,
+        }),
+      );
         
         navigate(`/host/display?roomId=${docRef.id}`);
       } catch (err) {

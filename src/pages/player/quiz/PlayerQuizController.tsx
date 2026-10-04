@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { collection, addDoc, query, where, getDocs, limit, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
-import { retentionExpiry } from "../../../lib/retention";
+import { quizAnswerPayload } from "../../../lib/clientWrites";
 import { AnimatePresence, motion } from "framer-motion";
 import { ParticleBackground } from "../../../components/ParticleBackground";
 import { SoundManager, sounds } from "../../../lib/audio";
@@ -73,17 +73,15 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
     setHasSubmitted(true);
 
     try {
-      const questionIndexStr = (room.current_question_index ?? 0).toString();
-      await addDoc(collection(db, "answers"), {
-        room_id: room.id,
-        player_id: player.id,
-        round_letter: questionIndexStr,
-        data: {
-          selectedOption: option,
-        },
-        created_at: serverTimestamp(),
-        expires_at: retentionExpiry(),
-      });
+      await addDoc(
+        collection(db, "answers"),
+        quizAnswerPayload({
+          roomId: room.id,
+          playerId: player.id,
+          questionIndex: room.current_question_index ?? 0,
+          option,
+        }),
+      );
       haptics.success();
     } catch (err) {
       console.error("Failed to submit quiz answer", err);

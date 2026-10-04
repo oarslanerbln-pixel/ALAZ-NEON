@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { db } from "../../../lib/firebase";
-import { doc, increment, updateDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
+import { counterIncrementPayload } from "../../../lib/clientWrites";
+import { reportWriteError } from "../../../lib/writeErrors";
 import { haptics } from "../../../lib/haptics";
 import { useLocale } from "../../../hooks/useLocale";
 import { Check } from "lucide-react";
@@ -96,9 +98,9 @@ export function PlayerKabloController({ room, player }: Props) {
       setStatus("success");
       
       const playerRef = doc(db, "players", player.id);
-      updateDoc(playerRef, {
-        kablo_score: increment(1)
-      }).catch(console.error);
+      updateDoc(playerRef, counterIncrementPayload("kablo_score", 1)).catch((err) =>
+        reportWriteError("kablo_score", err),
+      );
 
       setTimeout(() => {
         if (room.status === "kablo_active") {

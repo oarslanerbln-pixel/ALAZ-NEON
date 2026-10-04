@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { addDoc, collection, doc, getDocs, limit, query, serverTimestamp, setDoc, where } from "firebase/firestore";
+import { addDoc, collection, doc, getDocs, limit, query, setDoc, where } from "firebase/firestore";
 import { Check, Lock, Minus, Plus } from "lucide-react";
 
 import { useToast } from "../../../contexts/ToastContextCore";
 import { useLocale } from "../../../hooks/useLocale";
 import { auth, db } from "../../../lib/firebase";
 import { haptics } from "../../../lib/haptics";
-import { retentionExpiry } from "../../../lib/retention";
+import { aynaGuessPayload, aynaSurveyPayload } from "../../../lib/clientWrites";
 import { AYNA_MAX, AYNA_MIN, aynaRoundKey, parseGuess, topScorers } from "../../../lib/ayna";
 import { AYNA_CATEGORY_KEY, aynaRoundQuestion, formatAynaDelta, formatAynaValue, type AynaQuestion } from "../../../lib/aynaQuestions";
 import { salonQuestionById } from "../../../lib/aynaSalon";
@@ -128,14 +128,15 @@ function SurveyCard({ room, player }: { room: Room; player: Player }) {
     const uid = auth.currentUser?.uid;
     if (uid) {
       try {
-        await setDoc(doc(db, "ayna_survey", `${room.id}_${uid}`), {
-          room_id: room.id,
-          host_uid: room.host_uid ?? "",
-          player_id: player.id,
-          answers: final,
-          created_at: serverTimestamp(),
-          expires_at: retentionExpiry(),
-        });
+        await setDoc(
+          doc(db, "ayna_survey", `${room.id}_${uid}`),
+          aynaSurveyPayload({
+            roomId: room.id,
+            hostUid: room.host_uid ?? "",
+            playerId: player.id,
+            answers: final,
+          }),
+        );
       } catch (err) {
         // Sayfa yenilenip ikinci kez gönderildiyse ya da anket az önce
         // kapandıysa kural yazmayı reddeder. İkisi de misafirin sorunu değil.
@@ -313,15 +314,16 @@ function ActiveRound({ room, player, question, index, total }: ActiveProps) {
     submittedRef.current = true;
     setSubmitting(true);
     try {
-      await addDoc(collection(db, "answers"), {
-        room_id: room.id,
-        player_id: player.id,
-        round_letter: aynaRoundKey(index),
-        round_index: index,
-        data: { guess: String(value) },
-        created_at: serverTimestamp(),
-        expires_at: retentionExpiry(),
-      });
+      await addDoc(
+        collection(db, "answers"),
+        aynaGuessPayload({
+          roomId: room.id,
+          playerId: player.id,
+          roundKey: aynaRoundKey(index),
+          roundIndex: index,
+          value,
+        }),
+      );
       setLockedValue(value);
       haptics.success();
     } catch (err) {

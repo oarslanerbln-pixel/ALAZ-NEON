@@ -232,13 +232,35 @@ Uygulama notları:
 >   değil (oda silinse de kalır). Pulse dokunuş anı hâlâ telefon saatinden
 >   geliyor; hedef zaman herkese açık olduğu için kusursuz dokunuş
 >   sahtelenebilir. Sunucu saatine geçiş ayrı iş.
+>
+> **1.4 tamamlandı.**
+> - **Tek kaynak:** Kurallara tabi her istemci yazmasının verisi artık
+>   `src/lib/clientWrites.ts`'ten geliyor. Kural testleri de aynı
+>   fonksiyonları kullanıyor; test ile istemci ayrışamıyor.
+> - **Sözleşme testi** (`writeContract.test.ts`):
+>   - Oyuncu tarafındaki dosyalar yazma verisini satır içinde kuramaz.
+>   - Her yazma fonksiyonu en az bir emulator kural testinde kullanılmak
+>     zorunda.
+>   - Testi olmayan bir yazma yolu CI'dan geçemiyor.
+> - **Envanterin bulduğu üç canlı kırık daha (düzeltildi):**
+>   - **Çark:** "çevir" düğmesi için kural yoktu. Artık kimliğe bağlı bir
+>     sıra hamlesi.
+>   - **Unity:** Dokunuşlar odaya yazılıyordu ve bunun için kural yoktu.
+>     Olsa da tek dokümana saniyede 30 yazma olurdu. Artık her oyuncu kendi
+>     giriş kaydına yazıyor, host toplayıp odaya yazıyor.
+>   - **Renk/spektrum sayaçları:** Tek yazmadaki artış sınırı aştığında
+>     sayaç bir daha hiç yazılamıyordu. Artık her yazma sınıra kırpılıyor.
+> - **Hata görünürlüğü:** `reportWriteError` kural reddi ve geçersiz veri
+>   hatalarını yazmanın adıyla Sentry'ye gönderiyor. Bağlantı hataları yalnızca
+>   konsola düşüyor. Kullanıcıya ayrı bir toast eklenmedi; mevcut ekranlar
+>   kendi hata mesajlarını göstermeye devam ediyor.
 
 | İş | Kapsar | Efor | Kabul kriteri |
 |---|---|---|---|
 | 1.1 Host `rooms.player_count` yazar; `PlayerLobby` `players` dinleyicisini bırakır | M1 | S | 30 kişilik lobide ≤ 150 okuma/dk |
 | 1.2 Oyuncu heartbeat'i 15 → 30 sn, `liveness.ts` eşikleri orantılı; ardından D3 ölçümü | M2, D3 | S | `liveness` testleri güncel; host okumaları yarıya iner |
 | 1.3 Echo/pulse girişleri `rooms/{id}/inputs/{playerId}` kaydına; bomba, buzzer ve overload odada ama kimliğe bağlı (karma model) | M3, S5, A1 | L | Oyuncu başkası adına ya da başkasının oyunu ezerek yazamaz; toplu girişler N'e yayılmaz |
-| 1.4 Yazma yolu sözleşme testi: istemcideki her `setDoc/updateDoc/addDoc/increment` yolu için emulator testi + merkezi `safeWrite` (hata → toast + Sentry) | A2, U4 | M | Testsiz yazma yolu CI'dan geçmez |
+| 1.4 Yazma sözleşmesi: tek kaynaklı yazma verisi (`clientWrites`) + her yazma için emulator testi + `reportWriteError` (sözleşme ihlali → Sentry) | A2, U4 | M | Testsiz yazma yolu CI'dan geçmez |
 | 1.5 `answers` create: alan whitelist, boyut sınırı, oda durumu; okuma yalnız host + sahibi | S6 | M | Kural testleri |
 | 1.6 App Check (reCAPTCHA) — önce izleme, sonra zorunlu | S7 | S | Doğrulanmış istek ≥ %95 olunca enforce |
 

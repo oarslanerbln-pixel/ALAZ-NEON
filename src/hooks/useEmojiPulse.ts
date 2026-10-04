@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import { doc, onSnapshot, setDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
+import { emojiPulsePayload } from "../lib/clientWrites";
+import { reportWriteError } from "../lib/writeErrors";
 
 export function useEmojiPulse(
   roomId: string | null,
@@ -39,11 +41,9 @@ export function useEmojiPulse(
     if (!roomId || !playerId) return;
 
     const docRef = doc(db, "rooms", roomId, "transient", "emojiPulse");
-    setDoc(docRef, {
-      emoji,
-      timestamp: Date.now(),
-      player_id: playerId,
-    }).catch(err => console.error("Error sending reaction:", err));
+    setDoc(docRef, emojiPulsePayload(emoji, playerId)).catch((err) =>
+      reportWriteError("emoji_pulse", err),
+    );
 
     // Haptic vibration if available
     if (typeof window !== "undefined" && window.navigator.vibrate) {

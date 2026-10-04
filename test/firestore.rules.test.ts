@@ -5,8 +5,41 @@ import {
   assertSucceeds,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, setDoc, updateDoc, addDoc, collection, getDoc, getDocs, deleteDoc, query, where, increment } from "firebase/firestore";
+import { doc, setDoc, updateDoc, addDoc, collection, getDoc, getDocs, deleteDoc, query, where } from "firebase/firestore";
 import { beforeAll, afterAll, beforeEach, describe, it } from "vitest";
+
+// Uygulamanın yazdığı verinin kendisi: testler istemciden ayrışamasın diye
+// elle kopyalanmış nesneler yerine bu fonksiyonlar kullanılıyor (bkz.
+// src/lib/clientWrites.ts ve src/lib/__tests__/writeContract.test.ts).
+import {
+  COUNTER_MAX_STEP,
+  UNITY_MAX_STEP,
+  aynaGuessPayload,
+  aynaSurveyPayload,
+  bombPassPayload,
+  counterIncrementPayload,
+  echoInputPayload,
+  emojiPulsePayload,
+  heartbeatPayload,
+  letterAnswerPayload,
+  lifetimeCreditPayload,
+  lifetimeMarkerPayload,
+  nicknamePayload,
+  overloadDeflectPayload,
+  playerJoinPayload,
+  profileCreatePayload,
+  pulseInputPayload,
+  quizAnswerPayload,
+  rewardClaimPayload,
+  rewardPayload,
+  roomCreatePayload,
+  sensorAnswerPayload,
+  sensorBuzzPayload,
+  unityInputPayload,
+  vaultGuessPayload,
+  wheelSpinPayload,
+  type PlayerCounter,
+} from "../src/lib/clientWrites";
 
 /**
  * Firestore güvenlik kuralı testleri.
@@ -331,10 +364,7 @@ describe("rooms — overload savuşturma", () => {
   );
 
   /** PlayerOverloadGame'in savuşturmada gerçekte yazdığı alanlar. */
-  const deflect = (from: string) => ({
-    overload_target_id: "passing",
-    overload_last_target_id: from,
-  });
+  const deflect = (from: string) => overloadDeflectPayload(from);
 
   // Eski test istemcinin YAZMADIĞI bir veriyi deniyordu (overload_time_allowed);
   // istemcinin yazdığı overload_last_target_id beyaz listede yoktu, yani
@@ -681,13 +711,7 @@ describe("players — skor bütünlüğü", () => {
 
   /** PlayerJoin'in gerçekte yazdığı katılım dokümanı. */
   const joinPayload = (overrides: Record<string, unknown> = {}) => ({
-    room_id: ROOM_ID,
-    uid: PLAYER_UID,
-    nickname: "YENI",
-    team_name: null,
-    total_score: 0,
-    night_score: 0,
-    created_at: Date.now(),
+    ...playerJoinPayload({ roomId: ROOM_ID, uid: PLAYER_UID, nickname: "YENI", teamName: null }),
     ...overrides,
   });
 
@@ -831,15 +855,18 @@ describe("rewards koleksiyonu", () => {
 
   /** lib/rewards.ts'in host ekranından yazdığı ödül dokümanı. */
   const grantPayload = (overrides: Record<string, unknown> = {}) => ({
-    uid: PLAYER_UID,
-    nickname: "OYUNCU",
-    type: "drink",
-    title: "Ücretsiz Espresso",
-    description: "",
-    status: "available",
-    code: "X9Y8Z7",
-    earned_at: Date.now(),
-    room_id: ROOM_ID,
+    ...rewardPayload({
+      roomId: ROOM_ID,
+      uid: PLAYER_UID,
+      nickname: "OYUNCU",
+      code: "X9Y8Z7",
+      venue: {
+        reward_type: "drink",
+        reward_title: "Ücretsiz Espresso",
+        reward_description: "",
+        reward_validity_days: 7,
+      },
+    }),
     ...overrides,
   });
 
@@ -1081,12 +1108,7 @@ describe("seasons koleksiyonu", () => {
 describe("users koleksiyonu (ALAZ League)", () => {
   /** useUserProfile'ın ilk girişte oluşturduğu profil. */
   const profilePayload = (overrides: Record<string, unknown> = {}) => ({
-    phone_number: "+905551112233",
-    nickname: "PLAYER_abcd",
-    total_lifetime_score: 0,
-    current_league: "BRONZE",
-    created_at: Date.now(),
-    last_active: Date.now(),
+    ...profileCreatePayload({ phoneNumber: "+905551112233", nickname: "PLAYER_abcd" }),
     ...overrides,
   });
 
@@ -1132,7 +1154,7 @@ describe("users koleksiyonu (ALAZ League)", () => {
   it("kullanıcı takma adını güncelleyebilir", async () => {
     await seedProfile();
     await assertSucceeds(
-      setDoc(doc(asPlayer(), "users", PLAYER_UID), { nickname: "YENI_AD" }, { merge: true })
+      setDoc(doc(asPlayer(), "users", PLAYER_UID), nicknamePayload("YENI_AD"), { merge: true })
     );
   });
 
@@ -1141,7 +1163,7 @@ describe("users koleksiyonu (ALAZ League)", () => {
   it("kullanıcı kendi kalıcı puanını artıramaz", async () => {
     await seedProfile();
     await assertFails(
-      updateDoc(doc(asPlayer(), "users", PLAYER_UID), { total_lifetime_score: increment(100000) })
+      updateDoc(doc(asPlayer(), "users", PLAYER_UID), lifetimeCreditPayload(100000))
     );
   });
 
@@ -1156,14 +1178,14 @@ describe("users koleksiyonu (ALAZ League)", () => {
     await seedProfile();
     await seedStaff(HOST_UID);
     await assertSucceeds(
-      updateDoc(doc(asHost(), "users", PLAYER_UID), { total_lifetime_score: increment(120) })
+      updateDoc(doc(asHost(), "users", PLAYER_UID), lifetimeCreditPayload(120))
     );
   });
 
   it("personel olmayan host kalıcı puan yazamaz", async () => {
     await seedProfile();
     await assertFails(
-      updateDoc(doc(asHost(), "users", PLAYER_UID), { total_lifetime_score: increment(120) })
+      updateDoc(doc(asHost(), "users", PLAYER_UID), lifetimeCreditPayload(120))
     );
   });
 
@@ -1196,11 +1218,12 @@ describe("ayna_survey — anonim salon anketi", () => {
   const SURVEY_ID = `${ROOM_ID}_${PLAYER_UID}`;
   const asStranger = () => testEnv.authenticatedContext(STRANGER_UID).firestore();
   const survey = (overrides: Record<string, unknown> = {}) => ({
-    room_id: ROOM_ID,
-    host_uid: HOST_UID,
-    player_id: PLAYER_ID,
-    answers: { "salon-bilingual": true, "salon-morning": false },
-    created_at: Date.now(),
+    ...aynaSurveyPayload({
+      roomId: ROOM_ID,
+      hostUid: HOST_UID,
+      playerId: PLAYER_ID,
+      answers: { "salon-bilingual": true, "salon-morning": false },
+    }),
     ...overrides,
   });
 
@@ -1272,5 +1295,221 @@ describe("ayna_survey — anonim salon anketi", () => {
 
   it("misafir odanın tüm anketini sorgulayamaz", async () => {
     await assertFails(getDocs(query(collection(asPlayer(), "ayna_survey"), where("room_id", "==", ROOM_ID))));
+  });
+});
+
+/**
+ * İstemci yazma sözleşmesi: src/lib/clientWrites.ts'teki her yazma, uygulamanın
+ * gerçekte yazdığı veriyle, gerçek bağlamında kurallardan geçmeli. Buradaki
+ * olumlu testler "testte geçiyor, canlıda reddediliyor" kalıbını kapatıyor;
+ * src/lib/__tests__/writeContract.test.ts her fonksiyonun burada kullanıldığını
+ * denetliyor.
+ */
+describe("istemci yazma sözleşmesi (clientWrites)", () => {
+  const answerRef = (db: ReturnType<typeof asPlayer>) => collection(db, "answers");
+
+  describe("cevaplar", () => {
+    beforeEach(() => seed({ status: "playing" }));
+
+    it("klasik tur cevabı", async () => {
+      await assertSucceeds(
+        addDoc(
+          answerRef(asPlayer()),
+          letterAnswerPayload({ roomId: ROOM_ID, playerId: PLAYER_ID, letter: "A", roundIndex: 1, data: { Şehir: "Ankara" } })
+        )
+      );
+    });
+
+    it("quiz cevabı", async () => {
+      await assertSucceeds(
+        addDoc(answerRef(asPlayer()), quizAnswerPayload({ roomId: ROOM_ID, playerId: PLAYER_ID, questionIndex: 2, option: "B" }))
+      );
+    });
+
+    it("kasa tahmini", async () => {
+      await assertSucceeds(
+        addDoc(answerRef(asPlayer()), vaultGuessPayload({ roomId: ROOM_ID, playerId: PLAYER_ID, guess: "1234" }))
+      );
+    });
+
+    it("ayna tahmini", async () => {
+      await assertSucceeds(
+        addDoc(
+          answerRef(asPlayer()),
+          aynaGuessPayload({ roomId: ROOM_ID, playerId: PLAYER_ID, roundKey: "AYNA_0", roundIndex: 0, value: 42 })
+        )
+      );
+    });
+  });
+
+  describe("canlılık sinyali", () => {
+    beforeEach(() => seed());
+
+    it("oyuncu kendi sinyalini yazabilir", async () => {
+      await assertSucceeds(updateDoc(doc(asPlayer(), "players", PLAYER_ID), heartbeatPayload("last_active")));
+    });
+
+    it("host oda sinyalini yazabilir", async () => {
+      await assertSucceeds(updateDoc(doc(asHost(), "rooms", ROOM_ID), heartbeatPayload("host_last_active")));
+    });
+  });
+
+  describe("oda hamleleri", () => {
+    it("bomba paslama", async () => {
+      await seed({ status: "bomb_active", bomb_target_player: PLAYER_ID, used_words: [] });
+      await assertSucceeds(
+        updateDoc(doc(asPlayer(), "rooms", ROOM_ID), bombPassPayload(PLAYER_ID, OTHER_PLAYER_ID, "elma"))
+      );
+    });
+
+    it("buzzer ve cevap", async () => {
+      await seed({ status: "sensor_active", sensor_buzzer_player_id: null });
+      await assertSucceeds(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), sensorBuzzPayload(PLAYER_ID)));
+      await assertSucceeds(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), sensorAnswerPayload("  Kahve  ")));
+    });
+
+    it("overload savuşturma", async () => {
+      await seed({ status: "playing", overload_target_id: PLAYER_ID });
+      await assertSucceeds(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), overloadDeflectPayload(PLAYER_ID)));
+    });
+
+    it("emoji tepkisi", async () => {
+      await seed({ status: "playing" });
+      await assertSucceeds(
+        setDoc(doc(asPlayer(), "rooms", ROOM_ID, "transient", "emojiPulse"), emojiPulsePayload("🔥", PLAYER_ID))
+      );
+    });
+  });
+
+  // Çark için hiç kural yoktu: sırası gelen oyuncunun "çevir" düğmesi her
+  // seferinde reddediliyordu.
+  describe("çark", () => {
+    beforeEach(() => seed({ status: "wheel_active", wheel_spinner_id: PLAYER_ID, wheel_result_index: null }));
+
+    it("sırası gelen oyuncu çarkı çevirebilir", async () => {
+      await assertSucceeds(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), wheelSpinPayload(3)));
+    });
+
+    it("sırası gelmeyen oyuncu çeviremez", async () => {
+      await assertFails(updateDoc(doc(asStranger(), "rooms", ROOM_ID), wheelSpinPayload(3)));
+    });
+
+    it("çark ikinci kez çevrilemez", async () => {
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), { wheel_result_index: 1 });
+      });
+      await assertFails(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), wheelSpinPayload(3)));
+    });
+
+    it("geçersiz dilim ya da ek alan yazılamaz", async () => {
+      await assertFails(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), wheelSpinPayload(-1)));
+      await assertFails(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), wheelSpinPayload(1.5)));
+      await assertFails(
+        updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { ...wheelSpinPayload(2), status: "finished" })
+      );
+    });
+  });
+
+  describe("giriş kayıtları", () => {
+    const ROUND = 11;
+    const myInput = (db: ReturnType<typeof asPlayer>) => doc(db, "rooms", ROOM_ID, "inputs", PLAYER_ID);
+
+    it("echo oyu", async () => {
+      await seed({ status: "echo_active", input_round: ROUND });
+      await assertSucceeds(setDoc(myInput(asPlayer()), echoInputPayload(ROUND, OTHER_PLAYER_ID)));
+    });
+
+    it("pulse dokunuşu", async () => {
+      await seed({ status: "pulse_active", input_round: ROUND });
+      await assertSucceeds(setDoc(myInput(asPlayer()), pulseInputPayload(ROUND, Date.now())));
+    });
+
+    // Unity dokunuşları oda dokümanına yazılıyordu ve kural yoktu: her
+    // dokunuş reddediliyordu.
+    describe("unity", () => {
+      beforeEach(() => seed({ status: "unity_active", input_round: ROUND }));
+
+      it("oyuncu bu turdaki toplamını artırarak yazabilir", async () => {
+        await assertSucceeds(setDoc(myInput(asPlayer()), unityInputPayload(ROUND, 12)));
+        await assertSucceeds(setDoc(myInput(asPlayer()), unityInputPayload(ROUND, 12 + UNITY_MAX_STEP)));
+      });
+
+      it("bir yazmada sınırdan fazla artış reddedilir", async () => {
+        await assertFails(setDoc(myInput(asPlayer()), unityInputPayload(ROUND, UNITY_MAX_STEP + 1)));
+      });
+
+      it("toplam geriye gidemez", async () => {
+        await assertSucceeds(setDoc(myInput(asPlayer()), unityInputPayload(ROUND, 20)));
+        await assertFails(setDoc(myInput(asPlayer()), unityInputPayload(ROUND, 5)));
+      });
+
+      it("başka oyuncunun kaydına ya da oyun bitince yazılamaz", async () => {
+        await assertFails(
+          setDoc(doc(asPlayer(), "rooms", ROOM_ID, "inputs", OTHER_PLAYER_ID), unityInputPayload(ROUND, 5))
+        );
+        await testEnv.withSecurityRulesDisabled(async (ctx) => {
+          await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), { status: "unity_reveal" });
+        });
+        await assertFails(setDoc(myInput(asPlayer()), unityInputPayload(ROUND, 5)));
+      });
+    });
+  });
+
+  // Renk ve spektrum sayaçları sınırı aşınca reddediliyor, geri eklenip bir
+  // dahaki sefere daha büyük olarak deneniyordu: sayaç bir daha yazılamıyordu.
+  describe("oyuncu sayaçları", () => {
+    beforeEach(() => seed({ status: "playing" }));
+
+    for (const field of Object.keys(COUNTER_MAX_STEP) as PlayerCounter[]) {
+      it(`${field}: tek yazmada sınıra kadar artabilir, fazlası reddedilir`, async () => {
+        const max = COUNTER_MAX_STEP[field];
+        await assertSucceeds(
+          updateDoc(doc(asPlayer(), "players", PLAYER_ID), counterIncrementPayload(field, max))
+        );
+        await assertFails(
+          updateDoc(doc(asPlayer(), "players", PLAYER_ID), counterIncrementPayload(field, max + 1))
+        );
+      });
+    }
+  });
+
+  describe("host ve personel", () => {
+    it("personel hesabı oda açar", async () => {
+      await seedStaff(HOST_UID);
+      await assertSucceeds(
+        setDoc(
+          doc(asHost(), "rooms", "room-contract"),
+          roomCreatePayload({
+            code: "ZXCV",
+            hostUid: HOST_UID,
+            locale: "tr",
+            venue: { name: "Mekan", logo_url: undefined, primary_color: undefined },
+          })
+        )
+      );
+    });
+
+    it("personel ödülü kullanıldı işaretler", async () => {
+      await seedStaff();
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), "rewards", "r-contract"), {
+          uid: PLAYER_UID,
+          nickname: "OYUNCU",
+          type: "drink",
+          title: "Espresso",
+          description: "",
+          status: "available",
+          code: "QWERTY",
+          earned_at: Date.now(),
+        });
+      });
+      await assertSucceeds(updateDoc(doc(asVenueOwner(), "rewards", "r-contract"), rewardClaimPayload()));
+    });
+
+    it("host oyuncunun aktarım işaretçisini yazar, oyuncu kendisininkini yazamaz", async () => {
+      await seed();
+      await assertSucceeds(updateDoc(doc(asHost(), "players", PLAYER_ID), lifetimeMarkerPayload(120)));
+      await assertFails(updateDoc(doc(asPlayer(), "players", PLAYER_ID), lifetimeMarkerPayload(0)));
+    });
   });
 });

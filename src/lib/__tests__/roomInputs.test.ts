@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { echoVotesFromInputs, isInputForRound, pulseClicksFromInputs } from "../roomInputs";
+import { echoVotesFromInputs, isInputForRound, pulseClicksFromInputs, unityTotalFromInputs } from "../roomInputs";
 
 describe("isInputForRound", () => {
   it("yalnızca aynı turun kaydını sayar", () => {
@@ -39,5 +39,18 @@ describe("pulseClicksFromInputs", () => {
       c: { round: 2, echo_vote: "a" },
     };
     expect(pulseClicksFromInputs(inputs, 2)).toEqual({ a: 1000 });
+  });
+});
+
+describe("unityTotalFromInputs", () => {
+  it("bu turun dokunuş toplamlarını toplar, eski turları atlar", () => {
+    const inputs = {
+      a: { round: 4, unity_clicks: 12 },
+      b: { round: 4, unity_clicks: 30 },
+      c: { round: 3, unity_clicks: 99 },
+      d: { round: 4, echo_vote: "a" },
+    };
+    expect(unityTotalFromInputs(inputs, 4)).toBe(42);
+    expect(unityTotalFromInputs(inputs, undefined)).toBe(0);
   });
 });

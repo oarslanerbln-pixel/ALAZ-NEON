@@ -7,6 +7,7 @@ import { db } from "../../../lib/firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { useToast } from "../../../contexts/ToastContextCore";
 import { isInputForRound } from "../../../lib/roomInputs";
+import { pulseInputPayload } from "../../../lib/clientWrites";
 import { useOwnRoomInput } from "../../../hooks/useRoomInputs";
 
 interface Props {
@@ -47,10 +48,7 @@ export function PlayerPulseController({ room, player }: Props) {
     }
 
     try {
-      await setDoc(doc(db, "rooms", room.id, "inputs", player.id), {
-        round,
-        pulse_click: clickTime,
-      });
+      await setDoc(doc(db, "rooms", room.id, "inputs", player.id), pulseInputPayload(round, clickTime));
     } catch (err) {
       console.error(err);
       showToast(t("pulse.connectionError", "Bağlantı hatası!"), "error");

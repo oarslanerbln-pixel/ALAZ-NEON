@@ -8,6 +8,7 @@ import { useLocale } from "../../../hooks/useLocale";
 import { echoQuestionText } from "../../../lib/echoQuestions";
 import { isPlayerActive } from "../../../lib/liveness";
 import { isInputForRound } from "../../../lib/roomInputs";
+import { echoInputPayload } from "../../../lib/clientWrites";
 import { useOwnRoomInput } from "../../../hooks/useRoomInputs";
 
 interface Props {
@@ -74,10 +75,7 @@ export function PlayerEchoController({ room, player }: Props) {
     }
 
     try {
-      await setDoc(doc(db, "rooms", room.id, "inputs", player.id), {
-        round,
-        echo_vote: targetId,
-      });
+      await setDoc(doc(db, "rooms", room.id, "inputs", player.id), echoInputPayload(round, targetId));
     } catch (err) {
       console.error(err);
       showToast(t("echo.voteFailed"), "error");
