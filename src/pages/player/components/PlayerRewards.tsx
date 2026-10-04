@@ -7,6 +7,7 @@ import { db, auth } from "../../../lib/firebase";
 import type { Reward } from "../../../types/database";
 import { useVenue } from "../../../contexts/VenueContextCore";
 import { useLocale } from "../../../hooks/useLocale";
+import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { createLogger } from "../../../lib/logger";
 
 const log = createLogger("PlayerRewards");
@@ -21,6 +22,7 @@ export function PlayerRewards() {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
   const [openReward, setOpenReward] = useState<Reward | null>(null);
+  useEscapeKey(openReward !== null, () => setOpenReward(null));
 
   // `auth.currentUser` bir effect bağımlılığı olarak reaktif değil (bkz.
   // useUserProfile.ts'teki aynı düzeltme) — ayrıca eski kod auth henüz
@@ -141,6 +143,7 @@ export function PlayerRewards() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-md flex items-center justify-center p-6"
             onClick={() => setOpenReward(null)}
+            role="presentation"
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -148,6 +151,8 @@ export function PlayerRewards() {
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ type: "spring", bounce: 0.3, duration: 0.4 }}
               onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
               className="w-full max-w-xs bg-black border-2 border-[#ff003c] p-8 flex flex-col items-center gap-6 relative shadow-[0_0_60px_rgba(255,0,60,0.35)]"
             >
               <button
@@ -169,7 +174,7 @@ export function PlayerRewards() {
               </div>
 
               <div className="bg-white p-4 rounded-xl">
-                <QRCodeSVG value={openReward.code} size={160} bgColor="#ffffff" fgColor="#000000" level="H" />
+                <QRCodeSVG title={t("a11y.rewardQr")} value={openReward.code} size={160} bgColor="#ffffff" fgColor="#000000" level="H" />
               </div>
 
               <div className="text-center">

@@ -180,7 +180,7 @@ export function HostLobby({
                 </div>
                 <div className="w-px h-16 bg-white/20" />
                 <div className="bg-white p-3 rounded-2xl shadow-xl">
-                  <QRCodeSVG
+                  <QRCodeSVG title={t("a11y.joinQr")}
                     value={`${window.location.protocol}//${(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && typeof __LOCAL_IP__ !== 'undefined' ? __LOCAL_IP__ + (window.location.port ? ':' + window.location.port : '') : window.location.host}/join?code=${room?.code}`}
                     size={90}
                     bgColor="#ffffff"
@@ -255,7 +255,7 @@ export function HostLobby({
               {/* QR Code Container with Target Brackets */}
               {room?.code && (
                 <div className="relative p-4 bg-white rounded-2xl shadow-[0_0_30px_rgba(255,255,255,0.2)] shrink-0">
-                  <QRCodeSVG
+                  <QRCodeSVG title={t("a11y.joinQr")}
                     value={`${window.location.protocol}//${(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && typeof __LOCAL_IP__ !== 'undefined' ? __LOCAL_IP__ + (window.location.port ? ':' + window.location.port : '') : window.location.host}/join?code=${room.code}`}
                     size={160}
                     bgColor="#ffffff"
@@ -328,7 +328,9 @@ export function HostLobby({
                     >
                       <span className="truncate pr-3">{cat}</span>
                       <button
+                        type="button"
                         onClick={() => handleRemoveCategory(idx)}
+                        aria-label={`${t("lobby.removeCategory")}: ${cat}`}
                         className="text-gray-500 hover:text-red-400 transition-colors p-1"
                       >
                         <X className="w-3.5 h-3.5" />
@@ -346,6 +348,7 @@ export function HostLobby({
               {/* Add Custom Category */}
               <div className="flex gap-2">
                 <input
+                  aria-label={t("lobby.newCategory")}
                   type="text"
                   placeholder={t("lobby.newCategory")}
                   value={newCategory}

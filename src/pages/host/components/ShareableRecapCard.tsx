@@ -69,7 +69,7 @@ export function ShareableRecapCard({ awards, roomCode }: ShareableRecapCardProps
 
       <div className="mt-auto relative z-10 flex flex-col items-center border-t border-white/20 pt-5">
         <div className="bg-white rounded-xl p-2 shadow-[0_0_15px_rgba(255,255,255,0.3)] mb-3">
-          <QRCodeSVG value={joinUrl} size={64} bgColor="#ffffff" fgColor="#000000" />
+          <QRCodeSVG title={t("a11y.joinQr")} value={joinUrl} size={64} bgColor="#ffffff" fgColor="#000000" />
         </div>
         <p className="text-[10px] font-black text-white uppercase tracking-[0.3em]">
           {t("recap.joinCta")}

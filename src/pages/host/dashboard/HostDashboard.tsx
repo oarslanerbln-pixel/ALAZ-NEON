@@ -17,6 +17,7 @@ import { GameSettingsModal } from "../components/GameSettingsModal";
 import { GAME_CARDS as GAMES } from "../../../lib/gameCatalog";
 import { activePlayers as activePlayersOf } from "../../../lib/liveness";
 import { useLocale } from "../../../hooks/useLocale";
+import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useVenue } from "../../../contexts/VenueContextCore";
 import { createLogger } from "../../../lib/logger";
@@ -37,6 +38,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
   const { t } = useLocale();
   const { venue } = useVenue();
   const [isKioskMode, setIsKioskMode] = useState(false);
+  useEscapeKey(isKioskMode, () => setIsKioskMode(false));
   const [kioskImageIndex, setKioskImageIndex] = useState(0);
 
   // Game Setup State
@@ -330,7 +332,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                 </p>
 
                 <div className="bg-white p-4 rounded-2xl shadow-[0_0_30px_rgba(255,255,255,0.2)] border-[4px] border-white/5 relative group-hover/qr:scale-105 transition-transform duration-500">
-                  <QRCodeSVG value={joinUrl} size={140} bgColor="#ffffff" fgColor="#000000" level="H" marginSize={1} />
+                  <QRCodeSVG title={t("a11y.joinQr")} value={joinUrl} size={140} bgColor="#ffffff" fgColor="#000000" level="H" marginSize={1} />
                 </div>
                 
                 <div className="mt-4 flex flex-col items-center">
@@ -385,7 +387,9 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
               <div className="relative w-full max-w-4xl aspect-[21/9] flex items-center justify-center perspective-1000">
                 {/* Carousel Left Arrow */}
                 <button
+                  type="button"
                   onClick={() => paginate(-1)}
+                  aria-label={t("dashboard.prevGame")}
                   className="absolute left-0 z-20 w-16 h-16 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 transition-all hover:scale-110 shadow-xl -ml-8"
                 >
                   <ChevronLeft className="w-8 h-8 text-slate-800 opacity-80" />
@@ -447,7 +451,9 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
 
                 {/* Carousel Right Arrow */}
                 <button
+                  type="button"
                   onClick={() => paginate(1)}
+                  aria-label={t("dashboard.nextGame")}
                   className="absolute right-0 z-20 w-16 h-16 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 transition-all hover:scale-110 shadow-xl -mr-8"
                 >
                   <ChevronRight className="w-8 h-8 text-slate-800 opacity-80" />
@@ -483,6 +489,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsKioskMode(false)}
+            role="presentation"
             className="fixed inset-0 z-[999] bg-black cursor-pointer flex items-center justify-center"
           >
             <AnimatePresence mode="wait">
@@ -505,7 +512,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
             <div className="absolute bottom-8 right-8 bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/20 flex flex-col items-center">
               <span className="text-white font-bold uppercase tracking-widest text-[10px] mb-2">{t("host.joinGame", "Oyuna Katıl")}</span>
               <div className="bg-white p-2 rounded-lg">
-                <QRCodeSVG value={joinUrl} size={80} bgColor="#ffffff" fgColor="#000000" level="H" />
+                <QRCodeSVG title={t("a11y.joinQr")} value={joinUrl} size={80} bgColor="#ffffff" fgColor="#000000" level="H" />
               </div>
               <span className="text-alaz-orange font-mono font-bold mt-2">{room.code}</span>
             </div>

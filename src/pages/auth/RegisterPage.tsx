@@ -146,10 +146,11 @@ export function RegisterPage() {
           <div className="space-y-8 relative z-20" style={{ transform: "translateZ(30px)" }}>
             <div className="space-y-3 relative group">
               <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest ml-2 group-focus-within:text-alaz-orange transition-colors">
-                NICKNAME
+                {t("join.nickname")}
               </label>
               <div className="relative">
                 <input
+                  aria-label={t("join.nickname")}
                   type="text"
                   required
                   value={nickname}
@@ -167,6 +168,7 @@ export function RegisterPage() {
               </label>
               <div className="relative">
                 <input
+                  aria-label={t("auth.email")}
                   type="email"
                   required
                   value={email}
@@ -184,6 +186,7 @@ export function RegisterPage() {
               </label>
               <div className="relative">
                 <input
+                  aria-label={t("auth.password")}
                   type="password"
                   required
                   value={password}

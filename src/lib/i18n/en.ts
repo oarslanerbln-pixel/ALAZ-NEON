@@ -934,4 +934,13 @@ export const en = {
   "b2b.roiTitle": "RETURN ON INVESTMENT (ROI)",
   "b2b.roiDesc": "Competition between players fosters loyalty and triggers extra orders.",
   "b2b.ctaButton": "REQUEST A DEMO",
+  // ═══════════════════════════════════════════
+  // ERİŞİLEBİLİRLİK — yalnızca ekran okuyucu adları (2.11)
+  // ═══════════════════════════════════════════
+  "common.close": "Close",
+  "dashboard.prevGame": "Previous game",
+  "dashboard.nextGame": "Next game",
+  "lobby.removeCategory": "Remove category",
+  "a11y.joinQr": "QR code to join",
+  "a11y.rewardQr": "Reward QR code",
 } satisfies Dictionary;

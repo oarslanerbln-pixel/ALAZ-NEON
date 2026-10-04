@@ -938,6 +938,15 @@ export const de = {
   "b2b.roiTitle": "RETURN ON INVESTMENT (ROI)",
   "b2b.roiDesc": "Der Wettbewerb zwischen den Spielern fördert die Kundenbindung und löst zusätzliche Bestellungen aus.",
   "b2b.ctaButton": "DEMO-TERMIN VEREINBAREN",
+  // ═══════════════════════════════════════════
+  // ERİŞİLEBİLİRLİK — yalnızca ekran okuyucu adları (2.11)
+  // ═══════════════════════════════════════════
+  "common.close": "Schließen",
+  "dashboard.prevGame": "Vorheriges Spiel",
+  "dashboard.nextGame": "Nächstes Spiel",
+  "lobby.removeCategory": "Kategorie entfernen",
+  "a11y.joinQr": "QR-Code zum Beitreten",
+  "a11y.rewardQr": "Gutschein-QR-Code",
 };
 
 export type Dictionary = typeof de;

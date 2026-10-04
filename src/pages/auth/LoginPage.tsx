@@ -148,6 +148,7 @@ export function LoginPage() {
               </label>
               <div className="relative">
                 <input
+                  aria-label={t("auth.email")}
                   type="email"
                   required
                   value={email}
@@ -165,6 +166,7 @@ export function LoginPage() {
               </label>
               <div className="relative">
                 <input
+                  aria-label={t("auth.password")}
                   type="password"
                   required
                   value={password}

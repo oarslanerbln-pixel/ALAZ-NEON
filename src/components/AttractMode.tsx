@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { useLocale } from "../hooks/useLocale";
+import { useEscapeKey } from "../hooks/useEscapeKey";
 import { useTopPlayers } from "../hooks/useTopPlayers";
 import { useVenue } from "../contexts/VenueContextCore";
 
@@ -14,6 +15,7 @@ type Slide =
 
 export function AttractMode({ onClose }: { onClose: () => void }) {
   const { t } = useLocale();
+  useEscapeKey(true, onClose);
   const { venue } = useVenue();
   const [index, setIndex] = useState(0);
   // Eskiden burada sabit, uydurma bir üçlü vardı ("Ateşin_Oğlu", 12450 puan...)
@@ -53,6 +55,7 @@ export function AttractMode({ onClose }: { onClose: () => void }) {
       exit={{ opacity: 0 }}
       transition={{ duration: 1 }}
       onClick={onClose}
+      role="presentation"
       className="fixed inset-0 z-[100] bg-black overflow-hidden flex flex-col items-center justify-center cursor-pointer"
     >
       {/* Dynamic Background */}
@@ -220,7 +223,7 @@ export function AttractMode({ onClose }: { onClose: () => void }) {
         </div>
         <div className="bg-white p-3 rounded-xl">
           {/* Use window.location.origin to point to the current deployed URL */}
-          <QRCodeSVG value={`${typeof window !== 'undefined' ? window.location.origin : 'https://alaz-neon.app'}/join`} size={150} />
+          <QRCodeSVG title={t("a11y.joinQr")} value={`${typeof window !== 'undefined' ? window.location.origin : 'https://alaz-neon.app'}/join`} size={150} />
         </div>
         <div className="mt-4 text-alaz-orange font-black tracking-widest text-sm">
           {t("attract.joinNow")}

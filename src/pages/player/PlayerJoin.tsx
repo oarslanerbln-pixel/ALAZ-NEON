@@ -220,6 +220,7 @@ export function PlayerJoin() {
                     </div>
                   ) : (
                     <input
+                      aria-label={t("join.roomCode")}
                       type="text"
                       required
                       maxLength={4}
@@ -242,6 +243,7 @@ export function PlayerJoin() {
                 <div className="flex bg-white/[0.02] border border-white/10 rounded-2xl group-focus-within:border-alaz-orange/60 group-focus-within:bg-white/[0.04] transition-all shadow-inner overflow-hidden relative">
                   <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-alaz-orange/80 to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity" />
                   <input
+                    aria-label={t("join.nickname")}
                     type="text"
                     required
                     autoFocus={!!urlCode}
@@ -272,6 +274,7 @@ export function PlayerJoin() {
                         TEAM
                       </div>
                       <input
+                        aria-label={t("join.teamLabel")}
                         type="text"
                         required
                         value={teamName}

@@ -167,6 +167,7 @@ export function PlayerSensorController({ room, player }: Props) {
               
               <form onSubmit={handleSubmitAnswer} className="w-full flex flex-col gap-4">
                 <input 
+                  aria-label={t("sensor.writeAndSend")}
                   type="text"
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value)}

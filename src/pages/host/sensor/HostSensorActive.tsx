@@ -54,6 +54,7 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
           <motion.img 
             key={currentImage.url}
             src={currentImage.url}
+            alt=""
             initial={{ filter: "blur(40px) contrast(150%)", scale: 1.15, opacity: 0 }}
             animate={{ filter: "blur(0px) contrast(100%)", scale: 1, opacity: 1 }}
             transition={{ 
@@ -87,6 +88,7 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
         <div className="relative w-full max-w-5xl aspect-video rounded-3xl overflow-hidden shadow-[0_0_120px_rgba(239,68,68,0.4)] border-2 border-red-500/60 mt-12">
           <img 
             src={currentImage.url}
+            alt=""
             className="w-full h-full object-cover grayscale opacity-30"
             style={{ filter: "blur(25px)" }} 
           />
