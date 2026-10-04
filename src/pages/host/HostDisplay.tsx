@@ -16,6 +16,7 @@ import { useVenue } from "../../contexts/VenueContextCore";
 // Hooks
 import { useHostRoom } from "../../hooks/useHostRoom";
 import { useLifetimeScoreSync } from "../../hooks/useLifetimeScoreSync";
+import { useWakeLock } from "../../hooks/useWakeLock";
 import { useLocale } from "../../hooks/useLocale";
 
 // Types
@@ -51,6 +52,8 @@ export function HostDisplay() {
   const hostRoom = useHostRoom(roomId);
   useLifetimeScoreSync(hostRoom.players);
   const { room, loading, notFound, error } = hostRoom;
+  // TV/tablet gece boyunca kararmasın: ekran koruyucu QR'ı ve skorları kapatıyordu.
+  useWakeLock(!!room && room.status !== "closed");
 
   // Oyun ekranlarını TV boştayken önceden indir (bkz. preloadHostGameDisplays).
   // Erken dönüşlerden ÖNCE: hook sırası her render'da aynı kalmalı.

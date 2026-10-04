@@ -318,6 +318,16 @@ Uygulama notları:
 >   - Oturum yeni açılmışken katılım yazması tekrar gönderilirse
 >     `ALREADY_EXISTS` ile düşüyordu. Yazma artık tekrarlanabilir
 >     (önceden üretilmiş kimlik + `setDoc`).
+>
+> **2.5 tamamlandı (Wake Lock).**
+> - TV oda açık olduğu sürece, telefon oyuncu odadayken ekranı uyanık tutar
+>   (`lib/wakeLock.ts` + `useWakeLock`).
+> - Sekme gizlenince tarayıcının bıraktığı kilit görünürlük dönüşünde
+>   yeniden alınıyor.
+> - Reddedilen ya da görünürken bırakılan kilit (iOS jest şartı, pil
+>   tasarrufu) ilk dokunuşta bir kez daha isteniyor; al-bırak döngüsü yok.
+> - API'si olmayan tarayıcıda hiçbir şey yapılmaz. 9 birim testi; E2E
+>   senaryosu TV ve üç telefonun kilidi tuttuğunu doğruluyor.
 
 | İş | Kapsar | Efor | Kabul kriteri |
 |---|---|---|---|

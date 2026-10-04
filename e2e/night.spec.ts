@@ -3,13 +3,14 @@ import { expect, test, type Page } from "@playwright/test";
 import { readDoc, resetEmulators } from "./support/emulator";
 import { t } from "./support/i18n";
 import { joinAsPlayer, openNight } from "./support/night";
+import { activeWakeLocks } from "./support/wakeLock";
 
 test.beforeEach(resetEmulators);
 
 /**
  * Çekirdek gece akışı: TV odayı açar, üç telefon katılır, lobi sayacı
  * güncellenir (1.1), echo oylaması oyuncu giriş kayıtları üzerinden (1.3)
- * tamamlanır ve sonuç TV'de ilan edilir.
+ * tamamlanır ve sonuç TV'de ilan edilir. Ekranlar boyunca uyanık kalır (2.5).
  */
 test("TV odayı açar, üç oyuncu katılır ve echo oylaması tamamlanır", async ({ browser }) => {
   const { host, roomId, code } = await openNight(browser);
@@ -27,6 +28,12 @@ test("TV odayı açar, üç oyuncu katılır ve echo oylaması tamamlanır", asy
     }
     await expect(host.getByText(t("dashboard.playersCount", 3))).toBeVisible();
     expect((await readDoc(`rooms/${roomId}`))?.player_count).toBe(3);
+  });
+
+  await test.step("TV ve telefonlar ekranı uyanık tutar (2.5)", async () => {
+    for (const page of [host, ...phones]) {
+      await expect.poll(() => activeWakeLocks(page)).toBe(1);
+    }
   });
 
   await test.step("TV echo oyununu başlatır", async () => {
