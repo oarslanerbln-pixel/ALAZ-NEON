@@ -82,6 +82,35 @@ To revoke access, delete that document.
 > the Admin SDK is also accepted, with no rule changes needed — it avoids the
 > per-evaluation `get()` that the allowlist costs.
 
+## 🛡 App Check (recommended, one-time console setup)
+
+[App Check](https://firebase.google.com/docs/app-check) makes Firestore accept
+requests only from this web app (reCAPTCHA v3 attestation), so scripts and other
+sites cannot burn the daily quota. The client side is already wired up
+(`src/lib/appCheckSetup.ts`); it stays **off** until a site key is configured.
+
+1. **reCAPTCHA v3 key** — <https://www.google.com/recaptcha/admin/create>,
+   type *Score based (v3)*, domains: your production domains (e.g. the Vercel
+   domain). Do **not** add `localhost` (that would let anyone pass from their
+   own machine; local development uses debug tokens, step 5).
+2. **Register the app** — Firebase Console → App Check → Apps → your web app →
+   reCAPTCHA v3 → paste the **secret** key. The secret key lives only in the
+   console, never in this repo or in `VITE_*` variables.
+3. **Site key** — set `VITE_RECAPTCHA_SITE_KEY` (public) in the hosting
+   environment (and `.env.local`), then redeploy.
+4. **Monitor, then enforce** — App Check → APIs → Cloud Firestore shows
+   verified vs. unverified requests. TVs and phones still running an older
+   build show up as unverified until they reload. When verified traffic is
+   ≥ ~95 %, click **Enforce** for Cloud Firestore.
+5. **Local development / CI** — with the site key set, `npm run dev` prints an
+   *AppCheck debug token* in the browser console; add it under App Check →
+   Apps → ⋮ → *Manage debug tokens*. For CI, register a fixed token and set it
+   as `VITE_APPCHECK_DEBUG_TOKEN`. The Firestore emulator (rules tests) does not
+   enforce App Check.
+
+> reCAPTCHA v3 shows a small badge in the bottom-right corner. If you hide it,
+> Google requires the reCAPTCHA attribution text to be shown elsewhere.
+
 ## 🗑 Data retention (one-time console setup)
 
 Rooms, players and answers used to accumulate forever — the codebase contains no
