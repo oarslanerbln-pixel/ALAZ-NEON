@@ -145,6 +145,7 @@ export function HostBombDisplay({
       }
       if (survivor?.uid) {
         grantRewardToPlayers(
+          room.id,
           [{ uid: survivor.uid, nickname: survivor.nickname }],
           venue,
         ).catch((err) =>
@@ -199,7 +200,7 @@ export function HostBombDisplay({
         const batch = writeBatch(db);
         players.forEach(p => {
           const pRef = doc(db, "players", p.id);
-          batch.update(pRef, { total_score: 0, lives: 3 });
+          batch.update(pRef, { total_score: 0, lives: 3, lifetime_credited: 0 });
         });
         await batch.commit();
 

@@ -17,11 +17,19 @@ import type { Player } from "../types/database";
  */
 
 /**
- * Oyuncu telefonu 15 sn'de bir ping atıyor (bkz. PlayerGame → useHeartbeat).
- * Bomba/voltaj hedefi buna bakıyor; kısa tutulmalı.
+ * Oyuncu telefonu 30 sn'de bir ping atıyor (bkz. PlayerGame → useHeartbeat).
+ * Bomba/voltaj hedefi buna bakıyor.
+ *
+ * Aralık eskiden 15 sn'ydi. Her ping host'un `players` dinleyicisine bir
+ * okuma olarak düşüyor: 30 misafirli 4 saatlik bir gece yalnızca bununla
+ * ~28.800 okuma ediyordu (Spark günlük kotası 50.000; bkz. docs/roadmap.md,
+ * M2). Eşik aralığın iki katı: tek bir geç/kaybolan ping oyuncuyu elemiyor.
+ * Telefonu kilitlenen oyuncu sinyali hemen kesiyor (useHeartbeat sekme
+ * gizlenince durur), en geç 60 sn içinde hedef dışı kalıyor; geri
+ * döndüğünde anında ping atıp tekrar hedeflenebilir oluyor.
  */
-export const PLAYER_HEARTBEAT_MS = 15_000;
-const PLAYER_STALE_MS = 30_000;
+export const PLAYER_HEARTBEAT_MS = 30_000;
+const PLAYER_STALE_MS = 60_000;
 
 /**
  * Host ekranı 30 sn'de bir ping atıyor (bkz. useHostRoom → useHeartbeat).

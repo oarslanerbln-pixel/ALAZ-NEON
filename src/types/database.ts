@@ -87,12 +87,19 @@ export interface Room {
    */
   created_at?: number;
   /**
-   * Host ekraninin son sinyali (epoch ms). TV tarayicisi 15 sn'de bir
+   * Host ekraninin son sinyali (epoch ms). TV tarayicisi 30 sn'de bir
    * guncelliyor (bkz. useHostRoom). Oyuncu tarafi bu alana bakip "host
    * cevrimdisi" uyarisi gosteriyor — onceden host kopunca oda sonsuza kadar
    * donuk kaliyor, misafire hicbir aciklama cikmiyordu.
    */
   host_last_active?: number;
+  /**
+   * Odadaki oyuncu sayısı — yalnızca host yazar, yalnızca katılım/ayrılmada
+   * değişir (bkz. lib/playerCount.ts). Lobideki telefonlar sayıyı buradan
+   * okuyor; bütün `players` sorgusunu dinlemek okuma kotasını bitiriyordu.
+   * Alan eklenmeden önce açılmış odalarda yok.
+   */
+  player_count?: number;
   /**
    * Firestore TTL politikasinin baktigi alan — bu tarihten sonra dokuman
    * otomatik siliniyor (bkz. lib/retention.ts ve README). TTL yalnizca bu
@@ -239,6 +246,12 @@ export interface Player {
   spectrum_clicks?: number;
   bar_score?: number;
   kablo_score?: number;
+  /**
+   * total_score'un ne kadarının users/{uid}.total_lifetime_score'a
+   * aktarıldığı (bkz. lib/lifetimeScore.ts). Yalnızca host yazar; katılım
+   * kuralı bu alanı kabul etmez.
+   */
+  lifetime_credited?: number;
 }
 
 export interface Answer {
@@ -438,6 +451,8 @@ export interface Reward {
   status: "available" | "claimed";
   code: string;
   earned_at: number;
+  /** Ödülün kazanıldığı oda — kural, yazanın bu odanın host'u olmasını şart koşuyor. */
+  room_id?: string;
   claimed_at?: number;
   /**
    * `venue.reward_validity_days`'e göre kazanıldığı anda hesaplanıp

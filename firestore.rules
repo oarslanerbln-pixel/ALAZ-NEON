@@ -90,8 +90,11 @@ service cloud.firestore {
       // Anyone can read the room data
       allow read: if true;
 
-      // Only authenticated users can create a room. The creator must set themselves as the host.
-      allow create: if isAuth() && request.resource.data.host_uid == request.auth.uid;
+      // Oda yalnızca personel hesabıyla açılır (docs/roadmap.md, karar D1).
+      // Eskiden her anonim oturum host olabiliyordu; ödül ve kalıcı puan
+      // yazma yetkisi "odanın host'u" üzerinden aktığı için oda açmak
+      // hepsinin kapısıydı. TV/tablet bir kez personel hesabıyla giriş yapar.
+      allow create: if isStaff() && request.resource.data.host_uid == request.auth.uid;
 
       // The host owns the room and may change anything in it. Players also have
       // to write a handful of specific fields as part of normal play — passing
@@ -112,14 +115,61 @@ service cloud.firestore {
 
       // Only the host can delete the room.
       allow delete: if isAuth() && resource.data.host_uid == request.auth.uid;
+
+      /**
+       * Emoji tepkileri (src/hooks/useEmojiPulse.ts): telefon tek bir
+       * `emojiPulse` dokümanının üzerine yazar, TV onu dinler.
+       *
+       * Bu alt koleksiyon için hiç kural yoktu — `match /rooms/{roomId}`
+       * alt koleksiyonları kapsamaz, varsayılan ret her tepkiyi sessizce
+       * düşürüyordu. Yazan, bu odadaki kendi oyuncu kaydını göstermek
+       * zorunda: odada olmayan biri TV'ye bir şey basamaz.
+       */
+      match /transient/{docId} {
+        allow read: if true;
+
+        function isEmojiPulse() {
+          let data = request.resource.data;
+          let player = get(/databases/$(database)/documents/players/$(data.player_id)).data;
+          return docId == 'emojiPulse' &&
+            data.keys().hasOnly(['emoji', 'timestamp', 'player_id']) &&
+            data.emoji is string && data.emoji.size() > 0 && data.emoji.size() <= 16 &&
+            data.timestamp is number &&
+            player.uid == request.auth.uid &&
+            player.room_id == roomId;
+        }
+
+        allow create, update: if isAuth() && isEmojiPulse();
+        allow delete: if isAuth() &&
+          get(/databases/$(database)/documents/rooms/$(roomId)).data.host_uid == request.auth.uid;
+      }
     }
 
     match /players/{playerId} {
       // Anyone can see the players
       allow read: if true;
       
-      // Authenticated users can join a room (create their player profile)
-      allow create: if isAuth() && request.resource.data.uid == request.auth.uid;
+      /**
+       * Odaya katılım (src/pages/player/PlayerJoin.tsx). Yalnızca uid
+       * kontrol ediliyordu: oyuncu `total_score: 9999` ile katılabiliyordu
+       * ve ödül kazananı total_score'a göre seçildiği için bu, ödül kuralı
+       * ne kadar sıkı olursa olsun bedava kupon demekti. Katılım artık
+       * PlayerJoin'in yazdığı şemaya, sıfır puana ve canlı bir odaya bağlı
+       * (kapalı durumlar lib/roomCodes.ts'teki CLOSED_STATUSES ile aynı).
+       */
+      function isValidJoin() {
+        let data = request.resource.data;
+        return data.uid == request.auth.uid &&
+          data.keys().hasOnly(['room_id', 'nickname', 'team_name', 'total_score', 'night_score', 'uid', 'created_at', 'expires_at']) &&
+          data.total_score == 0 &&
+          data.get('night_score', 0) == 0 &&
+          data.nickname is string && data.nickname.size() > 0 && data.nickname.size() <= 20 &&
+          (data.get('team_name', null) == null ||
+            (data.team_name is string && data.team_name.size() <= 20)) &&
+          !(get(/databases/$(database)/documents/rooms/$(data.room_id)).data.status in ['closed', 'finished']);
+      }
+
+      allow create: if isAuth() && isValidJoin();
 
       // A player's own game counters (Kablo, Colors, Spectrum, Bar) are
       // updated via increment() directly from the player's device. These
@@ -158,15 +208,43 @@ service cloud.firestore {
       );
     }
 
-    // ALAZ League Rules
+    /**
+     * ALAZ League profili (src/hooks/useUserProfile.ts).
+     *
+     * Okuma: yalnızca sahibi. Profil telefon numarasını taşıyor ve okuma
+     * herkese açıktı — kayıtlı bütün numaralar listelenebiliyordu (KVKK).
+     * Uygulamada başkasının profilini okuyan bir ekran yok; liderlik
+     * tablosu `players` koleksiyonundan besleniyor.
+     *
+     * Puan: kalıcı puanı ve ligi istemci kendisi yazamaz. Eskiden puanı
+     * oyuncunun kendi cihazı increment() ile yazıyordu ve alan kısıtı
+     * yoktu; konsoldan tek satırla lig tablosunun tepesine çıkılıyordu.
+     * Puanı artık oyun sırasında personel hesaplı host ekranı yazıyor
+     * (src/hooks/useLifetimeScoreSync.ts) ve yalnızca o alana dokunabiliyor.
+     */
     match /users/{userId} {
-      // Anyone can read profiles for the leaderboard
-      allow read: if true;
-      
-      // Users can only create or update their own profile
-      allow create, update: if isAuth() && request.auth.uid == userId;
-      
-      // Do not allow deletion of profiles directly
+      function isValidNickname() {
+        return request.resource.data.get('nickname', '') is string &&
+          request.resource.data.get('nickname', '').size() <= 20;
+      }
+
+      allow read: if isAuth() && request.auth.uid == userId;
+
+      allow create: if isAuth() && request.auth.uid == userId &&
+        request.resource.data.keys().hasOnly(['phone_number', 'nickname', 'total_lifetime_score', 'current_league', 'created_at', 'last_active']) &&
+        request.resource.data.get('total_lifetime_score', 0) == 0 &&
+        request.resource.data.get('current_league', 'BRONZE') == 'BRONZE' &&
+        isValidNickname();
+
+      allow update: if isAuth() && (
+        (request.auth.uid == userId &&
+          touchesOnly(['nickname', 'last_active']) &&
+          isValidNickname()) ||
+        (isStaff() &&
+          touchesOnly(['total_lifetime_score']) &&
+          request.resource.data.total_lifetime_score is number)
+      );
+
       allow delete: if false;
     }
 
@@ -274,13 +352,18 @@ service cloud.firestore {
 
       // Ödül üretimi host tarafında (kazanan OYUNCULAR adına) oluyor —
       // host'un kendi kimliği kazananınkinden farklı, bu yüzden "sadece
-      // kendi uid'in için yaz" kısıtı burada uygulanamıyor. Üretimde bu
-      // Cloud Function'a taşınmalı (bkz. app_config'teki benzer not);
-      // MVP için en azından bir client'ın doğrudan "claimed" (kullanılmış)
-      // bir ödül YARATMASI engelleniyor.
-      allow create: if isAuth() &&
+      // kendi uid'in için yaz" kısıtı burada uygulanamıyor.
+      //
+      // Eskiden yalnızca status kontrol ediliyordu: herhangi bir anonim
+      // oturum konsoldan kendine "available" bir kupon yazıp barda kodla
+      // kullanabiliyordu. Artık yazan personel hesabı olmalı ve ödül, o
+      // hesabın host'u olduğu bir odaya bağlı olmalı (karar D1, bkz.
+      // docs/roadmap.md). Kalıcı çözüm Cloud Function (karar D2).
+      allow create: if isStaff() &&
+        request.resource.data.keys().hasOnly(['uid', 'nickname', 'type', 'title', 'description', 'status', 'code', 'earned_at', 'expires_at', 'room_id']) &&
         request.resource.data.status == 'available' &&
-        !('claimed_at' in request.resource.data);
+        request.resource.data.room_id is string &&
+        get(/databases/$(database)/documents/rooms/$(request.resource.data.room_id)).data.host_uid == request.auth.uid;
 
       // Asıl güvenlik sınırı burada: "kullanıldı" işaretlemek yalnızca
       // işletme hesabına (barda doğrulama yapan personel) açık, ve yalnızca

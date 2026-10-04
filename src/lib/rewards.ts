@@ -18,8 +18,12 @@ import type { GameMode, Player, Reward, VenueConfig } from "../types/database";
  * Firestore yazma hatası (izin, bağlantı vb.) oyunun bitişini ENGELLEMEMELİ
  * — bu yüzden çağıran taraf hatayı yutup sadece konsola loglamalı, ödül
  * dağıtımı oyunun kendisinden daha az kritik.
+ *
+ * `roomId` zorunlu: kural ödülü yalnızca personel hesabıyla açılmış ve
+ * yazanın host'u olduğu bir odaya bağlıysa kabul ediyor (firestore.rules).
  */
 export async function grantRewardToPlayers(
+  roomId: string,
   winners: Winner[],
   venue: VenueConfig,
 ): Promise<void> {
@@ -49,6 +53,7 @@ export async function grantRewardToPlayers(
       status: "available",
       code: generateCode(6),
       earned_at: now,
+      room_id: roomId,
       ...(expiresAt !== null ? { expires_at: expiresAt } : {}),
     };
     batch.set(rewardRef, reward);
@@ -58,10 +63,11 @@ export async function grantRewardToPlayers(
 
 /** Puan bazlı oyunlar için: kazananı puana göre bulur, sonra ödülü yazar. */
 export async function grantGameRewards(
+  roomId: string,
   gameMode: GameMode,
   players: Player[],
   venue: VenueConfig,
 ): Promise<void> {
   const winners = resolveWinners(gameMode, players);
-  await grantRewardToPlayers(winners, venue);
+  await grantRewardToPlayers(roomId, winners, venue);
 }
