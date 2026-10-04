@@ -56,6 +56,9 @@ test("klasik oyun: tur akışı, puanların tek ve doğru yazılması, sonraki t
     name: new RegExp(`^(${t("tutorial.next")}|${t("tutorial.startGame")})$`),
   });
   await expect(tutorialButton).toBeVisible({ timeout: 20_000 });
+  // Host durumu önce yerelde (iyimser) günceller: ekran göründüğünde odada
+  // durum henüz "lobby" olabilir. Önce odanın anlatıma geçmesini bekle.
+  await waitForStatus(roomId, "tutorial", 20_000);
   for (let i = 0; i < 20 && (await readDoc(`rooms/${roomId}`))?.status === "tutorial"; i++) {
     await tutorialButton.click({ timeout: 2_000 }).catch(() => {});
   }
