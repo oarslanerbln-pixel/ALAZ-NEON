@@ -1,13 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { readDoc, resetEmulators } from "./support/emulator";
+import { readDoc } from "./support/emulator";
 import { t } from "./support/i18n";
-import { joinAsPlayer, openNight } from "./support/night";
+import { freshStart, joinAsPlayer, openNight } from "./support/night";
 import { activeWakeLocks } from "./support/wakeLock";
 import { cspViolations } from "./support/csp";
 import { expectAccessible } from "./support/a11y";
 
-test.beforeEach(resetEmulators);
+test.beforeEach(freshStart);
 
 /**
  * Çekirdek gece akışı: TV odayı açar, üç telefon katılır, lobi sayacı

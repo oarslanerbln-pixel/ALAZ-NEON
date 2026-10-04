@@ -1,10 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { readDoc, resetEmulators } from "./support/emulator";
+import { readDoc } from "./support/emulator";
 import { t } from "./support/i18n";
-import { openNight } from "./support/night";
+import { freshStart, openNight } from "./support/night";
 
-test.beforeEach(resetEmulators);
+test.beforeEach(freshStart);
 
 /**
  * Oyun ayarları modalının odaya yazdığı ayarlar (docs/roadmap.md, 2.7).

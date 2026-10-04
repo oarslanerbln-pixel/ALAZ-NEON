@@ -308,7 +308,7 @@ Uygulama notları:
 >   - Echo oylaması giriş kayıtları üzerinden tamamlanır, sonuç TV'de ilan
 >     edilir.
 >
->   Oyun kapsamı 1/15. Diğer oyunlar aynı yardımcılarla sırayla eklenecek.
+>   Oyun kapsamı 1/15 → 15/15 (aşağıda, "2.1 tamamlandı").
 > - **İlk koşunun bulduğu üç canlı hata (düzeltildi):**
 >   - Eksik profil kaydı (yalnızca takma ad) katılım ekranını
 >     `phone_number.replace` üzerinde çökertiyordu.
@@ -503,6 +503,33 @@ Uygulama notları:
 > - **Sonuç:** üç büyük bileşen 868 / 843 / 700 → 187 / 394 / 76 satır. Yeni
 >   dosyaların hepsi < 400 satır. E2E 7 senaryo; tam takım ve klasik test
 >   art arda yeşil.
+>
+> **2.1 tamamlandı — oyun kapsamı 15/15.** `e2e/games.spec.ts` kalan 12 modu
+> TV + iki telefonla oynatıyor:
+> - **İskelet:** panodan başlat → telefonda kumanda açılır → bir tur oynanır
+>   (puan, giriş kaydı ya da oda alanı doğrulanır) → TV lobiye döner.
+>   Telefonlar da bekleme ekranına dönüyor.
+> - **Yardımcılar:** `e2e/support/games.ts`.
+> - **Cihaz sızıntısı giderildi:** her testten önce önceki testin tarayıcı
+>   bağlamları kapatılıyor (`freshStart`). Kapatılmayan sekmeler silinen
+>   odaları dinleyip worker boyunca birikiyordu.
+> - **Bulunan dört canlı hata (düzeltildi):**
+>   - **Şifre ve Birlik hiç başlamıyordu.** Pano odayı `lobby` ile açıyordu;
+>     iki ekran yalnızca `*_intro`'dan ilerlediği için anlatım ekranında
+>     donuyordu.
+>   - **Şifre kazananı 500 yerine ~14.500 puan alıyordu.** Cevap dinleyicisi
+>     açıklamaya kadar geçen 3 sn'de her anlık görüntüde +500 ekliyordu.
+>     Artık kod başına bir kez ödüllendiriliyor. Kazanan belge kimliği
+>     sırasına göre değil, en erken doğru tahmine göre seçiliyor
+>     (`lib/vault.ts`).
+>   - **Önceki oyunun kodu kalıyordu.** İkinci Şifre oyunu aynı kodla
+>     açılıyordu; ikinci Birlik oyunu eski kalabalığın hedefini
+>     kullanıyordu. Başlangıçta temizleniyorlar.
+>   - **Neon Savaşları takımları dengesizdi.** Panodan başlatılınca takımlar
+>     kurulmuyordu: takım oyuncu kimliğinin son karakterinden çıkıyordu (iki
+>     oyuncu aynı takıma düşebiliyordu). Hedef kalabalığa göre ayarlanmıyor,
+>     önceki oyunun dokunuşları sıfırlanmıyordu. Artık `lib/colorsTeams.ts`
+>     ile dengeli dağıtılıyor.
 
 | İş | Kapsar | Efor | Kabul kriteri |
 |---|---|---|---|
@@ -536,7 +563,7 @@ Uygulama notları:
 | 30 oyunculu lobi okuma/dk | ~3.720 | ≤ 150 | ≤ 150 |
 | 30 kişi × 4 saat gece, toplam okuma | kota aşımı | ≤ 30.000 (kotanın %60'ı) | — |
 | Bilinen sessiz permission-denied | 1 (emoji) | 0 + sözleşme testi | 0 |
-| E2E kapsanan oyun modu | 0 / 15 | — | 15 / 15 |
+| E2E kapsanan oyun modu | 0 / 15 | — | 15 / 15 ✅ |
 | Player ilk yük (JS gzip + ilk görsel) | ~360 KB + ~0,8 MB | — | ≤ 300 KB + ≤ 150 KB |
 | Prod yüksek seviye açık | 7 | 0 | 0 |
 

@@ -1,6 +1,6 @@
-import { expect, type Browser, type Page } from "@playwright/test";
+import { expect, type Browser, type BrowserContext, type Page } from "@playwright/test";
 
-import { createStaffAccount, readDoc } from "./emulator";
+import { createStaffAccount, readDoc, resetEmulators } from "./emulator";
 import { LOCALE_INIT_SCRIPT, t } from "./i18n";
 import { WAKE_LOCK_INIT_SCRIPT } from "./wakeLock";
 import { CSP_INIT_SCRIPT } from "./csp";
@@ -8,9 +8,12 @@ import { CSP_INIT_SCRIPT } from "./csp";
 export const STAFF_EMAIL = "personel@hengame.test";
 export const STAFF_PASSWORD = "e2e-sifre-123";
 
+const devices = new Set<BrowserContext>();
+
 /** Ayrı tarayıcı bağlamı = ayrı cihaz (ayrı anonim oturum, ayrı önbellek). */
 export async function newDevice(browser: Browser): Promise<Page> {
   const context = await browser.newContext();
+  devices.add(context);
   await context.addInitScript(LOCALE_INIT_SCRIPT);
   await context.addInitScript(WAKE_LOCK_INIT_SCRIPT);
   await context.addInitScript(CSP_INIT_SCRIPT);
@@ -59,4 +62,15 @@ export async function joinAsPlayer(browser: Browser, code: string, nickname: str
   await nicknameInput.press("Enter");
   await expect(phone).toHaveURL(/\/play/);
   return phone;
+}
+
+/**
+ * Her testten önce: önceki testin cihazlarını kapatır ve emulator'ü boşaltır.
+ * Kapatılmayan sekmeler silinen odaları dinlemeye devam edip worker
+ * boyunca birikiyordu (12 testlik dosyada 30+ açık sekme).
+ */
+export async function freshStart(): Promise<void> {
+  await Promise.all([...devices].map((context) => context.close()));
+  devices.clear();
+  await resetEmulators();
 }

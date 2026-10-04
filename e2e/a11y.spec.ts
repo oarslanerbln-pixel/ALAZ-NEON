@@ -1,11 +1,10 @@
 import { expect, test } from "@playwright/test";
 
-import { resetEmulators } from "./support/emulator";
 import { expectAccessible } from "./support/a11y";
 import { t } from "./support/i18n";
-import { newDevice } from "./support/night";
+import { freshStart, newDevice } from "./support/night";
 
-test.beforeEach(resetEmulators);
+test.beforeEach(freshStart);
 
 // Gece akışındaki ekranlar (telefon lobisi, TV, echo kumandası) night.spec.ts'te
 // denetleniyor; burada oda gerektirmeyen giriş ekranları.
