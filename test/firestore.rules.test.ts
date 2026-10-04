@@ -152,54 +152,110 @@ beforeEach(async () => {
 });
 
 describe("answers koleksiyonu", () => {
-  beforeEach(() => seed());
+  beforeEach(() => seed({ status: "playing" }));
+
+  /** PlayerGame'in klasik turda gerçekte yazdığı cevap. */
+  const answer = (overrides: Record<string, unknown> = {}) => ({
+    ...letterAnswerPayload({
+      roomId: ROOM_ID,
+      playerId: PLAYER_ID,
+      letter: "A",
+      roundIndex: 1,
+      data: { Şehir: "Ankara" },
+    }),
+    ...overrides,
+  });
+  const answers = (db: ReturnType<typeof asPlayer>) => collection(db, "answers");
 
   it("oyuncu kendi player_id'si ile cevap gönderebilir", async () => {
-    await assertSucceeds(
-      addDoc(collection(asPlayer(), "answers"), {
-        room_id: ROOM_ID,
-        player_id: PLAYER_ID,
-        round_letter: "A",
-        data: { Şehir: "Ankara" },
-        created_at: new Date().toISOString(),
-      })
-    );
+    await assertSucceeds(addDoc(answers(asPlayer()), answer()));
   });
 
   it("oyuncu başkasının adına cevap gönderemez", async () => {
-    await assertFails(
-      addDoc(collection(asPlayer(), "answers"), {
-        room_id: ROOM_ID,
-        player_id: OTHER_PLAYER_ID,
-        round_letter: "A",
-        data: { Şehir: "Ankara" },
-      })
-    );
+    await assertFails(addDoc(answers(asPlayer()), answer({ player_id: OTHER_PLAYER_ID })));
   });
 
   it("giriş yapmamış kullanıcı cevap gönderemez", async () => {
-    await assertFails(
-      addDoc(collection(asGuest(), "answers"), {
-        room_id: ROOM_ID,
-        player_id: PLAYER_ID,
-        round_letter: "A",
-        data: {},
-      })
-    );
+    await assertFails(addDoc(answers(asGuest()), answer()));
   });
 
   it("gönderilmiş cevap sonradan değiştirilemez", async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
-      await setDoc(doc(ctx.firestore(), "answers", "a1"), {
-        room_id: ROOM_ID,
-        player_id: PLAYER_ID,
-        round_letter: "A",
-        data: { Şehir: "Ankara" },
-      });
+      await setDoc(doc(ctx.firestore(), "answers", "a1"), answer());
     });
     await assertFails(
       updateDoc(doc(asPlayer(), "answers", "a1"), { data: { Şehir: "Adana" } })
     );
+  });
+
+  // Oyuncu kaydının odası kontrol edilmiyordu: bir odanın oyuncusu başka
+  // odanın turuna cevap basabiliyordu.
+  it("oyuncu kendi odası dışındaki bir odaya cevap yazamaz", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "rooms", "room-2"), { host_uid: HOST_UID, status: "playing" });
+    });
+    await assertFails(addDoc(answers(asPlayer()), answer({ room_id: "room-2" })));
+  });
+
+  it("cevap kabul etmeyen oda durumunda (lobi, bitmiş oyun) yazılamaz", async () => {
+    await seed({ status: "lobby" });
+    await assertFails(addDoc(answers(asPlayer()), answer()));
+    await seed({ status: "finished" });
+    await assertFails(addDoc(answers(asPlayer()), answer()));
+  });
+
+  it("süre bitip host incelemeye geçtiğinde otomatik gönderim hâlâ kabul edilir", async () => {
+    await seed({ status: "review" });
+    await assertSucceeds(addDoc(answers(asPlayer()), answer()));
+  });
+
+  it("şema dışı alan, dev veri haritası ya da uzun tur anahtarı yazılamaz", async () => {
+    await assertFails(addDoc(answers(asPlayer()), answer({ score: 9999 })));
+    const huge = Object.fromEntries(Array.from({ length: 40 }, (_, i) => [`k${i}`, "x"]));
+    await assertFails(addDoc(answers(asPlayer()), answer({ data: huge })));
+    await assertFails(addDoc(answers(asPlayer()), answer({ round_letter: "X".repeat(64) })));
+  });
+
+  describe("okuma", () => {
+    beforeEach(async () => {
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), "answers", "mine"), answer());
+      });
+    });
+
+    // Cevaplar herkese açıktı: hızlı oyuncunun cevabı tur bitmeden okunup
+    // kopyalanabiliyordu.
+    it("başka bir oyuncu ya da girişsiz kullanıcı cevabı okuyamaz", async () => {
+      await assertFails(getDoc(doc(asStranger(), "answers", "mine")));
+      await assertFails(getDoc(doc(asGuest(), "answers", "mine")));
+    });
+
+    it("başka bir oyuncu odanın bütün cevaplarını sorgulayamaz", async () => {
+      await assertFails(
+        getDocs(query(answers(asStranger()), where("room_id", "==", ROOM_ID)))
+      );
+    });
+
+    it("oyuncu kendi cevabını okuyabilir ve kendi cevaplarını sorgulayabilir", async () => {
+      await assertSucceeds(getDoc(doc(asPlayer(), "answers", "mine")));
+      // PlayerQuizController / PlayerAynaController'ın "zaten cevapladım mı" sorgusu.
+      await assertSucceeds(
+        getDocs(
+          query(
+            answers(asPlayer()),
+            where("room_id", "==", ROOM_ID),
+            where("player_id", "==", PLAYER_ID),
+            where("round_letter", "==", "A")
+          )
+        )
+      );
+    });
+
+    it("host odanın cevaplarını sorgulayabilir", async () => {
+      await assertSucceeds(
+        getDocs(query(answers(asHost()), where("room_id", "==", ROOM_ID), where("round_letter", "==", "A")))
+      );
+    });
   });
 });
 
@@ -1308,10 +1364,10 @@ describe("ayna_survey — anonim salon anketi", () => {
 describe("istemci yazma sözleşmesi (clientWrites)", () => {
   const answerRef = (db: ReturnType<typeof asPlayer>) => collection(db, "answers");
 
+  // Her cevap, istemcinin gerçekte yazdığı oda durumunda deneniyor.
   describe("cevaplar", () => {
-    beforeEach(() => seed({ status: "playing" }));
-
     it("klasik tur cevabı", async () => {
+      await seed({ status: "playing" });
       await assertSucceeds(
         addDoc(
           answerRef(asPlayer()),
@@ -1321,22 +1377,25 @@ describe("istemci yazma sözleşmesi (clientWrites)", () => {
     });
 
     it("quiz cevabı", async () => {
+      await seed({ status: "question_active" });
       await assertSucceeds(
         addDoc(answerRef(asPlayer()), quizAnswerPayload({ roomId: ROOM_ID, playerId: PLAYER_ID, questionIndex: 2, option: "B" }))
       );
     });
 
     it("kasa tahmini", async () => {
+      await seed({ status: "vault_active" });
       await assertSucceeds(
         addDoc(answerRef(asPlayer()), vaultGuessPayload({ roomId: ROOM_ID, playerId: PLAYER_ID, guess: "1234" }))
       );
     });
 
     it("ayna tahmini", async () => {
+      await seed({ status: "ayna_active" });
       await assertSucceeds(
         addDoc(
           answerRef(asPlayer()),
-          aynaGuessPayload({ roomId: ROOM_ID, playerId: PLAYER_ID, roundKey: "AYNA_0", roundIndex: 0, value: 42 })
+          aynaGuessPayload({ roomId: ROOM_ID, playerId: PLAYER_ID, roundKey: "ayna_0", roundIndex: 0, value: 42 })
         )
       );
     });
