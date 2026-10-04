@@ -9,6 +9,9 @@ import { useToast } from "../../../contexts/ToastContextCore";
 import { isInputForRound } from "../../../lib/roomInputs";
 import { pulseInputPayload } from "../../../lib/clientWrites";
 import { useOwnRoomInput } from "../../../hooks/useRoomInputs";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("PlayerPulseController");
 
 interface Props {
   room: Room;
@@ -50,7 +53,7 @@ export function PlayerPulseController({ room, player }: Props) {
     try {
       await setDoc(doc(db, "rooms", room.id, "inputs", player.id), pulseInputPayload(round, clickTime));
     } catch (err) {
-      console.error(err);
+      log.error(err);
       showToast(t("pulse.connectionError", "Bağlantı hatası!"), "error");
     } finally {
       isSubmittingRef.current = false;

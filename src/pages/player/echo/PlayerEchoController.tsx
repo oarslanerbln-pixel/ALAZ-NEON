@@ -10,6 +10,9 @@ import { isPlayerActive } from "../../../lib/liveness";
 import { isInputForRound } from "../../../lib/roomInputs";
 import { echoInputPayload } from "../../../lib/clientWrites";
 import { useOwnRoomInput } from "../../../hooks/useRoomInputs";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("PlayerEchoController");
 
 interface Props {
   room: Room;
@@ -55,7 +58,7 @@ export function PlayerEchoController({ room, player }: Props) {
           isPlayerActive(p, now)
         )); // Exclude self and ghosts
       } catch (err) {
-        console.error("Error fetching players:", err);
+        log.error("Error fetching players:", err);
       } finally {
         setPlayersLoaded(true);
       }
@@ -77,7 +80,7 @@ export function PlayerEchoController({ room, player }: Props) {
     try {
       await setDoc(doc(db, "rooms", room.id, "inputs", player.id), echoInputPayload(round, targetId));
     } catch (err) {
-      console.error(err);
+      log.error(err);
       showToast(t("echo.voteFailed"), "error");
     } finally {
       isSubmittingRef.current = false;

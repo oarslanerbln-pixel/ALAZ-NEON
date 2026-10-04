@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { signInAnonymously, onAuthStateChanged, type User } from "firebase/auth";
 import { auth } from "../lib/firebase";
+import { createLogger } from "../lib/logger";
+
+const log = createLogger("useAuth");
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -15,7 +18,7 @@ export function useAuth() {
       } else {
         // If not logged in, sign in anonymously
         signInAnonymously(auth).catch((error) => {
-          console.error("Anonymous auth failed (Check Firebase Console to enable it):", error);
+          log.error("Anonymous auth failed (Check Firebase Console to enable it):", error);
           setLoading(false);
         });
       }

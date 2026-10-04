@@ -17,6 +17,7 @@ import { useVenue } from "../../contexts/VenueContextCore";
 import { useHostRoom } from "../../hooks/useHostRoom";
 import { useLifetimeScoreSync } from "../../hooks/useLifetimeScoreSync";
 import { useWakeLock } from "../../hooks/useWakeLock";
+import { useMonitoringTags } from "../../hooks/useMonitoringTags";
 import { useLocale } from "../../hooks/useLocale";
 
 // Types
@@ -45,6 +46,9 @@ import {
   evaluateBestOfNight,
   type JulesAward
 } from "../../lib/intelligence";
+import { createLogger } from "../../lib/logger";
+
+const log = createLogger("HostDisplay");
 
 export function HostDisplay() {
   const [searchParams] = useSearchParams();
@@ -54,6 +58,7 @@ export function HostDisplay() {
   const { room, loading, notFound, error } = hostRoom;
   // TV/tablet gece boyunca kararmasın: ekran koruyucu QR'ı ve skorları kapatıyordu.
   useWakeLock(!!room && room.status !== "closed");
+  useMonitoringTags({ role: "host", room_id: roomId, game: room?.active_game, status: room?.status });
 
   // Oyun ekranlarını TV boştayken önceden indir (bkz. preloadHostGameDisplays).
   // Erken dönüşlerden ÖNCE: hook sırası her render'da aynı kalmalı.
@@ -240,8 +245,7 @@ function HostDisplayGame({
     const safeAnswers: Answer[] = [];
     for (const ans of rawAnswers) {
       if (Sentinel.radar.isShadowbanned(ans.player_id)) {
-        console.warn(
-          `[SENTINEL] Dropping answer from shadowbanned player: ${ans.player_id}`,
+        log.warn(`Dropping answer from shadowbanned player: ${ans.player_id}`,
         );
         continue;
       }
@@ -471,7 +475,7 @@ function HostDisplayGame({
       // Ödül dağıtımı Firestore yazma hatasında bile oyunun bitişini
       // engellememeli — hata varsa sadece konsola düşer.
       grantGameRewards(room.id, room.game_mode, players, venue).catch((err) =>
-        console.error("[HostDisplay] Ödül dağıtımı başarısız:", err),
+        log.error("Ödül dağıtımı başarısız:", err),
       );
 
       await updateRoomStatus("finished");
@@ -505,7 +509,7 @@ function HostDisplayGame({
       const finalAwards = evaluateBestOfNight(gameHistory);
       setAwards(finalAwards);
       grantGameRewards(room.id, room.game_mode, players, venue).catch((err) =>
-        console.error("[HostDisplay] Ödül dağıtımı başarısız:", err),
+        log.error("Ödül dağıtımı başarısız:", err),
       );
       await updateRoomStatus("finished");
       setGameState("finished");

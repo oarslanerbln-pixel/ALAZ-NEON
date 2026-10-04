@@ -19,6 +19,9 @@ import { activePlayers as activePlayersOf } from "../../../lib/liveness";
 import { useLocale } from "../../../hooks/useLocale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useVenue } from "../../../contexts/VenueContextCore";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("HostDashboard");
 
 
 
@@ -74,7 +77,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     try {
       await updateRoomStatus("closed", { active_game: "none" });
     } catch (err) {
-      console.error("[HostDashboard] Oda kapatılamadı:", err);
+      log.error("Oda kapatılamadı:", err);
     } finally {
       navigate("/");
     }

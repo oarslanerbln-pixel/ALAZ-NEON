@@ -18,12 +18,18 @@ export interface CaptureContext {
 export interface MonitoringConfig {
   dsn?: string;
   environment: string;
+  /** Yayın kimliği (vite.config.ts → appRelease); kaynak haritalarıyla eşleşir. */
+  release?: string;
 }
+
+/** Hangi ekranda/odada/oyunda olunduğu (undefined → etiketi kaldırır). */
+export type MonitoringTags = Record<string, string | undefined>;
 
 /** Cephenin ihtiyaç duyduğu SDK yüzeyi (testte sahtesi veriliyor). */
 export interface MonitoringSdk {
-  init(options: { dsn: string; environment: string; tracesSampleRate: number }): void;
+  init(options: { dsn: string; environment: string; release?: string; tracesSampleRate: number }): void;
   captureException(error: unknown, context?: CaptureContext): unknown;
+  setTags(tags: MonitoringTags): void;
 }
 
 interface MonitorDeps {
@@ -41,6 +47,7 @@ export function createMonitor(deps: MonitorDeps) {
   let sdk: MonitoringSdk | null = null;
   let loading: Promise<void> | null = null;
   const queue: [unknown, CaptureContext | undefined][] = [];
+  let tags: MonitoringTags = {};
 
   // SDK inene kadar yakalanmamış hatalar (SDK kendi dinleyicilerini kurunca
   // bunlar kaldırılıyor).
@@ -60,6 +67,7 @@ export function createMonitor(deps: MonitorDeps) {
           loaded.init({
             dsn: active.dsn,
             environment: active.environment,
+            release: active.release,
             // Performans izleme/session replay bilerek kapalı: bu bir maliyet
             // merkezi değil, sadece "bir şey patladı mı" haberimiz olsun diye
             // var — gereğinden fazla veri toplamak hem ücretsiz kotayı hem
@@ -69,6 +77,7 @@ export function createMonitor(deps: MonitorDeps) {
           deps.target?.removeEventListener("error", onError);
           deps.target?.removeEventListener("unhandledrejection", onRejection);
           sdk = loaded;
+          loaded.setTags(tags);
           for (const [error, context] of queue.splice(0)) loaded.captureException(error, context);
         })
         .catch(() => {
@@ -98,7 +107,16 @@ export function createMonitor(deps: MonitorDeps) {
     void load();
   }
 
-  return { init, captureException, ready: () => loading ?? Promise.resolve() };
+  /**
+   * Etiketleri günceller. SDK inmeden önce verilenler saklanıp yüklenince
+   * uygulanıyor; sıraya alınmış hatalar da böylece doğru etiketle gidiyor.
+   */
+  function setTags(next: MonitoringTags): void {
+    tags = { ...tags, ...next };
+    sdk?.setTags(next);
+  }
+
+  return { init, captureException, setTags, ready: () => loading ?? Promise.resolve() };
 }
 
 function whenIdle(run: () => void): void {
@@ -118,3 +136,4 @@ const monitor = createMonitor({
 
 export const initMonitoring = monitor.init;
 export const captureException = monitor.captureException;
+export const setMonitoringTags = monitor.setTags;

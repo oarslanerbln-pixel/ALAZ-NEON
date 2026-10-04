@@ -1,4 +1,7 @@
 import { captureException } from "./monitoring";
+import { createLogger } from "./logger";
+
+const log = createLogger("yazma");
 
 /**
  * Yazma sözleşmesi ihlali sayılan Firestore hata kodları: kural reddi ya da
@@ -21,7 +24,9 @@ export function isContractViolation(err: unknown): boolean {
  * yazmanın adıyla gidiyor (DSN yoksa no-op; bkz. lib/monitoring.ts).
  */
 export function reportWriteError(write: string, err: unknown): void {
-  console.error(`[yazma] ${write} başarısız:`, err);
+  // Konsol çıkışı her durumda; izlemeye yalnızca sözleşme ihlali gider.
+  // Bağlantı kopması gibi durumları Firestore kendisi yeniden deniyor.
+  log.warn(`${write} başarısız:`, err);
   if (isContractViolation(err)) {
     captureException(err, { tags: { write, code: String((err as { code: string }).code) } });
   }

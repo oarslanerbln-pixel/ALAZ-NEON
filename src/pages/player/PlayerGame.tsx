@@ -19,6 +19,7 @@ import { usePlayer } from "../../hooks/usePlayer";
 import { useEmojiPulse } from "../../hooks/useEmojiPulse";
 import { useHeartbeat } from "../../hooks/useHeartbeat";
 import { useWakeLock } from "../../hooks/useWakeLock";
+import { useMonitoringTags } from "../../hooks/useMonitoringTags";
 import { PLAYER_HEARTBEAT_MS } from "../../lib/liveness";
 
 // Extracted Components
@@ -34,6 +35,9 @@ import { PlayerTutorial } from "./components/PlayerTutorial";
 import { Suspense } from "react";
 import { PLAYER_GAME_CONTROLLERS } from "./gameControllers";
 import { PlayerGameShell } from "./components/PlayerGameShell";
+import { createLogger } from "../../lib/logger";
+
+const log = createLogger("PlayerGame");
 
 export function PlayerGame() {
   const [searchParams] = useSearchParams();
@@ -83,6 +87,7 @@ export function PlayerGame() {
   // Dokunulmadan TV izlenen telefon kararıp kilitlenmesin: kilitli telefon
   // soruyu kaçırıyor ve canlılık sinyali kesildiği için "kopmuş" sayılıyordu.
   useWakeLock(!!room && !!player && room.status !== "closed");
+  useMonitoringTags({ role: "player", room_id: roomId, game: room?.active_game, status: room?.status });
 
   // Derived States
   const gameState = room?.status || "lobby";
@@ -175,7 +180,7 @@ export function PlayerGame() {
       }
 
       if (submitError) {
-        console.error("Error submitting answers:", submitError);
+        log.error("Error submitting answers:", submitError);
         showToast(t("game.submitError"), "error");
         setSubmitStatus("idle");
         setIsLocked(false);

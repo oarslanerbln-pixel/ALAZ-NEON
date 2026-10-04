@@ -22,6 +22,9 @@ import { grantGameRewards } from "../../../lib/rewards";
 import { useVenue } from "../../../contexts/VenueContextCore";
 
 import type { Room, Player } from "../../../types/database";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("HostQuizDisplay");
 
 interface VoteStats {
   A: number;
@@ -53,7 +56,7 @@ export function HostQuizDisplay({
 
   const grantQuizRewards = () =>
     grantGameRewards(room.id, "individual", players, venue).catch((err) =>
-      console.error("[HostQuizDisplay] Ödül dağıtımı başarısız:", err),
+      log.error("Ödül dağıtımı başarısız:", err),
     );
 
   const [searchParams] = useSearchParams();
@@ -101,7 +104,7 @@ export function HostQuizDisplay({
         await batch.commit();
       }
     } catch (e) {
-      console.warn("Could not delete old answers:", e);
+      log.warn("Could not delete old answers:", e);
     }
 
     // Reset streaks

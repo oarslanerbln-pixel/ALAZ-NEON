@@ -6,6 +6,9 @@ import { HOST_HEARTBEAT_MS } from "../lib/liveness";
 import { playerCountUpdate } from "../lib/playerCount";
 import { useHeartbeat } from "./useHeartbeat";
 import type { Room, Player, Answer } from "../types/database";
+import { createLogger } from "../lib/logger";
+
+const log = createLogger("useHostRoom");
 
 export function useHostRoom(roomId: string | null) {
   const [room, setRoom] = useState<Room | null>(null);
@@ -50,7 +53,7 @@ export function useHostRoom(roomId: string | null) {
           setNotFound(false);
         } else {
           // Oda silinmiş ya da hiç yok — sessizce null'da kalma, bildir
-          console.error("[useHostRoom] Oda bulunamadı:", roomId);
+          log.error("Oda bulunamadı:", roomId);
           setRoom(null);
           setNotFound(true);
         }
@@ -58,7 +61,7 @@ export function useHostRoom(roomId: string | null) {
       },
       (err) => {
         // Firestore kural reddi / offline / kota — eskiden sessizce yutuluyordu
-        console.error("[useHostRoom] Oda dinlenemedi:", err);
+        log.error("Oda dinlenemedi:", err);
         setError(err);
         setLoading(false);
       }
@@ -79,7 +82,7 @@ export function useHostRoom(roomId: string | null) {
         if (!snapshot.metadata.fromCache) setPlayersLoaded(true);
       },
       (err) => {
-        console.error("[useHostRoom] Oyuncular dinlenemedi:", err);
+        log.error("Oyuncular dinlenemedi:", err);
         setError(err);
       }
     );
@@ -107,7 +110,7 @@ export function useHostRoom(roomId: string | null) {
         }
       });
     }, (err) => {
-      console.error("[useHostRoom] Cevaplar dinlenemedi:", err);
+      log.error("Cevaplar dinlenemedi:", err);
       setError(err);
     });
 
@@ -128,7 +131,7 @@ export function useHostRoom(roomId: string | null) {
     const next = playerCountUpdate(storedPlayerCount, players.length, playersLoaded);
     if (next === null) return;
     updateDoc(doc(db, "rooms", roomId), { player_count: next }).catch((err) =>
-      console.error("[useHostRoom] Oyuncu sayısı yazılamadı:", err),
+      log.error("Oyuncu sayısı yazılamadı:", err),
     );
   }, [roomId, roomLoaded, storedPlayerCount, players.length, playersLoaded]);
 
@@ -155,7 +158,7 @@ export function useHostRoom(roomId: string | null) {
     try {
       await updateDoc(doc(db, "rooms", roomId), { status, ...extra });
     } catch (err) {
-      console.error("[useHostRoom] Oda güncellenemedi:", status, err);
+      log.error("Oda güncellenemedi:", status, err);
       setError(err as Error);
     }
   }, [roomId]);
@@ -164,7 +167,7 @@ export function useHostRoom(roomId: string | null) {
     try {
       await updateDoc(doc(db, "players", playerId), { total_score: totalScore });
     } catch (err) {
-      console.error("[useHostRoom] Skor güncellenemedi:", playerId, err);
+      log.error("Skor güncellenemedi:", playerId, err);
     }
   }, []);
 

@@ -44,4 +44,13 @@ export default defineConfig([
       'react-hooks/refs': 'warn',
     },
   },
+  {
+    // Uygulama günlüğü lib/logger.ts üzerinden: hatalar izlemeye ulaşsın
+    // (docs/roadmap.md, 2.4). Testler ve araç betikleri serbest.
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/**/__tests__/**', 'src/test/**'],
+    rules: {
+      'no-console': 'error',
+    },
+  },
 ])

@@ -12,6 +12,9 @@ import type { Room, Player } from "../../../types/database";
 import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { NeonIcon } from "../../../components/NeonIcon";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("HostUnityDisplay");
 
 interface Props {
   room: Room;
@@ -102,7 +105,7 @@ export function HostUnityDisplay({ room, players, updateRoomStatus }: Props) {
       if (total === written) return;
       written = total;
       updateDoc(doc(db, "rooms", room.id), { unity_current: total }).catch((err) =>
-        console.error("[HostUnityDisplay] Toplam yazılamadı:", err),
+        log.error("Toplam yazılamadı:", err),
       );
     }, 1000);
     return () => clearInterval(interval);

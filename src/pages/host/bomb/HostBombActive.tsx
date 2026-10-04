@@ -5,6 +5,9 @@ import { SoundManager, sounds } from "../../../lib/audio";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { useLocale } from "../../../hooks/useLocale";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("HostBombActive");
 
 interface Props {
   room: Room;
@@ -91,7 +94,7 @@ export function HostBombActive({ room, players, onExplode }: Props) {
       updateDoc(doc(db, "rooms", room.id), {
         bomb_speed_multiplier: speedMultiplier,
         round_end_time: Date.now() + newTime
-      }).catch(console.error);
+      }).catch(log.error);
     }
   }, [room.bomb_target_player, bombControls, room.id, room.bomb_speed_multiplier]);
 
@@ -107,7 +110,7 @@ export function HostBombActive({ room, players, onExplode }: Props) {
         previous_bomb_target_player: null
       });
     } catch (err) {
-      console.error("Failed to reject word:", err);
+      log.error("Failed to reject word:", err);
     }
   };
 

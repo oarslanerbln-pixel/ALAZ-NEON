@@ -1,4 +1,7 @@
 import { useCallback, useRef } from "react";
+import { createLogger } from "../lib/logger";
+
+const log = createLogger("useSound");
 
 export function useSound(url: string) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -12,7 +15,7 @@ export function useSound(url: string) {
     // Reset and play
     audioRef.current.currentTime = 0;
     audioRef.current.play().catch((err) => {
-      console.warn("Audio playback failed (interaction required?):", err);
+      log.warn("Audio playback failed (interaction required?):", err);
     });
   }, [url]);
 

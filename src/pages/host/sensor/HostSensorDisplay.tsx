@@ -18,6 +18,9 @@ import type { Room, Player } from "../../../types/database";
 import { HostSensorIntro } from "./HostSensorIntro";
 import { HostSensorActive } from "./HostSensorActive";
 import { HostSensorReveal } from "./HostSensorReveal";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("HostSensorDisplay");
 
 export function HostSensorDisplay({
   room,
@@ -33,7 +36,7 @@ export function HostSensorDisplay({
   const { venue } = useVenue();
   const grantSensorRewards = () =>
     grantGameRewards(room.id, "individual", players, venue).catch((err) =>
-      console.error("[HostSensorDisplay] Ödül dağıtımı başarısız:", err),
+      log.error("Ödül dağıtımı başarısız:", err),
     );
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get("roomId");
@@ -82,7 +85,7 @@ export function HostSensorDisplay({
         await batch.commit();
       }
     } catch (e) {
-      console.warn("Could not delete old answers:", e);
+      log.warn("Could not delete old answers:", e);
     }
 
     const firstImg = getRandomSensorImage([]);
@@ -162,7 +165,7 @@ export function HostSensorDisplay({
       await batch.commit();
       await updateRoomStatus("lobby", { active_game: "none", current_round: 0 });
     } catch (err) {
-      console.error("Error resetting sensor game:", err);
+      log.error("Error resetting sensor game:", err);
     }
   };
 

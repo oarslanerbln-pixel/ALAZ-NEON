@@ -9,6 +9,9 @@ import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { grantRewardToPlayers } from "../../../lib/rewards";
 import { useVenue } from "../../../contexts/VenueContextCore";
 import { activePlayers as activePlayersOf } from "../../../lib/liveness";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("HostOverloadDisplay");
 
 interface HostOverloadDisplayProps {
   room: Room;
@@ -122,7 +125,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
       [{ uid: champion.uid, nickname: champion.nickname }],
       venue,
     ).catch((err) =>
-      console.error("[HostOverloadDisplay] Ödül dağıtımı başarısız:", err),
+      log.error("Ödül dağıtımı başarısız:", err),
     );
   }, [eligiblePlayers, venue, room.id]);
 

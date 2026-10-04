@@ -3,6 +3,10 @@
  * A full cinematic intro sequence with rhythm, bass, risers, and impact.
  */
 
+import { createLogger } from "./logger";
+
+const log = createLogger("soundSynth");
+
 function getAudioContext(): AudioContext {
   const AudioContextClass = window.AudioContext || (window as Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   return new AudioContextClass();
@@ -204,7 +208,7 @@ export function playCinematicWhoosh() {
 
     setTimeout(() => ctx.close(), 5000);
   } catch (e) {
-    console.warn("Cinematic synthesis failed:", e);
+    log.warn("Cinematic synthesis failed:", e);
   }
 }
 
@@ -256,7 +260,7 @@ export function playCinematicImpact() {
 
     setTimeout(() => ctx.close(), 1500);
   } catch (e) {
-    console.warn("Impact synthesis failed:", e);
+    log.warn("Impact synthesis failed:", e);
   }
 }
 
@@ -286,7 +290,7 @@ export function playSuccessHarmonics() {
 
     setTimeout(() => ctx.close(), 2000);
   } catch (e) {
-    console.warn("Success harmonics failed:", e);
+    log.warn("Success harmonics failed:", e);
   }
 }
 

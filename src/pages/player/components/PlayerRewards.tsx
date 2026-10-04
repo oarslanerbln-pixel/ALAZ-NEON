@@ -7,6 +7,9 @@ import { db, auth } from "../../../lib/firebase";
 import type { Reward } from "../../../types/database";
 import { useVenue } from "../../../contexts/VenueContextCore";
 import { useLocale } from "../../../hooks/useLocale";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("PlayerRewards");
 
 export function PlayerRewards() {
   const { venue } = useVenue();
@@ -51,7 +54,7 @@ export function PlayerRewards() {
           setLoading(false);
         },
         (err) => {
-          console.error("Failed to listen to rewards", err);
+          log.error("Failed to listen to rewards", err);
           setLoading(false);
         },
       );

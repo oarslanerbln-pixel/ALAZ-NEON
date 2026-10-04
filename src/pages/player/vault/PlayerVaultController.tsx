@@ -6,6 +6,9 @@ import { vaultGuessPayload } from "../../../lib/clientWrites";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useLocale } from "../../../hooks/useLocale";
 import type { Room, Player } from "../../../types/database";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("PlayerVaultController");
 
 interface Props {
   room: Room;
@@ -90,7 +93,7 @@ export function PlayerVaultController({ room, player }: Props) {
         vaultGuessPayload({ roomId: room.id, playerId: player.id, guess: currentGuess }),
       );
     } catch (err) {
-      console.error(err);
+      log.error(err);
     }
 
     setCurrentGuess("");
