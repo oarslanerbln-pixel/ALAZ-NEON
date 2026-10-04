@@ -89,6 +89,11 @@ Bunları baştan sona okuma, hedefli `grep` ile gir:
 - Framer Motion geçişlerinde `<AnimatePresence mode="wait">` + benzersiz `key`.
 - Skor yazan her yol için `firestore.rules` tarafını da güncelle; istemci
   kurcalanabilir kabul edilir.
+- Oda belgesi herkese açık okunur: doğru cevap, kod gibi **gizli bilgi
+  odaya yazılmaz**. Host'a özel `rooms/{id}/secrets/{ad}` belgesine
+  (`lib/gameSecrets.ts`, `useRoomSecret`) yazılır, açıklama anında host
+  odaya kopyalar. Telefonun yüklediği koda da cevap konmaz (ör. Ayna
+  gerçekleri `lib/aynaFacts.ts`, yalnızca TV yükler).
 - Commit mesajları Türkçe ve `tip(kapsam): özet` biçiminde (`feat(quiz): …`).
 
 Ayrıntılı kodlama standartları: `docs/coding-standards.md`.

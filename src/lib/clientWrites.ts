@@ -3,6 +3,8 @@ import { arrayUnion, increment, serverTimestamp } from "firebase/firestore";
 import { retentionExpiry } from "./retention";
 import type { GameType, Reward, VenueConfig } from "../types/database";
 import type { QuizPack } from "./quizPack";
+import type { QuizSecret } from "./gameSecrets";
+import type { VaultFeedback } from "./vault";
 
 /**
  * Kurallara tabi her istemci yazmasının verisi buradaki bir fonksiyondan
@@ -379,4 +381,21 @@ export function gameEventPayload(args: {
     created_at: now,
     expires_at: retentionExpiry(now),
   };
+}
+
+// ─── Gizli oyun bilgisi (yalnızca host) ─────────────────────────────
+
+/** `rooms/{id}/secrets/quiz`: soruların doğru cevapları ve bilgi notları. */
+export function quizSecretPayload(secret: QuizSecret) {
+  return { answers: secret.answers };
+}
+
+/** `rooms/{id}/secrets/vault`: Şifre oyununun kodu. */
+export function vaultSecretPayload(code: string) {
+  return { code };
+}
+
+/** Şifre tahmininin ipucu; host cevap belgesine yazar (yalnızca `feedback`). */
+export function vaultFeedbackPayload(feedback: VaultFeedback[]) {
+  return { feedback };
 }

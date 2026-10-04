@@ -103,6 +103,12 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
   }, [room.status, hasSubmitted, selectedOption, handleSubmit]);
 
   const currentQ = room.quiz_questions?.[room.current_question_index || 0];
+  // Doğru cevap yalnızca açıklama anında odaya yazılıyor (önceden soruyla
+  // birlikte gelip telefondan okunabiliyordu).
+  const revealedOption =
+    room.quiz_reveal && room.quiz_reveal.index === (room.current_question_index || 0)
+      ? room.quiz_reveal.correctOption
+      : null;
   const currentRound = room.current_round || (room.current_question_index ?? 0) + 1;
   const totalRounds = room.total_rounds || 5;
 
@@ -274,7 +280,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
 
           {/* QUESTION REVEAL SCREEN */}
           {gameState === "question_reveal" && currentQ && (() => {
-            const isCorrect = selectedOption === currentQ.correctOption;
+            const isCorrect = revealedOption !== null && selectedOption === revealedOption;
             return (
               <motion.div
                 key="reveal"
@@ -296,9 +302,11 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
                   }`}>
                     {isCorrect ? t("quiz.playerCorrect") : t("quiz.playerWrong")}
                   </h2>
-                  <p className="text-sm text-gray-300 font-medium">
-                    {t("quiz.correctAnswer")}: <strong className="text-white font-bold">{currentQ.correctOption} — {currentQ.options[currentQ.correctOption]}</strong>
-                  </p>
+                  {revealedOption && (
+                    <p className="text-sm text-gray-300 font-medium">
+                      {t("quiz.correctAnswer")}: <strong className="text-white font-bold">{revealedOption} — {currentQ.options[revealedOption]}</strong>
+                    </p>
+                  )}
                 </div>
 
                 <p className="text-gray-400 text-sm animate-pulse">

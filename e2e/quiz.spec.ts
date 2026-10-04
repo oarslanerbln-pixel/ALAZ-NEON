@@ -18,11 +18,19 @@ async function score(id: string): Promise<number> {
   return Number((await readDoc(`players/${id}`))?.total_score ?? 0);
 }
 
+/**
+ * Doğru cevap oda belgesinde değil, yalnızca host'un okuduğu belgede
+ * (lib/gameSecrets.ts). Test, emulator yöneticisi olarak oradan okuyor ve
+ * odada cevabın bulunmadığını da doğruluyor.
+ */
 async function currentCorrectOption(roomId: string): Promise<Option> {
   const room = await readDoc(`rooms/${roomId}`);
   const index = Number(room?.current_question_index ?? 0);
-  const questions = room?.quiz_questions as { correctOption: Option }[];
-  return questions[index].correctOption;
+  const question = (room?.quiz_questions as Record<string, unknown>[])[index];
+  expect(question).not.toHaveProperty("correctOption");
+  expect(room?.quiz_reveal ?? null).toBeNull();
+  const secret = await readDoc(`rooms/${roomId}/secrets/quiz`);
+  return (secret?.answers as Record<string, { correctOption: Option }>)[String(question.id)].correctOption;
 }
 
 const wrong = (correct: Option): Option => (correct === "A" ? "B" : "A");
@@ -63,6 +71,9 @@ test("quiz: doğru/yanlış, hız bonusu ve seri çarpanı puana yansır", async
     await answer(beta, wrong(correct));
     await expect.poll(() => score(alfaId), { timeout: 30_000 }).toBe(1500);
     expect(await score(betaId)).toBe(0);
+    // Açıklamada doğru cevap odaya yazıldı; telefon onu gösteriyor.
+    expect((await readDoc(`rooms/${roomId}`))?.quiz_reveal).toMatchObject({ index: 0, correctOption: correct });
+    await expect(beta.getByText(t("quiz.playerWrong"))).toBeVisible();
   });
 
   await test.step("2. soru: ALFA üst üste doğru → ×1.2", async () => {

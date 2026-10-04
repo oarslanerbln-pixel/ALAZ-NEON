@@ -622,6 +622,29 @@ Uygulama notları:
 >   - `e2e/telemetry.spec.ts`: olay çifti ve raporda görünüm.
 > - **Yayında gereken:** kural dağıtımı ve `events` için TTL politikası
 >   (README).
+>
+> **Cevap sızıntısı kapatıldı.** Oda belgesi herkese açık okunuyor; misafir
+> telefonundan ya da tarayıcı konsolundan doğru cevabı okuyabiliyordu. Ödül
+> puana bağlı olduğu için gerçek bir hile yoluydu.
+> - **Quiz:** doğru cevap ve bilgi notu host'a özel
+>   `rooms/{id}/secrets/quiz` belgesinde. Odaya yalnızca açık soru
+>   yazılıyor; doğru cevap açıklama anında `quiz_reveal` ile geliyor. Bu
+>   durumdan sonra kurallar cevap kabul etmiyor.
+> - **Şifre:** kod `secrets/vault`'ta. İpucu (doğru yer / var / yok)
+>   önceden telefonda koddan hesaplanıyordu; artık TV hesaplayıp tahminin
+>   `feedback` alanına yazıyor (yalnızca host, yalnızca bu alan). Kod
+>   oyun bitince açıklanıyor.
+> - **Ayna:** gerçek değerler ve notlar telefonun indirdiği koddaydı.
+>   Artık yalnızca TV'nin yüklediği `lib/aynaFacts.ts`'te; açıklamada
+>   odaya yazılıyor.
+> - **Sensör:** okunmayan `sensor_media_answer` alanı artık yazılmıyor.
+> - **Yan düzeltme:** quiz "tekrar oyna" seçili soru paketini yok sayıp
+>   gömülü havuza dönüyordu.
+> - **Kalkan:**
+>   - 4 kural testi (gizli belge yalnızca host; ipucunu yalnızca host
+>     yazar).
+>   - Birim testleri.
+>   - E2E: odada cevap yok, açıklamada geliyor; Şifre ipucu TV'den.
 
 ## 6. Başarı metrikleri
 

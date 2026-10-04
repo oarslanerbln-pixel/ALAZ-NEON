@@ -34,6 +34,7 @@ import {
   pulseInputPayload,
   quizAnswerPayload,
   quizPackPayload,
+  quizSecretPayload,
   rewardClaimPayload,
   rewardPayload,
   roomCreatePayload,
@@ -41,7 +42,9 @@ import {
   sensorAnswerPayload,
   sensorBuzzPayload,
   unityInputPayload,
+  vaultFeedbackPayload,
   vaultGuessPayload,
+  vaultSecretPayload,
   wheelSpinPayload,
   type PlayerCounter,
 } from "../src/lib/clientWrites";
@@ -1695,5 +1698,43 @@ describe("events — oyun telemetrisi (3.2)", () => {
     await assertFails(setDoc(eventDoc(asHost(), "game_ended"), { ...event("game_ended"), player_count: 501 }));
     await assertFails(setDoc(eventDoc(asHost(), "game_ended"), { ...event("game_ended"), type: "score_changed" }));
     await assertFails(setDoc(eventDoc(asHost(), "game_ended"), { ...event("game_ended"), nickname: "x" }));
+  });
+});
+
+describe("rooms/{id}/secrets — doğru cevaplar ve kasa kodu yalnızca host'ta", () => {
+  beforeEach(() => seed({ status: "question_active" }));
+  const secret = (db: ReturnType<typeof asHost>, name: string) => doc(db, "rooms", ROOM_ID, "secrets", name);
+
+  it("host gizli bilgiyi yazar ve okur", async () => {
+    await assertSucceeds(setDoc(secret(asHost(), "quiz"), quizSecretPayload({ answers: { q1: { correctOption: "B" } } })));
+    await assertSucceeds(setDoc(secret(asHost(), "vault"), vaultSecretPayload("4821")));
+    await assertSucceeds(getDoc(secret(asHost(), "quiz")));
+  });
+
+  it("oyuncu ve yabancı okuyamaz, yazamaz (önceden cevap oda belgesindeydi)", async () => {
+    await setDoc(secret(asHost(), "vault"), vaultSecretPayload("4821"));
+    await assertFails(getDoc(secret(asPlayer(), "vault")));
+    await assertFails(getDoc(secret(asGuest(), "vault")));
+    await assertFails(setDoc(secret(asPlayer(), "vault"), vaultSecretPayload("0000")));
+    await assertFails(setDoc(secret(testEnv.authenticatedContext(STRANGER_UID).firestore(), "quiz"), quizSecretPayload({ answers: {} })));
+  });
+});
+
+describe("answers — Şifre ipucunu yalnızca host yazar", () => {
+  beforeEach(() => seed({ status: "vault_active" }));
+  const guess = () => vaultGuessPayload({ roomId: ROOM_ID, playerId: PLAYER_ID, guess: "1234" });
+  const FEEDBACK = ["correct", "absent", "present", "absent"] as const;
+
+  it("host tahminin ipucunu yazar, sahibi okur", async () => {
+    const ref = await addDoc(collection(asPlayer(), "answers"), guess());
+    await assertSucceeds(updateDoc(doc(asHost(), "answers", ref.id), vaultFeedbackPayload([...FEEDBACK])));
+    await assertSucceeds(getDoc(doc(asPlayer(), "answers", ref.id)));
+  });
+
+  it("oyuncu kendi ipucunu yazamaz; host tahmini değiştiremez", async () => {
+    const ref = await addDoc(collection(asPlayer(), "answers"), guess());
+    await assertFails(updateDoc(doc(asPlayer(), "answers", ref.id), vaultFeedbackPayload(["correct", "correct", "correct", "correct"])));
+    await assertFails(updateDoc(doc(asHost(), "answers", ref.id), { feedback: [...FEEDBACK], data: { guess: "9999" } }));
+    await assertFails(updateDoc(doc(asHost(), "answers", ref.id), vaultFeedbackPayload(["correct"] as never)));
   });
 });

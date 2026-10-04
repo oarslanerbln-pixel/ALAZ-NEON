@@ -20,6 +20,9 @@ import { assignColorsTeams, colorsTargetClicks } from "../../../lib/colorsTeams"
 import { RULE_DEFAULTS } from "../../../lib/gameSettings";
 import { loadQuizPack } from "../../../hooks/useQuizPacks";
 import { recordGameEvent } from "../../../hooks/gameEvents";
+import { writeRoomSecret } from "../../../hooks/useRoomSecret";
+import { SECRET_DOC, splitQuizQuestions } from "../../../lib/gameSecrets";
+import { quizSecretPayload } from "../../../lib/clientWrites";
 import { useLocale } from "../../../hooks/useLocale";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -116,19 +119,25 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
               return null;
             })
           : Promise.resolve(null),
-      ]).then(([{ getQuizQuestions }, { recentQuestionIds, rememberQuestions }, pack]) => {
-        const questions = getQuizQuestions(room.locale || "tr", settings?.total_rounds || 3, {
+      ]).then(async ([{ getQuizQuestions }, { recentQuestionIds, rememberQuestions }, pack]) => {
+        const picked = getQuizQuestions(room.locale || "tr", settings?.total_rounds || 3, {
           topics: settings?.quiz_topics,
           recentIds: recentQuestionIds(),
           pool: pack?.questions,
         });
-        rememberQuestions(questions.map((q) => q.id));
+        rememberQuestions(picked.map((q) => q.id));
+        // Doğru cevaplar odaya değil, yalnızca host'un okuduğu belgeye.
+        const { questions, secret } = splitQuizQuestions(picked);
+        await writeRoomSecret(room.id, SECRET_DOC.quiz, quizSecretPayload(secret)).catch((err) =>
+          log.error("Quiz cevapları yazılamadı:", err),
+        );
         const startState = (settings?.current_round === 0 || room.current_round === 0) ? "tutorial" : "quiz_intro";
         const startedAt = Date.now();
         updateRoomStatus(startState, {
           ...extraUpdates,
           current_question_index: 0,
           quiz_questions: questions,
+          quiz_reveal: null,
           game_started_at: startedAt,
           ...(startState === "tutorial" ? { tutorial_step: 0 } : {})
         });
@@ -176,7 +185,6 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
         current_round: 0,
         used_sensor_images: [firstImg.id],
         sensor_current_media: firstImg.url,
-        sensor_media_answer: firstImg.answer,
         sensor_buzzer_player_id: null,
         sensor_buzzer_timestamp: null,
         sensor_player_answer: null

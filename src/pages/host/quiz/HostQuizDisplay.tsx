@@ -28,6 +28,10 @@ import { useVenue } from "../../../contexts/VenueContextCore";
 
 import type { Room, Player } from "../../../types/database";
 import { createLogger } from "../../../lib/logger";
+import { SECRET_DOC, splitQuizQuestions, withQuizAnswer, type QuizSecret } from "../../../lib/gameSecrets";
+import { quizSecretPayload } from "../../../lib/clientWrites";
+import { useRoomSecret, writeRoomSecret } from "../../../hooks/useRoomSecret";
+import { loadQuizPack } from "../../../hooks/useQuizPacks";
 
 const log = createLogger("HostQuizDisplay");
 
@@ -77,7 +81,9 @@ export function HostQuizDisplay({
       : "quiz_lobby";
 
   const currentQIndex = room?.current_question_index ?? 0;
-  const currentQuestion = room?.quiz_questions?.[currentQIndex] ?? null;
+  // Soru odada, doğru cevabı host'a özel belgede: ekran ikisini birleştiriyor.
+  const quizSecret = useRoomSecret<QuizSecret>(roomId, SECRET_DOC.quiz);
+  const currentQuestion = withQuizAnswer(room?.quiz_questions?.[currentQIndex], quizSecret);
   const totalRounds = room?.total_rounds || 5;
   const currentRoundNum = room?.current_round || currentQIndex + 1;
   // "2X final" ayarı kapalıysa son soru da normal puanlanır (alan yoksa açık).
@@ -106,22 +112,31 @@ export function HostQuizDisplay({
     // Ikinci tur da ayni secim ve hafizayi kullanmali: aksi halde host'un
     // kategori secimi yalnizca ilk turda gecerli olur ve tekrar hafizasi
     // gece icinde delinirdi.
-    const questions = getQuizQuestions(room.locale || "tr", totalRounds, {
+    // Seçili paket varsa tekrar oyunda da paketten (önceden gömülü havuza
+    // dönüyordu).
+    const pack = room.quiz_pack_id ? await loadQuizPack(room.quiz_pack_id).catch(() => null) : null;
+    const picked = getQuizQuestions(room.locale || "tr", totalRounds, {
       topics: room.quiz_topics,
       recentIds: recentQuestionIds(),
+      pool: pack?.questions,
     });
-    rememberQuestions(questions.map((q) => q.id));
+    rememberQuestions(picked.map((q) => q.id));
+    // Doğru cevaplar odaya değil host'a özel belgeye (lib/gameSecrets.ts).
+    const { questions, secret } = splitQuizQuestions(picked);
+    await writeRoomSecret(roomId, SECRET_DOC.quiz, quizSecretPayload(secret));
 
     if (room.current_round === 0) {
       await updateRoomStatus("tutorial", {
         tutorial_step: 0,
         current_question_index: 0,
         quiz_questions: questions,
+        quiz_reveal: null,
       });
     } else {
       await updateRoomStatus("quiz_intro", {
         current_question_index: 0,
         quiz_questions: questions,
+        quiz_reveal: null,
       });
     }
   };
@@ -162,7 +177,11 @@ export function HostQuizDisplay({
     SoundManager.getInstance().stopSound(sounds.GAME_PULSE);
     SoundManager.getInstance().playSFX(sounds.SIREN);
 
-    await updateRoomStatus("question_reveal");
+    // Doğru cevap açıklama anında odaya yazılıyor: telefon doğru/yanlışı
+    // ancak şimdi görüyor. Bu durumdan sonra cevap kabul edilmiyor (kurallar).
+    await updateRoomStatus("question_reveal", {
+      quiz_reveal: currentQuestion ? { index: currentQIndex, correctOption: currentQuestion.correctOption } : null,
+    });
 
     // Give players a brief grace period to resolve in-flight answers
     await new Promise((resolve) => setTimeout(resolve, 1200));
@@ -181,8 +200,11 @@ export function HostQuizDisplay({
       answers.push({ id: docSnap.id, ...docSnap.data() } as Answer);
     });
     
-    const currentQ = room.quiz_questions?.[room.current_question_index || 0];
-    if (!currentQ) return;
+    const currentQ = currentQuestion;
+    if (!currentQ) {
+      log.warn("Sorunun cevabı okunamadı; puanlama atlandı:", currentQIndex);
+      return;
+    }
     
     const result = scoreQuizQuestion({
       answers,
@@ -206,7 +228,7 @@ export function HostQuizDisplay({
 
     // Play reveal chime
     SoundManager.getInstance().playSFX(sounds.SUCCESS);
-  }, [roomId, room, players, isFinalRound, updateRoomStatus, updatePlayerScore]);
+  }, [roomId, room, players, isFinalRound, currentQuestion, currentQIndex, updateRoomStatus, updatePlayerScore]);
 
   // Timer logic
   useEffect(() => {
@@ -277,6 +299,7 @@ export function HostQuizDisplay({
       await updateRoomStatus("question_intro", {
         current_question_index: nextIndex,
         current_round: nextIndex + 1,
+        quiz_reveal: null,
       });
     }
   };

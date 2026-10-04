@@ -94,7 +94,6 @@ export function HostSensorDisplay({
       current_round: 0,
       used_sensor_images: [firstImg.id],
       sensor_current_media: firstImg.url,
-      sensor_media_answer: firstImg.answer,
       sensor_buzzer_player_id: null,
       sensor_buzzer_timestamp: null,
       sensor_player_answer: null
@@ -144,7 +143,6 @@ export function HostSensorDisplay({
       current_round: nextIdx,
       used_sensor_images: [...used, nextImg.id],
       sensor_current_media: nextImg.url,
-      sensor_media_answer: nextImg.answer,
       sensor_buzzer_player_id: null,
       sensor_buzzer_timestamp: null,
       sensor_player_answer: null
