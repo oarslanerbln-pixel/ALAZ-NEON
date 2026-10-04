@@ -8,6 +8,9 @@ import type { Room, Player, Answer } from "../../../types/database";
 import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { NeonIcon } from "../../../components/NeonIcon";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("HostVaultDisplay");
 
 interface Props {
   room: Room;
@@ -88,7 +91,7 @@ export function HostVaultDisplay({ room, players, updateRoomStatus }: Props) {
         
         // Add score to winner
         const pRef = doc(db, "players", winnerId);
-        updateDoc(pRef, { total_score: increment(500) }).catch(console.error);
+        updateDoc(pRef, { total_score: increment(500) }).catch(log.error);
 
         setTimeout(() => {
           updateRoomStatus("vault_reveal", { vault_winner_id: winnerId });

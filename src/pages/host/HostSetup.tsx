@@ -13,6 +13,9 @@ import { errorMessage } from "../../lib/errors";
 import { useVenue } from "../../contexts/VenueContextCore";
 import { useIsStaff } from "../../hooks/useIsStaff";
 import { StaffAccessNotice } from "../../components/StaffAccessNotice";
+import { createLogger } from "../../lib/logger";
+
+const log = createLogger("HostSetup");
 
 // Premium Dynamic Glass Panel with Spinning Neon Core
 function GlassPanel({ 
@@ -89,7 +92,7 @@ export function HostSetup() {
         
         navigate(`/host/display?roomId=${docRef.id}`);
       } catch (err) {
-        console.error("Error creating room:", err);
+        log.error("Error creating room:", err);
         showToast(t("setup.errorCreate") + errorMessage(err), "error");
         isCreatingRef.current = false;
         setIsCreating(false);

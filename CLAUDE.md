@@ -66,8 +66,10 @@ Bunları baştan sona okuma, hedefli `grep` ile gir:
   üçü birden doldurulur: anahtar önce `i18n/de.ts`'e, sonra aynı türle
   `tr.ts`/`en.ts`'e. Eksik ya da fazla anahtar derleme hatasıdır
   (`satisfies Dictionary`); `i18nKeys.test.ts` tanımsız `t()` çağrısını yakalar.
-- Hata raporu için `@sentry/react`'i doğrudan içe aktarma; `lib/monitoring.ts`
-  (`captureException`) kullan — SDK giriş paketinde değil, boşta iner.
+- Günlük için `console.*` değil `createLogger("Kapsam")` (`lib/logger.ts`;
+  ESLint `no-console`). `log.error` geçici ağ hataları dışında Sentry'ye gider.
+  `@sentry/react`'i doğrudan içe aktarma; `lib/monitoring.ts` kullan — SDK
+  giriş paketinde değil, boşta iner.
 - Yeni bir `RoomStatus` eklediğinde hem `HostDisplay` hem `PlayerGame`
   tarafında ele al — karşılıksız status **siyah ekran** demektir.
 - Yeni oyun modu: `GameType` + `gameCatalog.ts` kartı + `host/gameDisplays.ts`

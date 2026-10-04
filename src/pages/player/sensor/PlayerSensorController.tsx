@@ -8,6 +8,9 @@ import { useToast } from "../../../contexts/ToastContextCore";
 import { useLocale } from "../../../hooks/useLocale";
 import { haptics } from "../../../lib/haptics";
 import { SoundManager, sounds } from "../../../lib/audio";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("PlayerSensorController");
 
 interface Props {
   room: Room;
@@ -52,7 +55,7 @@ export function PlayerSensorController({ room, player }: Props) {
         transaction.update(roomRef, sensorBuzzPayload(player.id));
       });
     } catch (err) {
-      console.error(err);
+      log.error(err);
       if (err instanceof Error && err.message !== "Geç kaldın!") {
         showToast(t("sensor.toastError"), "error");
       } else {
@@ -80,7 +83,7 @@ export function PlayerSensorController({ room, player }: Props) {
       await updateDoc(roomRef, sensorAnswerPayload(answer));
       setAnswer("");
     } catch (err) {
-      console.error(err);
+      log.error(err);
       showToast(t("sensor.toastSubmitFailed"), "error");
     } finally {
       isSubmittingRef.current = false;

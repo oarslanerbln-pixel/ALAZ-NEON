@@ -8,6 +8,9 @@ import { AnimatedNumber } from "../../../components/AnimatedNumber";
 import { DURATION, EASE, SPRING, STAGGER, TWEEN, listItem } from "../../../lib/motion";
 import type { Player } from "../../../types/database";
 import type { JulesAward } from "../../../lib/intelligence";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("HostPodium");
 
 interface HostPodiumProps {
   room: {
@@ -223,7 +226,7 @@ export function HostPodium({
       const date = new Date().toISOString().split("T")[0];
       pdf.save(`ALAZ-NEON-Sonuclar-${date}.pdf`);
     } catch (error) {
-      console.error("PDF generation failed:", error);
+      log.error("PDF generation failed:", error);
     } finally {
       setIsGeneratingPDF(false);
     }

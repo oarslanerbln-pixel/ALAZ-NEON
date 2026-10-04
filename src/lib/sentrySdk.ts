@@ -4,4 +4,4 @@
  * ad alanının tamamını (replay, feedback, tracing …) ~156 KB gzip olarak
  * paketliyordu. Adlandırılmış içe aktarma ağaç sallamayı koruyor.
  */
-export { captureException, init } from "@sentry/react";
+export { captureException, init, setTags } from "@sentry/react";

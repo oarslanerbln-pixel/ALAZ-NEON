@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import type { Player } from "../types/database";
+import { createLogger } from "../lib/logger";
+
+const log = createLogger("usePlayer");
 
 export function usePlayer(playerId: string | null) {
   const [player, setPlayer] = useState<Player | null>(null);
@@ -34,7 +37,7 @@ export function usePlayer(playerId: string | null) {
         setLoading(false);
       },
       (err) => {
-        console.error("Error fetching player:", err);
+        log.error("Error fetching player:", err);
         setError(err);
         setLoading(false);
       }

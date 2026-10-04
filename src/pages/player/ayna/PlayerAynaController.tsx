@@ -12,6 +12,9 @@ import { AYNA_MAX, AYNA_MIN, aynaRoundKey, parseGuess, topScorers } from "../../
 import { AYNA_CATEGORY_KEY, aynaRoundQuestion, formatAynaDelta, formatAynaValue, type AynaQuestion } from "../../../lib/aynaQuestions";
 import { salonQuestionById } from "../../../lib/aynaSalon";
 import type { Player, Room } from "../../../types/database";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("PlayerAynaController");
 
 interface Props {
   room: Room;
@@ -140,7 +143,7 @@ function SurveyCard({ room, player }: { room: Room; player: Player }) {
       } catch (err) {
         // Sayfa yenilenip ikinci kez gönderildiyse ya da anket az önce
         // kapandıysa kural yazmayı reddeder. İkisi de misafirin sorunu değil.
-        console.warn("[AYNA] Anket kaydedilmedi:", err);
+        log.warn("Anket kaydedilmedi:", err);
       }
     }
     try {
@@ -327,7 +330,7 @@ function ActiveRound({ room, player, question, index, total }: ActiveProps) {
       setLockedValue(value);
       haptics.success();
     } catch (err) {
-      console.error("[AYNA] Tahmin gönderilemedi:", err);
+      log.error("Tahmin gönderilemedi:", err);
       submittedRef.current = false;
       showToast(t("game.submitError"), "error");
     } finally {

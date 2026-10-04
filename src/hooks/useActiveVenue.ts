@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { DEFAULT_VENUE_CONFIG, type VenueConfig } from "../types/database";
+import { createLogger } from "../lib/logger";
+
+const log = createLogger("useActiveVenue");
 
 const ACTIVE_VENUE_PATH = ["app_config", "active_venue"] as const;
 
@@ -25,7 +28,7 @@ export function useActiveVenue(): { venue: VenueConfig; loading: boolean } {
         setLoading(false);
       },
       (err) => {
-        console.error("[useActiveVenue] Mekan ayarları okunamadı:", err);
+        log.error("Mekan ayarları okunamadı:", err);
         setLoading(false);
       },
     );

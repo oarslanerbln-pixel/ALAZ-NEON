@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import type { Player } from "../types/database";
+import { createLogger } from "../lib/logger";
+
+const log = createLogger("useTopPlayers");
 
 export type LeaderboardRange = "week" | "all";
 
@@ -76,7 +79,7 @@ export function useTopPlayers(range: LeaderboardRange, limit = 10) {
             .map((entry, i) => ({ rank: i + 1, name: entry.name, score: entry.score })),
         );
       } catch (err) {
-        console.error("[useTopPlayers] Sıralama yüklenemedi:", err);
+        log.error("Sıralama yüklenemedi:", err);
         if (!cancelled) setPlayers([]);
       } finally {
         if (!cancelled) setLoading(false);

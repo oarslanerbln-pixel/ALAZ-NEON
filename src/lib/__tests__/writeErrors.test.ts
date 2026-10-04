@@ -8,7 +8,7 @@ import { isContractViolation, reportWriteError } from "../writeErrors";
 describe("reportWriteError", () => {
   beforeEach(() => {
     captureException.mockReset();
-    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
   });
 
   it("kural reddini yazma adıyla Sentry'ye bildirir", () => {

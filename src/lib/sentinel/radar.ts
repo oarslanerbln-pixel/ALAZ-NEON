@@ -3,6 +3,10 @@
  * Detects anomalies like superhuman typing speed (botting).
  */
 
+import { createLogger } from "../logger";
+
+const log = createLogger("radar");
+
 const MIN_HUMAN_TYPING_SPEED_MS_PER_CHAR = 70; // e.g. 10 chars take at least 700ms
 const ABSOLUTE_MIN_REACTION_TIME_MS = 300; // Human reaction time floor
 
@@ -38,7 +42,7 @@ export class SentinelRadar {
       answerText.length * MIN_HUMAN_TYPING_SPEED_MS_PER_CHAR;
 
     if (timeTakenMs < minimumPossibleTimeMs) {
-      console.warn(`[SENTINEL] Anomaly detected for Player ${playerId}. Time taken: ${timeTakenMs}ms for ${answerText.length} chars. (Min expected: ${minimumPossibleTimeMs}ms)`);
+      log.warn(`Anomaly detected for Player ${playerId}. Time taken: ${timeTakenMs}ms for ${answerText.length} chars. (Min expected: ${minimumPossibleTimeMs}ms)`);
       this.banPlayer(playerId, "Superhuman typing speed (Bot detected)");
       return false; // Fake answer, drop it
     }
@@ -52,7 +56,7 @@ export class SentinelRadar {
    */
   banPlayer(playerId: string, reason: string) {
     if (!this.shadowbanList.has(playerId)) {
-      console.error(`[SENTINEL] SHADOWBAN ISSUED: Player ${playerId} - Reason: ${reason}`);
+      log.error(`SHADOWBAN ISSUED: Player ${playerId} - Reason: ${reason}`);
       this.shadowbanList.set(playerId, reason);
     }
   }

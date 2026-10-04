@@ -15,6 +15,9 @@ import { PlayerProfileCard } from "./components/PlayerProfileCard";
 import { PlayerRewards } from "./components/PlayerRewards";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { containsProfanity } from "../../lib/profanity";
+import { createLogger } from "../../lib/logger";
+
+const log = createLogger("PlayerJoin");
 
 export function PlayerJoin() {
   const navigate = useNavigate();
@@ -132,7 +135,7 @@ export function PlayerJoin() {
         return;
       }
     } catch (err) {
-      console.error(err);
+      log.error(err);
       setErrorMsg(t("join.errorGeneral"));
       setIsLoading(false);
     }

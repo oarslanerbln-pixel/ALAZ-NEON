@@ -3,6 +3,9 @@ import { onAuthStateChanged, type User } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 
 import { auth, db } from "../lib/firebase";
+import { createLogger } from "../lib/logger";
+
+const log = createLogger("useIsStaff");
 
 export interface StaffState {
   /** Oturum çözülene kadar undefined; sonra hesap ya da null. */
@@ -45,7 +48,7 @@ export function useIsStaff(): StaffState {
       doc(db, "staff", uid),
       (snap) => setAnswer({ uid, isStaff: snap.exists() }),
       (err) => {
-        console.error("[useIsStaff] Personel kaydı okunamadı:", err);
+        log.error("Personel kaydı okunamadı:", err);
         // Hata hâlinde yetki VERMİYORUZ: güvenlik kararı her zaman kapalı
         // tarafa düşmeli.
         setAnswer({ uid, isStaff: false });

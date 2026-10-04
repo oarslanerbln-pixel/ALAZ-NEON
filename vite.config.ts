@@ -1,6 +1,8 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
+import { execSync } from 'child_process'
 import os from 'os'
 
 function getLocalIP() {
@@ -17,16 +19,54 @@ function getLocalIP() {
 
 const localIp = getLocalIP();
 
+/**
+ * Sürüm kimliği (docs/roadmap.md, 2.4): Sentry'deki her hata hangi yayından
+ * geldiğini bilsin. Vercel ve GitHub Actions commit'i ortamdan veriyor.
+ */
+function appRelease(): string {
+  const sha = process.env.VITE_APP_RELEASE || process.env.VERCEL_GIT_COMMIT_SHA || process.env.GITHUB_SHA;
+  if (sha) return `hengame@${sha.slice(0, 12)}`;
+  try {
+    return `hengame@${execSync('git rev-parse --short=12 HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()}`;
+  } catch {
+    return 'hengame@dev';
+  }
+}
+
+const release = appRelease();
+
+// Kaynak haritaları yalnızca Sentry'ye yüklenecekse üretilir ("hidden": JS
+// dosyası haritaya işaret etmez) ve yüklemeden sonra dist/'ten silinir —
+// yayına çıkıp kaynak kodu herkese açmasın. Üç değişken de yoksa hiçbiri
+// olmaz (yerel geliştirme, CI, e2e). Token yalnızca derleme ortamında durur.
+const sentryUpload = Boolean(
+  process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG && process.env.SENTRY_PROJECT,
+);
+
 // https://vite.dev/config/
 export default defineConfig({
   define: {
-    __LOCAL_IP__: JSON.stringify(localIp)
+    __LOCAL_IP__: JSON.stringify(localIp),
+    'import.meta.env.VITE_APP_RELEASE': JSON.stringify(release),
   },
   plugins: [
     react(),
     tailwindcss(),
+    ...(sentryUpload
+      ? [
+          sentryVitePlugin({
+            org: process.env.SENTRY_ORG,
+            project: process.env.SENTRY_PROJECT,
+            authToken: process.env.SENTRY_AUTH_TOKEN,
+            release: { name: release },
+            sourcemaps: { filesToDeleteAfterUpload: ['./dist/**/*.map'] },
+            telemetry: false,
+          }),
+        ]
+      : []),
   ],
   build: {
+    sourcemap: sentryUpload ? 'hidden' : false,
     // Satıcı kütüphanelerini ayır: uygulama kodu değişince
     // tarayıcı react/firebase/motion chunk'larını yeniden indirmez.
     rollupOptions: {

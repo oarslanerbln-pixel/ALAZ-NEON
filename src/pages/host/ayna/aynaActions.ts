@@ -6,6 +6,9 @@ import { aynaQuestionById } from "../../../lib/aynaQuestions";
 import { AYNA_SURVEY_MS, applySurveyResults, isSalonId, salonTruth, tallySurvey } from "../../../lib/aynaSalon";
 import { toMillis } from "../../../lib/timestamps";
 import type { Answer, Room } from "../../../types/database";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("aynaActions");
 
 /**
  * AYNA'nın host tarafı durum geçişleri.
@@ -56,7 +59,7 @@ async function fetchSurvey(room: Room): Promise<{ answers?: unknown }[]> {
     );
     return snap.docs.map((d) => d.data());
   } catch (err) {
-    console.error("[AYNA] Anket okunamadı:", err);
+    log.error("Anket okunamadı:", err);
     return [];
   }
 }

@@ -8,6 +8,9 @@ import { SoundManager, sounds } from "../../../lib/audio";
 import { haptics } from "../../../lib/haptics";
 import type { Room, Player } from "../../../types/database";
 import { useLocale } from "../../../hooks/useLocale";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("PlayerQuizController");
 
 interface PlayerQuizControllerProps {
   room: Room;
@@ -84,7 +87,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
       );
       haptics.success();
     } catch (err) {
-      console.error("Failed to submit quiz answer", err);
+      log.error("Failed to submit quiz answer", err);
       hasSubmittedRef.current = false;
       setHasSubmitted(false);
       setSelectedOption(null);

@@ -14,6 +14,7 @@ import "./index.css";
 initMonitoring({
   dsn: import.meta.env.VITE_SENTRY_DSN,
   environment: import.meta.env.MODE,
+  release: import.meta.env.VITE_APP_RELEASE,
 });
 
 const firebaseApiKey = import.meta.env.VITE_FIREBASE_API_KEY;

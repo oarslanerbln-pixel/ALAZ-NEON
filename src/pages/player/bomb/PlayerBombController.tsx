@@ -11,6 +11,9 @@ import { looksLikeGibberish } from "../../../lib/wordValidation";
 import { useLocale } from "../../../hooks/useLocale";
 import { haptics } from "../../../lib/haptics";
 import { isPlayerActive } from "../../../lib/liveness";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("PlayerBombController");
 
 interface Props {
   room: Room;
@@ -99,7 +102,7 @@ export function PlayerBombController({ room, player }: Props) {
 
       setWord("");
     } catch (error) {
-      console.error("Error passing bomb:", error);
+      log.error("Error passing bomb:", error);
       showToast(t("bomb.toastError"), "error");
     } finally {
       setTimeout(() => {

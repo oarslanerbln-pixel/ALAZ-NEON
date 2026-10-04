@@ -5,6 +5,9 @@ import { db, auth } from "../lib/firebase";
 import { nicknamePayload, profileCreatePayload } from "../lib/clientWrites";
 import { normalizeProfile } from "../lib/userProfile";
 import type { UserProfile } from "../types/database";
+import { createLogger } from "../lib/logger";
+
+const log = createLogger("useUserProfile");
 
 export function useUserProfile() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -54,7 +57,7 @@ export function useUserProfile() {
           setLoading(false);
         }
       }, (error) => {
-        console.error("Error fetching user profile:", error);
+        log.error("Error fetching user profile:", error);
         setLoading(false);
       });
     });

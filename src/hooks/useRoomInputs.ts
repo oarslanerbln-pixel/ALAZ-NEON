@@ -3,6 +3,9 @@ import { collection, doc, onSnapshot } from "firebase/firestore";
 
 import { db } from "../lib/firebase";
 import type { RoomInput } from "../lib/roomInputs";
+import { createLogger } from "../lib/logger";
+
+const log = createLogger("useRoomInputs");
 
 /**
  * Host: odanın bütün oyuncu girişlerini dinler (playerId → kayıt).
@@ -23,7 +26,7 @@ export function useRoomInputs(roomId: string | null): Record<string, RoomInput> 
         });
         setInputs(next);
       },
-      (err) => console.error("[useRoomInputs] Girişler dinlenemedi:", err),
+      (err) => log.error("Girişler dinlenemedi:", err),
     );
   }, [roomId]);
 
@@ -45,7 +48,7 @@ export function useOwnRoomInput(roomId: string | null, playerId: string | null):
     return onSnapshot(
       doc(db, "rooms", roomId, "inputs", playerId),
       (snap) => setInput({ key: k, value: snap.exists() ? (snap.data() as RoomInput) : null }),
-      (err) => console.error("[useOwnRoomInput] Giriş kaydı okunamadı:", err),
+      (err) => log.error("Giriş kaydı okunamadı:", err),
     );
   }, [roomId, playerId]);
 

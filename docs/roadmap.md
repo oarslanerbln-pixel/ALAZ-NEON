@@ -376,6 +376,23 @@ Uygulama notları:
 >   girişinden satıcı parçalarına taşındı (her yayında yeniden inmiyor).
 > - Firestore paketindeki `re2js` (~141 KB ham) Firestore'un kendi
 >   bağımlılığı; tam SDK gerektiği için (onSnapshot) şimdilik kalıyor.
+>
+> **2.4 tamamlandı (gözlemlenebilirlik).**
+> - **Release:** her derleme `hengame@<commit>` (Vercel/GitHub commit'i,
+>   yoksa `git rev-parse`).
+> - **Kaynak haritaları:** `SENTRY_AUTH_TOKEN/ORG/PROJECT` yalnızca derleme
+>   ortamında tanımlıysa gizli haritalar üretilip yüklenir ve `dist/`'ten
+>   silinir. Sahte kimlikle denendi: yükleme başarısız olsa bile harita
+>   yayına çıkmıyor ve derleme kırılmıyor.
+> - **Etiketler:** TV ve telefon ekranında `role`, `room_id`, `game`,
+>   `status`. SDK inmeden verilenler saklanıp sıradaki hatalardan önce
+>   uygulanır.
+> - **Logger:** 87 `console.error/warn` çağrısı (44 dosya) AST ile
+>   `createLogger(kapsam)`'a taşındı; ESLint `no-console` korur. Eskiden
+>   hiçbiri bize ulaşmıyordu. `error` artık Sentry'ye gidiyor: geçici ağ
+>   hataları hariç, kapsam başına oturumda en fazla 5. Yazma hataları
+>   eskisi gibi yalnızca sözleşme ihlalinde raporlanıyor.
+> - `@sentry/vite-plugin` 5.x (4.x eski `unplugin` zinciri getiriyordu).
 
 | İş | Kapsar | Efor | Kabul kriteri |
 |---|---|---|---|

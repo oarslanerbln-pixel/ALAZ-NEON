@@ -11,6 +11,9 @@ import { useVenue } from "../../../contexts/VenueContextCore";
 import { doc, writeBatch } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { KineticSpark } from "../../../components/KineticSpark";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("HostColorsDisplay");
 
 interface Props {
   room: Room;
@@ -50,7 +53,7 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
         colors_team_assignments: assignments,
       });
     } catch (err) {
-      console.error("Error starting Colors game:", err);
+      log.error("Error starting Colors game:", err);
     }
   };
 
@@ -105,7 +108,7 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
           
           if (rewardRecipients.length > 0) {
             grantRewardToPlayers(room.id, rewardRecipients, venue).catch(err => 
-              console.error("Error granting rewards to team:", err)
+              log.error("Error granting rewards to team:", err)
             );
           }
 
@@ -115,7 +118,7 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
             rewardBatch.update(pRef, { total_score: (p.total_score || 0) + 150 });
           });
           rewardBatch.commit().catch(err =>
-            console.error("Error updating winner scores:", err)
+            log.error("Error updating winner scores:", err)
           );
         }
 

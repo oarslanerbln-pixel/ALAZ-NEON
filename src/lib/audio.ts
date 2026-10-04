@@ -1,3 +1,7 @@
+import { createLogger } from "./logger";
+
+const log = createLogger("audio");
+
 export class SoundManager {
   private static instance: SoundManager;
   private sounds: Map<string, HTMLAudioElement> = new Map();
@@ -29,7 +33,7 @@ export class SoundManager {
       const audio = new Audio(path);
       // Dosya hiç yüklenemezse işaretle: bir sonraki çalma synth'e düşer
       audio.addEventListener("error", () => {
-        console.warn("[audio] Kaynak yüklenemedi:", path);
+        log.warn("Kaynak yüklenemedi:", path);
         this.missing.add(path);
       });
       this.sounds.set(path, audio);
@@ -63,13 +67,13 @@ export class SoundManager {
     sound.play().catch((e: DOMException) => {
       if (e?.name === "NotSupportedError" || e?.name === "NotFoundError") {
         // Dosya yok / bozuk → kalıcı olarak synth'e geç
-        console.warn("[audio] Dosya yüklenemedi, synth'e düşülüyor:", path);
+        log.warn("Dosya yüklenemedi, synth'e düşülüyor:", path);
         this.missing.add(path);
         const fb = SYNTH_FALLBACK[path];
         if (fb) this.playSynthSFX(fb, volume);
       } else {
         // NotAllowedError = tarayıcı autoplay politikası, dosya sorunu değil
-        console.warn("Audio play failed:", path, e?.name);
+        log.warn("Audio play failed:", path, e?.name);
       }
     });
   }
@@ -305,7 +309,7 @@ export class SoundManager {
           ctx.close();
       }
     } catch (e) {
-      console.warn("Synth SFX failed:", e);
+      log.warn("Synth SFX failed:", e);
     }
   }
 
@@ -326,11 +330,11 @@ export class SoundManager {
     music.loop = true;
     music.play().catch((e: DOMException) => {
       if (e?.name === "NotSupportedError" || e?.name === "NotFoundError") {
-        console.warn("[audio] Müzik dosyası yüklenemedi, pad'e düşülüyor:", path);
+        log.warn("Müzik dosyası yüklenemedi, pad'e düşülüyor:", path);
         this.missing.add(path);
         this.startPad(path, volume);
       } else {
-        console.warn("Music play failed:", path, e?.name);
+        log.warn("Music play failed:", path, e?.name);
       }
     });
   }
@@ -389,7 +393,7 @@ export class SoundManager {
       };
       this.padFor = path;
     } catch (e) {
-      console.warn("[audio] Pad başlatılamadı:", e);
+      log.warn("Pad başlatılamadı:", e);
     }
   }
 

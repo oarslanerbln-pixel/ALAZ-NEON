@@ -111,6 +111,25 @@ sites cannot burn the daily quota. The client side is already wired up
 > reCAPTCHA v3 shows a small badge in the bottom-right corner. If you hide it,
 > Google requires the reCAPTCHA attribution text to be shown elsewhere.
 
+## 🩺 Error monitoring (optional)
+
+Errors reach [Sentry](https://sentry.io) when `VITE_SENTRY_DSN` is set; without it,
+monitoring is fully off. The SDK is not in the initial bundle: it loads when the
+browser is idle or on the first error, and errors caught before that are queued.
+
+- **Release:** every build is tagged `hengame@<commit>` (Vercel/GitHub provide the
+  commit), so an error points to the deploy that caused it.
+- **Tags:** `role` (host/player), `room_id`, `game` and `status` are attached
+  while the TV or phone screen is open.
+- **Readable stack traces:** set `SENTRY_AUTH_TOKEN`, `SENTRY_ORG` and
+  `SENTRY_PROJECT` in the **build** environment only (Vercel → Settings →
+  Environment Variables; not `VITE_*`, never in the repo). The build then uploads
+  hidden source maps and deletes them from `dist/`, so source code is not served.
+  The token needs the *Releases: Admin* scope and *Project: Read & Write*.
+- **Logging:** application code logs through `createLogger(scope)`
+  (`src/lib/logger.ts`); `console.*` is blocked by ESLint. `log.error` reports to
+  Sentry except transient network errors, at most 5 per scope per session.
+
 ## 🖼 Images and static assets
 
 Background images ship as **AVIF + WebP** pairs (`<picture>` via

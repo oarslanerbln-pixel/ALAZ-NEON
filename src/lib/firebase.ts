@@ -10,6 +10,9 @@ import {
 import { connectAuthEmulator, getAuth } from "firebase/auth";
 
 import { appCheckSetup } from "./appCheckSetup";
+import { createLogger } from "./logger";
+
+const log = createLogger("firebase");
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
@@ -26,7 +29,7 @@ const isFirebaseConfigured = Boolean(
 );
 
 if (!isFirebaseConfigured) {
-  console.error(
+  log.error(
     "⚠️ FIREBASE ENV VARS MISSING! Check your .env.local file.",
     "\nVITE_FIREBASE_API_KEY:",
     firebaseConfig.apiKey ? "✅" : "❌",
@@ -80,8 +83,7 @@ function createFirestore() {
       }),
     });
   } catch (err) {
-    console.warn(
-      "[firebase] Kalıcı önbellek kurulamadı, çevrimiçi moda düşülüyor:",
+    log.warn("Kalıcı önbellek kurulamadı, çevrimiçi moda düşülüyor:",
       err,
     );
     return getFirestore(app);

@@ -8,6 +8,9 @@ import { useLocale } from "../../../hooks/useLocale";
 import type { Player } from "../../../types/database";
 import { ConfettiCanvas } from "../../../components/ConfettiCanvas";
 import { SPRING, STAGGER, TWEEN } from "../../../lib/motion";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("PlayerStandings");
 
 interface PlayerStandingsProps {
   currentPlayer: Player | null;
@@ -51,7 +54,7 @@ export function PlayerStandings({ currentPlayer }: PlayerStandingsProps) {
         setMyRank(me?.rank ?? null);
         setLoaded(true);
       } catch (err) {
-        console.error("Standings fetch error:", err);
+        log.error("Standings fetch error:", err);
         setLoaded(true);
       }
     };

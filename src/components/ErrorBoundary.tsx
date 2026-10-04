@@ -1,6 +1,9 @@
 import { Component } from "react";
 import type { ReactNode, ErrorInfo } from "react";
 import { captureException } from "../lib/monitoring";
+import { createLogger } from "../lib/logger";
+
+const log = createLogger("ErrorBoundary");
 
 interface Props {
   children?: ReactNode;
@@ -22,7 +25,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Uncaught error:", error, errorInfo);
+    log.error("Uncaught error:", error, errorInfo);
     // DSN ayarlanmadıysa izleme kapalı ve bu çağrı hiçbir şey yapmıyor;
     // açıksa SDK henüz inmemiş olsa bile hata sıraya alınıp gönderiliyor.
     captureException(error, { extra: { componentStack: errorInfo.componentStack } });
