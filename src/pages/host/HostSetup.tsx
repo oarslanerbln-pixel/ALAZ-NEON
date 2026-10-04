@@ -11,6 +11,8 @@ import { useLocale } from "../../hooks/useLocale";
 import { useToast } from "../../contexts/ToastContextCore";
 import { errorMessage } from "../../lib/errors";
 import { useVenue } from "../../contexts/VenueContextCore";
+import { useIsStaff } from "../../hooks/useIsStaff";
+import { StaffAccessNotice } from "../../components/StaffAccessNotice";
 
 // Premium Dynamic Glass Panel with Spinning Neon Core
 function GlassPanel({ 
@@ -60,6 +62,9 @@ export function HostSetup() {
   const { venue } = useVenue();
   const [isCreating, setIsCreating] = useState(false);
   const isCreatingRef = useRef(false);
+  // Oda yalnızca personel hesabıyla açılabiliyor (firestore.rules, karar
+  // D1): ödül ve kalıcı puan yazma yetkisi odanın host'u üzerinden akıyor.
+  const { user: staffUser, isStaff } = useIsStaff();
 
   const startLobby = async () => {
     if (isCreatingRef.current) return;
@@ -103,6 +108,20 @@ export function HostSetup() {
         setIsCreating(false);
       }
   };
+
+  if (staffUser === undefined || (staffUser && isStaff === undefined)) {
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center font-mono">
+        <div className="text-alaz-orange text-sm uppercase tracking-[0.5em] animate-pulse">
+          {t("common.loading")}
+        </div>
+      </div>
+    );
+  }
+
+  if (!staffUser || !isStaff) {
+    return <StaffAccessNotice title={t("setup.staffTitle")} user={staffUser} />;
+  }
 
   return (
     <div className="flex-1 w-full min-h-screen relative overflow-hidden bg-slate-50">

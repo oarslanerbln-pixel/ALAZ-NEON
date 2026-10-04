@@ -239,6 +239,12 @@ export interface Player {
   spectrum_clicks?: number;
   bar_score?: number;
   kablo_score?: number;
+  /**
+   * total_score'un ne kadarının users/{uid}.total_lifetime_score'a
+   * aktarıldığı (bkz. lib/lifetimeScore.ts). Yalnızca host yazar; katılım
+   * kuralı bu alanı kabul etmez.
+   */
+  lifetime_credited?: number;
 }
 
 export interface Answer {
@@ -438,6 +444,8 @@ export interface Reward {
   status: "available" | "claimed";
   code: string;
   earned_at: number;
+  /** Ödülün kazanıldığı oda — kural, yazanın bu odanın host'u olmasını şart koşuyor. */
+  room_id?: string;
   claimed_at?: number;
   /**
    * `venue.reward_validity_days`'e göre kazanıldığı anda hesaplanıp

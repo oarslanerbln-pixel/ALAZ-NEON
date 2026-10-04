@@ -1,16 +1,18 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../lib/firebase";
 import { useLocale } from "../../hooks/useLocale";
 import { upperTL } from "../../lib/stringUtils";
 import { errorMessage } from "../../lib/errors";
+import { safeNextPath } from "../../lib/safeRedirect";
 import { NeonIcon } from "../../components/NeonIcon";
 import { useVenue } from "../../contexts/VenueContextCore";
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t, locale } = useLocale();
   const { venue } = useVenue();
   const [email, setEmail] = useState("");
@@ -21,15 +23,15 @@ export function LoginPage() {
   // Daha önce bu form hiçbir yere bağlı değildi — submit'te sahte bir
   // gecikme atıp "başarılı" gibi ana sayfaya yönlendiriyordu, kimse
   // gerçekten giriş yapmıyordu. Şimdi gerçek Firebase Auth ile giriş
-  // yapıyor; bu oturum /admin/venue (mekan markası ayarları) erişiminin
-  // güvenlik kapısı.
+  // yapıyor; bu oturum yönetim ekranlarının ve oyun kurulumunun (TV)
+  // güvenlik kapısı. `next`, kişiyi giriş istenen ekrana geri götürür.
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
-      navigate("/admin/venue");
+      navigate(safeNextPath(searchParams.get("next"), "/admin/venue"), { replace: true });
     } catch (err) {
       setErrorMsg(errorMessage(err));
     } finally {

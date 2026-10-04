@@ -166,6 +166,28 @@ const translations = {
     de: "Fehler beim Erstellen des Raums: ",
     en: "An error occurred while creating the room: ",
   },
+  "setup.staffTitle": { tr: "OYUN KURULUMU", de: "SPIEL EINRICHTEN", en: "GAME SETUP" },
+  "staff.loginRequired": {
+    tr: "Bu ekran yalnızca işletme hesabıyla giriş yapıldığında açılır.",
+    de: "Dieser Bildschirm öffnet sich nur nach Anmeldung mit einem Betriebskonto.",
+    en: "This screen only opens when signed in with a venue staff account.",
+  },
+  "staff.login": { tr: "Giriş Yap", de: "Anmelden", en: "Sign in" },
+  "staff.notStaff": {
+    tr: (account: string) =>
+      `${account} bir işletme personeli hesabı değil. Bu ekran yalnızca mekan sahibinin yetkilendirdiği hesaplara açık.`,
+    de: (account: string) =>
+      `${account} ist kein Personalkonto des Betriebs. Dieser Bildschirm ist nur für vom Betreiber freigegebene Konten zugänglich.`,
+    en: (account: string) =>
+      `${account} is not a venue staff account. This screen is only open to accounts authorised by the venue owner.`,
+  },
+  "staff.thisAccount": { tr: "Bu hesap", de: "Dieses Konto", en: "This account" },
+  "staff.ownerHint": {
+    tr: "Mekan sahibiyseniz: Firebase Console → Firestore → staff koleksiyonuna bu hesabın kimliğiyle bir doküman ekleyin.",
+    de: "Als Betreiber: Firebase Console → Firestore → in der Sammlung staff ein Dokument mit der ID dieses Kontos anlegen.",
+    en: "If you are the venue owner: Firebase Console → Firestore → add a document with this account's ID to the staff collection.",
+  },
+  "staff.signOut": { tr: "Çıkış Yap", de: "Abmelden", en: "Sign out" },
   "setup.errorFirebase": {
     tr: "⚠️ Firebase bağlantı hatası! Proje erişilemez durumda. .env.local dosyasındaki VITE_FIREBASE_API_KEY değerini kontrol edin.",
     de: "⚠️ Firebase Verbindungsfehler! Projekt nicht erreichbar. Überprüfen Sie VITE_FIREBASE_API_KEY in .env.local.",

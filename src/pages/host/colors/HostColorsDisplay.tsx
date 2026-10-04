@@ -104,7 +104,7 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
             .map(p => ({ uid: p.uid!, nickname: p.nickname }));
           
           if (rewardRecipients.length > 0) {
-            grantRewardToPlayers(rewardRecipients, venue).catch(err => 
+            grantRewardToPlayers(room.id, rewardRecipients, venue).catch(err => 
               console.error("Error granting rewards to team:", err)
             );
           }
@@ -122,7 +122,7 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
         updateRoomStatus("colors_reveal");
       }
     }
-  }, [redPercentage, room.status, room.colors_team_assignments, activePlayers, venue, updateRoomStatus]);
+  }, [redPercentage, room.status, room.id, room.colors_team_assignments, activePlayers, venue, updateRoomStatus]);
 
   const handleEndGameEarly = () => {
     updateRoomStatus("lobby", { active_game: "none" });

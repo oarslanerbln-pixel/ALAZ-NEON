@@ -5,7 +5,7 @@ import {
   assertSucceeds,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, setDoc, updateDoc, addDoc, collection, getDoc, getDocs, deleteDoc, query, where } from "firebase/firestore";
+import { doc, setDoc, updateDoc, addDoc, collection, getDoc, getDocs, deleteDoc, query, where, increment } from "firebase/firestore";
 import { beforeAll, afterAll, beforeEach, describe, it } from "vitest";
 
 /**
@@ -369,6 +369,102 @@ describe("rooms — host yetkisi", () => {
   });
 });
 
+describe("rooms — oda açma yalnızca personel hesabına açık", () => {
+  // HostSetup'ın yazdığı oda dokümanının özü.
+  const roomPayload = (hostUid: string) => ({
+    code: "QWER",
+    host_uid: hostUid,
+    status: "night_lobby",
+    active_game: "none",
+    categories: [],
+    timer_setting: 60,
+    total_rounds: 3,
+    current_round: 0,
+    game_mode: "individual",
+    created_at: Date.now(),
+  });
+
+  it("personel hesabı kendi adına oda açabilir", async () => {
+    await seedStaff(HOST_UID);
+    await assertSucceeds(setDoc(doc(asHost(), "rooms", "room-new"), roomPayload(HOST_UID)));
+  });
+
+  // Her anonim oturum host olabiliyordu: ödül ve kalıcı puan yazma yetkisi
+  // "odanın host'u" üzerinden aktığı için oda açmak hepsinin kapısıydı.
+  it("anonim oturum oda açamaz", async () => {
+    await assertFails(setDoc(doc(asPlayer(), "rooms", "room-anon"), roomPayload(PLAYER_UID)));
+  });
+
+  it("personel başka bir hesap adına oda açamaz", async () => {
+    await seedStaff(HOST_UID);
+    await assertFails(setDoc(doc(asHost(), "rooms", "room-proxy"), roomPayload(PLAYER_UID)));
+  });
+});
+
+describe("rooms/{id}/transient — emoji tepkileri", () => {
+  beforeEach(() => seed({ status: "playing" }));
+
+  const pulseRef = (db: ReturnType<typeof asPlayer>) =>
+    doc(db, "rooms", ROOM_ID, "transient", "emojiPulse");
+
+  // Bu alt koleksiyon için hiç kural yoktu: `match /rooms/{roomId}` alt
+  // koleksiyonları kapsamaz, varsayılan ret her tepkiyi sessizce düşürüyordu.
+  it("odadaki oyuncu emoji gönderebilir", async () => {
+    await assertSucceeds(
+      setDoc(pulseRef(asPlayer()), { emoji: "🔥", timestamp: Date.now(), player_id: PLAYER_ID })
+    );
+  });
+
+  it("TV tepkiyi okuyabilir", async () => {
+    await assertSucceeds(getDoc(pulseRef(asGuest())));
+  });
+
+  it("başka bir oyuncunun adına emoji gönderilemez", async () => {
+    await assertFails(
+      setDoc(pulseRef(asPlayer()), { emoji: "🔥", timestamp: Date.now(), player_id: OTHER_PLAYER_ID })
+    );
+  });
+
+  it("odada olmayan biri emoji gönderemez", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "players", "player-elsewhere"), {
+        room_id: "baska-oda",
+        uid: PLAYER_UID,
+        nickname: "GEZGIN",
+        team_name: null,
+        total_score: 0,
+      });
+    });
+    await assertFails(
+      setDoc(pulseRef(asPlayer()), { emoji: "🔥", timestamp: Date.now(), player_id: "player-elsewhere" })
+    );
+  });
+
+  it("emoji yerine uzun metin ya da ek alan yazılamaz", async () => {
+    await assertFails(
+      setDoc(pulseRef(asPlayer()), { emoji: "X".repeat(64), timestamp: Date.now(), player_id: PLAYER_ID })
+    );
+    await assertFails(
+      setDoc(pulseRef(asPlayer()), {
+        emoji: "🔥",
+        timestamp: Date.now(),
+        player_id: PLAYER_ID,
+        message: "TV'de reklam",
+      })
+    );
+  });
+
+  it("emojiPulse dışında bir transient dokümanı yazılamaz", async () => {
+    await assertFails(
+      setDoc(doc(asPlayer(), "rooms", ROOM_ID, "transient", "baska"), {
+        emoji: "🔥",
+        timestamp: Date.now(),
+        player_id: PLAYER_ID,
+      })
+    );
+  });
+});
+
 describe("players — skor bütünlüğü", () => {
   beforeEach(() => seed());
 
@@ -405,6 +501,58 @@ describe("players — skor bütünlüğü", () => {
         nickname: "SAHTE",
         total_score: 0,
       })
+    );
+  });
+
+  /** PlayerJoin'in gerçekte yazdığı katılım dokümanı. */
+  const joinPayload = (overrides: Record<string, unknown> = {}) => ({
+    room_id: ROOM_ID,
+    uid: PLAYER_UID,
+    nickname: "YENI",
+    team_name: null,
+    total_score: 0,
+    night_score: 0,
+    created_at: Date.now(),
+    ...overrides,
+  });
+
+  // Ödül kazananı total_score'a göre seçiliyor: puanlı katılım, ödül
+  // kuralları ne kadar sıkı olursa olsun bedava kupon demek.
+  it("oyuncu odaya puanla katılamaz", async () => {
+    await assertFails(
+      addDoc(collection(asPlayer(), "players"), joinPayload({ total_score: 9999 }))
+    );
+  });
+
+  it("oyuncu odaya gece puanıyla katılamaz", async () => {
+    await assertFails(
+      addDoc(collection(asPlayer(), "players"), joinPayload({ night_score: 9999 }))
+    );
+  });
+
+  it("katılım dokümanına beyaz liste dışı alan sokulamaz", async () => {
+    await assertFails(
+      addDoc(collection(asPlayer(), "players"), joinPayload({ lives: 99 }))
+    );
+    await assertFails(
+      addDoc(collection(asPlayer(), "players"), joinPayload({ lifetime_credited: -5000 }))
+    );
+  });
+
+  it("var olmayan bir odaya oyuncu oluşturulamaz", async () => {
+    await assertFails(
+      addDoc(collection(asPlayer(), "players"), joinPayload({ room_id: "yok-boyle-oda" }))
+    );
+  });
+
+  it("bitmiş odaya katılınamaz", async () => {
+    await seed({ status: "finished" });
+    await assertFails(addDoc(collection(asPlayer(), "players"), joinPayload()));
+  });
+
+  it("TV'yi taşıracak uzunlukta takma ad reddedilir", async () => {
+    await assertFails(
+      addDoc(collection(asPlayer(), "players"), joinPayload({ nickname: "X".repeat(21) }))
     );
   });
 });
@@ -506,34 +654,70 @@ describe("rewards koleksiyonu", () => {
     await assertFails(getDoc(doc(asRandomSignup(), "rewards", REWARD_ID)));
   });
 
-  it("host, kazanan oyuncu adına 'available' bir ödül oluşturabilir", async () => {
-    await assertSucceeds(
-      setDoc(doc(asHost(), "rewards", "reward-new"), {
-        uid: PLAYER_UID,
-        nickname: "OYUNCU",
-        type: "drink",
-        title: "Ücretsiz Espresso",
-        description: "",
-        status: "available",
-        code: "X9Y8Z7",
-        earned_at: Date.now(),
-      })
+  /** lib/rewards.ts'in host ekranından yazdığı ödül dokümanı. */
+  const grantPayload = (overrides: Record<string, unknown> = {}) => ({
+    uid: PLAYER_UID,
+    nickname: "OYUNCU",
+    type: "drink",
+    title: "Ücretsiz Espresso",
+    description: "",
+    status: "available",
+    code: "X9Y8Z7",
+    earned_at: Date.now(),
+    room_id: ROOM_ID,
+    ...overrides,
+  });
+
+  it("personel hesabıyla açılmış odanın host'u kazanan adına 'available' ödül oluşturabilir", async () => {
+    await seed();
+    await seedStaff(HOST_UID);
+    await assertSucceeds(setDoc(doc(asHost(), "rewards", "reward-new"), grantPayload()));
+  });
+
+  // Asıl açık: create kuralı yalnızca status'a bakıyordu. Herhangi bir
+  // anonim oturum konsoldan kendine kupon yazıp barda kodla kullanabiliyordu.
+  it("oyuncu kendine kupon yazamaz — bedava içecek açığı", async () => {
+    await seed();
+    await assertFails(setDoc(doc(asPlayer(), "rewards", "reward-forged"), grantPayload()));
+  });
+
+  it("personel olmayan host ödül yazamaz", async () => {
+    await seed();
+    await assertFails(setDoc(doc(asHost(), "rewards", "reward-anon-host"), grantPayload()));
+  });
+
+  it("personel bile host'u olmadığı oda adına ödül yazamaz", async () => {
+    await seed();
+    await seedStaff();
+    await assertFails(
+      setDoc(doc(asVenueOwner(), "rewards", "reward-other-room"), grantPayload())
+    );
+  });
+
+  it("oda bağı (room_id) olmadan ödül yazılamaz", async () => {
+    await seed();
+    await seedStaff(HOST_UID);
+    const withoutRoom: Record<string, unknown> = grantPayload();
+    delete withoutRoom.room_id;
+    await assertFails(setDoc(doc(asHost(), "rewards", "reward-no-room"), withoutRoom));
+  });
+
+  it("ödül dokümanına şema dışı alan sokulamaz", async () => {
+    await seed();
+    await seedStaff(HOST_UID);
+    await assertFails(
+      setDoc(doc(asHost(), "rewards", "reward-extra"), grantPayload({ value_try: 5000 }))
     );
   });
 
   it("doğrudan 'claimed' durumunda bir ödül oluşturulamaz", async () => {
+    await seed();
+    await seedStaff(HOST_UID);
     await assertFails(
-      setDoc(doc(asHost(), "rewards", "reward-fake-claimed"), {
-        uid: PLAYER_UID,
-        nickname: "OYUNCU",
-        type: "drink",
-        title: "Sahte",
-        description: "",
-        status: "claimed",
-        claimed_at: Date.now(),
-        code: "FAKE01",
-        earned_at: Date.now(),
-      })
+      setDoc(
+        doc(asHost(), "rewards", "reward-fake-claimed"),
+        grantPayload({ status: "claimed", claimed_at: Date.now(), code: "FAKE01" })
+      )
     );
   });
 
@@ -590,6 +774,7 @@ describe("TTL alanı (expires_at) yazımı", () => {
   // Firestore TTL politikası bu alana bakıyor; alan yazılamazsa temizlik
   // hiç çalışmaz ve odalar/cevaplar yine sonsuza kadar birikir.
   it("host oda açarken expires_at yazabiliyor", async () => {
+    await seedStaff(HOST_UID);
     await assertSucceeds(
       setDoc(doc(asHost(), "rooms", "room-ttl"), {
         code: "WXYZ",
@@ -719,31 +904,105 @@ describe("seasons koleksiyonu", () => {
 });
 
 describe("users koleksiyonu (ALAZ League)", () => {
-  it("herkes kullanıcı profilini okuyabilir (liderlik tablosu için)", async () => {
-    await testEnv.withSecurityRulesDisabled(async (ctx) => {
-      await setDoc(doc(ctx.firestore(), "users", PLAYER_UID), {
-        nickname: "ALAZ_CHAMPION",
-        total_xp: 450,
-      });
-    });
-    await assertSucceeds(getDoc(doc(asGuest(), "users", PLAYER_UID)));
+  /** useUserProfile'ın ilk girişte oluşturduğu profil. */
+  const profilePayload = (overrides: Record<string, unknown> = {}) => ({
+    phone_number: "+905551112233",
+    nickname: "PLAYER_abcd",
+    total_lifetime_score: 0,
+    current_league: "BRONZE",
+    created_at: Date.now(),
+    last_active: Date.now(),
+    ...overrides,
   });
 
-  it("kullanıcı kendi profilini oluşturabilir veya güncelleyebilir", async () => {
+  async function seedProfile(uid: string = PLAYER_UID) {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users", uid), profilePayload({ total_lifetime_score: 450 }));
+    });
+  }
+
+  // Profil telefon numarasını taşıyor; herkese açık okuma kayıtlı bütün
+  // numaraların listelenebilmesi demekti (KVKK). Uygulamada başkasının
+  // profilini okuyan bir ekran yok.
+  it("kimse başkasının profilini okuyamaz — telefon numarası sızıntısı", async () => {
+    await seedProfile();
+    await assertFails(getDoc(doc(asGuest(), "users", PLAYER_UID)));
+    await assertFails(getDoc(doc(asHost(), "users", PLAYER_UID)));
+  });
+
+  it("kullanıcı kendi profilini okuyabilir", async () => {
+    await seedProfile();
+    await assertSucceeds(getDoc(doc(asPlayer(), "users", PLAYER_UID)));
+  });
+
+  it("kullanıcı kendi profilini başlangıç değerleriyle oluşturabilir", async () => {
+    await assertSucceeds(setDoc(doc(asPlayer(), "users", PLAYER_UID), profilePayload()));
+  });
+
+  it("profil yalnızca takma adla da oluşabilir (PlayerJoin'in merge yazımı)", async () => {
     await assertSucceeds(
-      setDoc(doc(asPlayer(), "users", PLAYER_UID), {
-        nickname: "ALAZ_CHAMPION",
-        total_xp: 500,
-      })
+      setDoc(doc(asPlayer(), "users", PLAYER_UID), { nickname: "YENI" }, { merge: true })
+    );
+  });
+
+  it("profil puanla ya da üst ligle oluşturulamaz", async () => {
+    await assertFails(
+      setDoc(doc(asPlayer(), "users", PLAYER_UID), profilePayload({ total_lifetime_score: 99999 }))
+    );
+    await assertFails(
+      setDoc(doc(asPlayer(), "users", PLAYER_UID), profilePayload({ current_league: "LEGEND" }))
+    );
+  });
+
+  it("kullanıcı takma adını güncelleyebilir", async () => {
+    await seedProfile();
+    await assertSucceeds(
+      setDoc(doc(asPlayer(), "users", PLAYER_UID), { nickname: "YENI_AD" }, { merge: true })
+    );
+  });
+
+  // Eskiden puanı oyuncunun kendi cihazı increment() ile yazıyordu ve kural
+  // alan kısıtı koymuyordu: konsoldan tek satırla lig tablosunun tepesi.
+  it("kullanıcı kendi kalıcı puanını artıramaz", async () => {
+    await seedProfile();
+    await assertFails(
+      updateDoc(doc(asPlayer(), "users", PLAYER_UID), { total_lifetime_score: increment(100000) })
+    );
+  });
+
+  it("kullanıcı kendi ligini değiştiremez", async () => {
+    await seedProfile();
+    await assertFails(
+      updateDoc(doc(asPlayer(), "users", PLAYER_UID), { current_league: "LEGEND" })
+    );
+  });
+
+  it("personel host oyun sonunda kalıcı puan ekleyebilir", async () => {
+    await seedProfile();
+    await seedStaff(HOST_UID);
+    await assertSucceeds(
+      updateDoc(doc(asHost(), "users", PLAYER_UID), { total_lifetime_score: increment(120) })
+    );
+  });
+
+  it("personel olmayan host kalıcı puan yazamaz", async () => {
+    await seedProfile();
+    await assertFails(
+      updateDoc(doc(asHost(), "users", PLAYER_UID), { total_lifetime_score: increment(120) })
+    );
+  });
+
+  it("personel bile puan dışındaki profil alanlarını değiştiremez", async () => {
+    await seedProfile();
+    await seedStaff(HOST_UID);
+    await assertFails(
+      updateDoc(doc(asHost(), "users", PLAYER_UID), { nickname: "DEGISTI" })
     );
   });
 
   it("kullanıcı başka birinin profilini değiştiremez", async () => {
     await assertFails(
-      setDoc(doc(asPlayer(), "users", STRANGER_UID), {
-        nickname: "HACKED",
-        total_xp: 0,
-      })
+      setDoc(doc(asPlayer(), "users", STRANGER_UID), profilePayload({ nickname: "HACKED" }))
     );
   });
 

@@ -44,7 +44,7 @@ export function PlayerGame() {
   // Centralized State Management via Hooks
   const { room, loading: roomLoading, error: roomError } = useRoom(roomId);
   const { player, loading: playerLoading, error: playerError } = usePlayer(playerId);
-  const { sendReaction } = useEmojiPulse(roomId);
+  const { sendReaction } = useEmojiPulse(roomId, undefined, playerId);
   const { t } = useLocale();
   const isScattegories = !room?.active_game || room?.active_game === "scattegories" || room?.active_game === "none";
 

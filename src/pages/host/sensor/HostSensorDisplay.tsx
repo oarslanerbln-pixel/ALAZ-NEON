@@ -32,7 +32,7 @@ export function HostSensorDisplay({
 }) {
   const { venue } = useVenue();
   const grantSensorRewards = () =>
-    grantGameRewards("individual", players, venue).catch((err) =>
+    grantGameRewards(room.id, "individual", players, venue).catch((err) =>
       console.error("[HostSensorDisplay] Ödül dağıtımı başarısız:", err),
     );
   const [searchParams] = useSearchParams();
@@ -152,7 +152,7 @@ export function HostSensorDisplay({
       const batch = writeBatch(db);
       players.forEach(p => {
         const pRef = doc(db, "players", p.id);
-        batch.update(pRef, { total_score: 0 });
+        batch.update(pRef, { total_score: 0, lifetime_credited: 0 });
       });
 
       const q = query(collection(db, "answers"), where("room_id", "==", roomId));

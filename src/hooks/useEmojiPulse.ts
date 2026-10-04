@@ -5,6 +5,8 @@ import { db } from "../lib/firebase";
 export function useEmojiPulse(
   roomId: string | null,
   onReaction?: (emoji: string) => void,
+  /** Gönderen telefonun oyuncu kaydı; kural yazanın bu odada olduğunu buradan doğruluyor. */
+  playerId?: string | null,
 ) {
   // Render sırasında Date.now() çağırmak saf değil (aynı render iki kez
   // çalışırsa farklı sonuç verir). Başlangıç zamanı abonelik kurulurken atanıyor.
@@ -34,12 +36,13 @@ export function useEmojiPulse(
   }, [roomId, onReaction]);
 
   const sendReaction = (emoji: string) => {
-    if (!roomId) return;
-    
+    if (!roomId || !playerId) return;
+
     const docRef = doc(db, "rooms", roomId, "transient", "emojiPulse");
     setDoc(docRef, {
       emoji,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      player_id: playerId,
     }).catch(err => console.error("Error sending reaction:", err));
 
     // Haptic vibration if available
