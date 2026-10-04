@@ -328,6 +328,19 @@ Uygulama notları:
 >   tasarrufu) ilk dokunuşta bir kez daha isteniyor; al-bırak döngüsü yok.
 > - API'si olmayan tarayıcıda hiçbir şey yapılmaz. 9 birim testi; E2E
 >   senaryosu TV ve üç telefonun kilidi tuttuğunu doğruluyor.
+>
+> **2.2 tamamlandı (görsel hattı).** `public/` 18 MB → 3.5 MB.
+> - Kullanılan 7 arka plan AVIF + WebP'ye çevrildi (`<picture>`,
+>   `BackdropImage`): telefon başına ~6 MB yerine ~0.5 MB. Görseller
+>   dekoratif: `alt=""`, `fetchpriority="low"`, `decoding="async"`.
+> - Hiçbir yerde kullanılmayan 10 görsel (~8 MB) silindi.
+> - 16 ekranın istediği ama hiç var olmayan `/noise.png` ve `/grid.svg`
+>   eklendi (her yüklemede 404 veriyordu).
+> - TV müziği 256 → 128 kbps (4.9 → 2.4 MB).
+> - `publicAssets.test.ts`: eksik dosya, ölü varlık, görsel başına 150 KB
+>   ve `public/` < 4 MB bütçesini her PR'da denetler.
+> - Dönüştürme `scripts/optimize-images.mjs` ile tekrarlanabilir (sharp
+>   bağımlılık değil, yalnızca görsel değişince kurulur).
 
 | İş | Kapsar | Efor | Kabul kriteri |
 |---|---|---|---|

@@ -471,7 +471,7 @@ export const sounds = {
 };
 
 /** Dosya yüklenemezse devreye giren synth karşılıkları */
-const SYNTH_FALLBACK: Record<string, string> = {
+export const SYNTH_FALLBACK: Record<string, string> = {
   [sounds.LOBBY_AMBIENT]: "synth:pad",
   [sounds.GAME_PULSE]: "synth:pad",
   [sounds.SIREN]: "synth:siren",
