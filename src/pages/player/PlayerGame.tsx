@@ -44,7 +44,7 @@ export function PlayerGame() {
   // Centralized State Management via Hooks
   const { room, loading: roomLoading, error: roomError } = useRoom(roomId);
   const { player, loading: playerLoading, error: playerError } = usePlayer(playerId);
-  const { sendReaction } = useEmojiPulse(roomId);
+  const { sendReaction } = useEmojiPulse(roomId, undefined, playerId);
   const { t } = useLocale();
   const isScattegories = !room?.active_game || room?.active_game === "scattegories" || room?.active_game === "none";
 
@@ -291,7 +291,7 @@ export function PlayerGame() {
 
       <main className={`flex-1 overflow-y-auto touch-auto p-4 md:p-6 relative z-10 ${(gameState === "review" || gameState === "standings" || gameState === "finished") ? "pb-[calc(9rem+env(safe-area-inset-bottom))]" : "pb-safe"}`}>
         <AnimatePresence mode="wait">
-          {(gameState === "lobby" || gameState === "night_lobby") && <PlayerLobby room={room} roomId={roomId} />}
+          {(gameState === "lobby" || gameState === "night_lobby") && <PlayerLobby room={room} />}
 
           {(gameState === "intro" || gameState === "gameIntro" || gameState === "countdown" || gameState === "ad_break") && (
             <motion.div

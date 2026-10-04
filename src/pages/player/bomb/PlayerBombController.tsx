@@ -9,6 +9,7 @@ import { containsProfanity } from "../../../lib/profanity";
 import { looksLikeGibberish } from "../../../lib/wordValidation";
 import { useLocale } from "../../../hooks/useLocale";
 import { haptics } from "../../../lib/haptics";
+import { isPlayerActive } from "../../../lib/liveness";
 
 interface Props {
   room: Room;
@@ -82,7 +83,7 @@ export function PlayerBombController({ room, player }: Props) {
       const activePlayers = allPlayers.filter(p => 
         p.id !== player.id && 
         (p.lives === undefined || p.lives > 0) &&
-        (p.last_active ? (now - p.last_active < 30000) : true)
+        isPlayerActive(p, now)
       );
       
       let nextPlayerId = player.id;

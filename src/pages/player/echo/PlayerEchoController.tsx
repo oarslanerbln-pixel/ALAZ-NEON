@@ -6,6 +6,7 @@ import { doc, updateDoc, collection, query, where, getDocs } from "firebase/fire
 import { useToast } from "../../../contexts/ToastContextCore";
 import { useLocale } from "../../../hooks/useLocale";
 import { echoQuestionText } from "../../../lib/echoQuestions";
+import { isPlayerActive } from "../../../lib/liveness";
 
 interface Props {
   room: Room;
@@ -46,7 +47,7 @@ export function PlayerEchoController({ room, player }: Props) {
         const now = Date.now();
         setPlayers(pList.filter(p => 
           p.id !== player.id &&
-          (p.last_active ? (now - p.last_active < 30000) : true)
+          isPlayerActive(p, now)
         )); // Exclude self and ghosts
       } catch (err) {
         console.error("Error fetching players:", err);

@@ -118,12 +118,13 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
     if (!champion?.uid) return;
     hasGrantedReward.current = true;
     grantRewardToPlayers(
+      room.id,
       [{ uid: champion.uid, nickname: champion.nickname }],
       venue,
     ).catch((err) =>
       console.error("[HostOverloadDisplay] Ödül dağıtımı başarısız:", err),
     );
-  }, [eligiblePlayers, venue]);
+  }, [eligiblePlayers, venue, room.id]);
 
   return (
     <TVScaleFrame>

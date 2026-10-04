@@ -48,10 +48,16 @@ The game expects the following Firestore collections:
 ## 🔐 Staff access (required before first use)
 
 Admin screens — venue settings (`/admin/venue`), reward verification
-(`/admin/rewards`) and the nightly report (`/admin/report`) — are restricted to
-**staff accounts**. Staff status is *not* implied by how you signed in: `/register`
-is a public player sign-up that also creates email/password accounts, so
-"signed in with a password" would mean "anyone who registered".
+(`/admin/rewards`) and the nightly report (`/admin/report`) — **and opening a game
+room on the TV/tablet (`/host/setup`)** are restricted to **staff accounts**. Staff
+status is *not* implied by how you signed in: `/register` is a public player
+sign-up that also creates email/password accounts, so "signed in with a password"
+would mean "anyone who registered".
+
+The host screen needs a staff account because reward coupons and lifetime league
+points are written by the room's host: the rules only accept them from a staff
+account that hosts the room. Sign the TV/tablet in once with a staff account; the
+session persists. Players keep joining anonymously via the QR code.
 
 Authority comes from a document in the `staff` collection:
 

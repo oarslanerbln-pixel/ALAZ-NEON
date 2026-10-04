@@ -52,7 +52,7 @@ export function HostQuizDisplay({
   const { venue } = useVenue();
 
   const grantQuizRewards = () =>
-    grantGameRewards("individual", players, venue).catch((err) =>
+    grantGameRewards(room.id, "individual", players, venue).catch((err) =>
       console.error("[HostQuizDisplay] Ödül dağıtımı başarısız:", err),
     );
 
@@ -347,7 +347,7 @@ export function HostQuizDisplay({
     const batch = writeBatch(db);
     players.forEach(p => {
       const pRef = doc(db, "players", p.id);
-      batch.update(pRef, { total_score: 0 });
+      batch.update(pRef, { total_score: 0, lifetime_credited: 0 });
     });
 
     const q = query(collection(db, "answers"), where("room_id", "==", roomId));

@@ -15,6 +15,7 @@ import { useVenue } from "../../contexts/VenueContextCore";
 
 // Hooks
 import { useHostRoom } from "../../hooks/useHostRoom";
+import { useLifetimeScoreSync } from "../../hooks/useLifetimeScoreSync";
 import { useLocale } from "../../hooks/useLocale";
 
 // Types
@@ -48,6 +49,7 @@ export function HostDisplay() {
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get("roomId");
   const hostRoom = useHostRoom(roomId);
+  useLifetimeScoreSync(hostRoom.players);
   const { room, loading, notFound, error } = hostRoom;
 
   // Oyun ekranlarını TV boştayken önceden indir (bkz. preloadHostGameDisplays).
@@ -465,7 +467,7 @@ function HostDisplayGame({
 
       // Ödül dağıtımı Firestore yazma hatasında bile oyunun bitişini
       // engellememeli — hata varsa sadece konsola düşer.
-      grantGameRewards(room.game_mode, players, venue).catch((err) =>
+      grantGameRewards(room.id, room.game_mode, players, venue).catch((err) =>
         console.error("[HostDisplay] Ödül dağıtımı başarısız:", err),
       );
 
@@ -481,7 +483,7 @@ function HostDisplayGame({
     const batch = writeBatch(db);
     players.forEach(p => {
       const pRef = doc(db, "players", p.id);
-      batch.update(pRef, { total_score: 0 });
+      batch.update(pRef, { total_score: 0, lifetime_credited: 0 });
     });
     await batch.commit();
     setPlayerStats({});
@@ -499,7 +501,7 @@ function HostDisplayGame({
     if (confirmEnd) {
       const finalAwards = evaluateBestOfNight(gameHistory);
       setAwards(finalAwards);
-      grantGameRewards(room.game_mode, players, venue).catch((err) =>
+      grantGameRewards(room.id, room.game_mode, players, venue).catch((err) =>
         console.error("[HostDisplay] Ödül dağıtımı başarısız:", err),
       );
       await updateRoomStatus("finished");
