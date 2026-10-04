@@ -254,6 +254,20 @@ Uygulama notları:
 >   hatalarını yazmanın adıyla Sentry'ye gönderiyor. Bağlantı hataları yalnızca
 >   konsola düşüyor. Kullanıcıya ayrı bir toast eklenmedi; mevcut ekranlar
 >   kendi hata mesajlarını göstermeye devam ediyor.
+>
+> **1.5 tamamlandı.**
+> - **Okuma:** `answers` artık yalnızca cevabın sahibine ve odanın host'una
+>   açık; tur bitmeden başkasının cevabını kopyalamak mümkün değil. Mevcut
+>   sorgular zaten `player_id` ya da `room_id` ile süzüldüğü için istemci
+>   değişikliği gerekmedi.
+> - **Yazma:** Oyuncu yalnızca kendi odasına, oda cevap kabul ederken yazabiliyor
+>   (`playing`, `review`, `question_active`, `vault_active`, `ayna_active`).
+>   Şema sabit ve sınırlı: en fazla 24 veri anahtarı, tur anahtarı en fazla
+>   32 karakter.
+> - **Açık kalan:** Tek tek değerlerin uzunluğu kuralla sınırlanamıyor
+>   (kurallar harita değerleri üzerinde döngü kuramaz); istemci giriş
+>   sınırları geçerli. Kasa oyununda tahmin sayısı sınırsız, ama yalnızca
+>   `vault_active` sırasında yazılabiliyor.
 
 | İş | Kapsar | Efor | Kabul kriteri |
 |---|---|---|---|

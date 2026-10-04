@@ -378,23 +378,55 @@ service cloud.firestore {
       allow delete: if isAuth() && resource.data.host_uid == request.auth.uid;
     }
 
+    /**
+     * Oyuncu cevapları (bkz. src/lib/clientWrites.ts → *AnswerPayload,
+     * vaultGuessPayload, aynaGuessPayload).
+     *
+     * Okuma: yalnızca cevabın sahibi ve odanın host'u. Eskiden herkese
+     * açıktı: hızlı oyuncunun cevabı tur bitmeden okunup kopyalanabiliyordu.
+     * Oyuncunun "zaten cevapladım mı" sorguları player_id ile, host'un
+     * sorguları room_id ile süzülüyor; kural ikisini de kanıtlayabiliyor.
+     *
+     * Yazma: oyuncu yalnızca kendi kaydı adına, kendi odasına, o oda cevap
+     * kabul ederken ve sabit şemayla yazabilir. Oyuncunun odası kontrol
+     * edilmiyordu ve alan/boyut sınırı yoktu.
+     */
     match /answers/{answerId} {
-      // Anyone can read answers (host needs to tally scores; players see their own review).
-      allow read: if true;
+      function isAnswerOwner() {
+        return playerDoc(resource.data.player_id).uid == request.auth.uid;
+      }
 
-      // A player may only submit an answer under their own player_id, and that
-      // player document must actually belong to them (uid match). This was
-      // previously unmatched by any rule, which meant Firestore's default-deny
-      // silently rejected every answer submission in every game mode.
-      allow create: if isAuth() &&
-        request.resource.data.player_id is string &&
-        get(/databases/$(database)/documents/players/$(request.resource.data.player_id)).data.uid == request.auth.uid;
+      function isAnswerRoomHost() {
+        return get(/databases/$(database)/documents/rooms/$(resource.data.room_id)).data.host_uid == request.auth.uid;
+      }
+
+      // Cevap kabul eden oda durumları. 'review': klasik turda süre bitince
+      // telefonun otomatik gönderimi host incelemeye geçtikten sonra varabilir.
+      function acceptsAnswers(roomId) {
+        return get(/databases/$(database)/documents/rooms/$(roomId)).data.status in
+          ['playing', 'review', 'question_active', 'vault_active', 'ayna_active'];
+      }
+
+      function isValidAnswer() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['room_id', 'player_id', 'round_letter', 'round_index', 'data', 'created_at', 'expires_at']) &&
+          d.keys().hasAll(['room_id', 'player_id', 'round_letter', 'data']) &&
+          d.room_id is string &&
+          d.player_id is string &&
+          actsAs(d.player_id, d.room_id) &&
+          d.round_letter is string && d.round_letter.size() <= 32 &&
+          d.data is map && d.data.size() <= 24 &&
+          acceptsAnswers(d.room_id);
+      }
+
+      allow read: if isAuth() && (isAnswerOwner() || isAnswerRoomHost());
+
+      allow create: if isAuth() && isValidAnswer();
 
       // Answers are never edited after submission, only cleared out by the host
       // between rounds/games.
       allow update: if false;
-      allow delete: if isAuth() &&
-        get(/databases/$(database)/documents/rooms/$(resource.data.room_id)).data.host_uid == request.auth.uid;
+      allow delete: if isAuth() && isAnswerRoomHost();
     }
 
     /**
