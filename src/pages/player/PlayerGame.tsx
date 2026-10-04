@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams, useNavigate, Navigate } from "react-router-dom";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
-import { retentionExpiry } from "../../lib/retention";
+import { letterAnswerPayload } from "../../lib/clientWrites";
 import { NeonIcon } from "../../components/NeonIcon";
 import { HostOfflineBanner } from "../../components/HostOfflineBanner";
 import { DatabaseStatus } from "../../components/DatabaseStatus";
@@ -156,15 +156,16 @@ export function PlayerGame() {
 
       let submitError = null;
       try {
-        await addDoc(collection(db, "answers"), {
-          room_id: roomId,
-          player_id: playerId,
-          round_letter: activeLetter,
-          round_index: currentRound,
-          data: finalData,
-          created_at: new Date().toISOString(),
-          expires_at: retentionExpiry(),
-        });
+        await addDoc(
+          collection(db, "answers"),
+          letterAnswerPayload({
+            roomId,
+            playerId,
+            letter: activeLetter,
+            roundIndex: currentRound,
+            data: finalData,
+          }),
+        );
       } catch (err) {
         submitError = err;
       }

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { doc, setDoc, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "../lib/firebase";
+import { nicknamePayload, profileCreatePayload } from "../lib/clientWrites";
 import type { UserProfile } from "../types/database";
 
 export function useUserProfile() {
@@ -43,14 +44,10 @@ export function useUserProfile() {
           setLoading(false);
         } else {
           // Create initial profile if it doesn't exist
-          const newProfile: Omit<UserProfile, "uid"> = {
-            phone_number,
+          const newProfile: Omit<UserProfile, "uid"> = profileCreatePayload({
+            phoneNumber: phone_number,
             nickname: `PLAYER_${uid.substring(0, 4)}`,
-            total_lifetime_score: 0,
-            current_league: "BRONZE",
-            created_at: Date.now(),
-            last_active: Date.now(),
-          };
+          });
           await setDoc(userRef, newProfile);
           setProfile({ uid, ...newProfile } as UserProfile);
           setLoading(false);
@@ -70,7 +67,7 @@ export function useUserProfile() {
   const updateNickname = async (newNickname: string) => {
     if (!auth.currentUser) return;
     const userRef = doc(db, "users", auth.currentUser.uid);
-    await setDoc(userRef, { nickname: newNickname }, { merge: true });
+    await setDoc(userRef, nicknamePayload(newNickname), { merge: true });
   };
 
   return { profile, loading, updateNickname };

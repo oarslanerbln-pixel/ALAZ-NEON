@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { db } from "../../../lib/firebase";
-import { doc, updateDoc, increment } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
+import { counterIncrementPayload, counterStep } from "../../../lib/clientWrites";
+import { reportWriteError } from "../../../lib/writeErrors";
 import { useLocale } from "../../../hooks/useLocale";
 
 interface Props {
@@ -23,19 +25,19 @@ export function PlayerSpectrumController({ room, player }: Props) {
     if (clickCount === 0 || room.status !== "spectrum_active" || isFlushingRef.current) return;
     
     isFlushingRef.current = true;
-    const countToFlush = clickCount;
-    setClickCount(0); // Reset early for responsiveness
+    // Kural tek yazmada en fazla COUNTER_MAX_STEP artışa izin veriyor;
+    // fazlası sonraki turlara kalıyor (bkz. counterStep).
+    const countToFlush = counterStep("spectrum_clicks", clickCount);
+    setClickCount(prev => prev - countToFlush); // Reset early for responsiveness
 
     try {
       // KRİTİK DÜZELTME: Tüm oyuncuların aynı "rooms/id" dokümanına yazması
       // "Contention" kilitlenmesine neden oluyordu.
       // Artık her oyuncu kendi dokümanına yazıyor.
       const playerRef = doc(db, "players", player.id);
-      await updateDoc(playerRef, {
-        spectrum_clicks: increment(countToFlush)
-      });
+      await updateDoc(playerRef, counterIncrementPayload("spectrum_clicks", countToFlush));
     } catch (err) {
-      console.error("Failed to flush spectrum clicks", err);
+      reportWriteError("spectrum_clicks", err);
       // Put them back if failed (simplified, might lose some if they kept clicking but okay for this game)
       setClickCount(prev => prev + countToFlush);
     } finally {

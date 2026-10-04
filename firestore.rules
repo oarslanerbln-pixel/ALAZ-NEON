@@ -93,6 +93,23 @@ service cloud.firestore {
         actsAs(resource.data.sensor_buzzer_player_id, roomId);
     }
 
+    // Çark: sırası gelen oyuncu (wheel_spinner_id) çarkı bir kez çevirir.
+    // Kural yoktu: telefondaki "çevir" düğmesi her seferinde reddediliyordu.
+    // Sonucu çeviren telefon seçiyor; dilim aralığı ve tek çevirme sınırı
+    // burada, sonucu sunucuya taşımak Cloud Function işi (karar D2).
+    // Dilimler mekan ayarında (app_config), odada değil: üst sınır kaba.
+    function isWheelSpin(roomId) {
+      let d = request.resource.data;
+      return resource.data.status == 'wheel_active' &&
+        d.status == 'wheel_spinning' &&
+        touchesOnly(['status', 'wheel_result_index']) &&
+        resource.data.get('wheel_result_index', null) == null &&
+        d.wheel_result_index is int &&
+        d.wheel_result_index >= 0 &&
+        d.wheel_result_index < 64 &&
+        actsAs(resource.data.wheel_spinner_id, roomId);
+    }
+
     // Overload: hedef oyuncu bombayı "passing" durumuna atar; sonraki hedefi
     // ve kısalan süreyi host seçer (HostOverloadDisplay). Kural eskiden
     // istemcinin yazmadığı overload_time_allowed'ı beyaz listeye almış,
@@ -124,7 +141,8 @@ service cloud.firestore {
         isBombPass(roomId) ||
         isSensorBuzz(roomId) ||
         isSensorAnswer(roomId) ||
-        isOverloadDeflect(roomId)
+        isOverloadDeflect(roomId) ||
+        isWheelSpin(roomId)
       );
 
       // Only the host can delete the room.
@@ -182,11 +200,26 @@ service cloud.firestore {
         allow get: if isAuth() && (actsAs(playerId, roomId) || isHostOfRoom());
         allow list: if isAuth() && isHostOfRoom();
 
+        // Unity: oyuncu bu turdaki toplam dokunuşunu yazar; toplam yalnızca
+        // artabilir ve bir yazmada en fazla 30 artar (clientWrites.UNITY_MAX_STEP).
+        // Eskiden dokunuşlar oda dokümanına increment ile yazılıyordu ve
+        // bunun için kural yoktu: her dokunuş reddediliyordu.
+        function isUnityInput() {
+          let d = request.resource.data;
+          let prev = (resource != null && resource.data.round == d.round)
+            ? resource.data.get('unity_clicks', 0)
+            : 0;
+          return roomData().status == 'unity_active' &&
+            d.keys().hasOnly(['round', 'unity_clicks']) &&
+            d.unity_clicks is int &&
+            d.unity_clicks >= prev &&
+            d.unity_clicks <= prev + 30;
+        }
+
         allow create, update: if isAuth() &&
           actsAs(playerId, roomId) &&
           request.resource.data.round == roomData().input_round &&
-          isFreshRound() &&
-          (isEchoInput() || isPulseInput());
+          ((isFreshRound() && (isEchoInput() || isPulseInput())) || isUnityInput());
 
         allow delete: if isAuth() && isHostOfRoom();
       }

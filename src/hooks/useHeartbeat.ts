@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { doc, updateDoc } from "firebase/firestore";
 
 import { db } from "../lib/firebase";
+import { heartbeatPayload } from "../lib/clientWrites";
 
 type HeartbeatTarget =
   | { collection: "rooms"; field: "host_last_active" }
@@ -28,7 +29,7 @@ export function useHeartbeat(
     if (!docId) return;
     const ref = doc(db, target, docId);
     const beat = () => {
-      updateDoc(ref, { [field]: Date.now() }).catch(() => {});
+      updateDoc(ref, heartbeatPayload(field)).catch(() => {});
     };
 
     let timer: ReturnType<typeof setInterval> | null = null;

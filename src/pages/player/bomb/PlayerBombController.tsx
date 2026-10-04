@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { db } from "../../../lib/firebase";
-import { doc, updateDoc, collection, getDocs, query, where, arrayUnion } from "firebase/firestore";
+import { doc, updateDoc, collection, getDocs, query, where } from "firebase/firestore";
+import { bombPassPayload } from "../../../lib/clientWrites";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useToast } from "../../../contexts/ToastContextCore";
 import { containsProfanity } from "../../../lib/profanity";
@@ -94,11 +95,7 @@ export function PlayerBombController({ room, player }: Props) {
 
       SoundManager.getInstance().playSFX(sounds.SUCCESS);
 
-      await updateDoc(doc(db, "rooms", room.id), {
-        previous_bomb_target_player: player.id,
-        bomb_target_player: nextPlayerId,
-        used_words: arrayUnion(word.trim()),
-      });
+      await updateDoc(doc(db, "rooms", room.id), bombPassPayload(player.id, nextPlayerId, word.trim()));
 
       setWord("");
     } catch (error) {

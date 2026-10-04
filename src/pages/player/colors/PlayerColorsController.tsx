@@ -2,7 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { db } from "../../../lib/firebase";
-import { doc, increment, updateDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
+import { counterIncrementPayload, counterStep } from "../../../lib/clientWrites";
+import { reportWriteError } from "../../../lib/writeErrors";
 import { haptics } from "../../../lib/haptics";
 import { useLocale } from "../../../hooks/useLocale";
 
@@ -36,17 +38,17 @@ export function PlayerColorsController({ room, player }: Props) {
     if (room.status !== "colors_active" || !team) return;
 
     const interval = setInterval(() => {
-      const clicksToFlush = pendingClicksRef.current;
+      // Kural tek yazmada en fazla COUNTER_MAX_STEP artışa izin veriyor;
+      // fazlası sonraki turlara kalıyor (bkz. counterStep).
+      const clicksToFlush = counterStep("colors_clicks", pendingClicksRef.current);
       if (clicksToFlush > 0 && !isFlushingRef.current) {
         isFlushingRef.current = true;
-        pendingClicksRef.current = 0;
+        pendingClicksRef.current -= clicksToFlush;
         
         const playerRef = doc(db, "players", player.id);
         
-        updateDoc(playerRef, {
-          colors_clicks: increment(clicksToFlush)
-        }).catch(err => {
-          console.error("Failed to flush clicks to Firestore:", err);
+        updateDoc(playerRef, counterIncrementPayload("colors_clicks", clicksToFlush)).catch(err => {
+          reportWriteError("colors_clicks", err);
           pendingClicksRef.current += clicksToFlush;
         }).finally(() => {
           isFlushingRef.current = false;

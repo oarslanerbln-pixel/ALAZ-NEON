@@ -15,6 +15,8 @@ export interface RoomInput {
   round?: number;
   echo_vote?: string;
   pulse_click?: number;
+  /** Unity: oyuncunun bu turdaki toplam dokunuşu (artan, mutlak değer). */
+  unity_clicks?: number;
 }
 
 /** Kayıt bu tura mı ait. Tur açılmamışsa (`round` yoksa) hiçbir kayıt sayılmaz. */
@@ -51,4 +53,18 @@ export function pulseClicksFromInputs(
     }
   }
   return clicks;
+}
+
+/** Unity: bu turda bütün oyuncuların toplam dokunuşu. */
+export function unityTotalFromInputs(
+  inputs: Readonly<Record<string, RoomInput>>,
+  round: number | null | undefined,
+): number {
+  let total = 0;
+  for (const input of Object.values(inputs)) {
+    if (isInputForRound(input, round) && typeof input.unity_clicks === "number") {
+      total += input.unity_clicks;
+    }
+  }
+  return total;
 }

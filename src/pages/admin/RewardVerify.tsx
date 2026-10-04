@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../../lib/firebase";
+import { rewardClaimPayload } from "../../lib/clientWrites";
 import { useIsStaff } from "../../hooks/useIsStaff";
 import { StaffAccessNotice } from "../../components/StaffAccessNotice";
 import type { Reward } from "../../types/database";
@@ -85,10 +86,7 @@ export function RewardVerify() {
     setRedeeming(true);
     setErrorMsg("");
     try {
-      await updateDoc(doc(db, "rewards", found.id), {
-        status: "claimed",
-        claimed_at: Date.now(),
-      });
+      await updateDoc(doc(db, "rewards", found.id), rewardClaimPayload());
       setRedeemedNickname(found.nickname);
       setFound(null);
       setCode("");

@@ -1,5 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { doc, updateDoc } from "firebase/firestore";
+
+import { db } from "../../../lib/firebase";
+import { unityTotalFromInputs } from "../../../lib/roomInputs";
+import { useRoomInputs } from "../../../hooks/useRoomInputs";
 
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useLocale } from "../../../hooks/useLocale";
@@ -20,7 +25,14 @@ export function HostUnityDisplay({ room, players, updateRoomStatus }: Props) {
   const [timeLeft, setTimeLeft] = useState(60);
 
   const target = room.unity_target || (players.length || 1) * 100;
-  const current = room.unity_current || 0;
+  // Dokunuşlar oyuncuların kendi giriş kayıtlarında (bkz. lib/roomInputs.ts);
+  // TV toplamı oradan anında görüyor, telefonlar oda dokümanından.
+  const inputs = useRoomInputs(room.id);
+  const tapTotal = useMemo(
+    () => unityTotalFromInputs(inputs, room.input_round),
+    [inputs, room.input_round],
+  );
+  const current = Math.max(room.unity_current || 0, tapTotal);
   const percentage = Math.min(100, Math.max(0, (current / target) * 100));
 
   useEffect(() => {
@@ -30,10 +42,12 @@ export function HostUnityDisplay({ room, players, updateRoomStatus }: Props) {
       SoundManager.getInstance().playMusic(sounds.LOBBY_AMBIENT, 0.4);
       
       timer = setTimeout(() => {
-        updateRoomStatus("unity_active", { 
+        updateRoomStatus("unity_active", {
           unity_target: target,
           unity_current: 0,
-          unity_end_time: Date.now() + 60000 
+          unity_end_time: Date.now() + 60000,
+          // Yeni giriş turu: telefonlar yalnızca bu turun toplamını yazabilir.
+          input_round: Date.now(),
         });
       }, 5000);
     } else if (room.status === "unity_active") {
@@ -53,7 +67,7 @@ export function HostUnityDisplay({ room, players, updateRoomStatus }: Props) {
     if (percentage >= 100) {
       // Win condition met
       SoundManager.getInstance().playSFX(sounds.SUCCESS);
-      updateRoomStatus("unity_reveal");
+      updateRoomStatus("unity_reveal", { unity_current: current });
       return;
     }
 
@@ -66,12 +80,33 @@ export function HostUnityDisplay({ room, players, updateRoomStatus }: Props) {
       if (remaining === 0) {
         clearInterval(interval);
         SoundManager.getInstance().playSFX(sounds.FAILURE);
-        updateRoomStatus("unity_reveal");
+        updateRoomStatus("unity_reveal", { unity_current: current });
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [gameState, percentage, room.unity_end_time, updateRoomStatus]);
+  }, [gameState, percentage, current, room.unity_end_time, updateRoomStatus]);
+
+  // Telefonlardaki ilerleme çubuğu için toplamı odaya saniyede en fazla bir
+  // kez yazıyoruz; her dokunuşu yaymak odadaki her telefona okuma demekti.
+  const tapTotalRef = useRef(tapTotal);
+  useEffect(() => {
+    tapTotalRef.current = tapTotal;
+  }, [tapTotal]);
+
+  useEffect(() => {
+    if (room.status !== "unity_active") return;
+    let written = -1;
+    const interval = setInterval(() => {
+      const total = tapTotalRef.current;
+      if (total === written) return;
+      written = total;
+      updateDoc(doc(db, "rooms", room.id), { unity_current: total }).catch((err) =>
+        console.error("[HostUnityDisplay] Toplam yazılamadı:", err),
+      );
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [room.status, room.id]);
 
   // Music for active state
   useEffect(() => {

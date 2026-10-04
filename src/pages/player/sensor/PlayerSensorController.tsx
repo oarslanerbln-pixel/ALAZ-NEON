@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { db } from "../../../lib/firebase";
 import { doc, updateDoc, runTransaction } from "firebase/firestore";
+import { sensorAnswerPayload, sensorBuzzPayload } from "../../../lib/clientWrites";
 import { useToast } from "../../../contexts/ToastContextCore";
 import { useLocale } from "../../../hooks/useLocale";
 import { haptics } from "../../../lib/haptics";
@@ -48,11 +49,7 @@ export function PlayerSensorController({ room, player }: Props) {
           throw new Error("Geç kaldın!");
         }
 
-        transaction.update(roomRef, {
-          status: "sensor_buzzed",
-          sensor_buzzer_player_id: player.id,
-          sensor_buzzer_timestamp: Date.now()
-        });
+        transaction.update(roomRef, sensorBuzzPayload(player.id));
       });
     } catch (err) {
       console.error(err);
@@ -80,9 +77,7 @@ export function PlayerSensorController({ room, player }: Props) {
 
     try {
       const roomRef = doc(db, "rooms", room.id);
-      await updateDoc(roomRef, {
-        sensor_player_answer: answer.trim()
-      });
+      await updateDoc(roomRef, sensorAnswerPayload(answer));
       setAnswer("");
     } catch (err) {
       console.error(err);

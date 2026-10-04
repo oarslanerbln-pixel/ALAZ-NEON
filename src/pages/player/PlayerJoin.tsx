@@ -5,7 +5,7 @@ import { collection, addDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import type { User } from "firebase/auth";
 import { db, auth } from "../../lib/firebase";
-import { retentionExpiry } from "../../lib/retention";
+import { playerJoinPayload } from "../../lib/clientWrites";
 import { findJoinableRoomByCode } from "../../lib/roomQueries";
 import { useLocale } from "../../hooks/useLocale";
 import { errorMessage } from "../../lib/errors";
@@ -102,18 +102,15 @@ export function PlayerJoin() {
            await updateNickname(nickname.trim());
         }
 
-        const playerRef = await addDoc(collection(db, "players"), {
-            room_id: room.id,
-            nickname: nickname.trim(),
-            team_name: room.game_mode === "team" ? teamName.trim() : null,
-            total_score: 0,
-            night_score: 0,
+        const playerRef = await addDoc(
+          collection(db, "players"),
+          playerJoinPayload({
+            roomId: room.id,
             uid: currentUser?.uid || "anonymous",
-            created_at: Date.now(),
-            // Firestore TTL politikasi bu alana bakip dokumani siliyor
-            // (bkz. lib/retention.ts ve README).
-            expires_at: retentionExpiry(),
-        });
+            nickname: nickname.trim(),
+            teamName: room.game_mode === "team" ? teamName.trim() : null,
+          }),
+        );
 
         localStorage.setItem("cafe_game_playerId", playerRef.id);
         localStorage.setItem("cafe_game_roomId", room.id);

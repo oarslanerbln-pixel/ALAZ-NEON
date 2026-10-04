@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { updateDoc, doc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
+import { overloadDeflectPayload } from "../../../lib/clientWrites";
+import { reportWriteError } from "../../../lib/writeErrors";
 import { haptics } from "../../../lib/haptics";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useLocale } from "../../../hooks/useLocale";
@@ -27,16 +29,13 @@ export function PlayerOverloadGame({ room, player }: PlayerOverloadGameProps) {
 
     try {
       const roomRef = doc(db, "rooms", room.id);
-      await updateDoc(roomRef, {
-        overload_target_id: "passing",
-        overload_last_target_id: player.id
-      });
+      await updateDoc(roomRef, overloadDeflectPayload(player.id));
       
       if (navigator.vibrate) {
         navigator.vibrate([150, 50, 150]);
       }
     } catch (err) {
-      console.error("Deflect failed:", err);
+      reportWriteError("overload_deflect", err);
     } finally {
       setTimeout(() => {
         setIsDeflecting(false);
