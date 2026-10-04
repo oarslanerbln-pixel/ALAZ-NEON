@@ -18,6 +18,7 @@ import { useRoom } from "../../hooks/useRoom";
 import { usePlayer } from "../../hooks/usePlayer";
 import { useEmojiPulse } from "../../hooks/useEmojiPulse";
 import { useHeartbeat } from "../../hooks/useHeartbeat";
+import { useWakeLock } from "../../hooks/useWakeLock";
 import { PLAYER_HEARTBEAT_MS } from "../../lib/liveness";
 
 // Extracted Components
@@ -79,6 +80,9 @@ export function PlayerGame() {
 
   // Canlılık sinyali — hayalet oyuncuya bomba/voltaj geçmesini önlüyor.
   useHeartbeat("players", "last_active", playerId, PLAYER_HEARTBEAT_MS);
+  // Dokunulmadan TV izlenen telefon kararıp kilitlenmesin: kilitli telefon
+  // soruyu kaçırıyor ve canlılık sinyali kesildiği için "kopmuş" sayılıyordu.
+  useWakeLock(!!room && !!player && room.status !== "closed");
 
   // Derived States
   const gameState = room?.status || "lobby";
