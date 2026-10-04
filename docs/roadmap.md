@@ -472,6 +472,16 @@ Uygulama notları:
 >   kullanıyor), "2X final", "tarif hızı" ve "zafer koşulu" seçimleri hiçbir
 >   yere yazılmıyor; ekranda seçilebiliyor ama etkisi yok. Ya bağlanmalı ya
 >   kaldırılmalı (ürün kararı).
+>
+> **`HostQuizDisplay` ayrıştırıldı** (843 → 395 satır).
+> - **Önce kalkan:** `e2e/quiz.spec.ts`, iki telefonla iki soru oynatıp
+>   puanları doğruluyor: doğru 1000, en hızlıya +500, üst üste doğruya ×1.2
+>   (ALFA 1500 → 3300, BETA 0). Eski kodda art arda yeşil görüldü.
+> - **Puanlama** `lib/quizScoring.ts`'e taşındı (saf, 8 birim testi): hız
+>   sırası, seri çarpanı, final ×2, ilk cevap kuralı, en hızlı doğru.
+> - **Görünümler:** durum başına beş bileşen (`views/Quiz*.tsx`) mekanik
+>   olarak çıkarıldı; JSX ve çeviri anahtarları aynı (anahtar kümesi
+>   karşılaştırılarak doğrulandı).
 
 | İş | Kapsar | Efor | Kabul kriteri |
 |---|---|---|---|
