@@ -83,9 +83,12 @@ export function PlayerProfileCard() {
             >
               {profile.nickname}
             </h2>
-            <p className="text-xs tracking-wider opacity-70 mt-1 font-mono">
-              {profile.phone_number.replace(/(\d{3})(\d{3})(\d{2})(\d{2})/, "$1 $2 $3 $4")}
-            </p>
+            {/* Anonim oyuncunun telefon numarası yok: boş satır basılmasın. */}
+            {profile.phone_number && (
+              <p className="text-xs tracking-wider opacity-70 mt-1 font-mono">
+                {profile.phone_number.replace(/(\d{3})(\d{3})(\d{2})(\d{2})/, "$1 $2 $3 $4")}
+              </p>
+            )}
           </div>
 
           {/* Tier Badge */}
@@ -127,7 +130,12 @@ export function PlayerProfileCard() {
             </p>
           </div>
           
-          <button 
+          {/* type="button" şart: kart katılım formunun içinde. Tipsiz düğme
+              "gönder" sayılıyor ve takma adda Enter'a (telefonda "Git")
+              basmak oyuncunun oturumunu kapatıyordu — katılım yazması da
+              yeni oturumla tekrar gönderilip ALREADY_EXISTS ile düşüyordu. */}
+          <button
+            type="button"
             onClick={() => auth.signOut()}
             className="text-[10px] uppercase tracking-widest border border-white/20 px-3 py-1 hover:bg-white/10 transition-colors"
           >

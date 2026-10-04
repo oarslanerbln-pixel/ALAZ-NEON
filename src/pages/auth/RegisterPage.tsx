@@ -196,6 +196,7 @@ export function RegisterPage() {
             </div>
 
             <motion.button
+              type="submit"
               whileHover={{ scale: 1.02, textShadow: "0px 0px 8px rgb(255,255,255)" }}
               whileTap={{ scale: 0.98 }}
               disabled={loading}

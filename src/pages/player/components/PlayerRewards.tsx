@@ -115,6 +115,7 @@ export function PlayerRewards() {
               <p className="text-white/60 text-[10px] tracking-wider mt-1">{reward.description}</p>
             </div>
             <button
+              type="button"
               onClick={() => setOpenReward(reward)}
               className="px-3 py-2 bg-[#ff003c]/20 border border-[#ff003c]/50 text-[#ff003c] text-[10px] uppercase font-bold tracking-widest group-hover:bg-[#ff003c] group-hover:text-black transition-colors"
             >
@@ -147,6 +148,7 @@ export function PlayerRewards() {
               className="w-full max-w-xs bg-black border-2 border-[#ff003c] p-8 flex flex-col items-center gap-6 relative shadow-[0_0_60px_rgba(255,0,60,0.35)]"
             >
               <button
+                type="button"
                 onClick={() => setOpenReward(null)}
                 className="absolute top-3 right-3 text-white/40 hover:text-white text-xl leading-none"
                 aria-label={t("rewards.close")}

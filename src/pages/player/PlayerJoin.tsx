@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, doc, setDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import type { User } from "firebase/auth";
 import { db, auth } from "../../lib/firebase";
@@ -102,8 +102,17 @@ export function PlayerJoin() {
            await updateNickname(nickname.trim());
         }
 
-        const playerRef = await addDoc(
-          collection(db, "players"),
+        // Kimlik önceden üretilip setDoc ile yazılıyor, addDoc ile değil.
+        // addDoc "yoksa oluştur" koşuluyla yazar: oturum yeni açılmışken
+        // Firestore kimlik değişimiyle yazma bağlantısını yeniden kurup
+        // onaylanmamış yazmayı tekrar gönderirse, ilk gönderim çoktan
+        // kaydedildiği için ikincisi ALREADY_EXISTS ile düşüyor ve oyuncu
+        // "kayıt oluşturulamadı" görüyordu (uçtan uca testler yakaladı).
+        // setDoc'ta tekrar gönderim aynı verinin üzerine yazılmasıdır; kural
+        // bunu hiçbir alanı değiştirmeyen bir öz-güncelleme olarak kabul ediyor.
+        const playerRef = doc(collection(db, "players"));
+        await setDoc(
+          playerRef,
           playerJoinPayload({
             roomId: room.id,
             uid: currentUser?.uid || "anonymous",
