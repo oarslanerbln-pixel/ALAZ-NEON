@@ -50,6 +50,7 @@ Firestore koleksiyonları: `rooms` (durum makinesi), `players` (skorlar),
 | `src/hooks/` | `useHostRoom`, `useRoom`, `usePlayer`, `useAuth`, `useLocale`, `useSound` … |
 | `src/lib/` | Saf mantık: `scoring`, `fuzzyMatch`, `wordValidation`, `league`, `retention`, `rewards`, `roomCodes`, `liveness`, `gameRouting` |
 | `src/types/database.ts` | `RoomStatus`, `GameType`, tüm Firestore modelleri |
+| `src/content/quiz/*.json` | Quiz soru havuzları; şema `lib/quizPack.ts` (mekan/kurum paketleri de aynı şemayla, `/admin/content`) |
 | `firestore.rules` + `test/firestore.rules.test.ts` | Güvenlik kuralları ve testleri |
 
 ## Büyük dosyalar — komple okuma

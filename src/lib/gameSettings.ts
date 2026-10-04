@@ -22,6 +22,8 @@ export interface GameSettingsForm {
   quizTimePerQuestion: string;
   quizDoubleFinal: boolean;
   quizTopics: string[];
+  /** Mekan/kurum soru paketi; null ise gömülü havuz. */
+  quizPackId: string | null;
   bombFuseTime: string;
   bombLives: string;
   bombSpeedMultiplier: number;
@@ -64,6 +66,7 @@ export function initialSettingsForm(defaultCategories: string): GameSettingsForm
     quizTimePerQuestion: "20",
     quizDoubleFinal: true,
     quizTopics: [...QUIZ_TOPIC_IDS],
+    quizPackId: null,
     bombFuseTime: "30",
     bombLives: "3",
     bombSpeedMultiplier: 1.0,
@@ -126,6 +129,7 @@ export function buildRoomSettings(game: GameType, form: GameSettingsForm): Parti
       // geçmiyordu. Artık odaya yazılıyor ve soru seçimi bunu uyguluyor.
       settings.quiz_topics = form.quizTopics;
       settings.quiz_double_final = form.quizDoubleFinal;
+      settings.quiz_pack_id = form.quizPackId;
       break;
     case "bomb":
       settings.timer_setting = parseInt(form.bombFuseTime, 10);

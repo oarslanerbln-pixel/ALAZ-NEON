@@ -18,6 +18,7 @@ import { GAME_CARDS as GAMES } from "../../../lib/gameCatalog";
 import { activePlayers as activePlayersOf } from "../../../lib/liveness";
 import { assignColorsTeams, colorsTargetClicks } from "../../../lib/colorsTeams";
 import { RULE_DEFAULTS } from "../../../lib/gameSettings";
+import { loadQuizPack } from "../../../hooks/useQuizPacks";
 import { useLocale } from "../../../hooks/useLocale";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -107,10 +108,18 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       Promise.all([
         import("../../../lib/quizQuestions"),
         import("../../../lib/questionHistory"),
-      ]).then(([{ getQuizQuestions }, { recentQuestionIds, rememberQuestions }]) => {
+        // Seçili paket okunamaz ya da geçersizse gömülü havuza düşülür.
+        settings?.quiz_pack_id
+          ? loadQuizPack(settings.quiz_pack_id).catch((err) => {
+              log.warn("Soru paketi okunamadı:", err);
+              return null;
+            })
+          : Promise.resolve(null),
+      ]).then(([{ getQuizQuestions }, { recentQuestionIds, rememberQuestions }, pack]) => {
         const questions = getQuizQuestions(room.locale || "tr", settings?.total_rounds || 3, {
           topics: settings?.quiz_topics,
           recentIds: recentQuestionIds(),
+          pool: pack?.questions,
         });
         rememberQuestions(questions.map((q) => q.id));
         const startState = (settings?.current_round === 0 || room.current_round === 0) ? "tutorial" : "quiz_intro";

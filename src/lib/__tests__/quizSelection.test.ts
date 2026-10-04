@@ -126,3 +126,24 @@ describe("konu kapsamı", () => {
     expect(missing).toEqual([]);
   });
 });
+
+describe("getQuizQuestions — mekan/kurum paketi (3.4)", () => {
+  const pack = [1, 2, 3, 4, 5, 6].map((n) => ({
+    id: `firma_${n}`,
+    text: `Firma sorusu numara ${n}?`,
+    options: { A: "a", B: "b", C: "c", D: "d" },
+    correctOption: "A" as const,
+    difficulty: 1 as const,
+  }));
+
+  it("paket verilirse yalnızca paketten soru gelir, konu filtresi uygulanmaz", () => {
+    const questions = getQuizQuestions("de", 5, { pool: pack, topics: ["muzik"] });
+    expect(questions).toHaveLength(5);
+    expect(questions.every((q) => q.id.startsWith("firma_"))).toBe(true);
+  });
+
+  it("boş paket gömülü havuza düşer", () => {
+    const questions = getQuizQuestions("tr", 3, { pool: [] });
+    expect(questions.every((q) => q.id.startsWith("tr_"))).toBe(true);
+  });
+});

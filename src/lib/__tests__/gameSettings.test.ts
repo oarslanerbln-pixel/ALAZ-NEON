@@ -67,7 +67,9 @@ describe("buildRoomSettings", () => {
       timer_setting: 15,
       quiz_topics: ["gece", "zeka"],
       quiz_double_final: false,
+      quiz_pack_id: null,
     });
+    expect(buildRoomSettings("quiz", { ...form(), quizPackId: "pack-1" }).quiz_pack_id).toBe("pack-1");
   });
 
   it("bomba, sensör ve bar kendi süre alanlarını kullanır", () => {

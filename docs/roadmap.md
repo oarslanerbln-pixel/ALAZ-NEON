@@ -577,6 +577,29 @@ Uygulama notları:
 | 3.4 İçerik hattı: JSON + şema doğrulama + mekan/kurum özel soru paketi | B4 | M |
 | 3.5 D2: Blaze + Cloud Functions (ödül, puanlama, custom claim, temizlik), bütçe alarmıyla | D2 | L |
 
+> **3.4 tamamlandı (içerik hattı).**
+> - **JSON:** quiz havuzları `src/content/quiz/{tr,de,en}.json` dosyalarında
+>   (220 soru, içerik birebir). Geliştirici olmayan bir editör de
+>   düzenleyebilir.
+> - **Tek şema:** `lib/quizPack.ts`. Gömülü havuzlar CI'da (quizContent
+>   testi), yüklenen paketler yüklemede ve oyun başında aynı kurallarla
+>   doğrulanıyor. Hatalar kod + soru kimliği olarak dönüyor, ekran üç dilde
+>   açıklıyor.
+> - **Soru paketleri:** personel `/admin/content`'te JSON paketi yüklüyor;
+>   örnek dosya oradan indiriliyor. Paket `quiz_packs` koleksiyonunda
+>   duruyor; yalnızca personel okuyup yazabiliyor (doğru cevaplar içinde).
+>   Paket değiştirilmiyor, silinip yeniden yükleniyor. TV quiz ayarlarında
+>   "soru kaynağı" seçiliyor; seçilince sorular yalnızca paketten geliyor.
+> - **Kalkan:**
+>   - 4 kural testi (yetki, sahiplik, boyut/dil, değişmezlik).
+>   - Şema ve seçim birim testleri.
+>   - `e2e/content.spec.ts`: hatalı dosya reddi, yükleme, TV'de seçim,
+>     odaya paketten soru yazılması, erişilebilirlik.
+> - **Yayında gereken:** `firebase deploy --only firestore:rules`; yeni
+>   koleksiyonun kuralı olmadan yükleme reddedilir.
+> - **Sonraki adım:** paketler şimdilik tüm personele ortak. 3.1 (çok mekan)
+>   ile `venue_id`'ye bağlanacak.
+
 ## 6. Başarı metrikleri
 
 | Metrik | Bugün | Faz 1 sonu | Faz 2 sonu |

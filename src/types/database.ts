@@ -131,6 +131,8 @@ export interface Room {
   quiz_topics?: string[];
   /** Son soru çift puan (ayar penceresindeki "2X final"). Alan yoksa açık. */
   quiz_double_final?: boolean;
+  /** Seçilen mekan/kurum soru paketi (`quiz_packs`); yoksa gömülü havuz. */
+  quiz_pack_id?: string | null;
   current_question_index?: number;
   next_letter?: string;
   // Bomb Game Fields

@@ -85,3 +85,11 @@ describe("validateQuestions", () => {
     ]);
   });
 });
+
+describe("örnek paket dosyası", () => {
+  it("indirilen şablon şemaya uyar (yükleyen kişi doğrudan düzenleyebilsin)", async () => {
+    const sample = (await import("../../content/quiz/sample-pack.json")).default;
+    const result = parseQuizPack(sample);
+    expect(result.ok ? [] : result.issues).toEqual([]);
+  });
+});

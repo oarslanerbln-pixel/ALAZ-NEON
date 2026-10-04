@@ -1,0 +1,48 @@
+{
+  "title": "Örnek Paket — Yılbaşı Partisi",
+  "locale": "tr",
+  "questions": [
+    {
+      "id": "ornek_1",
+      "category": "🏢 ŞİRKET",
+      "text": "Şirketimiz hangi yılda kuruldu?",
+      "options": { "A": "1998", "B": "2005", "C": "2012", "D": "2019" },
+      "correctOption": "B",
+      "difficulty": 1,
+      "funFact": "İlk ofisimiz tek bir odaydı."
+    },
+    {
+      "id": "ornek_2",
+      "category": "🏢 ŞİRKET",
+      "text": "Ofisimizde en çok tüketilen içecek hangisi?",
+      "options": { "A": "Çay", "B": "Filtre kahve", "C": "Maden suyu", "D": "Ayran" },
+      "correctOption": "A",
+      "difficulty": 1
+    },
+    {
+      "id": "ornek_3",
+      "category": "🎉 ETKİNLİK",
+      "text": "Geçen yılki yaz pikniği nerede yapıldı?",
+      "options": { "A": "Belgrad Ormanı", "B": "Polonezköy", "C": "Kilyos", "D": "Şile" },
+      "correctOption": "C",
+      "difficulty": 2
+    },
+    {
+      "id": "ornek_4",
+      "category": "🎉 ETKİNLİK",
+      "text": "Takımımızın maskotunun adı nedir?",
+      "options": { "A": "Bulut", "B": "Pamuk", "C": "Karamel", "D": "Fıstık" },
+      "correctOption": "D",
+      "difficulty": 2
+    },
+    {
+      "id": "ornek_5",
+      "category": "🧠 GENEL",
+      "text": "Bu yıl kaç yeni çalışma arkadaşımız aramıza katıldı?",
+      "options": { "A": "12", "B": "18", "C": "25", "D": "31" },
+      "correctOption": "C",
+      "difficulty": 3,
+      "funFact": "Bunların 7'si stajyer olarak başladı."
+    }
+  ]
+}
