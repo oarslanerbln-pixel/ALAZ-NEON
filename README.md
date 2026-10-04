@@ -111,6 +111,21 @@ sites cannot burn the daily quota. The client side is already wired up
 > reCAPTCHA v3 shows a small badge in the bottom-right corner. If you hide it,
 > Google requires the reCAPTCHA attribution text to be shown elsewhere.
 
+## 🖼 Images and static assets
+
+Background images ship as **AVIF + WebP** pairs (`<picture>` via
+`src/components/BackdropImage.tsx`); the originals are not kept in `public/`.
+To add or replace one, list the original in `scripts/optimize-images.mjs` and run:
+
+```bash
+npm i --no-save sharp
+node scripts/optimize-images.mjs <folder-with-originals>
+```
+
+`src/lib/__tests__/publicAssets.test.ts` fails the build when the code requests a
+file that is not in `public/`, when `public/` contains a file nothing uses, when an
+image exceeds 150 KB, or when `public/` grows past 4 MB.
+
 ## 🗑 Data retention (one-time console setup)
 
 Rooms, players and answers used to accumulate forever — the codebase contains no

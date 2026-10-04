@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HERO_IMAGES } from "../data/heroImages";
+import { BackdropImage } from "./BackdropImage";
 
 interface BackgroundSliderProps {
   className?: string;
@@ -26,12 +27,11 @@ export function BackgroundSlider({ className = "absolute inset-0 z-0 overflow-hi
         transition={{ duration: 1.5, ease: "easeInOut" }}
         className={className}
       >
-        <motion.img
+        <BackdropImage
           initial={{ scale: 1.0 }}
           animate={{ scale: 1.15 }}
           transition={{ duration: 10, ease: "linear" }}
-          src={HERO_IMAGES[bgIndex]}
-          alt="Background"
+          source={HERO_IMAGES[bgIndex]}
           className="w-full h-full object-cover object-center opacity-90"
         />
         {/* Cinematic Gradient Overlays */}

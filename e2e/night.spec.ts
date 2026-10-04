@@ -30,6 +30,14 @@ test("TV odayı açar, üç oyuncu katılır ve echo oylaması tamamlanır", asy
     expect((await readDoc(`rooms/${roomId}`))?.player_count).toBe(3);
   });
 
+  await test.step("telefon arka planı optimize görselden yüklenir (2.2)", async () => {
+    const backdrop = alfa.locator("picture img").first();
+    await expect
+      .poll(() => backdrop.evaluate((img: HTMLImageElement) => (img.complete ? img.naturalWidth : 0)))
+      .toBeGreaterThan(0);
+    expect(await backdrop.evaluate((img: HTMLImageElement) => img.currentSrc)).toMatch(/\.(avif|webp)$/);
+  });
+
   await test.step("TV ve telefonlar ekranı uyanık tutar (2.5)", async () => {
     for (const page of [host, ...phones]) {
       await expect.poll(() => activeWakeLocks(page)).toBe(1);
