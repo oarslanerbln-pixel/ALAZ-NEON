@@ -202,6 +202,14 @@ Uygulama notları:
 
 ### Faz 1 — Maliyet ve "host tek yazar" (2–3 hafta)
 
+> **Durum (2026-10-04): 1.1 ve 1.2 tamamlandı.** 30 oyunculu lobi hesabı:
+> önce ≈ 3.780 okuma/dk (oyuncu sinyallerinin lobiye yayılması 3.720 + host
+> sinyali 60), şimdi ≈ 120 okuma/dk (host'a düşen oyuncu sinyalleri 60 + host
+> sinyali 60). Oyuncu sayacı yalnızca katılım/ayrılmada yazılıyor. 4 saatlik
+> gecede host'a düşen sinyal okuması 28.800 → 14.400. Bunun bedeli, kilitli
+> telefonun hedef dışı kalma süresinin en fazla 30 sn'den en fazla 60 sn'ye
+> çıkması. Tek bir geciken sinyal hâlâ oyuncuyu elemiyor.
+
 | İş | Kapsar | Efor | Kabul kriteri |
 |---|---|---|---|
 | 1.1 Host `rooms.player_count` yazar; `PlayerLobby` `players` dinleyicisini bırakır | M1 | S | 30 kişilik lobide ≤ 150 okuma/dk |

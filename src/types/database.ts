@@ -87,12 +87,19 @@ export interface Room {
    */
   created_at?: number;
   /**
-   * Host ekraninin son sinyali (epoch ms). TV tarayicisi 15 sn'de bir
+   * Host ekraninin son sinyali (epoch ms). TV tarayicisi 30 sn'de bir
    * guncelliyor (bkz. useHostRoom). Oyuncu tarafi bu alana bakip "host
    * cevrimdisi" uyarisi gosteriyor — onceden host kopunca oda sonsuza kadar
    * donuk kaliyor, misafire hicbir aciklama cikmiyordu.
    */
   host_last_active?: number;
+  /**
+   * Odadaki oyuncu sayısı — yalnızca host yazar, yalnızca katılım/ayrılmada
+   * değişir (bkz. lib/playerCount.ts). Lobideki telefonlar sayıyı buradan
+   * okuyor; bütün `players` sorgusunu dinlemek okuma kotasını bitiriyordu.
+   * Alan eklenmeden önce açılmış odalarda yok.
+   */
+  player_count?: number;
   /**
    * Firestore TTL politikasinin baktigi alan — bu tarihten sonra dokuman
    * otomatik siliniyor (bkz. lib/retention.ts ve README). TTL yalnizca bu

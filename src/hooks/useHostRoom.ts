@@ -3,12 +3,16 @@ import { doc, collection, query, where, onSnapshot, updateDoc } from "firebase/f
 import { db } from "../lib/firebase";
 import { Sentinel } from "../lib/sentinel";
 import { HOST_HEARTBEAT_MS } from "../lib/liveness";
+import { playerCountUpdate } from "../lib/playerCount";
 import { useHeartbeat } from "./useHeartbeat";
 import type { Room, Player, Answer } from "../types/database";
 
 export function useHostRoom(roomId: string | null) {
   const [room, setRoom] = useState<Room | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
+  // Oyuncu listesi sunucudan en az bir kez geldi mi — o zamana kadar
+  // `players` boş başlangıç değeri, sayaç olarak yazılmamalı.
+  const [playersLoaded, setPlayersLoaded] = useState(false);
   const [submittedPlayerIds, setSubmittedPlayerIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(Boolean(roomId));
   const [notFound, setNotFound] = useState(!roomId);
@@ -22,6 +26,7 @@ export function useHostRoom(roomId: string | null) {
     setTrackedRoomId(roomId);
     setRoom(null);
     setPlayers([]);
+    setPlayersLoaded(false);
     setSubmittedPlayerIds([]);
     setError(null);
     setLoading(Boolean(roomId));
@@ -69,6 +74,9 @@ export function useHostRoom(roomId: string | null) {
           pList.push({ id: d.id, ...d.data() } as Player);
         });
         setPlayers(pList);
+        // Önbellekten gelen ilk görüntü eksik olabilir; sayaç yalnızca
+        // sunucunun onayladığı listeyle yazılsın.
+        if (!snapshot.metadata.fromCache) setPlayersLoaded(true);
       },
       (err) => {
         console.error("[useHostRoom] Oyuncular dinlenemedi:", err);
@@ -109,6 +117,20 @@ export function useHostRoom(roomId: string | null) {
       answersUnsub();
     };
   }, [roomId]);
+
+  // Lobi sayacı: telefonlar oyuncu sayısını oda dokümanından okuyor (bkz.
+  // lib/playerCount.ts). Yalnızca sayı değişince yazılıyor; heartbeat'lerin
+  // ürettiği anlık görüntüler yazma doğurmuyor.
+  const roomLoaded = room !== null;
+  const storedPlayerCount = room?.player_count;
+  useEffect(() => {
+    if (!roomId || !roomLoaded) return;
+    const next = playerCountUpdate(storedPlayerCount, players.length, playersLoaded);
+    if (next === null) return;
+    updateDoc(doc(db, "rooms", roomId), { player_count: next }).catch((err) =>
+      console.error("[useHostRoom] Oyuncu sayısı yazılamadı:", err),
+    );
+  }, [roomId, roomLoaded, storedPlayerCount, players.length, playersLoaded]);
 
   // Reset submitted IDs when letter changes
   useEffect(() => {

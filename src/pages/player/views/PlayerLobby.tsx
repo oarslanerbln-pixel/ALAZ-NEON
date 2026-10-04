@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { Check } from "lucide-react";
-import { db } from "../../../lib/firebase";
 import { useLocale } from "../../../hooks/useLocale";
 import { PlayerBackground } from "../../../components/PlayerBackground";
 import { LanguageSwitcher } from "../../../components/LanguageSwitcher";
@@ -10,7 +8,6 @@ import type { Room } from "../../../types/database";
 
 interface PlayerLobbyProps {
   room: Room | null;
-  roomId: string | null;
 }
 
 /**
@@ -34,18 +31,16 @@ const TIPS = [
  * ETA: --:--" ve "RND/TMR" gibi süsler hiçbir şey anlatmıyordu; üstelik
  * dil seçici `absolute` olduğu için başlığın üstüne biniyordu.
  */
-export function PlayerLobby({ room, roomId }: PlayerLobbyProps) {
+export function PlayerLobby({ room }: PlayerLobbyProps) {
   const { t } = useLocale();
-  const [playerCount, setPlayerCount] = useState(0);
   const [tipIdx, setTipIdx] = useState(0);
 
-  // Canlı oyuncu sayısı
-  useEffect(() => {
-    if (!roomId) return;
-    const q = query(collection(db, "players"), where("room_id", "==", roomId));
-    const unsub = onSnapshot(q, (snap) => setPlayerCount(snap.size));
-    return () => unsub();
-  }, [roomId]);
+  // Canlı oyuncu sayısı host'un oda dokümanına yazdığı sayaçtan geliyor.
+  // Eskiden her telefon odanın bütün `players` sorgusunu dinliyordu; her
+  // oyuncunun canlılık sinyali bütün lobiye birer okuma olarak yansıyordu
+  // (bkz. lib/playerCount.ts). Sayaç yoksa (alan eklenmeden önce açılmış
+  // oda) yanlış bir "0 oyuncu" yerine rozet hiç gösterilmiyor.
+  const playerCount = room?.player_count;
 
   // İpucu her 4 sn'de bir değişir
   useEffect(() => {
@@ -83,14 +78,16 @@ export function PlayerLobby({ room, roomId }: PlayerLobbyProps) {
         <h1 className="text-4xl font-black text-white tracking-wide">{t("lobby.readyTitle")}</h1>
         <p className="text-base text-white/70 max-w-xs leading-relaxed">{t("lobby.readyBody")}</p>
 
-        <span
-          className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm font-bold text-emerald-300"
-          role="status"
-          aria-live="polite"
-        >
-          <span className="w-2 h-2 rounded-full bg-emerald-400 motion-safe:animate-pulse" aria-hidden="true" />
-          {t("waitingRoom.playersConnected", playerCount)}
-        </span>
+        {typeof playerCount === "number" && (
+          <span
+            className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm font-bold text-emerald-300"
+            role="status"
+            aria-live="polite"
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-400 motion-safe:animate-pulse" aria-hidden="true" />
+            {t("waitingRoom.playersConnected", playerCount)}
+          </span>
+        )}
       </div>
 
       <div className="relative z-10 flex flex-col gap-3 pb-2">

@@ -364,6 +364,12 @@ describe("rooms — host yetkisi", () => {
     await assertFails(deleteDoc(doc(asPlayer(), "rooms", ROOM_ID)));
   });
 
+  // Lobideki telefonlar sayıyı artık bu alandan okuyor (lib/playerCount.ts).
+  it("lobi sayacını (player_count) yalnızca host yazabilir", async () => {
+    await assertSucceeds(updateDoc(doc(asHost(), "rooms", ROOM_ID), { player_count: 3 }));
+    await assertFails(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { player_count: 99 }));
+  });
+
   it("oda herkes tarafından okunabilir (telefonlar PIN ile bağlanıyor)", async () => {
     await assertSucceeds(getDoc(doc(asGuest(), "rooms", ROOM_ID)));
   });
