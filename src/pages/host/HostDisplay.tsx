@@ -9,7 +9,7 @@ import { KineticSpark } from "../../components/KineticSpark";
 import { DURATION, EASE } from "../../lib/motion";
 import { sounds, SoundManager } from "../../lib/audio";
 import { calculateRoundScores } from "../../lib/scoring";
-import { Sentinel } from "../../lib/sentinel";
+import { cleanAnswerData } from "../../lib/answerText";
 import { grantGameRewards } from "../../lib/rewards";
 import { useVenue } from "../../contexts/VenueContextCore";
 
@@ -241,32 +241,10 @@ function HostDisplayGame({
       return;
     }
 
-    // 1. SENTINEL FILTER: Remove shadowbanned players and sanitize payloads
-    const safeAnswers: Answer[] = [];
-    for (const ans of rawAnswers) {
-      if (Sentinel.radar.isShadowbanned(ans.player_id)) {
-        log.warn(`Dropping answer from shadowbanned player: ${ans.player_id}`,
-        );
-        continue;
-      }
+    // Cevap metni puanlamadan ve TV'de gösterilmeden önce temizleniyor
+    // (boşluk, görünmez karakter, uzunluk sınırı — bkz. lib/answerText.ts).
+    const safeAnswers: Answer[] = rawAnswers.map((ans) => ({ ...ans, data: cleanAnswerData(ans.data) }));
 
-      // Sanitize all category inputs
-      const safeData: Record<string, string> = {};
-      if (ans.data) {
-        for (const [cat, val] of Object.entries(ans.data)) {
-          Reflect.set(safeData, cat, Sentinel.crypto.sanitizePayload(val || ""));
-        }
-      }
-
-      safeAnswers.push({ ...ans, data: safeData });
-    }
-
-    if (safeAnswers.length === 0) {
-      setIsAnalyzing(false);
-      return; // Everyone was a bot, or no valid answers
-    }
-
-    // Use the safe, sanitized answers
     const results = calculateRoundScores(
       room,
       players,
@@ -421,9 +399,6 @@ function HostDisplayGame({
     setCurrentLetter(nextLetter);
     setTimeLeft(room.timer_setting);
 
-    // Notify Sentinel that the round timer has officially started
-    Sentinel.radar.startRoundTime();
-
     setGameState("playing");
   };
 
@@ -497,7 +472,6 @@ function HostDisplayGame({
     setRoundResults([]);
     setGameHistory([]);
     setAwards(undefined);
-    Sentinel.radar.clearRadar(); // Clear bans on reset
     await updateRoomStatus("lobby", { current_round: 0, active_letter: "?", used_letters: [] });
     setGameState("lobby");
   };

@@ -409,6 +409,20 @@ Uygulama notları:
 >   görüldü. reCAPTCHA (telefon girişi, App Check) testte yok; birkaç gece
 >   temiz konsoldan sonra anahtar adı değiştirilerek zorlanacak.
 > - `hostingHeaders.test.ts` başlık sözleşmesini denetliyor.
+>
+> **2.9 tamamlandı — karar: sadeleştir.** Sentinel kaldırıldı.
+> - Radar yalnızca cevabın toplam uzunluğunu (`"X".repeat(n)`) görüyordu.
+>   Gönderim zamanını da istemci belirliyor; bağlanabilecek gerçek bir
+>   sinyal yok.
+> - Kripto katmanı, React zaten kaçışladığı halde cevabı HTML-kaçışlıyordu:
+>   TV'de `Ankara'da` → `Ankara&#x27;da` görünüyor, puanlamaya bozulmuş
+>   metin gidiyordu.
+> - Hileye karşı asıl sınır kurallar (Faz 0–1: kimlik, oda durumu, alan
+>   kümesi).
+> - Yerine `lib/answerText.ts` geldi: NFC, görünmez/bidi karakter temizliği,
+>   boşluk sadeleştirme ve 40 karakter sınırı (kod noktası, emoji
+>   bölünmez). Kural dili harita değerlerinin uzunluğunu sınırlayamadığı
+>   için TV tarafında uygulanıyor; oyuncu girişinde de `maxLength` aynı.
 
 | İş | Kapsar | Efor | Kabul kriteri |
 |---|---|---|---|
