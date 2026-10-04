@@ -7,10 +7,12 @@ import { echoQuestionText } from "../../../lib/echoQuestions";
 interface Props {
   room: Room;
   players: Player[];
+  /** Bu turun oyları (oy veren → oy verilen); oyuncu giriş kayıtlarından. */
+  votes: Record<string, string>;
   onNext: () => void;
 }
 
-export function HostEchoActive({ room, players, onNext }: Props) {
+export function HostEchoActive({ room, players, votes, onNext }: Props) {
   const { t } = useLocale();
   const [timeLeft, setTimeLeft] = useState(20);
 
@@ -30,7 +32,7 @@ export function HostEchoActive({ room, players, onNext }: Props) {
   }, [room.round_end_time, onNext]);
 
 
-  const totalVotes = Object.keys(room.echo_votes || {}).length;
+  const totalVotes = Object.keys(votes).length;
 
   return (
     <div className="flex-1 flex flex-col items-center justify-start p-12 bg-black relative overflow-hidden min-h-screen">
@@ -55,7 +57,7 @@ export function HostEchoActive({ room, players, onNext }: Props) {
       <div className="relative z-10 w-full max-w-6xl grid grid-cols-2 gap-x-12 gap-y-6">
         <AnimatePresence>
           {players.map(player => {
-            const hasVoted = Object.keys(room.echo_votes || {}).includes(player.id);
+            const hasVoted = player.id in votes;
             return (
               <motion.div
                 key={player.id}

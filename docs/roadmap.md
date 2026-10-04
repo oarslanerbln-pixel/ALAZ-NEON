@@ -209,12 +209,35 @@ Uygulama notları:
 > gecede host'a düşen sinyal okuması 28.800 → 14.400. Bunun bedeli, kilitli
 > telefonun hedef dışı kalma süresinin en fazla 30 sn'den en fazla 60 sn'ye
 > çıkması. Tek bir geciken sinyal hâlâ oyuncuyu elemiyor.
+>
+> **1.3 tamamlandı — karma model (kullanıcı kararı, 2026-10-04).**
+> - **Herkesin aynı anda yazdığı girişler** (echo oyu, pulse dokunuşu)
+>   `rooms/{id}/inputs/{playerId}` kaydına taşındı. Oyuncu tur başına
+>   (`rooms.input_round`) bir kez, yalnızca kendi kaydına yazar. Kaydı
+>   yalnızca host okur ve sonucu reveal anında odaya kendisi yazar.
+>   30 kişilik bir oylama turu ≈ 930 → 30 okuma; oylar artık ezilemiyor.
+> - **Sıra/yarış hamleleri** (bomba paslama, buzzer, overload savuşturma)
+>   odada kaldı, çünkü sonucun anında herkese yayılması gerekiyor. Host
+>   üzerinden aktarmak her hamleye TV gecikmesi eklerdi. Bu hamleler artık
+>   kimliğe bağlı: yalnızca sırası gelen ve bu odadaki oyuncu yazabilir.
+>   Kabul kriterinden sapma: odada bu üç kimlik bağlı istisna kalıyor.
+> - **Yol üstünde bulunan iki canlı hata:**
+>   - Overload savuşturması kural beyaz listesiyle uyuşmuyordu; her
+>     savuşturma reddediliyordu (A2 kalıbı).
+>   - Echo intro zamanlayıcısı her host yeniden çiziminde sıfırlanıyordu;
+>     kalabalık odada intro bitmeyebiliyordu.
+>
+>   İkisi de testle sabitlendi.
+> - **Açık kalan:** `inputs` ve `transient` alt koleksiyonları TTL kapsamında
+>   değil (oda silinse de kalır). Pulse dokunuş anı hâlâ telefon saatinden
+>   geliyor; hedef zaman herkese açık olduğu için kusursuz dokunuş
+>   sahtelenebilir. Sunucu saatine geçiş ayrı iş.
 
 | İş | Kapsar | Efor | Kabul kriteri |
 |---|---|---|---|
 | 1.1 Host `rooms.player_count` yazar; `PlayerLobby` `players` dinleyicisini bırakır | M1 | S | 30 kişilik lobide ≤ 150 okuma/dk |
 | 1.2 Oyuncu heartbeat'i 15 → 30 sn, `liveness.ts` eşikleri orantılı; ardından D3 ölçümü | M2, D3 | S | `liveness` testleri güncel; host okumaları yarıya iner |
-| 1.3 Oyuncu girdileri `rooms/{id}/inputs/{playerId}` alt koleksiyonuna (bomb pas, echo oyu, pulse, overload). Sensor buzz → sabit ID'li `create` (ikinci create reddedilir: ilk basan kazanır, transaction gerekmez) | M3, S5, A1 | L | Oda dokümanında oyuncu yazma istisnası kalmaz; `firestore.rules:44-87` silinir |
+| 1.3 Echo/pulse girişleri `rooms/{id}/inputs/{playerId}` kaydına; bomba, buzzer ve overload odada ama kimliğe bağlı (karma model) | M3, S5, A1 | L | Oyuncu başkası adına ya da başkasının oyunu ezerek yazamaz; toplu girişler N'e yayılmaz |
 | 1.4 Yazma yolu sözleşme testi: istemcideki her `setDoc/updateDoc/addDoc/increment` yolu için emulator testi + merkezi `safeWrite` (hata → toast + Sentry) | A2, U4 | M | Testsiz yazma yolu CI'dan geçmez |
 | 1.5 `answers` create: alan whitelist, boyut sınırı, oda durumu; okuma yalnız host + sahibi | S6 | M | Kural testleri |
 | 1.6 App Check (reCAPTCHA) — önce izleme, sonra zorunlu | S7 | S | Doğrulanmış istek ≥ %95 olunca enforce |

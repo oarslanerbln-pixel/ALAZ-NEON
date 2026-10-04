@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import type { Room } from "../../../types/database";
 import { echoQuestionText } from "../../../lib/echoQuestions";
@@ -14,13 +14,21 @@ export function HostEchoIntro({ room, onNext }: Props) {
   const { t } = useLocale();
   
 
+  // Intro 6 sn gösterilip oylamaya geçiliyor. Zamanlayıcı eskiden `onNext`
+  // değiştikçe yeniden kuruluyordu; `onNext` host her yeniden çizildiğinde
+  // yeni bir fonksiyon ve her oyuncu sinyali host'u yeniden çizdiriyor.
+  // Kalabalık odada sinyaller 6 sn'den sık geldiği için intro hiç
+  // bitmeyebiliyordu. Zamanlayıcı artık bir kez kuruluyor, en güncel
+  // `onNext`'i ref'ten çağırıyor.
+  const onNextRef = useRef(onNext);
   useEffect(() => {
-    // Show intro for 6 seconds then proceed to active voting
-    const timer = setTimeout(() => {
-      onNext();
-    }, 6000);
-    return () => clearTimeout(timer);
+    onNextRef.current = onNext;
   }, [onNext]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => onNextRef.current(), 6000);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-black relative overflow-hidden">

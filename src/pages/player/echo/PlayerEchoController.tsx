@@ -2,11 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { db } from "../../../lib/firebase";
-import { doc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { useToast } from "../../../contexts/ToastContextCore";
 import { useLocale } from "../../../hooks/useLocale";
 import { echoQuestionText } from "../../../lib/echoQuestions";
 import { isPlayerActive } from "../../../lib/liveness";
+import { isInputForRound } from "../../../lib/roomInputs";
+import { useOwnRoomInput } from "../../../hooks/useRoomInputs";
 
 interface Props {
   room: Room;
@@ -16,22 +18,24 @@ interface Props {
 export function PlayerEchoController({ room, player }: Props) {
   const [players, setPlayers] = useState<Player[]>([]);
   const [playersLoaded, setPlayersLoaded] = useState(false);
-  const [hasVoted, setHasVoted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSubmittingRef = useRef(false);
   const { showToast } = useToast();
   const { t } = useLocale();
-  
+
+  // Oy artık oda dokümanına değil oyuncunun kendi giriş kaydına yazılıyor
+  // (bkz. lib/roomInputs.ts). "Oy verdin" durumu o kayıttan geliyor: telefon
+  // yenilense de bu turda ikinci kez oy düğmesi açılmıyor.
+  const ownInput = useOwnRoomInput(room.id, player.id);
+  const hasVoted = isInputForRound(ownInput, room.input_round);
 
   // Reset local state when round changes
   useEffect(() => {
     if (room.status === "echo_intro" || room.status === "echo_active") {
-      const myVote = room.echo_votes?.[player.id];
-      setHasVoted(!!myVote);
       isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
-  }, [room.status, room.echo_votes, player.id]);
+  }, [room.status]);
 
   useEffect(() => {
     const fetchPlayers = async () => {
@@ -60,6 +64,8 @@ export function PlayerEchoController({ room, player }: Props) {
 
   const handleVote = async (targetId: string) => {
     if (hasVoted || isSubmittingRef.current || room.status !== "echo_active") return;
+    const round = room.input_round;
+    if (typeof round !== "number") return;
     isSubmittingRef.current = true;
     setIsSubmitting(true);
     
@@ -68,11 +74,10 @@ export function PlayerEchoController({ room, player }: Props) {
     }
 
     try {
-      const roomRef = doc(db, "rooms", room.id);
-      await updateDoc(roomRef, {
-        [`echo_votes.${player.id}`]: targetId
+      await setDoc(doc(db, "rooms", room.id, "inputs", player.id), {
+        round,
+        echo_vote: targetId,
       });
-      setHasVoted(true);
     } catch (err) {
       console.error(err);
       showToast(t("echo.voteFailed"), "error");

@@ -1,6 +1,8 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { useLocale } from "../../../hooks/useLocale";
+import { useRoomInputs } from "../../../hooks/useRoomInputs";
+import { pulseClicksFromInputs } from "../../../lib/roomInputs";
 import type { Room, Player } from "../../../types/database";
 
 interface Props {
@@ -15,12 +17,27 @@ export function HostPulseDisplay({ room, players, updateRoomStatus }: Props) {
   const [scale, setScale] = useState(1);
   const [isExploding, setIsExploding] = useState(false);
 
+  // Dokunuşlar oyuncuların kendi giriş kayıtlarından geliyor; reveal anında
+  // odaya host yazıyor (bkz. lib/roomInputs.ts). Zamanlayıcı her dokunuşta
+  // yeniden kurulmasın diye son değer ref'te tutuluyor.
+  const inputs = useRoomInputs(room.id);
+  const clicks = useMemo(
+    () => pulseClicksFromInputs(inputs, room.input_round),
+    [inputs, room.input_round],
+  );
+  const clicksRef = useRef(clicks);
+  useEffect(() => {
+    clicksRef.current = clicks;
+  }, [clicks]);
+
   // State Management
   useEffect(() => {
     if (room.status === "lobby" || room.status === "pulse_intro") {
-      updateRoomStatus("pulse_active", { 
-        pulse_target_time: Date.now() + 10000, 
-        pulse_clicks: {} 
+      updateRoomStatus("pulse_active", {
+        pulse_target_time: Date.now() + 10000,
+        pulse_clicks: {},
+        // Yeni giriş turu: oyuncu yalnızca bu tur için, bir kez dokunabilir.
+        input_round: Date.now(),
       });
     }
   }, [room.status, updateRoomStatus]);
@@ -39,7 +56,7 @@ export function HostPulseDisplay({ room, players, updateRoomStatus }: Props) {
           
           // Wait 2 seconds for late clicks to arrive then reveal
           setTimeout(() => {
-            updateRoomStatus("pulse_reveal");
+            updateRoomStatus("pulse_reveal", { pulse_clicks: clicksRef.current });
           }, 2000);
         } else {
           setTimeLeft(Math.ceil(diff / 1000));
