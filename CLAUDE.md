@@ -16,6 +16,7 @@ npm run lint        # eslint
 npm run test:run    # vitest tek sefer
 npm run build       # tsc --noEmit + vite build
 npm run test:rules  # Firestore kural testleri (Java 21 + emulator gerekir)
+npm run test:e2e    # Uçtan uca: TV + telefonlar, Firestore/Auth emulator (Java 21 + Chromium)
 ```
 
 Değişiklikten sonra en az `npm run typecheck && npm run lint && npm run test:run`

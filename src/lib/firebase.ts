@@ -1,12 +1,13 @@
 import { initializeApp } from "firebase/app";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import {
+  connectFirestoreEmulator,
   getFirestore,
   initializeFirestore,
   persistentLocalCache,
   persistentMultipleTabManager,
 } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { connectAuthEmulator, getAuth } from "firebase/auth";
 
 import { appCheckSetup } from "./appCheckSetup";
 
@@ -90,3 +91,11 @@ function createFirestore() {
 // Initialize Cloud Firestore and get a reference to the service
 export const db = createFirestore();
 export const auth = getAuth(app);
+
+// Uçtan uca testler (e2e/) uygulamayı Firestore ve Auth emulator'üne bağlıyor
+// (.env.e2e). Üretim yapılandırmasında bu değişken yok; bağlantı kurulmaz.
+const emulatorHost = import.meta.env.VITE_FIREBASE_EMULATOR_HOST;
+if (emulatorHost) {
+  connectFirestoreEmulator(db, emulatorHost, 8080);
+  connectAuthEmulator(auth, `http://${emulatorHost}:9099`, { disableWarnings: true });
+}

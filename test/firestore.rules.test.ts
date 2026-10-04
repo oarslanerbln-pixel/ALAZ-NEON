@@ -805,6 +805,28 @@ describe("players — skor bütünlüğü", () => {
     await assertFails(addDoc(collection(asPlayer(), "players"), joinPayload()));
   });
 
+  // Oturum yeni açılmışken Firestore yazmayı tekrar gönderebiliyor
+  // (PlayerJoin). Aynı veriyle ikinci yazma zararsız olmalı, hata değil.
+  it("katılım yazmasının aynen tekrar gönderilmesi kabul edilir", async () => {
+    const payload = playerJoinPayload({
+      roomId: ROOM_ID,
+      uid: PLAYER_UID,
+      nickname: "YENI",
+      teamName: null,
+      now: 1_700_000_000_000,
+    });
+    await assertSucceeds(setDoc(doc(asPlayer(), "players", "player-retry"), payload));
+    await assertSucceeds(setDoc(doc(asPlayer(), "players", "player-retry"), payload));
+  });
+
+  it("katılım tekrarı bahanesiyle puan yazılamaz", async () => {
+    const payload = playerJoinPayload({ roomId: ROOM_ID, uid: PLAYER_UID, nickname: "YENI", teamName: null });
+    await assertSucceeds(setDoc(doc(asPlayer(), "players", "player-retry2"), payload));
+    await assertFails(
+      setDoc(doc(asPlayer(), "players", "player-retry2"), { ...payload, total_score: 500 })
+    );
+  });
+
   it("TV'yi taşıracak uzunlukta takma ad reddedilir", async () => {
     await assertFails(
       addDoc(collection(asPlayer(), "players"), joinPayload({ nickname: "X".repeat(21) }))

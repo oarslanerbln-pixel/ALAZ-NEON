@@ -295,6 +295,30 @@ Uygulama notları:
 
 ### Faz 2 — Kalite, performans, gözlemlenebilirlik (3–4 hafta)
 
+> **Durum (2026-10-04): 2.1 başladı — altyapı ve çekirdek akış hazır.**
+> - **Altyapı:**
+>   - `npm run test:e2e`: uygulamayı e2e kipinde derler, Firestore + Auth
+>     emulator'ünü başlatır ve Playwright (1.56.1, sabit) ile koşar.
+>   - Personel hesabı emulator'de tohumlanıyor.
+>   - Her cihaz ayrı bir tarayıcı bağlamında çalışıyor.
+>   - CI'da ayrı bir iş olarak koşuyor.
+> - **Kapsam:**
+>   - Personel kapısı.
+>   - TV odayı açar, üç telefon katılır, lobi sayaçları güncellenir.
+>   - Echo oylaması giriş kayıtları üzerinden tamamlanır, sonuç TV'de ilan
+>     edilir.
+>
+>   Oyun kapsamı 1/15. Diğer oyunlar aynı yardımcılarla sırayla eklenecek.
+> - **İlk koşunun bulduğu üç canlı hata (düzeltildi):**
+>   - Eksik profil kaydı (yalnızca takma ad) katılım ekranını
+>     `phone_number.replace` üzerinde çökertiyordu.
+>   - Katılım formundaki tipsiz "ÇIKIŞ YAP" ve ödül düğmeleri formu gönderme
+>     düğmesi sayılıyordu: takma adda Enter / "Git" tuşu oyuncunun oturumunu
+>     kapatıyordu.
+>   - Oturum yeni açılmışken katılım yazması tekrar gönderilirse
+>     `ALREADY_EXISTS` ile düşüyordu. Yazma artık tekrarlanabilir
+>     (önceden üretilmiş kimlik + `setDoc`).
+
 | İş | Kapsar | Efor | Kabul kriteri |
 |---|---|---|---|
 | 2.1 Playwright çok-context E2E (1 host + 3 oyuncu, emulator); her oyun için lobi → tur → podyum duman testi; CI job | Q1 | L | 15 oyun modu yeşil |

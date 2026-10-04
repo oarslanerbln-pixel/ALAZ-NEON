@@ -3,6 +3,7 @@ import { doc, setDoc, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "../lib/firebase";
 import { nicknamePayload, profileCreatePayload } from "../lib/clientWrites";
+import { normalizeProfile } from "../lib/userProfile";
 import type { UserProfile } from "../types/database";
 
 export function useUserProfile() {
@@ -40,7 +41,7 @@ export function useUserProfile() {
 
       profileUnsub.current = onSnapshot(userRef, async (docSnap) => {
         if (docSnap.exists()) {
-          setProfile({ uid, ...docSnap.data() } as UserProfile);
+          setProfile(normalizeProfile(uid, docSnap.data()));
           setLoading(false);
         } else {
           // Create initial profile if it doesn't exist
