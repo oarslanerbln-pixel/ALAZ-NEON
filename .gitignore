@@ -52,3 +52,10 @@ errors.txt
 _dbg_*
 _arsiv/
 .env*
+# Uçtan uca testlerin emulator yapılandırması; gizli değer içermez (demo- projesi).
+!.env.e2e
+
+# Uçtan uca testler (npm run test:e2e)
+dist-e2e
+playwright-report
+test-results

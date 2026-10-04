@@ -12,7 +12,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
-    "test:rules": "firebase emulators:exec --only firestore --project alaz-neon-rules-test \"vitest run --config vitest.rules.config.ts\""
+    "test:rules": "firebase emulators:exec --only firestore --project alaz-neon-rules-test \"vitest run --config vitest.rules.config.ts\"",
+    "test:e2e": "vite build --mode e2e --outDir dist-e2e && firebase emulators:exec --only firestore,auth --project demo-hengame \"playwright test\""
   },
   "dependencies": {
     "@sentry/react": "^10.70.0",
@@ -31,6 +32,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@firebase/rules-unit-testing": "^5.0.1",
+    "@playwright/test": "1.56.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",

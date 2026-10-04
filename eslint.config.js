@@ -11,6 +11,9 @@ export default defineConfig([
   // kez yaptı ve lint'i anlamsız hatalarla doldurdu) — lint'e sokma.
   globalIgnores([
     'dist',
+    'dist-e2e',
+    'playwright-report',
+    'test-results',
     'src/**/*.js',
     'src/**/*.d.ts',
     'src/**/*.js.map',
