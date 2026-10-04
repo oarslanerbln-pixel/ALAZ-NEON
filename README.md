@@ -162,6 +162,10 @@ npm i --no-save sharp
 node scripts/optimize-images.mjs <folder-with-originals>
 ```
 
+App icons (`public/icons/*.png`, used by the manifest and iOS home screen) are
+generated from `public/icon.svg` with `node scripts/generate-icons.mjs` (same
+`sharp` prerequisite).
+
 `src/lib/__tests__/publicAssets.test.ts` fails the build when the code requests a
 file that is not in `public/`, when `public/` contains a file nothing uses, when an
 image exceeds 150 KB, or when `public/` grows past 4 MB.

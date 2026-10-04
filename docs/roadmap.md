@@ -423,6 +423,20 @@ Uygulama notları:
 >   boşluk sadeleştirme ve 40 karakter sınırı (kod noktası, emoji
 >   bölünmez). Kural dili harita değerlerinin uzunluğunu sınırlayamadığı
 >   için TV tarafında uygulanıyor; oyuncu girişinde de `maxLength` aynı.
+>
+> **2.8 tamamlandı (PWA).**
+> - PNG ikonlar `icon.svg`'den üretildi (`scripts/generate-icons.mjs`): 192,
+>   512, maskable 512 ve iOS 180 (`apple-touch-icon` artık PNG; iOS SVG
+>   kabul etmiyor).
+> - `orientation: any`: yatay TV/tablet kurulu uygulamada dik
+>   zorlanmıyordu. `id` ve `scope` eklendi.
+> - **Service worker bilinçli olarak yok.** Canlı oyunda çevrimdışı kullanım
+>   yok, eski sürüm önbelleği riski ise gerçek (yayın sonrası eski parça
+>   zaten `staleChunk` ile ele alınıyor). Chrome kurulum için artık SW
+>   istemiyor.
+> - Lighthouse'un PWA kategorisi kaldırıldığı için kabul ölçütü
+>   `pwaManifest.test.ts`'e taşındı: kurulum alanları ve PNG ikonların
+>   gerçek boyutları (IHDR) denetleniyor.
 
 | İş | Kapsar | Efor | Kabul kriteri |
 |---|---|---|---|
