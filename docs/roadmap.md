@@ -168,14 +168,37 @@ lobi okuma/dk ≈ N × 4 × (N + 1)
 
 Her madde önce **kırmızı** kural testiyle (saldırı senaryosu) başlar, sonra kural, sonra istemci uyarlaması.
 
-| İş | Kapsar | Efor | Kabul kriteri |
-|---|---|---|---|
-| 0.1 `players` create: alan whitelist, `total_score == 0`, oda mevcut ve katılıma açık | S4 | S | Puanlı katılım kural testinde reddedilir |
-| 0.2 D1: `rooms` create ve `rewards` create `isStaff()`; ödül `room_id` taşır, yazan o odanın host'u | S1, S7 | M | Anonim kupon yazımı reddedilir |
-| 0.3 `users` update yalnız `nickname`/`last_active`; puan/lig alanlarını host (personel) oyun sonunda yazar | S2 | M | Oyuncu kendi puanını değiştiremez; `usePlayer` senkronu host'a taşınmış |
-| 0.4 PII ayrımı: herkese açık `users_public` (takma ad, lig, puan) + sahibine özel `users/{uid}` (telefon) | S3 | M | Leaderboard telefonsuz; başka uid okuması reddedilir |
-| 0.5 Emoji alt koleksiyonu kuralı (oda oyuncusu, alan whitelist, boyut) + test | A2 | S | Emoji tepkisi TV'de görünür |
-| 0.6 Sürüm içi yamalar (`npm audit fix`, firebase 12.19, react-router ≥ 7.18.2, vite) | S8 | S | `npm audit --omit=dev --audit-level=high` temiz |
+> **Durum (2026-10-04): tamamlandı.** D1 onaylandı. 19 saldırı/yeni davranış
+> testi önce kırmızı doğrulandı, ardından kural testleri 102/102 yeşil.
+> Uygulamadaki sapmalar tablonun altında.
+
+| İş | Kapsar | Efor | Kabul kriteri | Durum |
+|---|---|---|---|---|
+| 0.1 `players` create: alan whitelist, `total_score == 0`, oda mevcut ve katılıma açık | S4 | S | Puanlı katılım kural testinde reddedilir | ✅ |
+| 0.2 D1: `rooms` create ve `rewards` create `isStaff()`; ödül `room_id` taşır, yazan o odanın host'u | S1, S7 | M | Anonim kupon yazımı reddedilir | ✅ |
+| 0.3 `users` update yalnız `nickname`/`last_active`; puan/lig alanlarını host (personel) oyun sonunda yazar | S2 | M | Oyuncu kendi puanını değiştiremez; `usePlayer` senkronu host'a taşınmış | ✅ |
+| 0.4 PII: başka uid'nin profil okuması reddedilir | S3 | S | Telefon numarası yalnızca sahibine okunur | ✅ |
+| 0.5 Emoji alt koleksiyonu kuralı (oda oyuncusu, alan whitelist, boyut) + test | A2 | S | Emoji tepkisi TV'de görünür | ✅ |
+| 0.6 Sürüm içi yamalar (firebase 12.19, react-router 7.18.4, vite 7.3.6) | S8 | S | Prod ağacında yalnızca upstream'de çözümsüz bulgu kalır | ✅ |
+
+Uygulama notları:
+
+- **0.3:** Kalıcı puan, oyun boyunca host ekranından aktarılıyor
+  (`hooks/useLifetimeScoreSync.ts`, saf mantık `lib/lifetimeScore.ts`).
+  "Ne kadar aktarıldı" bilgisi oyuncu dokümanında (`lifetime_credited`)
+  kalıcı. Bu sayede host sayfası yenilense de puan iki kez eklenmiyor,
+  arada kazanılan puan da kaybolmuyor.
+- **0.4:** `users_public` ayrımına gerek kalmadı. Başkasının profilini okuyan
+  bir ekran yok; liderlik tablosu `players` koleksiyonundan besleniyor. Bu
+  yüzden okuma sahibine kısıtlandı.
+- **0.6:** Kalan tek bulgu `firebase` → `@firebase/firestore` →
+  `@grpc/grpc-js@1.9`. Firestore bu sürümü sabitliyor; en güncel firebase
+  (12.19) de aynı. grpc yalnızca Node tarafında kullanılıyor, tarayıcı
+  paketine girmiyor (`dist/` içinde doğrulandı). Upstream düzeltmesi
+  bekleniyor; 2.6'daki audit kapısı bu bulguyu istisna listesinde tutmalı.
+- **Geçiş etkisi:** Yayından önce anonim oturumla açılmış odalar oynanmaya
+  devam eder. Ancak bu odalarda ödül ve kalıcı puan yazılamaz. TV'nin bir kez
+  personel hesabıyla giriş yapması gerekir (README → Staff access).
 
 ### Faz 1 — Maliyet ve "host tek yazar" (2–3 hafta)
 
