@@ -32,11 +32,20 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Unit tests
-        run: npm run test:run
+      # Birim testleri + src/lib kapsama eşiği (vite.config.ts → coverage.thresholds).
+      - name: Unit tests + kapsama
+        run: npm run test:coverage
 
       - name: Build
         run: npm run build
+
+      # İlk yük / giriş / en büyük tembel parça gzip sınırları.
+      - name: Paket bütçesi
+        run: npm run check:bundle
+
+      # Üretim bağımlılıklarında high+ açık (süreli istisnalar betikte).
+      - name: Bağımlılık güvenliği
+        run: npm run check:audit
 
       # Kaynak ağacına derleme çıktısı sızmasın: yanlış yapılandırılmış bir
       # composite tsconfig bir kez src/ içine 88 adet .d.ts/.js kusmuştu.
