@@ -41,7 +41,7 @@ test("bomba: hedef oyuncu kelimeyi yazıp bombayı fırlatır", async ({ browser
   await returnToLobbyFromHeader(table);
 });
 
-test("sensör: buzzer'a basan doğru cevapla 100 puan alır", async ({ browser }) => {
+test("sensör: buzzer'a basan doğru cevapla ayardaki 1000 puanı alır", async ({ browser }) => {
   const table = await openTable(browser);
   const [alfa] = table.phones;
   await startGame(table.host, "HENGAME SENSÖR");
@@ -59,7 +59,7 @@ test("sensör: buzzer'a basan doğru cevapla 100 puan alır", async ({ browser }
 
   await table.host.getByRole("button", { name: new RegExp(t("sensor.correct")) }).click();
   await waitForStatus(table.roomId, "sensor_reveal");
-  expect((await player(table.playerIds[0])).total_score).toBe(100);
+  expect((await player(table.playerIds[0])).total_score).toBe(1000);
 
   await table.host.getByRole("button", { name: t("hostHeader.endEarly") }).click();
   await waitForStatus(table.roomId, "finished");

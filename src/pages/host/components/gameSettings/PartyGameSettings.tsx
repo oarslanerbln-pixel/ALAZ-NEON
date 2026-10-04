@@ -97,10 +97,10 @@ export function BarSettings({ form, set }: SectionProps) {
         columns={3}
       />
       <OptionGrid
-        label="⚡ REZEPT-GESCHWINDIGKEIT"
+        label={t("gameSettings.barRecipeSpeed")}
         options={[
-          { value: "4.5", label: "Normal (4.5s)" },
-          { value: "3.0", label: "Turbo Barmen (3.0s)" },
+          { value: "4.5", label: t("gameSettings.barRecipeNormal") },
+          { value: "3.0", label: t("gameSettings.barRecipeTurbo") },
         ]}
         value={form.barRecipeSpeed}
         onChange={(v) => set("barRecipeSpeed", v)}
@@ -114,22 +114,23 @@ export function BarSettings({ form, set }: SectionProps) {
 const COLORS_CONDITIONS = [
   {
     value: "domination" as const,
-    title: "100% DOMINANZ",
-    description: "Das Team, das die Mittellinie vollständig schiebt, gewinnt sofort.",
+    titleKey: "gameSettings.colorsDomination" as const,
+    descriptionKey: "gameSettings.colorsDominationDesc" as const,
   },
   {
     value: "timed" as const,
-    title: "45s ZEIT-DUELL",
-    description: "Nach Ablauf der Zeit siegt das Team mit der größeren Fläche.",
+    titleKey: "gameSettings.colorsTimed" as const,
+    descriptionKey: "gameSettings.colorsTimedDesc" as const,
   },
 ];
 
 export function ColorsSettings({ form, set }: SectionProps) {
+  const { t } = useLocale();
   return (
     <div className="space-y-6">
       <div>
         <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-purple-400 font-black block mb-2.5">
-          🏆 SIEGBEDINGUNG
+          {t("gameSettings.colorsWinCondition")}
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           {COLORS_CONDITIONS.map((condition) => (
@@ -144,8 +145,8 @@ export function ColorsSettings({ form, set }: SectionProps) {
                   : "bg-white/5 border-white/15 text-gray-300 hover:bg-white/10 hover:text-white"
               }`}
             >
-              <div className="font-black text-base text-white mb-1">{condition.title}</div>
-              <div className="text-xs text-gray-300">{condition.description}</div>
+              <div className="font-black text-base text-white mb-1">{t(condition.titleKey)}</div>
+              <div className="text-xs text-gray-300">{t(condition.descriptionKey)}</div>
             </button>
           ))}
         </div>

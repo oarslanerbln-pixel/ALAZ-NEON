@@ -34,6 +34,22 @@ export interface GameSettingsForm {
 
 export const QUIZ_TOPIC_IDS = ["gece", "muzik", "sinema", "zeka", "kultur", "bilim"] as const;
 
+/**
+ * Odada ayar alanı yoksa (ayardan önce açılmış oda, eski istemci) oyunların
+ * kullandığı değerler. Ayar penceresinin varsayılanlarıyla aynı.
+ */
+export const RULE_DEFAULTS = {
+  bombLives: 3,
+  sensorPoints: 1000,
+  barRecipeSeconds: 4.5,
+  colorsTimedSeconds: 45,
+} as const;
+
+/** Sensörde doğru cevabın puanı: ayardaki değer, yoksa varsayılan. */
+export function sensorPoints(room: Pick<Room, "sensor_point_reward">): number {
+  return room.sensor_point_reward ?? RULE_DEFAULTS.sensorPoints;
+}
+
 /** Kategori alanı boş bırakılırsa klasik oyunun kullandığı kategoriler. */
 export const FALLBACK_CATEGORIES = ["Stadt", "Land", "Name", "Tier"];
 
@@ -109,16 +125,23 @@ export function buildRoomSettings(game: GameType, form: GameSettingsForm): Parti
       // Seçim önceden yalnızca ekranda işaretli görünüyordu; hiçbir yere
       // geçmiyordu. Artık odaya yazılıyor ve soru seçimi bunu uyguluyor.
       settings.quiz_topics = form.quizTopics;
+      settings.quiz_double_final = form.quizDoubleFinal;
       break;
     case "bomb":
       settings.timer_setting = parseInt(form.bombFuseTime, 10);
       settings.bomb_speed_multiplier = form.bombSpeedMultiplier;
+      settings.bomb_lives = parseInt(form.bombLives, 10);
       break;
     case "sensor":
       settings.timer_setting = parseInt(form.sensorUnblurDuration, 10);
+      settings.sensor_point_reward = parseInt(form.sensorPointReward, 10);
       break;
     case "bar":
       settings.timer_setting = parseInt(form.barTime, 10);
+      settings.bar_recipe_seconds = parseFloat(form.barRecipeSpeed);
+      break;
+    case "colors":
+      settings.colors_win_condition = form.colorsWinCondition;
       break;
   }
   return settings;

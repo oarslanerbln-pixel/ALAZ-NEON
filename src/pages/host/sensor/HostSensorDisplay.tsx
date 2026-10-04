@@ -17,6 +17,7 @@ import type { Room, Player } from "../../../types/database";
 // New modular components
 import { HostSensorIntro } from "./HostSensorIntro";
 import { HostSensorActive } from "./HostSensorActive";
+import { sensorPoints } from "../../../lib/gameSettings";
 import { HostSensorReveal } from "./HostSensorReveal";
 import { createLogger } from "../../../lib/logger";
 
@@ -112,10 +113,11 @@ export function HostSensorDisplay({
   const handleEvaluate = async (isCorrect: boolean) => {
     if (isCorrect && room.sensor_buzzer_player_id) {
       SoundManager.getInstance().playSFX(sounds.SUCCESS);
-      // Add 100 points to the buzzer player's EXISTING total, not overwrite it
+      // Ayardaki puan, oyuncunun MEVCUT toplamına eklenir. TV düğmesi ve
+      // ayar penceresi "+1000" diyordu ama burada 100 ekleniyordu.
       const buzzerPlayer = players.find(p => p.id === room.sensor_buzzer_player_id);
       const currentScore = buzzerPlayer?.total_score ?? 0;
-      await updatePlayerScore(room.sensor_buzzer_player_id, currentScore + 100);
+      await updatePlayerScore(room.sensor_buzzer_player_id, currentScore + sensorPoints(room));
       await updateRoomStatus("sensor_reveal");
     } else {
       SoundManager.getInstance().playSFX(sounds.FAILURE);

@@ -17,6 +17,7 @@ import { GameSettingsModal } from "../components/GameSettingsModal";
 import { GAME_CARDS as GAMES } from "../../../lib/gameCatalog";
 import { activePlayers as activePlayersOf } from "../../../lib/liveness";
 import { assignColorsTeams, colorsTargetClicks } from "../../../lib/colorsTeams";
+import { RULE_DEFAULTS } from "../../../lib/gameSettings";
 import { useLocale } from "../../../hooks/useLocale";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -124,11 +125,16 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     }
     
     if (game === "bomb") {
-      // Canı olan VE hâlâ sinyal gönderen oyuncular: bomba, telefonu cebine
-      // koyup gitmiş bir misafire verilirse tur süre dolana kadar kilitlenir.
-      const activePlayers = activePlayersOf(
-        players.filter((p) => (p.lives === undefined ? 3 : p.lives) > 0),
-      );
+      // Herkes ayardaki canla başlar. Canlar önceden yalnızca "sıfırla"da
+      // geri geliyordu: gecenin ikinci bomba oyununda önceki oyunda elenenler
+      // hiç oynayamıyordu. Hâlâ sinyal gönderen oyunculardan biri başlar:
+      // bomba telefonu cebine koyup gitmiş bir misafire verilirse tur süre
+      // dolana kadar kilitlenir.
+      const lives = settings?.bomb_lives ?? RULE_DEFAULTS.bombLives;
+      const livesBatch = writeBatch(db);
+      players.forEach((p) => livesBatch.update(doc(db, "players", p.id), { lives }));
+      await livesBatch.commit();
+      const activePlayers = activePlayersOf(players);
       const randomPlayer = activePlayers.length > 0 ? activePlayers[Math.floor(Math.random() * activePlayers.length)] : null;
       const availableCategories = settings?.categories || room.categories || [];
       const randomCategory = availableCategories.length > 0 ? availableCategories[Math.floor(Math.random() * availableCategories.length)] : "GENEL";
@@ -142,15 +148,18 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
         active_letter: randomCategory,
         used_bomb_categories: [randomCategory],
         used_words: [],
-        bomb_speed_multiplier: 1.0,
+        // Ayardaki hız; önceden burada 1.0'a eziliyordu.
+        bomb_speed_multiplier: settings?.bomb_speed_multiplier ?? 1.0,
       };
     }
 
     if (game === "sensor") {
       const firstImg = getRandomSensorImage([]);
       initialStatus = "sensor_intro";
+      // Ayarlar (tur sayısı, bulanıklık süresi, puan) önceden burada
+      // atılıyordu: sensör önceki oyunun tur sayısıyla oynanıyordu.
       extraUpdates = {
-        active_game: game,
+        ...extraUpdates,
         current_round: 0,
         used_sensor_images: [firstImg.id],
         sensor_current_media: firstImg.url,
@@ -180,14 +189,16 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     }
     // Neon Savaşları: takımlar ve hedef burada kurulmazsa takım oyuncu
     // kimliğinin son karakterinden çıkıyordu (iki oyuncu aynı takıma
-    // düşebiliyordu) ve hedef kalabalığa göre ayarlanmıyordu.
+    // düşebiliyordu) ve hedef kalabalığa göre ayarlanmıyordu. Herkes oynar:
+    // bombada elenmiş (canı 0) oyuncu önceden takımsız kalıyordu.
     if (game === "colors") {
-      const contenders = players.filter((p) => (p.lives === undefined ? 3 : p.lives) > 0);
       initialStatus = "colors_intro";
       extraUpdates = {
         active_game: game,
-        colors_team_assignments: assignColorsTeams(contenders.map((p) => p.id)),
-        colors_target_clicks: colorsTargetClicks(contenders.length),
+        colors_team_assignments: assignColorsTeams(players.map((p) => p.id)),
+        colors_target_clicks: colorsTargetClicks(players.length),
+        colors_win_condition: settings?.colors_win_condition ?? "domination",
+        colors_winner: null,
       };
     }
 

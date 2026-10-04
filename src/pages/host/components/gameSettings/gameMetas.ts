@@ -133,10 +133,10 @@ export const GAME_METAS: Record<string, GameMeta> = {
 };
 
 export const QUIZ_CATEGORIES = [
-  { id: "gece", label: "🍸 NIGHTLIFE & BAR", icon: "🍸" },
-  { id: "muzik", label: "🎵 MUSIK & CHARTS", icon: "🎵" },
-  { id: "sinema", label: "🎬 KINO & SERIEN", icon: "🎬" },
-  { id: "zeka", label: "🧠 LOGIK & TRICK", icon: "🧠" },
-  { id: "kultur", label: "🌍 ALLGEMEINWISSEN", icon: "🌍" },
-  { id: "bilim", label: "🚀 TECH & TRENDS", icon: "🚀" }
-];
+  { id: "gece", labelKey: "gameSettings.quizTopic.gece" },
+  { id: "muzik", labelKey: "gameSettings.quizTopic.muzik" },
+  { id: "sinema", labelKey: "gameSettings.quizTopic.sinema" },
+  { id: "zeka", labelKey: "gameSettings.quizTopic.zeka" },
+  { id: "kultur", labelKey: "gameSettings.quizTopic.kultur" },
+  { id: "bilim", labelKey: "gameSettings.quizTopic.bilim" },
+] as const;

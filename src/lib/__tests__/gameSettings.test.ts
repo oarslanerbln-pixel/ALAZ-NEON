@@ -59,8 +59,15 @@ describe("buildRoomSettings", () => {
       quizQuestionsCount: "12",
       quizTimePerQuestion: "15",
       quizTopics: ["gece", "zeka"],
+      quizDoubleFinal: false,
     });
-    expect(settings).toEqual({ game_mode: "team", total_rounds: 12, timer_setting: 15, quiz_topics: ["gece", "zeka"] });
+    expect(settings).toEqual({
+      game_mode: "team",
+      total_rounds: 12,
+      timer_setting: 15,
+      quiz_topics: ["gece", "zeka"],
+      quiz_double_final: false,
+    });
   });
 
   it("bomba, sensör ve bar kendi süre alanlarını kullanır", () => {
@@ -70,6 +77,16 @@ describe("buildRoomSettings", () => {
     });
     expect(buildRoomSettings("sensor", { ...form(), sensorUnblurDuration: "35" }).timer_setting).toBe(35);
     expect(buildRoomSettings("bar", { ...form(), barTime: "90" }).timer_setting).toBe(90);
+  });
+
+  it("can, puan, tarif hızı ve kazanma koşulu odaya yazılır (önceden yalnızca ekranda)", () => {
+    expect(buildRoomSettings("bomb", { ...form(), bombLives: "1", bombSpeedMultiplier: 1.5 })).toMatchObject({
+      bomb_lives: 1,
+      bomb_speed_multiplier: 1.5,
+    });
+    expect(buildRoomSettings("sensor", form()).sensor_point_reward).toBe(1000);
+    expect(buildRoomSettings("bar", { ...form(), barRecipeSpeed: "3.0" }).bar_recipe_seconds).toBe(3);
+    expect(buildRoomSettings("colors", { ...form(), colorsWinCondition: "timed" }).colors_win_condition).toBe("timed");
   });
 
   it("diğer oyunlar yalnızca ortak alanları yazar", () => {

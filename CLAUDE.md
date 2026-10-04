@@ -77,6 +77,10 @@ Bunları baştan sona okuma, hedefli `grep` ile gir:
   `lib/gameRouting.ts` çözer; eksik kayıt derleme hatası verir.
 - Oyun mantığını `src/lib/` içinde saf fonksiyon olarak yaz ve birim testle;
   bileşenlerin içine gömme.
+- Ayar penceresine eklenen her ayar `lib/gameSettings.ts`'teki
+  `buildRoomSettings` ile odaya yazılır ve oyun ekranı onu okur (alan yoksa
+  `RULE_DEFAULTS`). Yalnızca ekranda görünen ayar hatadır;
+  `e2e/game-settings.spec.ts` her ayarın odaya ulaştığını doğrular.
 - Firebase v9+ modüler SDK; `firebase/compat` yasak. Çok dokümanlı güncellemede
   `writeBatch` / `runTransaction`.
 - Framer Motion geçişlerinde `<AnimatePresence mode="wait">` + benzersiz `key`.
