@@ -22,6 +22,7 @@ import {
   rewardClaimPayload,
   rewardPayload,
   roomCreatePayload,
+  roomStatusPayload,
   sensorAnswerPayload,
   sensorBuzzPayload,
   UNITY_MAX_STEP,
@@ -101,5 +102,13 @@ describe("yazma yükleri undefined alan taşımaz", () => {
       expires_at: now + 2 * 24 * 60 * 60 * 1000,
     });
     expect(rewardPayload({ ...base, venue: { reward_validity_days: 0 } })).not.toHaveProperty("expires_at");
+  });
+});
+
+describe("roomStatusPayload", () => {
+  it("undefined alanları atar, diğerlerini (null ve 0 dahil) korur", () => {
+    expect(
+      roomStatusPayload("countdown", { tutorial_step: undefined, used_letters: ["A"], time_left: 0, ad_break_next_state: null }),
+    ).toEqual({ status: "countdown", used_letters: ["A"], time_left: 0, ad_break_next_state: null });
   });
 });

@@ -315,3 +315,17 @@ export function lifetimeCreditPayload(delta: number) {
 export function lifetimeMarkerPayload(credited: number) {
   return { lifetime_credited: credited };
 }
+
+/**
+ * Host: oda durumu güncellemesi. `undefined` değerli alanlar atılır —
+ * Firestore `undefined`'ı kabul etmiyor ve yazmayı tümüyle reddediyor.
+ * Klasik oyunda ikinci tura geçerken `tutorial_step: undefined` yazılıyor,
+ * TV "bağlantı hatası" ekranına düşüyordu (2.7 kalkanı buldu).
+ */
+export function roomStatusPayload<T extends object>(status: string, extra: T): Record<string, unknown> {
+  const fields: Record<string, unknown> = { status };
+  for (const [key, value] of Object.entries(extra)) {
+    if (value !== undefined) fields[key] = value;
+  }
+  return fields;
+}
