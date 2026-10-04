@@ -46,5 +46,26 @@ export default defineConfig({
     setupFiles: './src/test/setup.ts',
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: ['node_modules', 'dist', '.idea', '.git', '.cache'],
+    // CI kapısı (docs/roadmap.md, 2.6): saf oyun mantığı src/lib'de yaşıyor
+    // ve birim testle korunuyor. `npm run test:coverage` eşiğin altında kırmızı.
+    coverage: {
+      provider: 'v8',
+      include: ['src/lib/**/*.ts'],
+      exclude: [
+        'src/lib/**/__tests__/**',
+        // Tarayıcı/SDK bağlamaları — mantık içermiyor; uçtan uca testler kapsıyor.
+        'src/lib/firebase.ts',
+        'src/lib/soundSynth.ts',
+      ],
+      reporter: ['text-summary', 'json-summary'],
+      // Satır/ifade hedefi %80 (yol haritası). Diğer ikisi mevcut düzeyin
+      // biraz altında: belirgin bir düşüş PR'ı kırar; yükseldikçe artırılır.
+      thresholds: {
+        lines: 80,
+        statements: 80,
+        functions: 85,
+        branches: 70,
+      },
+    },
   },
 })

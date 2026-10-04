@@ -6,11 +6,14 @@
   "scripts": {
     "dev": "vite --host",
     "build": "tsc -p tsconfig.app.json --noEmit && vite build",
+    "check:bundle": "node scripts/bundle-budget.mjs",
+    "check:audit": "node scripts/audit-gate.mjs",
     "typecheck": "tsc -b && tsc -p tsconfig.test.json --noEmit",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
     "test:rules": "firebase emulators:exec --only firestore --project alaz-neon-rules-test \"vitest run --config vitest.rules.config.ts\"",
     "test:e2e": "vite build --mode e2e --outDir dist-e2e && firebase emulators:exec --only firestore,auth --project demo-hengame \"playwright test\""
@@ -40,6 +43,7 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
+    "@vitest/coverage-v8": "^4.1.11",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
@@ -49,6 +53,6 @@
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.48.0",
     "vite": "^7.3.6",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.11"
   }
 }

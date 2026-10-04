@@ -341,6 +341,23 @@ Uygulama notları:
 >   ve `public/` < 4 MB bütçesini her PR'da denetler.
 > - Dönüştürme `scripts/optimize-images.mjs` ile tekrarlanabilir (sharp
 >   bağımlılık değil, yalnızca görsel değişince kurulur).
+>
+> **2.6 tamamlandı (CI kapıları).** Hepsi `verify` işinde, her PR'da:
+> - **Kapsama:** `npm run test:coverage`; `src/lib` satır %85, ifade %84
+>   (eşik 80/80, fonksiyon 85, dal 70). SDK/Web Audio bağlamaları
+>   (`firebase.ts`, `soundSynth.ts`) kapsam dışı, gerekçesi yapılandırmada.
+>   Eşiğe ulaşmak için iki gerçek test eklendi: ~110 parametreli çevirinin
+>   üç dilde çalıştırılması, her Firestore yazma yükünde `undefined` alan
+>   olmaması (Firestore bu durumda yazmayı tümüyle reddediyor).
+> - **Paket bütçesi:** `npm run check:bundle`; ilk yük JS 360 KB gzip
+>   (sınır 378), giriş 123 (130), en büyük tembel parça 123 (130).
+> - **Audit:** `npm run check:audit`; üretim bağımlılıklarında high+ açık
+>   CI'ı kırar. Tek istisna grpc (GHSA-m9gg-hp2v-232j, tarayıcı paketinde
+>   yok — `dist/` içinde doğrulandı), son gözden geçirme tarihi geçince
+>   istisna kendiliğinden düşer.
+> - **Bağımlılıklar:** vitest 4.1.11 (kritik açık kapandı) ve uyumlu
+>   güncellemeler; geliştirme açıkları 34 → 16. Kalanlar yalnızca
+>   firebase-tools/firebase zincirinde, düzeltme sürümü yok.
 
 | İş | Kapsar | Efor | Kabul kriteri |
 |---|---|---|---|

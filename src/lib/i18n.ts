@@ -7,7 +7,7 @@ import { trPossessiveSuffix } from "./trSuffix";
 
 export type Locale = "tr" | "de" | "en";
 
-const translations = {
+export const translations = {
   // ═══════════════════════════════════════════
   // LANDING PAGE
   // ═══════════════════════════════════════════

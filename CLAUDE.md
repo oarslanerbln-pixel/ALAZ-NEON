@@ -14,13 +14,17 @@ npm run dev         # vite --host (telefondan test için --host şart)
 npm run typecheck   # tsc -b + test tsconfig
 npm run lint        # eslint
 npm run test:run    # vitest tek sefer
+npm run test:coverage  # vitest + src/lib kapsama eşiği (CI bunu koşar)
+npm run check:bundle   # build sonrası paket bütçesi (gzip)
+npm run check:audit    # üretim bağımlılıklarında high+ açık
 npm run build       # tsc --noEmit + vite build
 npm run test:rules  # Firestore kural testleri (Java 21 + emulator gerekir)
 npm run test:e2e    # Uçtan uca: TV + telefonlar, Firestore/Auth emulator (Java 21 + Chromium)
 ```
 
 Değişiklikten sonra en az `npm run typecheck && npm run lint && npm run test:run`
-çalıştır. CI bunlara ek olarak `build` ve kural testlerini koşar, ayrıca
+çalıştır. CI bunlara ek olarak kapsama eşiğini, `build`, paket bütçesini,
+audit kapısını, kural testlerini ve uçtan uca testleri koşar, ayrıca
 `src/`–`test/` ağacına derleme çıktısı (`*.js`, `*.d.ts`) sızmadığını denetler.
 
 ## Mimari — tek cümlelik kural
