@@ -170,11 +170,59 @@ describe("answers koleksiyonu", () => {
   });
 });
 
+// Odadaki diğer oyuncu (OTHER_PLAYER_ID'nin sahibi).
+const asStranger = () => testEnv.authenticatedContext(STRANGER_UID).firestore();
+
 describe("rooms — bomba paslama", () => {
   beforeEach(() => seed({ status: "bomb_active", bomb_target_player: PLAYER_ID, used_words: [] }));
 
-  it("oyuncu bombayı paslayabilir", async () => {
+  it("bombayı tutan oyuncu paslayabilir", async () => {
     await assertSucceeds(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        previous_bomb_target_player: PLAYER_ID,
+        bomb_target_player: OTHER_PLAYER_ID,
+        used_words: ["kelime"],
+      })
+    );
+  });
+
+  // Paslama kuralı yalnızca alan listesine bakıyordu: bombayı tutmayan biri
+  // de bombayı istediğine atabiliyor, turu kilitleyebiliyordu.
+  it("bombayı tutmayan oyuncu paslayamaz", async () => {
+    await assertFails(
+      updateDoc(doc(asStranger(), "rooms", ROOM_ID), {
+        previous_bomb_target_player: OTHER_PLAYER_ID,
+        bomb_target_player: PLAYER_ID,
+        used_words: ["kelime"],
+      })
+    );
+  });
+
+  it("paslayan kendini başkası gibi gösteremez", async () => {
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        previous_bomb_target_player: OTHER_PLAYER_ID,
+        bomb_target_player: OTHER_PLAYER_ID,
+        used_words: ["kelime"],
+      })
+    );
+  });
+
+  it("bomba odada olmayan birine paslanamaz", async () => {
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        previous_bomb_target_player: PLAYER_ID,
+        bomb_target_player: "uydurma-oyuncu",
+        used_words: ["kelime"],
+      })
+    );
+  });
+
+  it("kullanılmış kelimeler silinemez", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), { used_words: ["elma", "armut"] });
+    });
+    await assertFails(
       updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
         previous_bomb_target_player: PLAYER_ID,
         bomb_target_player: OTHER_PLAYER_ID,
@@ -198,6 +246,7 @@ describe("rooms — bomba paslama", () => {
     });
     await assertFails(
       updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        previous_bomb_target_player: PLAYER_ID,
         bomb_target_player: OTHER_PLAYER_ID,
       })
     );
@@ -217,6 +266,26 @@ describe("rooms — sensör buzzer", () => {
     );
   });
 
+  it("başka bir oyuncunun adına buzzer'a basılamaz", async () => {
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        status: "sensor_buzzed",
+        sensor_buzzer_player_id: OTHER_PLAYER_ID,
+        sensor_buzzer_timestamp: Date.now(),
+      })
+    );
+  });
+
+  it("odada olmayan biri buzzer'a basamaz", async () => {
+    await assertFails(
+      updateDoc(doc(asRandomSignup(), "rooms", ROOM_ID), {
+        status: "sensor_buzzed",
+        sensor_buzzer_player_id: "uydurma-oyuncu",
+        sensor_buzzer_timestamp: Date.now(),
+      })
+    );
+  });
+
   it("oyuncu doğrudan cevap ekranına atlayamaz", async () => {
     await assertFails(
       updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
@@ -226,16 +295,33 @@ describe("rooms — sensör buzzer", () => {
     );
   });
 
-  it("buzzer'a basıldıktan sonra oyuncu cevabını yazabilir", async () => {
-    await testEnv.withSecurityRulesDisabled(async (ctx) => {
-      await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), {
-        status: "sensor_buzzed",
-        sensor_buzzer_player_id: PLAYER_ID,
+  describe("buzzer'a basıldıktan sonra", () => {
+    beforeEach(async () => {
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), {
+          status: "sensor_buzzed",
+          sensor_buzzer_player_id: PLAYER_ID,
+        });
       });
     });
-    await assertSucceeds(
-      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { sensor_player_answer: "Kahve" })
-    );
+
+    it("basan oyuncu cevabını yazabilir", async () => {
+      await assertSucceeds(
+        updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { sensor_player_answer: "Kahve" })
+      );
+    });
+
+    it("basmayan oyuncu cevap yazamaz", async () => {
+      await assertFails(
+        updateDoc(doc(asStranger(), "rooms", ROOM_ID), { sensor_player_answer: "Çay" })
+      );
+    });
+
+    it("cevap TV'yi taşıracak uzunlukta olamaz", async () => {
+      await assertFails(
+        updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { sensor_player_answer: "X".repeat(500) })
+      );
+    });
   });
 });
 
@@ -244,21 +330,37 @@ describe("rooms — overload savuşturma", () => {
     seed({ status: "playing", overload_target_id: PLAYER_ID, overload_time_allowed: 10 })
   );
 
-  it("hedef olan oyuncu bombayı savuşturup paslayabilir", async () => {
-    await assertSucceeds(
-      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
-        overload_target_id: null,
-        overload_time_allowed: 9,
-      })
+  /** PlayerOverloadGame'in savuşturmada gerçekte yazdığı alanlar. */
+  const deflect = (from: string) => ({
+    overload_target_id: "passing",
+    overload_last_target_id: from,
+  });
+
+  // Eski test istemcinin YAZMADIĞI bir veriyi deniyordu (overload_time_allowed);
+  // istemcinin yazdığı overload_last_target_id beyaz listede yoktu, yani
+  // canlıda her savuşturma reddediliyordu.
+  it("hedef olan oyuncu savuşturabilir (istemcinin gerçek yazımı)", async () => {
+    await assertSucceeds(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), deflect(PLAYER_ID)));
+  });
+
+  it("hedef olmayan oyuncu savuşturamaz", async () => {
+    await assertFails(updateDoc(doc(asStranger(), "rooms", ROOM_ID), deflect(OTHER_PLAYER_ID)));
+  });
+
+  it("savuşturan kendini başkası gibi gösteremez", async () => {
+    await assertFails(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), deflect(OTHER_PLAYER_ID)));
+  });
+
+  // Sonraki hedefi ve kısalan süreyi host seçiyor; oyuncu süreyi yazabiliyordu.
+  it("oyuncu tur süresini yazamaz", async () => {
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { overload_time_allowed: 999 })
     );
   });
 
   it("oyuncu savuşturma bahanesiyle oda durumunu değiştiremez", async () => {
     await assertFails(
-      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
-        overload_target_id: null,
-        status: "finished",
-      })
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { ...deflect(PLAYER_ID), status: "finished" })
     );
   });
 
@@ -266,77 +368,144 @@ describe("rooms — overload savuşturma", () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), { status: "lobby" });
     });
-    await assertFails(
-      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
-        overload_target_id: null,
-        overload_time_allowed: 9,
-      })
-    );
+    await assertFails(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), deflect(PLAYER_ID)));
   });
 });
 
-describe("rooms — echo oylamasi", () => {
-  beforeEach(() => seed({ status: "echo_active", echo_question: "Kim?", echo_votes: {} }));
+/**
+ * Oyuncu girişleri (rooms/{id}/inputs/{playerId}): echo oyu ve pulse
+ * dokunuşu. Eskiden oda dokümanındaki haritalara yazılıyordu; her oy
+ * odadaki her telefona bir okuma olarak yayılıyordu ve haritanın tamamı
+ * başkasının oyunu ezecek şekilde yazılabiliyordu. Artık her oyuncu yalnızca
+ * kendi kaydına, tur başına bir kez yazıyor; kayıtları yalnızca host
+ * okuyor, sonucu reveal anında odaya o yazıyor.
+ */
+const inputRef = (db: ReturnType<typeof asPlayer>, playerId: string) =>
+  doc(db, "rooms", ROOM_ID, "inputs", playerId);
 
-  it("oyuncu kendi oyunu yazabilir", async () => {
+describe("rooms/{id}/inputs — echo oyu", () => {
+  const ROUND = 7;
+  beforeEach(() => seed({ status: "echo_active", echo_question: "Kim?", echo_votes: {}, input_round: ROUND }));
+
+  it("oyuncu oyunu kendi giriş kaydına yazabilir", async () => {
     await assertSucceeds(
-      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
-        [`echo_votes.${PLAYER_ID}`]: OTHER_PLAYER_ID,
-      })
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND, echo_vote: OTHER_PLAYER_ID })
     );
   });
 
-  it("oyuncu oy bahanesiyle oda durumunu degistiremez", async () => {
+  it("oyuncu artık oda dokümanına oy yazamaz", async () => {
     await assertFails(
       updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
         [`echo_votes.${PLAYER_ID}`]: OTHER_PLAYER_ID,
-        status: "finished",
       })
     );
   });
 
-  it("oylama acik degilken oy yazilamaz", async () => {
+  it("başka bir oyuncunun kaydına oy yazılamaz", async () => {
+    await assertFails(
+      setDoc(inputRef(asPlayer(), OTHER_PLAYER_ID), { round: ROUND, echo_vote: PLAYER_ID })
+    );
+  });
+
+  it("kendine ya da odada olmayan birine oy verilemez", async () => {
+    await assertFails(
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND, echo_vote: PLAYER_ID })
+    );
+    await assertFails(
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND, echo_vote: "uydurma-oyuncu" })
+    );
+  });
+
+  it("aynı turda ikinci kez oy verilemez", async () => {
+    await assertSucceeds(
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND, echo_vote: OTHER_PLAYER_ID })
+    );
+    await assertFails(
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND, echo_vote: OTHER_PLAYER_ID })
+    );
+  });
+
+  it("yeni turda yeniden oy verilebilir", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(inputRef(ctx.firestore(), PLAYER_ID), { round: ROUND - 1, echo_vote: OTHER_PLAYER_ID });
+    });
+    await assertSucceeds(
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND, echo_vote: OTHER_PLAYER_ID })
+    );
+  });
+
+  it("eski tur numarasıyla oy verilemez", async () => {
+    await assertFails(
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND - 1, echo_vote: OTHER_PLAYER_ID })
+    );
+  });
+
+  it("oylama açık değilken oy verilemez", async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), { status: "echo_reveal" });
     });
     await assertFails(
-      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
-        [`echo_votes.${PLAYER_ID}`]: OTHER_PLAYER_ID,
-      })
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND, echo_vote: OTHER_PLAYER_ID })
     );
+  });
+
+  describe("okuma", () => {
+    beforeEach(async () => {
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(inputRef(ctx.firestore(), PLAYER_ID), { round: ROUND, echo_vote: OTHER_PLAYER_ID });
+      });
+    });
+
+    it("oyuncu kendi oyunu okuyabilir (telefon yenilenince 'oy verdin' korunur)", async () => {
+      await assertSucceeds(getDoc(inputRef(asPlayer(), PLAYER_ID)));
+    });
+
+    it("diğer oyuncular kimin kime oy verdiğini okuyamaz", async () => {
+      await assertFails(getDoc(inputRef(asStranger(), PLAYER_ID)));
+      await assertFails(getDocs(collection(asStranger(), "rooms", ROOM_ID, "inputs")));
+    });
+
+    it("host bütün girişleri listeleyebilir", async () => {
+      await assertSucceeds(getDocs(collection(asHost(), "rooms", ROOM_ID, "inputs")));
+    });
   });
 });
 
-describe("rooms — pulse dokunusu", () => {
+describe("rooms/{id}/inputs — pulse dokunuşu", () => {
+  const ROUND = 3;
   beforeEach(() =>
-    seed({ status: "pulse_active", pulse_target_time: Date.now() + 10000, pulse_clicks: {} })
+    seed({ status: "pulse_active", pulse_target_time: Date.now() + 10000, pulse_clicks: {}, input_round: ROUND })
   );
 
-  it("oyuncu kendi dokunus zamanini yazabilir", async () => {
+  it("oyuncu dokunuş zamanını kendi giriş kaydına yazabilir", async () => {
     await assertSucceeds(
-      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
-        [`pulse_clicks.${PLAYER_ID}`]: Date.now(),
-      })
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND, pulse_click: Date.now() })
     );
   });
 
-  it("oyuncu dokunus bahanesiyle baska alan yazamaz", async () => {
+  it("oyuncu artık oda dokümanına dokunuş yazamaz", async () => {
     await assertFails(
       updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
         [`pulse_clicks.${PLAYER_ID}`]: Date.now(),
-        total_score: 9999,
       })
     );
   });
 
-  it("tur bittikten sonra dokunus yazilamaz", async () => {
+  it("dokunuş bahanesiyle başka alan ya da echo oyu yazılamaz", async () => {
+    await assertFails(
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND, pulse_click: Date.now(), total_score: 9999 })
+    );
+    await assertFails(
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND, echo_vote: OTHER_PLAYER_ID })
+    );
+  });
+
+  it("tur bittikten sonra dokunuş yazılamaz", async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), { status: "pulse_reveal" });
     });
     await assertFails(
-      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
-        [`pulse_clicks.${PLAYER_ID}`]: Date.now(),
-      })
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND, pulse_click: Date.now() })
     );
   });
 });

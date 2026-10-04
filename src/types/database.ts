@@ -160,10 +160,20 @@ export interface Room {
    * ikinci Echo turu bir onceki gecenin sorusuyla ve oylariyla aciliyordu.
    */
   echo_question?: string | null;
+  /**
+   * Echo oylarının SONUCU: host reveal anında rooms/{id}/inputs kayıtlarından
+   * toplayıp yazar (bkz. lib/roomInputs.ts). Oyuncular buraya yazamaz.
+   */
   echo_votes?: Record<string, string>;
   // Pulse Game Fields
   pulse_target_time?: number;
+  /** Pulse dokunuşlarının SONUCU — echo_votes ile aynı şekilde host yazar. */
   pulse_clicks?: Record<string, number>;
+  /**
+   * Host'un açtığı giriş turu (epoch ms). Oyuncu girişi yalnızca bu tura
+   * ait olarak ve tur başına bir kez yazılabilir (firestore.rules → inputs).
+   */
+  input_round?: number;
   pulse_result?: number;
   // Spectrum Game Fields
   /**

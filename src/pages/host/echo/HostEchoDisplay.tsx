@@ -1,6 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 import type { Room, Player } from "../../../types/database";
+import { echoVotesFromInputs } from "../../../lib/roomInputs";
+import { useRoomInputs } from "../../../hooks/useRoomInputs";
 import { HostEchoIntro } from "./HostEchoIntro";
 import { HostEchoActive } from "./HostEchoActive";
 import { HostEchoReveal } from "./HostEchoReveal";
@@ -25,6 +27,14 @@ const PREMIUM_QUESTION_KEYS = [
 ] as const;
 
 export function HostEchoDisplay({ room, players, updateRoomStatus }: Props) {
+  // Oylar oyuncuların kendi giriş kayıtlarından geliyor; sonucu reveal
+  // anında odaya host yazıyor (bkz. lib/roomInputs.ts).
+  const inputs = useRoomInputs(room.id);
+  const votes = useMemo(
+    () => echoVotesFromInputs(inputs, room.input_round),
+    [inputs, room.input_round],
+  );
+
   // If we are in lobby and starting the game
   useEffect(() => {
     if (room.status === "lobby" || room.status === "echo_intro") {
@@ -39,11 +49,30 @@ export function HostEchoDisplay({ room, players, updateRoomStatus }: Props) {
   }, [room.status, room.echo_question, updateRoomStatus]);
 
   if (room.status === "echo_intro") {
-    return <HostEchoIntro room={room} onNext={() => updateRoomStatus("echo_active", { round_end_time: Date.now() + 20000 })} />;
+    return (
+      <HostEchoIntro
+        room={room}
+        onNext={() =>
+          updateRoomStatus("echo_active", {
+            round_end_time: Date.now() + 20000,
+            // Yeni giriş turu: oyuncu yalnızca bu tur için, bir kez oy yazabilir.
+            input_round: Date.now(),
+            echo_votes: {},
+          })
+        }
+      />
+    );
   }
 
   if (room.status === "echo_active") {
-    return <HostEchoActive room={room} players={players} onNext={() => updateRoomStatus("echo_reveal")} />;
+    return (
+      <HostEchoActive
+        room={room}
+        players={players}
+        votes={votes}
+        onNext={() => updateRoomStatus("echo_reveal", { echo_votes: votes })}
+      />
+    );
   }
 
   if (room.status === "echo_reveal") {
