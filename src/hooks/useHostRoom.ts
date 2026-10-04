@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { doc, collection, query, where, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { Sentinel } from "../lib/sentinel";
 import { HOST_HEARTBEAT_MS } from "../lib/liveness";
 import { playerCountUpdate } from "../lib/playerCount";
 import { useHeartbeat } from "./useHeartbeat";
@@ -93,17 +92,6 @@ export function useHostRoom(roomId: string | null) {
       snapshot.docChanges().forEach((change) => {
         if (change.type === "added") {
           const newAnswer = { id: change.doc.id, ...change.doc.data() } as Answer;
-          
-          let totalAnswerLength = 0;
-          if (newAnswer.data) {
-            Object.values(newAnswer.data).forEach(val => {
-              totalAnswerLength += val ? val.toString().length : 0;
-            });
-          }
-
-          const dummyText = "X".repeat(totalAnswerLength);
-          Sentinel.processIncomingAnswer(newAnswer.player_id, dummyText);
-
           setSubmittedPlayerIds((prev) => [
             ...new Set([...prev, newAnswer.player_id]),
           ]);

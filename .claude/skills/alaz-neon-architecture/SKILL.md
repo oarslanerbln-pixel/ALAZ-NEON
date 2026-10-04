@@ -65,7 +65,7 @@ Uygulamanın gelir modeli sadece yazılım satışından değil, reklam ağı (D
 ## 5. Kritik Teknik Detaylar (Güvenlik ve Senkronizasyon)
 
 * **Zamanlayıcı (Timer):** Geri sayımlar asla `setInterval` ile yerel olarak yönetilip bitince odayı statü değiştirmeye zorlamamalıdır. Host tarafında `round_end_time` Firestore'a (timestamp olarak) basılır. Hem Host hem Player bu timestamp'i referans alarak kendi lokal `setInterval`'leri ile kalan süreyi hesaplar (Optimistic UI). Böylece cihaz saat farklılıkları ve anlık kopmalar tolere edilir.
-* **Hile Koruması:** `Sentinel` adlı özel sistemle hileli oyuncular shadow-ban (hayalet ban) edilir, cevapları veritabanına yazılsa bile Host değerlendirmesinde yok sayılır.
+* **Hile Koruması:** Asıl sınır `firestore.rules`: kimlik (`actsAs`), oda durumu ve alan kümesi. İstemci kurcalanabilir kabul edilir. Host, cevap metnini puanlamadan önce `lib/answerText.ts` ile temizler (görünmez karakter, uzunluk sınırı). Eski `Sentinel` (hız sezgisi + HTML kaçışlama) gerçek sinyal görmediği ve metni bozduğu için kaldırıldı (yol haritası 2.9).
 
 ## Kullanım Kılavuzu
 

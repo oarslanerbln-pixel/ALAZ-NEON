@@ -4,6 +4,7 @@ import { HoldButton } from "../../../components/HoldButton";
 import { useLocale } from "../../../hooks/useLocale";
 import { haptics } from "../../../lib/haptics";
 import { SPRING, STAGGER, TWEEN } from "../../../lib/motion";
+import { MAX_ANSWER_LENGTH } from "../../../lib/answerText";
 
 interface PlayerPlayingProps {
   categories: string[];
@@ -98,6 +99,7 @@ export function PlayerPlaying({
                   type="text"
                   value={answers[cat] || ""}
                   onChange={(e) => onAnswerChange(cat, e.target.value)}
+                  maxLength={MAX_ANSWER_LENGTH}
                   disabled={isLocked}
                   placeholder={t("game.inputPlaceholder", activeLetter)}
                   autoComplete="off"
