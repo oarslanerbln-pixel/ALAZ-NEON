@@ -4,6 +4,7 @@ import { readDoc, resetEmulators } from "./support/emulator";
 import { t } from "./support/i18n";
 import { joinAsPlayer, openNight } from "./support/night";
 import { activeWakeLocks } from "./support/wakeLock";
+import { cspViolations } from "./support/csp";
 
 test.beforeEach(resetEmulators);
 
@@ -65,5 +66,11 @@ test("TV odayı açar, üç oyuncu katılır ve echo oylaması tamamlanır", asy
     const room = await readDoc(`rooms/${roomId}`);
     const votes = room?.echo_votes as Record<string, string>;
     expect(Object.keys(votes)).toHaveLength(3);
+  });
+
+  await test.step("zorlayıcı CSP hiçbir isteği engellemedi (2.10)", async () => {
+    for (const page of [host, ...phones]) {
+      expect(await cspViolations(page)).toEqual([]);
+    }
   });
 });

@@ -111,6 +111,27 @@ sites cannot burn the daily quota. The client side is already wired up
 > reCAPTCHA v3 shows a small badge in the bottom-right corner. If you hide it,
 > Google requires the reCAPTCHA attribution text to be shown elsewhere.
 
+## 🚀 Deployment and security headers
+
+**Vercel is the only hosting target.** `firebase.json` holds only Firestore rules
+and emulator settings, so a bare `firebase deploy` can no longer publish an
+outdated site to Firebase Hosting. Deploy rules with
+`firebase deploy --only firestore:rules`.
+
+`vercel.json` sets:
+
+- `/assets/*` (content-hashed): cached for a year, `immutable`.
+- `public/` media: cached for a day, `stale-while-revalidate`.
+- every response: `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, HSTS,
+  and a `Permissions-Policy` that keeps the screen wake lock (`screen-wake-lock=(self)`)
+  and blocks camera/microphone/geolocation.
+- a **Content-Security-Policy**, currently **Report-Only**: violations are logged to the
+  browser console but nothing is blocked. The end-to-end tests apply the *same* policy
+  in enforcing mode and fail on any violation. To enforce it in production, rename the
+  header key to `Content-Security-Policy` after a few nights with clean consoles on the
+  TV and phones (phone sign-in and App Check use reCAPTCHA, which the tests do not
+  cover).
+
 ## 🩺 Error monitoring (optional)
 
 Errors reach [Sentry](https://sentry.io) when `VITE_SENTRY_DSN` is set; without it,
