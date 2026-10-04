@@ -19,6 +19,7 @@ import { activePlayers as activePlayersOf } from "../../../lib/liveness";
 import { assignColorsTeams, colorsTargetClicks } from "../../../lib/colorsTeams";
 import { RULE_DEFAULTS } from "../../../lib/gameSettings";
 import { loadQuizPack } from "../../../hooks/useQuizPacks";
+import { venueIdOf } from "../../../lib/venues";
 import { recordGameEvent } from "../../../hooks/gameEvents";
 import { writeRoomSecret } from "../../../hooks/useRoomSecret";
 import { SECRET_DOC, splitQuizQuestions } from "../../../lib/gameSecrets";
@@ -114,7 +115,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
         import("../../../lib/questionHistory"),
         // Seçili paket okunamaz ya da geçersizse gömülü havuza düşülür.
         settings?.quiz_pack_id
-          ? loadQuizPack(settings.quiz_pack_id).catch((err) => {
+          ? loadQuizPack(venueIdOf(room), settings.quiz_pack_id).catch((err) => {
               log.warn("Soru paketi okunamadı:", err);
               return null;
             })

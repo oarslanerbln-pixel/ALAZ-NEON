@@ -118,6 +118,8 @@ export interface Room {
   active_game?: GameType | "none";
   game_type?: GameType; // Legacy
   host_uid?: string;
+  /** Odanın mekanı (docs/design/3.1-cok-mekan.md); bu sürümden önceki odalarda yok = "default". */
+  venue_id?: string;
   categories: string[];
   timer_setting: number;
   total_rounds: number;
@@ -397,6 +399,8 @@ export interface WheelSlice {
  * böylece marka sonradan değişse bile geçmiş odalar etkilenmez.
  */
 export interface VenueConfig {
+  /** Mekan belgesinin kimliği; belgede saklanmaz, okuyan kanca ekler. */
+  id?: string;
   name: string;
   logo_url?: string;
   /** Hex renk, örn. "#ff5500". Boşsa varsayılan HENGAME turuncusu kullanılır. */
@@ -490,6 +494,8 @@ export interface Reward {
   earned_at: number;
   /** Ödülün kazanıldığı oda — kural, yazanın bu odanın host'u olmasını şart koşuyor. */
   room_id?: string;
+  /** Ödülün mekanı; bu sürümden önceki ödüllerde yok = "default". */
+  venue_id?: string;
   claimed_at?: number;
   /**
    * `venue.reward_validity_days`'e göre kazanıldığı anda hesaplanıp

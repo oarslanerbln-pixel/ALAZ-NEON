@@ -9,7 +9,7 @@ import type { Room } from "../../../types/database";
 interface HostAdBreakProps {
   onComplete: () => void;
   /** Gösterim kaydı (proof-of-play) bu odaya yazılır; verilmezse kayıt yok. */
-  room?: Pick<Room, "id" | "host_uid">;
+  room?: Pick<Room, "id" | "host_uid" | "venue_id">;
   /** Gösterim anında bağlı misafir sayısı (sponsor raporundaki izleyici). */
   audience?: number;
 }

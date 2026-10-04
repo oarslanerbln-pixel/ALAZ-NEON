@@ -10,10 +10,13 @@ import { createLogger } from "../lib/logger";
 const log = createLogger("QuizPacks");
 
 /**
- * Mekan/kurum soru paketleri (docs/roadmap.md, 3.4): `quiz_packs`
- * koleksiyonu. Yalnızca personel okur/yazar (firestore.rules); TV personel
- * hesabıyla açıldığı için ayar penceresi de listeyi görebiliyor.
+ * Mekan/kurum soru paketleri (docs/roadmap.md, 3.4): `venues/{v}/quiz_packs`.
+ * Paket mekanındır (3.1, D7); yalnızca o mekanın personeli okur/yazar
+ * (firestore.rules). TV personel hesabıyla açıldığı için ayar penceresi de
+ * listeyi görebiliyor.
  */
+const packs = (venueId: string) => collection(db, "venues", venueId, "quiz_packs");
+
 export interface QuizPackSummary {
   id: string;
   title: string;
@@ -22,18 +25,19 @@ export interface QuizPackSummary {
   createdAt: number;
 }
 
-/** Paket listesi; `enabled` false iken dinlemez (personel değilse okuma reddedilir). */
-export function useQuizPacks(enabled: boolean): QuizPackSummary[] | null {
-  const [packs, setPacks] = useState<QuizPackSummary[] | null>(null);
+/** Mekanın paket listesi; `venueId` null iken dinlemez (personel değilse okuma reddedilir). */
+export function useQuizPacks(venueId: string | null): QuizPackSummary[] | null {
+  const [list, setList] = useState<{ venueId: string; packs: QuizPackSummary[] } | null>(null);
 
   useEffect(() => {
-    if (!enabled) return;
-    const q = query(collection(db, "quiz_packs"), orderBy("created_at", "desc"));
+    if (!venueId) return;
+    const q = query(packs(venueId), orderBy("created_at", "desc"));
     return onSnapshot(
       q,
       (snap) =>
-        setPacks(
-          snap.docs.map((d) => {
+        setList({
+          venueId,
+          packs: snap.docs.map((d) => {
             const data = d.data();
             return {
               id: d.id,
@@ -43,32 +47,33 @@ export function useQuizPacks(enabled: boolean): QuizPackSummary[] | null {
               createdAt: toMillis(data.created_at),
             };
           }),
-        ),
+        }),
       (err) => {
         log.error("Soru paketleri okunamadı:", err);
-        setPacks([]);
+        setList({ venueId, packs: [] });
       },
     );
-  }, [enabled]);
+  }, [venueId]);
 
-  return enabled ? packs : null;
+  // Mekan değişince eski mekanın listesi bir an bile görünmesin.
+  return venueId && list?.venueId === venueId ? list.packs : null;
 }
 
-export async function saveQuizPack(pack: QuizPack, uid: string): Promise<string> {
-  const ref = await addDoc(collection(db, "quiz_packs"), quizPackPayload(pack, uid));
+export async function saveQuizPack(venueId: string, pack: QuizPack, uid: string): Promise<string> {
+  const ref = await addDoc(packs(venueId), quizPackPayload(pack, uid));
   return ref.id;
 }
 
-export async function deleteQuizPack(id: string): Promise<void> {
-  await deleteDoc(doc(db, "quiz_packs", id));
+export async function deleteQuizPack(venueId: string, id: string): Promise<void> {
+  await deleteDoc(doc(packs(venueId), id));
 }
 
 /**
  * Oyun başında paketi okur ve yeniden doğrular (konsoldan elle düzenlenmiş
  * bozuk bir paket TV'yi düşürmesin). Geçersiz ya da yoksa null.
  */
-export async function loadQuizPack(id: string): Promise<QuizPack | null> {
-  const snap = await getDoc(doc(db, "quiz_packs", id));
+export async function loadQuizPack(venueId: string, id: string): Promise<QuizPack | null> {
+  const snap = await getDoc(doc(packs(venueId), id));
   if (!snap.exists()) return null;
   const result = parseQuizPack(snap.data());
   if (!result.ok) {

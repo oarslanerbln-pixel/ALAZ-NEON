@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 
 // Hooks
 import { useHostRoom } from "../../hooks/useHostRoom";
+import { useFollowRoomVenue } from "../../hooks/useFollowRoomVenue";
 import { useLifetimeScoreSync } from "../../hooks/useLifetimeScoreSync";
 import { useWakeLock } from "../../hooks/useWakeLock";
 import { useMonitoringTags } from "../../hooks/useMonitoringTags";
@@ -25,6 +26,8 @@ export function HostDisplay() {
   const hostRoom = useHostRoom(roomId);
   useLifetimeScoreSync(hostRoom.players);
   const { room, loading, notFound, error } = hostRoom;
+  // Marka, ödül ve sponsor reklamları odanın mekanından (3.1).
+  useFollowRoomVenue(room);
   // TV/tablet gece boyunca kararmasın: ekran koruyucu QR'ı ve skorları kapatıyordu.
   useWakeLock(!!room && room.status !== "closed");
   useMonitoringTags({ role: "host", room_id: roomId, game: room?.active_game, status: room?.status });

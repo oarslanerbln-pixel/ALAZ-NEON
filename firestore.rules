@@ -34,6 +34,35 @@ service cloud.firestore {
       );
     }
 
+    /**
+     * Çok mekan (docs/design/3.1-cok-mekan.md). Mekan personeli
+     * `venues/{venueId}/staff/{uid}` kaydıyla tanımlanır. Geçiş (aşama A):
+     * global `staff` kaydı `default` mekanın personeli sayılır; göç bitince
+     * (aşama C) bu geri dönüş kaldırılır. Blaze sonrası custom claim de
+     * kabul ediliyor (`venues` haritası).
+     */
+    function isPlatformAdmin() {
+      return isAuth() && exists(/databases/$(database)/documents/platform_admins/$(request.auth.uid));
+    }
+
+    function isStaffOf(venueId) {
+      return isAuth() && venueId is string && (
+        request.auth.token.get('venues', {}).get(venueId, null) != null ||
+        exists(/databases/$(database)/documents/venues/$(venueId)/staff/$(request.auth.uid)) ||
+        (venueId == 'default' && isStaff())
+      );
+    }
+
+    function isOwnerOf(venueId) {
+      let path = /databases/$(database)/documents/venues/$(venueId)/staff/$(request.auth.uid);
+      return isAuth() && exists(path) && get(path).data.role == 'owner';
+    }
+
+    /** Odanın mekanı; mekansız (bu sürümden önce açılmış) oda `default`. */
+    function roomVenue(roomId) {
+      return get(/databases/$(database)/documents/rooms/$(roomId)).data.get('venue_id', 'default');
+    }
+
     // A write may touch these fields and nothing else.
     function touchesOnly(fields) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
@@ -131,13 +160,19 @@ service cloud.firestore {
       // Eskiden her anonim oturum host olabiliyordu; ödül ve kalıcı puan
       // yazma yetkisi "odanın host'u" üzerinden aktığı için oda açmak
       // hepsinin kapısıydı. TV/tablet bir kez personel hesabıyla giriş yapar.
-      allow create: if isStaff() && request.resource.data.host_uid == request.auth.uid;
+      // Oda mekanın personeliyle açılır; mekan sonradan değişmez. Mekansız
+      // oda yalnızca geçiş süresince eski istemciden (global personel) gelir.
+      allow create: if request.resource.data.host_uid == request.auth.uid && (
+        (request.resource.data.get('venue_id', null) == null && isStaff()) ||
+        isStaffOf(request.resource.data.get('venue_id', null))
+      );
 
       // Odayı host serbestçe günceller. Oyuncu yalnızca yukarıdaki üç
       // kimliğe bağlı sıra/yarış hamlesini yazabilir; echo oyu ve pulse
       // dokunuşu artık aşağıdaki `inputs` alt koleksiyonunda.
       allow update: if isAuth() && (
-        resource.data.host_uid == request.auth.uid ||
+        (resource.data.host_uid == request.auth.uid &&
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['venue_id', 'host_uid'])) ||
         isBombPass(roomId) ||
         isSensorBuzz(roomId) ||
         isSensorAnswer(roomId) ||
@@ -486,37 +521,77 @@ service cloud.firestore {
       allow write: if isStaff();
     }
 
-    // Mekan/kurum soru paketleri (docs/roadmap.md, 3.4). Personel yükler,
-    // TV (personel hesabı) oyun başında okur. Misafir okuyamaz: doğru
-    // cevaplar paketin içinde. Soruların ayrıntılı şeması istemcide
-    // (lib/quizPack.ts) yüklemede ve oyun başında doğrulanıyor; burada
-    // biçim, boyut ve sahiplik. Paket değiştirilmez: silinip yeniden yüklenir.
-    match /quiz_packs/{packId} {
-      allow read: if isStaff();
-      allow create: if isStaff() &&
-        request.resource.data.keys().hasOnly(['title', 'locale', 'questions', 'created_by', 'created_at']) &&
-        request.resource.data.keys().hasAll(['title', 'locale', 'questions', 'created_by', 'created_at']) &&
-        request.resource.data.created_by == request.auth.uid &&
-        request.resource.data.created_at == request.time &&
-        request.resource.data.title is string &&
-        request.resource.data.title.size() > 0 &&
-        request.resource.data.title.size() <= 60 &&
-        request.resource.data.locale in ['tr', 'de', 'en'] &&
-        request.resource.data.questions is list &&
-        request.resource.data.questions.size() >= 5 &&
-        request.resource.data.questions.size() <= 200;
-      allow update: if false;
-      allow delete: if isStaff();
+    /**
+     * Mekanlar (docs/design/3.1-cok-mekan.md). Marka herkese açık okunur
+     * (giriş ekranı ve telefon gösteriyor). Mekanı HENGAME ekibi açar
+     * (platform_admins, karar D5); ayarlarını mekanın personeli düzenler.
+     */
+    match /venues/{venueId} {
+      allow read: if true;
+      allow create, delete: if isPlatformAdmin();
+      // Personel markayı ve ödülü düzenler; sözleşme alanları (plan,
+      // limitler) yalnızca HENGAME ekibinin.
+      allow update: if isPlatformAdmin() || (isStaffOf(venueId) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan', 'limits']));
+
+      // Personel listesi: sahip personel ekler ve çıkarır; kimse kendini
+      // ekleyemez ya da sahip yapamaz. Sahibi yalnızca HENGAME ekibi atar.
+      match /staff/{uid} {
+        allow read: if isAuth() && (request.auth.uid == uid || isStaffOf(venueId) || isPlatformAdmin());
+        allow create: if (isPlatformAdmin() || (isOwnerOf(venueId) && uid != request.auth.uid &&
+            request.resource.data.role == 'staff')) &&
+          request.resource.data.keys().hasOnly(['uid', 'role', 'added_at', 'added_by']) &&
+          request.resource.data.uid == uid &&
+          request.resource.data.role in ['owner', 'staff'] &&
+          request.resource.data.added_by == request.auth.uid &&
+          request.resource.data.added_at is int;
+        allow update: if false;
+        allow delete: if isPlatformAdmin() ||
+          (isOwnerOf(venueId) && uid != request.auth.uid && resource.data.role == 'staff');
+      }
+
+      // Mekan/kurum soru paketleri (docs/roadmap.md, 3.4): yalnızca o mekanın
+      // personeli (doğru cevaplar içinde, karar D7: paket mekanın). Soruların
+      // ayrıntılı şeması istemcide (lib/quizPack.ts) yüklemede ve oyun
+      // başında doğrulanıyor; burada biçim, boyut ve sahiplik. Paket
+      // değiştirilmez: silinip yeniden yüklenir.
+      match /quiz_packs/{packId} {
+        allow read: if isStaffOf(venueId);
+        allow create: if isStaffOf(venueId) &&
+          request.resource.data.keys().hasOnly(['title', 'locale', 'questions', 'created_by', 'created_at']) &&
+          request.resource.data.keys().hasAll(['title', 'locale', 'questions', 'created_by', 'created_at']) &&
+          request.resource.data.created_by == request.auth.uid &&
+          request.resource.data.created_at == request.time &&
+          request.resource.data.title is string &&
+          request.resource.data.title.size() > 0 &&
+          request.resource.data.title.size() <= 60 &&
+          request.resource.data.locale in ['tr', 'de', 'en'] &&
+          request.resource.data.questions is list &&
+          request.resource.data.questions.size() >= 5 &&
+          request.resource.data.questions.size() <= 200;
+        allow update: if false;
+        allow delete: if isStaffOf(venueId);
+      }
     }
+
+    // Personel giriş yapınca üye olduğu mekanları listeler (collection group
+    // sorgusu `staff` where uid == kendisi).
+    match /{path=**}/staff/{uid} {
+      allow read: if isAuth() && resource.data.uid == request.auth.uid;
+    }
+
 
     // Oyun telemetrisi (docs/roadmap.md, 3.2): TV her oyunun başında ve
     // sonunda bir olay yazar; mekan KPI raporu bunlardan hesaplanır. Yalnızca
     // kendi odasının host'u (personel) yazar, personel okur. Olaylar
     // değiştirilemez; TTL (expires_at) ile silinir.
     match /events/{eventId} {
-      allow read: if isStaff();
-      allow create: if isStaff() &&
-        request.resource.data.keys().hasOnly(['type', 'room_id', 'host_uid', 'game', 'player_count', 'started_at', 'ended_at', 'created_at', 'expires_at']) &&
+      // Okuma yalnızca kaydın mekanının personeline: rapor sorgusu
+      // `venue_id ==` ile süzülmek zorunda.
+      allow read: if isStaffOf(resource.data.venue_id);
+      allow create: if isStaffOf(request.resource.data.venue_id) &&
+        request.resource.data.keys().hasOnly(['type', 'room_id', 'venue_id', 'host_uid', 'game', 'player_count', 'started_at', 'ended_at', 'created_at', 'expires_at']) &&
+        request.resource.data.venue_id == roomVenue(request.resource.data.room_id) &&
         request.resource.data.host_uid == request.auth.uid &&
         request.resource.data.type in ['game_started', 'game_ended'] &&
         request.resource.data.game is string &&
@@ -536,9 +611,10 @@ service cloud.firestore {
     // dökümü bunlardan. Yalnızca odanın host'u (personel) yazar, personel
     // okur; kayıt değiştirilemez ve silinemez (TTL hariç).
     match /ad_impressions/{impressionId} {
-      allow read: if isStaff();
-      allow create: if isStaff() &&
-        request.resource.data.keys().hasOnly(['ad_id', 'sponsor_name', 'ad_type', 'room_id', 'host_uid', 'started_at', 'shown_ms', 'planned_ms', 'completed', 'audience', 'created_at', 'expires_at']) &&
+      allow read: if isStaffOf(resource.data.venue_id);
+      allow create: if isStaffOf(request.resource.data.venue_id) &&
+        request.resource.data.keys().hasOnly(['ad_id', 'sponsor_name', 'ad_type', 'room_id', 'venue_id', 'host_uid', 'started_at', 'shown_ms', 'planned_ms', 'completed', 'audience', 'created_at', 'expires_at']) &&
+        request.resource.data.venue_id == roomVenue(request.resource.data.room_id) &&
         request.resource.data.host_uid == request.auth.uid &&
         request.resource.data.ad_type in ['image', 'video'] &&
         request.resource.data.ad_id is string &&
@@ -568,8 +644,14 @@ service cloud.firestore {
       // ekranı) ya da işletme hesabına (RewardVerify doğrulama ekranı,
       // kodla arama yapıyor — resource.data.uid personelin kendi uid'i
       // değil) açık.
-      allow read: if isAuth() &&
-        (resource.data.uid == request.auth.uid || isStaff());
+      //
+      // Çok mekan: ödülü kendi mekanının personeli okur. Geçiş (aşama A):
+      // global personel hepsini okur; mekansız eski ödül `default`'tur.
+      allow read: if isAuth() && (
+        resource.data.uid == request.auth.uid ||
+        isStaff() ||
+        isStaffOf(resource.data.get('venue_id', 'default'))
+      );
 
       // Ödül üretimi host tarafında (kazanan OYUNCULAR adına) oluyor —
       // host'un kendi kimliği kazananınkinden farklı, bu yüzden "sadece
@@ -580,8 +662,13 @@ service cloud.firestore {
       // kullanabiliyordu. Artık yazan personel hesabı olmalı ve ödül, o
       // hesabın host'u olduğu bir odaya bağlı olmalı (karar D1, bkz.
       // docs/roadmap.md). Kalıcı çözüm Cloud Function (karar D2).
-      allow create: if isStaff() &&
-        request.resource.data.keys().hasOnly(['uid', 'nickname', 'type', 'title', 'description', 'status', 'code', 'earned_at', 'expires_at', 'room_id']) &&
+      allow create: if (
+          request.resource.data.get('venue_id', null) == null
+            ? isStaff()
+            : isStaffOf(request.resource.data.venue_id) &&
+              request.resource.data.venue_id == roomVenue(request.resource.data.room_id)
+        ) &&
+        request.resource.data.keys().hasOnly(['uid', 'nickname', 'type', 'title', 'description', 'status', 'code', 'earned_at', 'expires_at', 'room_id', 'venue_id']) &&
         request.resource.data.status == 'available' &&
         request.resource.data.room_id is string &&
         get(/databases/$(database)/documents/rooms/$(request.resource.data.room_id)).data.host_uid == request.auth.uid;
@@ -590,7 +677,7 @@ service cloud.firestore {
       // işletme hesabına (barda doğrulama yapan personel) açık, ve yalnızca
       // status/claimed_at alanlarına dokunabiliyor — başka bir alanı
       // (uid, code, title...) değiştiremiyor.
-      allow update: if isStaff() &&
+      allow update: if (isStaff() || isStaffOf(resource.data.get('venue_id', 'default'))) &&
         touchesOnly(['status', 'claimed_at']);
 
       allow delete: if false;

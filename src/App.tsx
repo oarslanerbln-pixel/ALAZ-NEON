@@ -48,6 +48,9 @@ const NightlyReport = lazy(() =>
 const QuizPacks = lazy(() =>
   import("./pages/admin/QuizPacks").then((m) => ({ default: m.QuizPacks }))
 );
+const VenueStaff = lazy(() =>
+  import("./pages/admin/VenueStaff").then((m) => ({ default: m.VenueStaff }))
+);
 const NotFoundPage = lazy(() =>
   import("./pages/NotFoundPage").then((m) => ({ default: m.NotFoundPage }))
 );
@@ -107,6 +110,7 @@ function App() {
                 <Route path="/admin/report" element={<NightlyReport />} />
                 {/* Mekan/kurum soru paketleri (docs/roadmap.md, 3.4) */}
                 <Route path="/admin/content" element={<QuizPacks />} />
+                <Route path="/admin/staff" element={<VenueStaff />} />
                 
                 {/* B2B Pazarlama / Satış Sunum Sayfası */}
                 <Route path="/business" element={<B2BPitchPage />} />

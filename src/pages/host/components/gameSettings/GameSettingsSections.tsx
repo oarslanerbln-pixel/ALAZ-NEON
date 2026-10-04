@@ -6,6 +6,7 @@ import { SoundManager, sounds } from "../../../../lib/audio";
 import { getCategoryPresets } from "../../../../lib/categoryPresets";
 import { toggleQuizTopic } from "../../../../lib/gameSettings";
 import { useQuizPacks } from "../../../../hooks/useQuizPacks";
+import { useVenue } from "../../../../contexts/VenueContextCore";
 import { QUIZ_CATEGORIES } from "./gameMetas";
 import { OptionGrid } from "./OptionGrid";
 import { suffixed, WHITE_ACTIVE, type SectionProps } from "./sectionShared";
@@ -88,8 +89,9 @@ export function ScattegoriesSettings({ form, set }: SectionProps) {
 
 export function QuizSettings({ form, set }: SectionProps) {
   const { t } = useLocale();
-  // TV personel hesabıyla açık; paketleri yalnızca personel okuyabiliyor.
-  const packs = useQuizPacks(true);
+  // TV personel hesabıyla açık; paketleri yalnızca mekanın personeli okuyabiliyor.
+  const { venueId } = useVenue();
+  const packs = useQuizPacks(venueId);
 
   const toggleTopic = (id: string) => {
     SoundManager.getInstance().playSFX(sounds.CLICK);

@@ -2,7 +2,9 @@ import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { StaffAccessNotice } from "../../components/StaffAccessNotice";
+import { VenueSwitcher } from "../../components/VenueSwitcher";
 import { useIsStaff } from "../../hooks/useIsStaff";
+import { useVenue } from "../../contexts/VenueContextCore";
 import { useLocale } from "../../hooks/useLocale";
 import { deleteQuizPack, saveQuizPack, useQuizPacks, type QuizPackSummary } from "../../hooks/useQuizPacks";
 import { createLogger } from "../../lib/logger";
@@ -45,8 +47,9 @@ function issueText(t: Translate, issue: Issue): string {
  */
 export function QuizPacks() {
   const { t, locale } = useLocale();
-  const { user, isStaff } = useIsStaff();
-  const packs = useQuizPacks(isStaff === true);
+  const { user, isStaff, venues } = useIsStaff();
+  const { venueId } = useVenue();
+  const packs = useQuizPacks(isStaff === true ? venueId : null);
   const fileInput = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState<QuizPack | null>(null);
   const [issues, setIssues] = useState<Issue[]>([]);
@@ -60,7 +63,7 @@ export function QuizPacks() {
     );
   }
   if (!user || !isStaff) {
-    return <StaffAccessNotice title={t("content.title")} user={user} />;
+    return <StaffAccessNotice title={t("content.title")} user={user} venues={venues} />;
   }
 
   const readFile = async (file: File) => {
@@ -83,7 +86,7 @@ export function QuizPacks() {
     if (!draft) return;
     setStatus("saving");
     try {
-      await saveQuizPack(draft, user.uid);
+      await saveQuizPack(venueId, draft, user.uid);
       setDraft(null);
       setStatus("saved");
       if (fileInput.current) fileInput.current.value = "";
@@ -95,7 +98,7 @@ export function QuizPacks() {
 
   const remove = (pack: QuizPackSummary) => {
     if (!window.confirm(t("content.confirmDelete", pack.title))) return;
-    deleteQuizPack(pack.id).catch((err) => log.error("Soru paketi silinemedi:", err));
+    deleteQuizPack(venueId, pack.id).catch((err) => log.error("Soru paketi silinemedi:", err));
   };
 
   const downloadSample = () => {
@@ -120,6 +123,9 @@ export function QuizPacks() {
           </Link>
           <h1 className="text-3xl font-black uppercase tracking-widest mt-3">{t("content.title")}</h1>
           <p className="text-white/60 text-sm mt-2">{t("content.subtitle")}</p>
+          <div className="mt-3">
+            <VenueSwitcher venues={venues} />
+          </div>
         </header>
 
         <section className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-5">

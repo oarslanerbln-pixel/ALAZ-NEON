@@ -32,6 +32,7 @@ import { SECRET_DOC, splitQuizQuestions, withQuizAnswer, type QuizSecret } from 
 import { quizSecretPayload } from "../../../lib/clientWrites";
 import { useRoomSecret, writeRoomSecret } from "../../../hooks/useRoomSecret";
 import { loadQuizPack } from "../../../hooks/useQuizPacks";
+import { venueIdOf } from "../../../lib/venues";
 
 const log = createLogger("HostQuizDisplay");
 
@@ -114,7 +115,7 @@ export function HostQuizDisplay({
     // gece icinde delinirdi.
     // Seçili paket varsa tekrar oyunda da paketten (önceden gömülü havuza
     // dönüyordu).
-    const pack = room.quiz_pack_id ? await loadQuizPack(room.quiz_pack_id).catch(() => null) : null;
+    const pack = room.quiz_pack_id ? await loadQuizPack(venueIdOf(room), room.quiz_pack_id).catch(() => null) : null;
     const picked = getQuizQuestions(room.locale || "tr", totalRounds, {
       topics: room.quiz_topics,
       recentIds: recentQuestionIds(),

@@ -248,6 +248,8 @@ export function counterIncrementPayload(field: PlayerCounter, step: number) {
 export function roomCreatePayload(args: {
   code: string;
   hostUid: string;
+  /** Odanın mekanı (docs/design/3.1-cok-mekan.md); sonradan değişmez. */
+  venueId: string;
   locale: string;
   venue: Pick<VenueConfig, "name" | "logo_url" | "primary_color">;
   now?: number;
@@ -267,6 +269,7 @@ export function roomCreatePayload(args: {
     created_at: now,
     expires_at: retentionExpiry(now),
     host_uid: args.hostUid,
+    venue_id: args.venueId,
     // Aktif mekan markasının anlık kopyası — canlı referans değil
     // (bkz. types/database.ts Room.venue_* alanları).
     venue_name: args.venue.name,
@@ -277,6 +280,8 @@ export function roomCreatePayload(args: {
 
 export function rewardPayload(args: {
   roomId: string;
+  /** Odanın mekanı; kurallar odanınkiyle aynı olmasını şart koşuyor. */
+  venueId: string;
   uid: string;
   nickname: string;
   venue: Pick<VenueConfig, "reward_type" | "reward_title" | "reward_description" | "reward_validity_days">;
@@ -301,6 +306,7 @@ export function rewardPayload(args: {
     code: args.code,
     earned_at: now,
     room_id: args.roomId,
+    venue_id: args.venueId,
     ...(expiresAt !== null ? { expires_at: expiresAt } : {}),
   };
 }
@@ -362,6 +368,7 @@ export function gameEventId(roomId: string, startedAt: number, type: GameEventTy
 export function gameEventPayload(args: {
   type: GameEventType;
   roomId: string;
+  venueId: string;
   hostUid: string;
   game: GameType;
   playerCount: number;
@@ -373,6 +380,7 @@ export function gameEventPayload(args: {
   return {
     type: args.type,
     room_id: args.roomId,
+    venue_id: args.venueId,
     host_uid: args.hostUid,
     game: args.game,
     player_count: args.playerCount,
@@ -409,6 +417,7 @@ export function vaultFeedbackPayload(feedback: VaultFeedback[]) {
 export function adImpressionPayload(args: {
   ad: { id: string; sponsor_name: string; type: "image" | "video" };
   roomId: string;
+  venueId: string;
   hostUid: string;
   startedAt: number;
   shownMs: number;
@@ -423,6 +432,7 @@ export function adImpressionPayload(args: {
     sponsor_name: args.ad.sponsor_name.slice(0, 80),
     ad_type: args.ad.type,
     room_id: args.roomId,
+    venue_id: args.venueId,
     host_uid: args.hostUid,
     started_at: Math.round(args.startedAt),
     shown_ms: Math.max(0, Math.min(600_000, Math.round(args.shownMs))),
@@ -432,4 +442,11 @@ export function adImpressionPayload(args: {
     created_at: now,
     expires_at: retentionExpiry(now),
   };
+}
+
+// ─── Mekan personeli (docs/design/3.1-cok-mekan.md) ─────────────────
+
+/** `venues/{v}/staff/{uid}`: sahip personel ekler; sahibi HENGAME ekibi atar. */
+export function venueStaffPayload(args: { uid: string; role: "owner" | "staff"; addedBy: string; now?: number }) {
+  return { uid: args.uid, role: args.role, added_by: args.addedBy, added_at: args.now ?? Date.now() };
 }
