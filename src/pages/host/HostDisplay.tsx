@@ -355,9 +355,12 @@ function HostDisplayGame({
     
     const hasAds = venue.sponsor_ads && venue.sponsor_ads.length > 0;
     const nextState = room.current_round === 0 ? "tutorial" : "countdown";
-    const nextUpdateData = { 
-      tutorial_step: room.current_round === 0 ? 0 : undefined, 
-      used_letters: newUsedLetters 
+    // Anlatım yalnızca ilk turda. Sonraki turlarda alan hiç yazılmamalı:
+    // `undefined` yazmak Firestore'da hata, TV "bağlantı hatası"na düşüyor ve
+    // klasik oyun 1. turdan öteye geçemiyordu.
+    const nextUpdateData = {
+      ...(room.current_round === 0 ? { tutorial_step: 0 } : {}),
+      used_letters: newUsedLetters,
     };
 
     if (hasAds) {
