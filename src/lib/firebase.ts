@@ -1,4 +1,5 @@
 import { initializeApp } from "firebase/app";
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import {
   getFirestore,
   initializeFirestore,
@@ -6,6 +7,8 @@ import {
   persistentMultipleTabManager,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+
+import { appCheckSetup } from "./appCheckSetup";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
@@ -33,6 +36,25 @@ if (!isFirebaseConfigured) {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+// App Check, Firestore ilk isteğini göndermeden önce kurulmalı: yoksa ilk
+// istekler jetonsuz gider ve zorunlu kılındığında reddedilir. Site anahtarı
+// tanımlı değilse kurulmaz (bkz. lib/appCheckSetup.ts).
+const appCheck = appCheckSetup({
+  siteKey: import.meta.env.VITE_RECAPTCHA_SITE_KEY,
+  debugToken: import.meta.env.VITE_APPCHECK_DEBUG_TOKEN,
+  dev: import.meta.env.DEV,
+});
+if (appCheck) {
+  if (appCheck.debugToken !== null) {
+    (globalThis as typeof globalThis & { FIREBASE_APPCHECK_DEBUG_TOKEN?: string | boolean })
+      .FIREBASE_APPCHECK_DEBUG_TOKEN = appCheck.debugToken;
+  }
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider(appCheck.siteKey),
+    isTokenAutoRefreshEnabled: true,
+  });
+}
 
 /**
  * Firestore, kalıcı yerel önbellekle başlatılıyor.

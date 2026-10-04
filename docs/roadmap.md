@@ -268,6 +268,21 @@ Uygulama notları:
 >   (kurallar harita değerleri üzerinde döngü kuramaz); istemci giriş
 >   sınırları geçerli. Kasa oyununda tahmin sayısı sınırsız, ama yalnızca
 >   `vault_active` sırasında yazılabiliyor.
+>
+> **1.6 kod tarafı hazır, konsol adımları bekliyor.**
+> - **İstemci:** App Check (reCAPTCHA v3) kuruldu
+>   (`lib/appCheckSetup.ts`, `lib/firebase.ts`). `VITE_RECAPTCHA_SITE_KEY`
+>   tanımlı değilse devreye girmiyor, uygulama bugünkü gibi çalışıyor.
+>   Geliştirmede hata ayıklama jetonu kullanılıyor; CI için sabit jeton
+>   desteği var.
+> - **Bekleyen (konsol, proje sahibi):**
+>   1. reCAPTCHA v3 anahtarı oluştur.
+>   2. Firebase konsolunda uygulamayı App Check'e kaydet.
+>   3. Site anahtarını barındırma ortamına ekle.
+>   4. Birkaç gün izle, sonra Cloud Firestore için **Enforce**.
+>
+>   Adımlar: README → App Check.
+> - **Maliyet:** `vendor-firebase` paketi +5 KB (gzip).
 
 | İş | Kapsar | Efor | Kabul kriteri |
 |---|---|---|---|
