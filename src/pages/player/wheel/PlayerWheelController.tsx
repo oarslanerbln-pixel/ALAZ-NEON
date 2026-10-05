@@ -136,7 +136,7 @@ export function PlayerWheelController({ room, player }: Props) {
                 whileTap={{ scale: 0.92 }}
                 onClick={handleSpinClick}
                 disabled={isSpinning}
-                className="w-64 h-64 rounded-full bg-gradient-to-tr from-amber-600 to-yellow-400 border-4 border-white text-black font-black text-3xl uppercase tracking-wider shadow-[0_0_80px_rgba(255,215,0,0.8)] active:brightness-125 transition-all flex flex-col items-center justify-center"
+                className="w-64 h-64 rounded-full bg-gradient-to-tr from-amber-600 to-yellow-400 border-4 border-white text-black font-black text-3xl uppercase tracking-wider shadow-[0_0_80px_rgba(255,215,0,0.8)] active:brightness-125 transition-all flex flex-col items-center justify-center focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-amber-400"
               >
                 <span className="text-5xl mb-2">🎰</span>
                 <span>{t("wheel.spin")}!</span>
