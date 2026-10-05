@@ -1863,7 +1863,8 @@ describe("çok mekan — mekan başına personel ve çapraz erişim (3.1)", () =
     it("personel yalnızca kendi mekanında oda açar; mekansız oda yalnızca eski global personele", async () => {
       await assertSucceeds(setDoc(doc(as(STAFF_A), "rooms", "r1"), room(A, STAFF_A)));
       await assertFails(setDoc(doc(as(STAFF_A), "rooms", "r2"), room(B, STAFF_A)));
-      const { venue_id: _omit, ...legacy } = room(A, STAFF_A);
+      const legacy: Record<string, unknown> = { ...room(A, STAFF_A) };
+      delete legacy.venue_id;
       await assertFails(setDoc(doc(as(STAFF_A), "rooms", "r3"), legacy));
     });
 
