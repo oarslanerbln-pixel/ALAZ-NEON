@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 0%; /* Black */
+    --foreground: 60 100% 50%; /* Yellow (#ffff00) */
+    --accent: 180 100% 50%; /* Cyan (#00ffff) */
+  }
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+button {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--background));
+}
+
+button:focus-visible {
+  outline: 2px solid hsl(var(--foreground));
+  outline-offset: 2px;
+}
