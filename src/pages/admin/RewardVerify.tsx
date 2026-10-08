@@ -146,11 +146,12 @@ export function RewardVerify() {
         </div>
 
         <form onSubmit={handleLookup} className="space-y-4 mb-8">
-          <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest block">
+          <label htmlFor="reward-code" className="text-[10px] text-gray-400 font-black uppercase tracking-widest block">
             Ödül Kodu
           </label>
           <div className="flex gap-3">
             <input
+              id="reward-code"
               type="text"
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
