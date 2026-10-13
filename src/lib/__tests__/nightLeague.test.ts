@@ -6,6 +6,7 @@ import {
   nightPointsForPlayers,
   placementPointsByOrder,
   placementPointsByScore,
+  rankDeltas,
   teamPoints,
 } from "../nightLeague";
 
@@ -70,5 +71,11 @@ describe("nightPointsForPlayers", () => {
       { id: "a", total_score: 10, team_name: null },
       { id: "b", total_score: 20, team_name: null },
     ])).toEqual({ a: 18, b: 25 });
+  });
+});
+
+describe("rankDeltas", () => {
+  it("yükselen pozitif, düşen negatif, yeni gelen 0", () => {
+    expect(rankDeltas(["a", "b", "c"], ["c", "a", "b", "d"])).toEqual({ c: 2, a: -1, b: -1, d: 0 });
   });
 });

@@ -23,6 +23,7 @@ import { AuroraBackdrop } from "../../../components/fx/AuroraBackdrop";
 import { BeamBorder } from "../../../components/fx/BeamBorder";
 import { GridPattern } from "../../../components/fx/GridPattern";
 import { NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
+import { rankDeltas } from "../../../lib/nightLeague";
 
 
 
@@ -278,6 +279,19 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
 
   const joinUrl = `${window.location.protocol}//${window.location.host}/join?code=${room.code}`;
 
+  // Gecenin liderleri: night_score F1 sıra puanlarıyla birikir (lib/nightLeague).
+  // Eşitlikte ada göre — snapshot sırası değişince liste titremesin.
+  const leaderboard = [...players].sort(
+    (a, b) => (b.night_score ?? 0) - (a.night_score ?? 0) || a.nickname.localeCompare(b.nickname),
+  );
+  const order = leaderboard.map((p) => p.id);
+  const orderKey = order.join("|");
+  // Sıra değiştiğinde önceki sırayı sakla: kim kaç basamak çıktı/düştü (▲/▼).
+  // Render sırasında state ayarı — effect'te setState fazladan tur doğururdu.
+  const [ranks, setRanks] = useState(() => ({ key: orderKey, prev: order, cur: order }));
+  if (ranks.key !== orderKey) setRanks({ key: orderKey, prev: ranks.cur, cur: order });
+  const deltas = rankDeltas(ranks.prev, ranks.cur);
+
   return (
     <TVScaleFrame>
     <div className="w-full h-full relative overflow-hidden font-sans selection:bg-alaz-orange selection:text-black">
@@ -350,10 +364,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                 {players.length === 0 ? (
                   <div className="text-gray-500 text-sm text-center mt-10">{t("dashboard.waiting")}</div>
                 ) : (
-                  // Gecenin liderleri: night_score gece boyu birikir (lib/scoreWrites).
-                  [...players]
-                    .sort((a, b) => (b.night_score ?? 0) - (a.night_score ?? 0))
-                    .map((p, i) => (
+                  leaderboard.map((p, i) => (
                     <motion.div
                       key={p.id}
                       layout
@@ -365,6 +376,17 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                         {(p.night_score ?? 0) > 0 && i < 3 ? ["🥇", "🥈", "🥉"][i] : i + 1}
                       </span>
                       <span className="flex-1 truncate font-bold text-white">{p.nickname}</span>
+                      {deltas[p.id] !== 0 && (
+                        <motion.span
+                          key={`${p.id}-${ranks.key}`}
+                          initial={{ opacity: 0, y: deltas[p.id] > 0 ? 6 : -6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className={`text-xs font-black tabular-nums ${deltas[p.id] > 0 ? "text-emerald-400" : "text-red-400"}`}
+                          aria-label={t(deltas[p.id] > 0 ? "dashboard.rankUp" : "dashboard.rankDown", Math.abs(deltas[p.id]))}
+                        >
+                          {deltas[p.id] > 0 ? "▲" : "▼"}{Math.abs(deltas[p.id])}
+                        </motion.span>
+                      )}
                       <span className="text-alaz-orange font-mono text-sm tabular-nums">{t("dashboard.pointsSuffix", p.night_score || 0)}</span>
                     </motion.div>
                   ))

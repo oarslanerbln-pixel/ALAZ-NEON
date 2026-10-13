@@ -82,3 +82,18 @@ export function nightPointsForPlayers(
   }
   return placementPointsByScore(players.map((p) => ({ id: p.id, score: p.total_score || 0 })));
 }
+
+/**
+ * İki sıralama arasındaki yer değişimi: pozitif = yükseldi (▲), negatif =
+ * düştü (▼). Yeni gelen oyuncu için 0. TV'deki "gecenin liderleri" listesi
+ * bir oyun bitip puanlar dağıtıldığında kimin kaç basamak çıktığını gösterir.
+ */
+export function rankDeltas(prevOrder: readonly string[], nextOrder: readonly string[]): Record<string, number> {
+  const prev = new Map(prevOrder.map((id, i) => [id, i]));
+  const out: Record<string, number> = {};
+  nextOrder.forEach((id, i) => {
+    const before = prev.get(id);
+    out[id] = before === undefined ? 0 : before - i;
+  });
+  return out;
+}

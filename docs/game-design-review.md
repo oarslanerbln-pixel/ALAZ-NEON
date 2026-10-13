@@ -65,8 +65,12 @@ Enerji eğrisi: ısın → zirve → nefes → final. Örnek 90 dakikalık blok:
 Karara bağlananlar (Ekim 2026): F1 usulü gecelik lig ✅, Spectrum kaldırıldı ✅,
 Bar ve Kablo lige girdi ✅.
 
-**P2 — TV'de lig anı.** Oyun sonu podyumunda "+25 gece puanı" rozeti ve
-dashboard'da sıra değişimi animasyonu (▲2) — misafir ligi oyunun içinde görsün.
+**TV'de lig anı ✅** — podyumda her sütunda "+25 gece puanı" rozeti;
+dashboard'daki gecenin liderleri listesi sıra değişince ▲/▼ gösteriyor
+(`rankDeltas`).
+
+**P2 — Telefonda lig.** Oyun sonu ekranında misafirin kendi "+N gece puanı"
+ve gecelik sırası (şu an yalnızca TV'de).
 
 **P2 — Saat farkı.** Oyuncu `last_active` kendi saatiyle yazılıyor; bomba ve
 echo hedef seçimi diğer telefonların saatini kıyaslıyor. Kalıcı çözüm:

@@ -316,6 +316,11 @@ const translations = {
   // ═══════════════════════════════════════════
   // PODIUM
   // ═══════════════════════════════════════════
+  "podium.nightPoints": {
+    tr: (n: number) => `+${n} gece puanı`,
+    de: (n: number) => `+${n} Nachtpunkte`,
+    en: (n: number) => `+${n} night points`,
+  },
   "podium.title": { tr: "ŞAMPİYONLAR", de: "CHAMPIONS", en: "CHAMPIONS" },
   "podium.awardsTitle": { tr: "OYUNUN EN'LERİ", de: "DIE BESTEN DES SPIELS", en: "BEST OF THE GAME" },
   "podium.creativeTitle": { tr: "MİTİK YARATICI", de: "MYTHISCHER KREATIVER", en: "MYTHIC CREATOR" },
@@ -1521,6 +1526,16 @@ const translations = {
   "gameCategory.team": { tr: "Takım", de: "Team", en: "Team" },
   "gameCategory.social": { tr: "Sosyal", de: "Sozial", en: "Social" },
   "gameCategory.reward": { tr: "Ödül", de: "Preis", en: "Prize" },
+  "dashboard.rankUp": {
+    tr: (n: number) => `${n} sıra yükseldi`,
+    de: (n: number) => `${n} Plätze aufgestiegen`,
+    en: (n: number) => `Up ${n} places`,
+  },
+  "dashboard.rankDown": {
+    tr: (n: number) => `${n} sıra düştü`,
+    de: (n: number) => `${n} Plätze abgerutscht`,
+    en: (n: number) => `Down ${n} places`,
+  },
   "dashboard.step1": { tr: "ADIM 1", de: "SCHRITT 1", en: "STEP 1" },
   "dashboard.joinTitle": { tr: "Oyuna katıl", de: "Spiel beitreten", en: "Join the game" },
   "dashboard.joinBody": {
