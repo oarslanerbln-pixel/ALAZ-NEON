@@ -1430,40 +1430,18 @@ const translations = {
   // ═══════════════════════════════════════════
   // INTRO CINEMATICS (HostIntro + HostQuizIntro ortak "hacker" açılışı)
   // ═══════════════════════════════════════════
-  "intro.systemCrash": { tr: "SİSTEM ÇÖKÜŞÜ", de: "SYSTEMABSTURZ", en: "SYSTEM CRASH" },
-  "intro.securityBreach": {
-    tr: "GÜVENLİK PROTOKOLÜ İHLAL EDİLDİ...",
-    de: "SICHERHEITSPROTOKOLL VERLETZT...",
-    en: "SECURITY PROTOCOL BREACHED...",
-  },
-  "intro.systemHacked": { tr: "SİSTEM HACKLENDİ", de: "SYSTEM GEHACKT", en: "SYSTEM HACKED" },
-  "intro.arena.downloadLabel": {
-    tr: "OYUNCU VERİSİ İNDİRİLİYOR...",
-    de: "SPIELERDATEN WERDEN GELADEN...",
-    en: "DOWNLOADING PLAYER NEURAL DATA...",
-  },
-  "intro.arena.mainframeLabel": {
-    tr: "HENGAME ARENA ANA SİSTEMİNE BAĞLANILIYOR...",
-    de: "VERBINDUNG ZUM HENGAME-ARENA-MAINFRAME...",
-    en: "CONNECTING TO HENGAME ARENA MAINFRAME...",
-  },
-  "intro.arena.connecting": {
-    tr: "ZİHİN AĞA BAĞLANIYOR...",
-    de: "GEIST WIRD MIT NETZWERK VERBUNDEN...",
-    en: "CONNECTING MIND TO NETWORK...",
-  },
+  "intro.howToPlay": { tr: "NASIL OYNANIR", de: "SO WIRD GESPIELT", en: "HOW TO PLAY" },
+  "intro.phonesReady": { tr: "TELEFONLAR HAZIR", de: "HANDYS BEREIT", en: "PHONES READY" },
+  "intro.quiz.titleShort": { tr: "QUIZ", de: "QUIZ", en: "QUIZ" },
+  "intro.quiz.step1": { tr: "Soru TV'de, şıklar telefonunda", de: "Frage auf dem TV, Antworten auf dem Handy", en: "Question on the TV, answers on your phone" },
+  "intro.quiz.step2": { tr: "Hızlı cevap, daha çok puan", de: "Schnell antworten, mehr Punkte", en: "Answer fast, score more" },
+  "intro.quiz.step3": { tr: "En çok puanı toplayan kazanır", de: "Wer die meisten Punkte hat, gewinnt", en: "Most points wins" },
+  "intro.arena.titleShort": { tr: "ARENA", de: "ARENA", en: "ARENA" },
+  "intro.arena.step1": { tr: "Her turda bir harf çıkar", de: "Jede Runde bringt einen Buchstaben", en: "Each round reveals a letter" },
+  "intro.arena.step2": { tr: "Her kategoriye o harfle cevap yaz", de: "Schreib zu jeder Kategorie eine Antwort mit diesem Buchstaben", en: "Answer every category with that letter" },
+  "intro.arena.step3": { tr: "Kimsenin yazmadığı cevap daha çok puan getirir", de: "Einzigartige Antworten bringen mehr Punkte", en: "Unique answers score more" },
   "intro.arena.title": { tr: "HENGAME ARENA", de: "HENGAME ARENA", en: "HENGAME ARENA" },
   "intro.arena.subtitle": { tr: "ATEŞ SERBEST", de: "FEUER FREI", en: "FIRE AT WILL" },
-  "intro.quiz.downloadLabel": {
-    tr: "BİLGİ YARIŞMASI VERİSİ İNDİRİLİYOR...",
-    de: "QUIZDATEN WERDEN GELADEN...",
-    en: "DOWNLOADING TRIVIA DATA...",
-  },
-  "intro.quiz.mainframeLabel": {
-    tr: "HENGAME QUIZ ANA SİSTEMİNE BAĞLANILIYOR...",
-    de: "VERBINDUNG ZUM HENGAME-QUIZ-MAINFRAME...",
-    en: "CONNECTING TO HENGAME QUIZ MAINFRAME...",
-  },
   "intro.quiz.title": { tr: "HENGAME QUIZ", de: "HENGAME QUIZ", en: "HENGAME QUIZ" },
   "intro.quiz.subtitle": { tr: "ZİHİNLER ÇARPIŞIYOR", de: "KÖPFE PRALLEN AUFEINANDER", en: "MINDS COLLIDE" },
 
