@@ -1001,6 +1001,12 @@ const translations = {
   // ── Overload ──
   "overload.title": { tr: "AŞIRI YÜKLEME", de: "ÜBERLASTUNG", en: "OVERLOAD" },
   "overload.whoHasVoltage": { tr: "VOLTAJ KİMDE:", de: "WER HAT DIE SPANNUNG:", en: "WHO HOLDS THE CHARGE:" },
+  "overload.transferring": { tr: "AKTARILIYOR…", de: "WIRD ÜBERTRAGEN…", en: "TRANSFERRING…" },
+  "overload.reflexTime": {
+    tr: (s: string) => `Refleks süresi: ${s} sn`,
+    de: (s: string) => `Reaktionszeit: ${s} s`,
+    en: (s: string) => `Reflex time: ${s}s`,
+  },
   "overload.overloaded": { tr: "AŞIRI YÜKLENDİ!", de: "ÜBERLASTET!", en: "OVERLOADED!" },
   "overload.youOverloaded": { tr: "AŞIRI YÜKLENDİN!", de: "DU BIST ÜBERLASTET!", en: "YOU OVERLOADED!" },
   "overload.survivor": { tr: "HAYATTA KALAN ŞAMPİYON", de: "ÜBERLEBENDER CHAMPION", en: "SURVIVING CHAMPION" },
