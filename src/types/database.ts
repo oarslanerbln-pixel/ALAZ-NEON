@@ -93,6 +93,8 @@ export interface Room {
    * donuk kaliyor, misafire hicbir aciklama cikmiyordu.
    */
   host_last_active?: number;
+  /** Bu oyunun gecelik lig puanları dağıtıldı mı (bkz. lib/nightAwards). */
+  night_awarded?: boolean;
   /**
    * Firestore TTL politikasinin baktigi alan — bu tarihten sonra dokuman
    * otomatik siliniyor (bkz. lib/retention.ts ve README). TTL yalnizca bu

@@ -18,6 +18,8 @@ import type { Room, Player } from "../../../types/database";
 import { HostSensorIntro } from "./HostSensorIntro";
 import { HostSensorActive } from "./HostSensorActive";
 import { HostSensorReveal } from "./HostSensorReveal";
+import { finishNightRound, NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
+import { nightPointsForPlayers } from "../../../lib/nightLeague";
 
 export function HostSensorDisplay({
   room,
@@ -31,10 +33,12 @@ export function HostSensorDisplay({
   updatePlayerScore: (playerId: string, score: number) => Promise<void>;
 }) {
   const { venue } = useVenue();
-  const grantSensorRewards = () =>
+  const grantSensorRewards = () => {
     grantGameRewards("individual", players, venue).catch((err) =>
       console.error("[HostSensorDisplay] Ödül dağıtımı başarısız:", err),
     );
+    finishNightRound(room.id, nightPointsForPlayers("individual", players));
+  };
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get("roomId");
   
@@ -160,7 +164,7 @@ export function HostSensorDisplay({
       snapshot.forEach(docSnap => batch.delete(docSnap.ref));
 
       await batch.commit();
-      await updateRoomStatus("lobby", { active_game: "none", current_round: 0 });
+      await updateRoomStatus("lobby", { active_game: "none", current_round: 0, ...NIGHT_ROUND_OPEN });
     } catch (err) {
       console.error("Error resetting sensor game:", err);
     }

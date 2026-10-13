@@ -24,6 +24,8 @@ import { grantGameRewards } from "../../../lib/rewards";
 import { useVenue } from "../../../contexts/VenueContextCore";
 
 import type { Room, Player } from "../../../types/database";
+import { finishNightRound, NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
+import { nightPointsForPlayers } from "../../../lib/nightLeague";
 
 interface VoteStats {
   A: number;
@@ -53,10 +55,12 @@ export function HostQuizDisplay({
   const { t } = useLocale();
   const { venue } = useVenue();
 
-  const grantQuizRewards = () =>
+  const grantQuizRewards = () => {
     grantGameRewards("individual", players, venue).catch((err) =>
       console.error("[HostQuizDisplay] Ödül dağıtımı başarısız:", err),
     );
+    finishNightRound(room.id, nightPointsForPlayers("individual", players));
+  };
 
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get("roomId");
@@ -362,7 +366,7 @@ export function HostQuizDisplay({
     await batch.commit();
     streaksRef.current = {};
     setPlayerStreaks({});
-    await updateRoomStatus("quiz_lobby", { current_round: 0, current_question_index: 0 });
+    await updateRoomStatus("quiz_lobby", { current_round: 0, current_question_index: 0, ...NIGHT_ROUND_OPEN });
   };
 
   // Color scheme mappings for options

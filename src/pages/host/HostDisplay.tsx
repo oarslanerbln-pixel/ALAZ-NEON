@@ -37,6 +37,8 @@ import { DatabaseStatus } from "../../components/DatabaseStatus";
 import { RoomStatusScreen } from "../../components/RoomStatusScreen";
 import { EmojiRain } from "../../components/EmojiRain";
 import { LetterSpinner } from "../../components/LetterSpinner";
+import { finishNightRound, NIGHT_ROUND_OPEN } from "../../lib/nightAwards";
+import { nightPointsForPlayers } from "../../lib/nightLeague";
 import {
   getRoundIntelligence,
   logRoundIntelligence,
@@ -468,6 +470,7 @@ function HostDisplayGame({
       grantGameRewards(room.game_mode, players, venue).catch((err) =>
         console.error("[HostDisplay] Ödül dağıtımı başarısız:", err),
       );
+      finishNightRound(room.id, nightPointsForPlayers(room.game_mode, players));
 
       await updateRoomStatus("finished");
       setGameState("finished");
@@ -489,7 +492,7 @@ function HostDisplayGame({
     setGameHistory([]);
     setAwards(undefined);
     Sentinel.radar.clearRadar(); // Clear bans on reset
-    await updateRoomStatus("lobby", { current_round: 0, active_letter: "?", used_letters: [] });
+    await updateRoomStatus("lobby", { current_round: 0, active_letter: "?", used_letters: [], ...NIGHT_ROUND_OPEN });
     setGameState("lobby");
   };
 
@@ -502,6 +505,7 @@ function HostDisplayGame({
       grantGameRewards(room.game_mode, players, venue).catch((err) =>
         console.error("[HostDisplay] Ödül dağıtımı başarısız:", err),
       );
+      finishNightRound(room.id, nightPointsForPlayers(room.game_mode, players));
       await updateRoomStatus("finished");
       setGameState("finished");
     }

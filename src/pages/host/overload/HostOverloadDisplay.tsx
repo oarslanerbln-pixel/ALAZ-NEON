@@ -9,6 +9,8 @@ import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { grantRewardToPlayers } from "../../../lib/rewards";
 import { useVenue } from "../../../contexts/VenueContextCore";
 import { activePlayers as activePlayersOf } from "../../../lib/liveness";
+import { finishNightRound, NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
+import { placementPointsByOrder } from "../../../lib/nightLeague";
 
 interface HostOverloadDisplayProps {
   room: Room;
@@ -115,15 +117,21 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
   useEffect(() => {
     if (eligiblePlayers.length !== 1 || hasGrantedReward.current) return;
     const champion = eligiblePlayers[0];
-    if (!champion?.uid) return;
+    if (!champion) return;
     hasGrantedReward.current = true;
+    // Gecelik lig: hayatta kalan birinci, sonra en son elenenden geriye.
+    finishNightRound(
+      room.id,
+      placementPointsByOrder([champion.id, ...[...(room.overload_eliminated_ids ?? [])].reverse()], players.map((p) => p.id)),
+    );
+    if (!champion.uid) return;
     grantRewardToPlayers(
       [{ uid: champion.uid, nickname: champion.nickname }],
       venue,
     ).catch((err) =>
       console.error("[HostOverloadDisplay] Ödül dağıtımı başarısız:", err),
     );
-  }, [eligiblePlayers, venue]);
+  }, [eligiblePlayers, venue, room.id, room.overload_eliminated_ids, players]);
 
   return (
     <TVScaleFrame>
@@ -202,7 +210,8 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
                   await updateRoomStatus("playing", {
                     overload_target_id: nextTarget?.id || null,
                     overload_start_time: Date.now(),
-                    overload_eliminated_ids: []
+                    overload_eliminated_ids: [],
+                    ...NIGHT_ROUND_OPEN,
                   });
                 }}
                 onUpdateCategories={async () => {}}

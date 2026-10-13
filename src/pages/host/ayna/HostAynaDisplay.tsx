@@ -11,6 +11,8 @@ import { useLocale } from "../../../hooks/useLocale";
 import type { Player, Room } from "../../../types/database";
 import { advanceAyna, finishAynaSurvey, revealAynaRound, startAynaAfterIntro } from "./aynaActions";
 import { AynaActiveScreen, AynaBackdrop, AynaFinalScreen, AynaIntroScreen, AynaRevealScreen, AynaSurveyScreen } from "./HostAynaScreens";
+import { finishNightRound } from "../../../lib/nightAwards";
+import { placementPointsByScore } from "../../../lib/nightLeague";
 
 interface Props {
   room: Room;
@@ -146,6 +148,14 @@ export function HostAynaDisplay({ room, players, updateRoomStatus }: Props) {
     if (status !== "ayna_reveal") return;
     return scheduleWithRetry(advance, REVEAL_MS);
   }, [status, index, advance]);
+
+  // Gecelik lig: oyun bitince AYNA toplamlarına göre sıra puanı (tek sefer;
+  // nightAwards transaction'ı tekrarları yutar).
+  useEffect(() => {
+    if (status !== "ayna_final") return;
+    const { room: r, players: ps } = latest.current;
+    finishNightRound(r.id, placementPointsByScore(ps.map((p) => ({ id: p.id, score: r.ayna_totals?.[p.id] ?? 0 }))));
+  }, [status]);
 
   const backToLobby = () => updateRoomStatus("night_lobby", { active_game: "none" });
 

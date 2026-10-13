@@ -22,6 +22,7 @@ import { useVenue } from "../../../contexts/VenueContextCore";
 import { AuroraBackdrop } from "../../../components/fx/AuroraBackdrop";
 import { BeamBorder } from "../../../components/fx/BeamBorder";
 import { GridPattern } from "../../../components/fx/GridPattern";
+import { NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
 
 
 
@@ -97,7 +98,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     // Quiz/bomba/sensör kendi intro DURUMLARINI ekranlarında yönettiği için
     // onlarda böyle bir sorun yok.
     let initialStatus: Room["status"] = "lobby";
-    let extraUpdates: Partial<Room> = { active_game: game, ...settings };
+    let extraUpdates: Partial<Room> = { active_game: game, ...settings, ...NIGHT_ROUND_OPEN };
 
     if (game === "quiz") {
       Promise.all([

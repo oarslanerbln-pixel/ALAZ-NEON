@@ -14,7 +14,8 @@ import { grantRewardToPlayers } from "../../../lib/rewards";
 import { useVenue } from "../../../contexts/VenueContextCore";
 import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
-import { totalScoreFields } from "../../../lib/scoreWrites";
+import { finishNightRound, NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
+import { placementPointsByScore } from "../../../lib/nightLeague";
 
 interface Props {
   room: Room;
@@ -134,14 +135,23 @@ export function HostBombDisplay({
       // hayatta kalan tek oyuncudan alıyoruz. İki oyuncu aynı anda
       // elenirse (activePlayers 0'a düşer) kimseye ödül verilmiyor.
       const survivor = activePlayers[0];
+      const survivorScore = (players.length - 1) * 100;
       if (survivor) {
         // Hayatta kalan tek oyuncu hiç elenmeden kazanıyor — podyumda 1.
         // sırada görünmesi için ona da aynı "outlasted rakip sayısı"
         // formülüyle herkesten yüksek skoru veriyoruz.
-        updateDoc(doc(db, "players", survivor.id), totalScoreFields(survivor.total_score, (players.length - 1) * 100)).catch((err) =>
+        updateDoc(doc(db, "players", survivor.id), { total_score: survivorScore }).catch((err) =>
           console.error("[HostBombDisplay] Kazanan skoru yazılamadı:", err),
         );
       }
+      // Gecelik lig: dayanılan rakip sayısına göre sıra (kazananın skoru
+      // henüz snapshot'a yansımadığı için burada elle yerine konuyor).
+      finishNightRound(
+        room.id,
+        placementPointsByScore(
+          players.map((p) => ({ id: p.id, score: p.id === survivor?.id ? survivorScore : p.total_score || 0 })),
+        ),
+      );
       if (survivor?.uid) {
         grantRewardToPlayers(
           [{ uid: survivor.uid, nickname: survivor.nickname }],
@@ -205,6 +215,7 @@ export function HostBombDisplay({
         await updateDoc(doc(db, "rooms", room.id), {
           status: "lobby",
           current_round: 0,
+          ...NIGHT_ROUND_OPEN,
         });
       });
     } catch (err) {
