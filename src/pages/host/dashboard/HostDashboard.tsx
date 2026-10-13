@@ -23,6 +23,7 @@ import { AuroraBackdrop } from "../../../components/fx/AuroraBackdrop";
 import { BeamBorder } from "../../../components/fx/BeamBorder";
 import { GridPattern } from "../../../components/fx/GridPattern";
 import { NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
+import { NightFinale } from "../views/NightFinale";
 import { nightStandings, rankDeltas } from "../../../lib/nightLeague";
 
 
@@ -43,6 +44,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
 
   // Game Setup State
   const [setupGameMode, setSetupGameMode] = useState<GameType | null>(null);
+  const [showFinale, setShowFinale] = useState(false);
 
   // Carousel State
   const [carouselIndex, setCarouselIndex] = useState(0);
@@ -355,9 +357,20 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
             </div>
 
             <div className="flex-1 bg-[#0b0b14]/90 backdrop-blur-3xl rounded-2xl border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.2)] p-4 flex flex-col overflow-hidden max-h-[250px]">
-              <h3 className="text-gray-300 font-black text-sm uppercase tracking-widest mb-4">
-                {t("dashboard.playersCount", players.length)}
-              </h3>
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <h3 className="text-gray-300 font-black text-sm uppercase tracking-widest">
+                  {t("dashboard.playersCount", players.length)}
+                </h3>
+                {/* Gece puanı dağıtılmışsa finale geçilebilir (bkz. NightFinale). */}
+                {players.some((p) => (p.night_score ?? 0) > 0) && (
+                  <button
+                    onClick={() => setShowFinale(true)}
+                    className="rounded-full border border-amber-300/40 bg-amber-300/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200 transition-colors hover:bg-amber-300/20"
+                  >
+                    🏆 {t("finale.open")}
+                  </button>
+                )}
+              </div>
               <div className="flex-1 overflow-y-auto pr-2 space-y-2">
                 {players.length === 0 ? (
                   <div className="text-gray-500 text-sm text-center mt-10">{t("dashboard.waiting")}</div>
@@ -545,6 +558,8 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       </AnimatePresence>
 
       {/* Game Setup Modal */}
+      {showFinale && <NightFinale players={players} onClose={() => setShowFinale(false)} onEndNight={endNight} />}
+
       <GameSettingsModal
         isOpen={!!setupGameMode}
         game={setupGameMode}
