@@ -31,12 +31,14 @@ import { HostPodium } from "./views/HostPodium";
 import { HostAdBreak } from "./views/HostAdBreak";
 import { HostDashboard } from "./dashboard/HostDashboard";
 import { HOST_GAME_DISPLAYS, preloadHostGameDisplays } from "./gameDisplays";
-import { resolveRoutedGame } from "../../lib/gameRouting";
+import { isRetiredGame, resolveRoutedGame } from "../../lib/gameRouting";
 import { HostTutorial } from "./components/HostTutorial";
 import { DatabaseStatus } from "../../components/DatabaseStatus";
 import { RoomStatusScreen } from "../../components/RoomStatusScreen";
 import { EmojiRain } from "../../components/EmojiRain";
 import { LetterSpinner } from "../../components/LetterSpinner";
+import { finishNightRound, NIGHT_ROUND_OPEN } from "../../lib/nightAwards";
+import { nightPointsForPlayers } from "../../lib/nightLeague";
 import {
   getRoundIntelligence,
   logRoundIntelligence,
@@ -85,7 +87,7 @@ export function HostDisplay() {
     );
   }
 
-  if (room.status === "night_lobby" || room.active_game === "none") {
+  if (room.status === "night_lobby" || room.active_game === "none" || isRetiredGame(room.active_game)) {
     return (
       <HostDashboard
         room={room}
@@ -208,7 +210,7 @@ function HostDisplayGame({
     setIsAnalyzing(true);
 
     await updateRoomStatus("review");
-    SoundManager.getInstance().playSFX(sounds.SIREN);
+    SoundManager.getInstance().playSFX(sounds.CINEMATIC_BOOM, 0.6);
 
     // Give players 2.5 seconds to auto-submit their final answers
     await new Promise((resolve) => setTimeout(resolve, 2500));
@@ -468,6 +470,7 @@ function HostDisplayGame({
       grantGameRewards(room.game_mode, players, venue).catch((err) =>
         console.error("[HostDisplay] Ödül dağıtımı başarısız:", err),
       );
+      finishNightRound(room.id, nightPointsForPlayers(room.game_mode, players));
 
       await updateRoomStatus("finished");
       setGameState("finished");
@@ -489,7 +492,7 @@ function HostDisplayGame({
     setGameHistory([]);
     setAwards(undefined);
     Sentinel.radar.clearRadar(); // Clear bans on reset
-    await updateRoomStatus("lobby", { current_round: 0, active_letter: "?", used_letters: [] });
+    await updateRoomStatus("lobby", { current_round: 0, active_letter: "?", used_letters: [], ...NIGHT_ROUND_OPEN });
     setGameState("lobby");
   };
 
@@ -502,6 +505,7 @@ function HostDisplayGame({
       grantGameRewards(room.game_mode, players, venue).catch((err) =>
         console.error("[HostDisplay] Ödül dağıtımı başarısız:", err),
       );
+      finishNightRound(room.id, nightPointsForPlayers(room.game_mode, players));
       await updateRoomStatus("finished");
       setGameState("finished");
     }

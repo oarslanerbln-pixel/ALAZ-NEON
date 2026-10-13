@@ -9,6 +9,8 @@ import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { grantRewardToPlayers } from "../../../lib/rewards";
 import { useVenue } from "../../../contexts/VenueContextCore";
 import { activePlayers as activePlayersOf } from "../../../lib/liveness";
+import { finishNightRound, NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
+import { placementPointsByOrder } from "../../../lib/nightLeague";
 
 interface HostOverloadDisplayProps {
   room: Room;
@@ -115,19 +117,28 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
   useEffect(() => {
     if (eligiblePlayers.length !== 1 || hasGrantedReward.current) return;
     const champion = eligiblePlayers[0];
-    if (!champion?.uid) return;
+    if (!champion) return;
     hasGrantedReward.current = true;
+    // Gecelik lig: hayatta kalan birinci, sonra en son elenenden geriye.
+    finishNightRound(
+      room.id,
+      placementPointsByOrder([champion.id, ...[...(room.overload_eliminated_ids ?? [])].reverse()], players.map((p) => p.id)),
+    );
+    if (!champion.uid) return;
     grantRewardToPlayers(
       [{ uid: champion.uid, nickname: champion.nickname }],
       venue,
     ).catch((err) =>
       console.error("[HostOverloadDisplay] Ödül dağıtımı başarısız:", err),
     );
-  }, [eligiblePlayers, venue]);
+  }, [eligiblePlayers, venue, room.id, room.overload_eliminated_ids, players]);
 
   return (
     <TVScaleFrame>
-      <div className="relative w-full h-full bg-[#05000a] overflow-hidden flex flex-col items-center justify-center font-sans">
+      {/* Dikey sütun: HostHeader üstte, oyun kalan alanda ortalı. Eskiden kök
+          "items-center justify-center" olduğu için başlık ekranın ortasına
+          itiliyor, oyuncu rozetleri de onunla çakışıyordu. */}
+      <div className="relative w-full h-full bg-[#05000a] overflow-hidden flex flex-col font-sans">
         <HostHeader 
           room={room} 
           onEndGameEarly={() => updateRoomStatus("finished")} 
@@ -140,15 +151,16 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
         {/* Critical Voltage Flash */}
         {timeLeft <= 3 && room.status === "playing" && !isExploding && (
           <motion.div 
-            animate={{ opacity: [0, 0.4, 0] }} 
-            transition={{ repeat: Infinity, duration: timeLeft <= 1.5 ? 0.25 : 0.5 }} 
+            animate={{ opacity: [0, 0.3, 0] }}
+            // Saniyede en fazla 2 parlama: WCAG 2.3.1 eşiği 3/sn (ışığa duyarlı epilepsi).
+            transition={{ repeat: Infinity, duration: 0.5 }}
             className="absolute inset-0 bg-red-600 pointer-events-none z-10 mix-blend-screen"
           />
         )}
 
         {/* TOP STATUS BAR: Active Players Badges */}
         {room.status !== "lobby" && room.status !== "finished" && (
-          <div className="absolute top-24 left-8 right-8 flex justify-between items-center z-20">
+          <div className="relative w-full px-8 flex justify-between items-start gap-8 z-20">
             <div className="flex items-center gap-2">
               <span className="text-2xl animate-pulse">⚡</span>
               <span className="text-cyan-400 font-mono font-black tracking-[0.3em] uppercase text-xl">
@@ -156,7 +168,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
               </span>
             </div>
             
-            <div className="flex gap-2 flex-wrap max-w-xl justify-end">
+            <div className="flex gap-2 flex-wrap max-w-4xl justify-end">
               {players.map(p => {
                 const isEliminated = (room.overload_eliminated_ids || []).includes(p.id);
                 const isCurrent = p.id === targetPlayer?.id;
@@ -198,7 +210,8 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
                   await updateRoomStatus("playing", {
                     overload_target_id: nextTarget?.id || null,
                     overload_start_time: Date.now(),
-                    overload_eliminated_ids: []
+                    overload_eliminated_ids: [],
+                    ...NIGHT_ROUND_OPEN,
                   });
                 }}
                 onUpdateCategories={async () => {}}
@@ -209,14 +222,14 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
               key="finished"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="z-10 flex flex-col items-center justify-center text-center"
+              className="relative z-10 flex-1 flex flex-col items-center justify-center text-center"
             >
               <span className="text-8xl mb-4 animate-bounce">👑</span>
               <h1 className="text-4xl text-cyan-400 font-mono font-black uppercase tracking-widest mb-2">
                 {t("overload.survivor")}
               </h1>
               <h2 className="text-7xl md:text-8xl text-white font-black uppercase drop-shadow-[0_0_40px_rgba(0,255,255,0.9)] mb-10">
-                {eligiblePlayers[0]?.nickname || "KAZANAN"}
+                {eligiblePlayers[0]?.nickname || t("overload.champion")}
               </h2>
               <button
                 onClick={() => updateRoomStatus("lobby", { active_game: "none", overload_eliminated_ids: [], overload_target_id: null })}
@@ -245,7 +258,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="relative z-10 flex flex-col items-center justify-center mt-12"
+              className="relative z-10 flex-1 flex flex-col items-center justify-center"
             >
               {/* Active Target Banner */}
               {targetPlayer ? (
@@ -264,7 +277,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
               ) : (
                 <div className="flex flex-col items-center text-center mb-6">
                   <h1 className="text-5xl md:text-6xl font-black text-amber-400 uppercase tracking-widest animate-pulse">
-                    ⚡ AKTARILIYOR...
+                    ⚡ {t("overload.transferring")}
                   </h1>
                 </div>
               )}
@@ -292,9 +305,11 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
                 </div>
               </div>
               
-              <div className="mt-4 px-6 py-2 rounded-full border border-white/10 bg-black/50 text-cyan-300 font-mono text-sm uppercase tracking-widest">
-                REFLEKS SÜRESİ: {room.overload_time_allowed?.toFixed(1)}S
-              </div>
+              {room.overload_time_allowed != null && (
+                <div className="mt-4 px-6 py-2 rounded-full border border-white/10 bg-black/50 text-cyan-300 font-mono text-lg uppercase tracking-widest tabular-nums">
+                  {t("overload.reflexTime", room.overload_time_allowed.toFixed(1))}
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

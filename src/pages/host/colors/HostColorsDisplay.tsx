@@ -11,6 +11,9 @@ import { useVenue } from "../../../contexts/VenueContextCore";
 import { doc, writeBatch } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { KineticSpark } from "../../../components/KineticSpark";
+import { pointsFields } from "../../../lib/scoreWrites";
+import { finishNightRound } from "../../../lib/nightAwards";
+import { teamPoints } from "../../../lib/nightLeague";
 
 interface Props {
   room: Room;
@@ -97,6 +100,8 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
         
         const assignments = room.colors_team_assignments || {};
         const winners = activePlayers.filter(p => assignments[p.id] === winningTeam);
+        // Gecelik lig: kazanan takımın her üyesi takım puanı, diğerleri katılım.
+        finishNightRound(room.id, teamPoints(winners.map((p) => p.id), activePlayers.map((p) => p.id)));
         
         if (winners.length > 0) {
           const rewardRecipients = winners
@@ -112,7 +117,7 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
           const rewardBatch = writeBatch(db);
           winners.forEach(p => {
             const pRef = doc(db, "players", p.id);
-            rewardBatch.update(pRef, { total_score: (p.total_score || 0) + 150 });
+            rewardBatch.update(pRef, pointsFields(150));
           });
           rewardBatch.commit().catch(err =>
             console.error("Error updating winner scores:", err)
@@ -122,7 +127,7 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
         updateRoomStatus("colors_reveal");
       }
     }
-  }, [redPercentage, room.status, room.colors_team_assignments, activePlayers, venue, updateRoomStatus]);
+  }, [redPercentage, room.status, room.id, room.colors_team_assignments, activePlayers, venue, updateRoomStatus]);
 
   const handleEndGameEarly = () => {
     updateRoomStatus("lobby", { active_game: "none" });

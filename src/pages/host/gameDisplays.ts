@@ -25,7 +25,6 @@ const HOST_GAME_LOADERS: Record<RoutedGame, Loader> = {
   overload: () => import("./overload/HostOverloadDisplay").then((m) => ({ default: m.HostOverloadDisplay })),
   echo: () => import("./echo/HostEchoDisplay").then((m) => ({ default: m.HostEchoDisplay })),
   pulse: () => import("./pulse/HostPulseDisplay").then((m) => ({ default: m.HostPulseDisplay })),
-  spectrum: () => import("./spectrum/HostSpectrumDisplay").then((m) => ({ default: m.HostSpectrumDisplay })),
   colors: () => import("./colors/HostColorsDisplay").then((m) => ({ default: m.HostColorsDisplay })),
   vault: () => import("./vault/HostVaultDisplay").then((m) => ({ default: m.HostVaultDisplay })),
   unity: () => import("./unity/HostUnityDisplay").then((m) => ({ default: m.HostUnityDisplay })),

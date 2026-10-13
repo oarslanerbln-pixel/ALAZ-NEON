@@ -9,6 +9,8 @@ import { containsProfanity } from "../../../lib/profanity";
 import { looksLikeGibberish } from "../../../lib/wordValidation";
 import { useLocale } from "../../../hooks/useLocale";
 import { haptics } from "../../../lib/haptics";
+import { activePlayers } from "../../../lib/liveness";
+import { bombLives } from "../../../lib/bomb";
 import { gameTitle } from "../../../lib/gameCatalog";
 import { PlayerStageScreen } from "../components/PlayerStageScreen";
 
@@ -80,17 +82,15 @@ export function PlayerBombController({ room, player }: Props) {
         allPlayers.push({ id: doc.id, ...doc.data() } as Player);
       });
 
-      const now = Date.now();
-      const activePlayers = allPlayers.filter(p => 
-        p.id !== player.id && 
-        (p.lives === undefined || p.lives > 0) &&
-        (p.last_active ? (now - p.last_active < 30000) : true)
-      );
-      
+      // Önce canı olan DİĞER oyuncular, sonra canlılık süzgeci. Eskiden
+      // süzgeç kimseyi bırakmazsa (telefon saati ileri, herkes "pasif"
+      // görünüyor) bomba atanın KENDİSİNE geri dönüyordu. activePlayers
+      // hiç canlı yoksa listenin tamamını döndürüyor; bomba kendine dönmez.
+      const candidates = activePlayers(allPlayers.filter((p) => p.id !== player.id && bombLives(p) > 0));
+
       let nextPlayerId = player.id;
-      if (activePlayers.length > 0) {
-        const randomTarget = activePlayers[Math.floor(Math.random() * activePlayers.length)];
-        nextPlayerId = randomTarget.id;
+      if (candidates.length > 0) {
+        nextPlayerId = candidates[Math.floor(Math.random() * candidates.length)].id;
       }
 
       SoundManager.getInstance().playSFX(sounds.SUCCESS);

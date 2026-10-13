@@ -184,6 +184,17 @@ const translations = {
     en: (rounds: number) =>
       `The game is starting. This exciting challenge will last ${rounds} rounds.`,
   },
+  "lobby.nightTitle": { tr: "Gecenin sıralaması", de: "Rangliste des Abends", en: "Tonight's standings" },
+  "lobby.nightRank": {
+    tr: (r: number, n: number) => `${r}. / ${n}`,
+    de: (r: number, n: number) => `Platz ${r} / ${n}`,
+    en: (r: number, n: number) => `#${r} of ${n}`,
+  },
+  "lobby.nightPoints": {
+    tr: (n: number) => `${n} gece puanı`,
+    de: (n: number) => `${n} Nachtpunkte`,
+    en: (n: number) => `${n} night points`,
+  },
   "lobby.roomCode": { tr: "ODA GİRİŞ KODU", de: "RAUM-CODE", en: "ROOM CODE" },
   "lobby.connect": { tr: "BAĞLAN", de: "VERBINDEN", en: "CONNECT" },
   "lobby.categories": { tr: "KATEGORİLER", de: "KATEGORIEN", en: "CATEGORIES" },
@@ -316,6 +327,11 @@ const translations = {
   // ═══════════════════════════════════════════
   // PODIUM
   // ═══════════════════════════════════════════
+  "podium.nightPoints": {
+    tr: (n: number) => `+${n} gece puanı`,
+    de: (n: number) => `+${n} Nachtpunkte`,
+    en: (n: number) => `+${n} night points`,
+  },
   "podium.title": { tr: "ŞAMPİYONLAR", de: "CHAMPIONS", en: "CHAMPIONS" },
   "podium.awardsTitle": { tr: "OYUNUN EN'LERİ", de: "DIE BESTEN DES SPIELS", en: "BEST OF THE GAME" },
   "podium.creativeTitle": { tr: "MİTİK YARATICI", de: "MYTHISCHER KREATIVER", en: "MYTHIC CREATOR" },
@@ -552,13 +568,6 @@ const translations = {
   // ═══════════════════════════════════════════
   // AYNA (dünyayı ve salonu tahmin et — bkz. lib/ayna.ts)
   // ═══════════════════════════════════════════
-  "spectrum.youWon": { tr: "KAZANDINIZ!", de: "GEWONNEN!", en: "YOU WON!" },
-  "spectrum.tap": { tr: "BAS!", de: "TIPP!", en: "TAP!" },
-  "spectrum.power": {
-    tr: (n: number) => `+${n} güç`,
-    de: (n: number) => `+${n} Power`,
-    en: (n: number) => `+${n} power`,
-  },
   "ayna.title": { tr: "AYNA", de: "SPIEGEL", en: "MIRROR" },
   "ayna.tagline": {
     tr: "Dünyayı ne kadar tanıyorsun? Peki bu salonu?",
@@ -949,11 +958,6 @@ const translations = {
     de: "Der gemeinsame Rhythmus-Test: Alle tippen genau in dem Moment, in dem der Kern explodiert.",
     en: "A shared rhythm test: everyone taps at the exact moment the core bursts.",
   },
-  "dashboard.modeSpectrumDesc": {
-    tr: "Takımlar rastgele kurulur, 30 saniyede en çok dokunan renk ekranı boyar.",
-    de: "Die Teams werden zufällig gelost — wer in 30 Sekunden am meisten tippt, färbt den Bildschirm.",
-    en: "Teams are drawn at random; whoever taps most in 30 seconds paints the screen.",
-  },
   "dashboard.modeBarDesc": {
     tr: "Tarifi ezberle, malzemeleri doğru sırayla dök. En çok tamamlayan barista kazanır.",
     de: "Rezept merken, Zutaten in der richtigen Reihenfolge eingießen. Wer am meisten schafft, gewinnt.",
@@ -974,7 +978,7 @@ const translations = {
   // OYUN MODLARI — misafir telefonu ve TV ekranı
   //
   // Bu modlar (çarkıfelek, overload, echo, pulse, unity, kasa, bar,
-  // spectrum, kablo) sonradan eklenirken metinleri doğrudan bileşenlerin
+  // kablo) sonradan eklenirken metinleri doğrudan bileşenlerin
   // içine sabit Türkçe olarak yazılmıştı. Varsayılan dil "de" ve asıl pazar
   // Berlin olduğu için Alman misafir kendi telefonunda Türkçe metin
   // görüyordu. İlk modlar (quiz/sensör/bomba) baştan çevrilmişti; bu blok
@@ -1001,6 +1005,12 @@ const translations = {
   // ── Overload ──
   "overload.title": { tr: "AŞIRI YÜKLEME", de: "ÜBERLASTUNG", en: "OVERLOAD" },
   "overload.whoHasVoltage": { tr: "VOLTAJ KİMDE:", de: "WER HAT DIE SPANNUNG:", en: "WHO HOLDS THE CHARGE:" },
+  "overload.transferring": { tr: "AKTARILIYOR…", de: "WIRD ÜBERTRAGEN…", en: "TRANSFERRING…" },
+  "overload.reflexTime": {
+    tr: (s: string) => `Refleks süresi: ${s} sn`,
+    de: (s: string) => `Reaktionszeit: ${s} s`,
+    en: (s: string) => `Reflex time: ${s}s`,
+  },
   "overload.overloaded": { tr: "AŞIRI YÜKLENDİ!", de: "ÜBERLASTET!", en: "OVERLOADED!" },
   "overload.youOverloaded": { tr: "AŞIRI YÜKLENDİN!", de: "DU BIST ÜBERLASTET!", en: "YOU OVERLOADED!" },
   "overload.survivor": { tr: "HAYATTA KALAN ŞAMPİYON", de: "ÜBERLEBENDER CHAMPION", en: "SURVIVING CHAMPION" },
@@ -1116,16 +1126,10 @@ const translations = {
   "bar.wrongDrink": { tr: "YANLIŞ İÇECEK!", de: "FALSCHES GETRÄNK!", en: "WRONG DRINK!" },
   "colors.yourTapCount": { tr: "SENİN TIK SAYIN", de: "DEINE TIPPS", en: "YOUR TAPS" },
   "overload.youAreSafe": { tr: "GÜVENDESİN", de: "DU BIST SICHER", en: "YOU'RE SAFE" },
-  "spectrum.youLostCaps": { tr: "KAYBETTİNİZ", de: "IHR HABT VERLOREN", en: "YOU LOST" },
   "bar.ing.limeShort": { tr: "LİME", de: "LIMETTE", en: "LIME" },
   "bar.ing.orangeShort": { tr: "PORTAKAL", de: "ORANGE", en: "ORANGE" },
 
-  // ── Spectrum / Neon Savaşları ──
-  "spectrum.takeScreen": { tr: "EKRANI ELE GEÇİR", de: "EROBERT DEN BILDSCHIRM", en: "TAKE THE SCREEN" },
-  "spectrum.champion": { tr: "ŞAMPİYON", de: "CHAMPION", en: "CHAMPION" },
-  "spectrum.teamSet": { tr: "TAKIMIN BELLİ OLDU", de: "DEIN TEAM STEHT FEST", en: "YOUR TEAM IS SET" },
-  "spectrum.youLost": { tr: "KAYBETTİNİZ", de: "IHR HABT VERLOREN", en: "YOU LOST" },
-  "spectrum.waitTV": { tr: "TV Ekranını Bekle", de: "Warte auf den TV-Bildschirm", en: "Wait for the TV screen" },
+  // ── Neon Savaşları (Colors) ──
   "colors.teamAssigned": { tr: "TAKIMIN BELİRLENDİ", de: "DEIN TEAM WURDE ZUGETEILT", en: "YOUR TEAM IS ASSIGNED" },
   "colors.tapFast": { tr: "Tüm parmaklarınla olabildiğince hızlı tıkla!", de: "Tippe mit allen Fingern so schnell du kannst!", en: "Tap as fast as you can with every finger!" },
   "colors.hostHint": { tr: "TAKIMIN İÇİN EN HIZLI SEN TIKLA!", de: "TIPP AM SCHNELLSTEN FÜR DEIN TEAM!", en: "TAP FASTEST FOR YOUR TEAM!" },
@@ -1375,6 +1379,7 @@ const translations = {
     de: "Schau zu, wie die anderen hochgehen!",
     en: "Watch the others blow up!",
   },
+  "bomb.changingHands": { tr: "Bomba yeni sahibine geçiyor…", de: "Die Bombe wechselt den Besitzer…", en: "The bomb is changing hands…" },
   "bomb.preparing": { tr: "BOMBA HAZIRLANIYOR", de: "BOMBE WIRD VORBEREITET", en: "PREPARING BOMB" },
   "bomb.explodedShort": { tr: "PATLADI!", de: "EXPLODIERT!", en: "EXPLODED!" },
   "bomb.watchMainScreen": {
@@ -1429,40 +1434,18 @@ const translations = {
   // ═══════════════════════════════════════════
   // INTRO CINEMATICS (HostIntro + HostQuizIntro ortak "hacker" açılışı)
   // ═══════════════════════════════════════════
-  "intro.systemCrash": { tr: "SİSTEM ÇÖKÜŞÜ", de: "SYSTEMABSTURZ", en: "SYSTEM CRASH" },
-  "intro.securityBreach": {
-    tr: "GÜVENLİK PROTOKOLÜ İHLAL EDİLDİ...",
-    de: "SICHERHEITSPROTOKOLL VERLETZT...",
-    en: "SECURITY PROTOCOL BREACHED...",
-  },
-  "intro.systemHacked": { tr: "SİSTEM HACKLENDİ", de: "SYSTEM GEHACKT", en: "SYSTEM HACKED" },
-  "intro.arena.downloadLabel": {
-    tr: "OYUNCU VERİSİ İNDİRİLİYOR...",
-    de: "SPIELERDATEN WERDEN GELADEN...",
-    en: "DOWNLOADING PLAYER NEURAL DATA...",
-  },
-  "intro.arena.mainframeLabel": {
-    tr: "HENGAME ARENA ANA SİSTEMİNE BAĞLANILIYOR...",
-    de: "VERBINDUNG ZUM HENGAME-ARENA-MAINFRAME...",
-    en: "CONNECTING TO HENGAME ARENA MAINFRAME...",
-  },
-  "intro.arena.connecting": {
-    tr: "ZİHİN AĞA BAĞLANIYOR...",
-    de: "GEIST WIRD MIT NETZWERK VERBUNDEN...",
-    en: "CONNECTING MIND TO NETWORK...",
-  },
+  "intro.howToPlay": { tr: "NASIL OYNANIR", de: "SO WIRD GESPIELT", en: "HOW TO PLAY" },
+  "intro.phonesReady": { tr: "TELEFONLAR HAZIR", de: "HANDYS BEREIT", en: "PHONES READY" },
+  "intro.quiz.titleShort": { tr: "QUIZ", de: "QUIZ", en: "QUIZ" },
+  "intro.quiz.step1": { tr: "Soru TV'de, şıklar telefonunda", de: "Frage auf dem TV, Antworten auf dem Handy", en: "Question on the TV, answers on your phone" },
+  "intro.quiz.step2": { tr: "Hızlı cevap, daha çok puan", de: "Schnell antworten, mehr Punkte", en: "Answer fast, score more" },
+  "intro.quiz.step3": { tr: "En çok puanı toplayan kazanır", de: "Wer die meisten Punkte hat, gewinnt", en: "Most points wins" },
+  "intro.arena.titleShort": { tr: "ARENA", de: "ARENA", en: "ARENA" },
+  "intro.arena.step1": { tr: "Her turda bir harf çıkar", de: "Jede Runde bringt einen Buchstaben", en: "Each round reveals a letter" },
+  "intro.arena.step2": { tr: "Her kategoriye o harfle cevap yaz", de: "Schreib zu jeder Kategorie eine Antwort mit diesem Buchstaben", en: "Answer every category with that letter" },
+  "intro.arena.step3": { tr: "Kimsenin yazmadığı cevap daha çok puan getirir", de: "Einzigartige Antworten bringen mehr Punkte", en: "Unique answers score more" },
   "intro.arena.title": { tr: "HENGAME ARENA", de: "HENGAME ARENA", en: "HENGAME ARENA" },
   "intro.arena.subtitle": { tr: "ATEŞ SERBEST", de: "FEUER FREI", en: "FIRE AT WILL" },
-  "intro.quiz.downloadLabel": {
-    tr: "BİLGİ YARIŞMASI VERİSİ İNDİRİLİYOR...",
-    de: "QUIZDATEN WERDEN GELADEN...",
-    en: "DOWNLOADING TRIVIA DATA...",
-  },
-  "intro.quiz.mainframeLabel": {
-    tr: "HENGAME QUIZ ANA SİSTEMİNE BAĞLANILIYOR...",
-    de: "VERBINDUNG ZUM HENGAME-QUIZ-MAINFRAME...",
-    en: "CONNECTING TO HENGAME QUIZ MAINFRAME...",
-  },
   "intro.quiz.title": { tr: "HENGAME QUIZ", de: "HENGAME QUIZ", en: "HENGAME QUIZ" },
   "intro.quiz.subtitle": { tr: "ZİHİNLER ÇARPIŞIYOR", de: "KÖPFE PRALLEN AUFEINANDER", en: "MINDS COLLIDE" },
 
@@ -1549,6 +1532,30 @@ const translations = {
   "host.redTeam": { tr: "Kırmızı Takım", de: "Team Rot", en: "Red Team" },
   "host.blueTeam": { tr: "Mavi Takım", de: "Team Blau", en: "Blue Team" },
   "host.participation": { tr: "Katılım", de: "Teilnahme", en: "Participation" },
+  "gameCategory.knowledge": { tr: "Bilgi", de: "Wissen", en: "Knowledge" },
+  "gameCategory.reflex": { tr: "Refleks", de: "Reflex", en: "Reflex" },
+  "gameCategory.team": { tr: "Takım", de: "Team", en: "Team" },
+  "gameCategory.social": { tr: "Sosyal", de: "Sozial", en: "Social" },
+  "gameCategory.reward": { tr: "Ödül", de: "Preis", en: "Prize" },
+  "dashboard.rankUp": {
+    tr: (n: number) => `${n} sıra yükseldi`,
+    de: (n: number) => `${n} Plätze aufgestiegen`,
+    en: (n: number) => `Up ${n} places`,
+  },
+  "dashboard.rankDown": {
+    tr: (n: number) => `${n} sıra düştü`,
+    de: (n: number) => `${n} Plätze abgerutscht`,
+    en: (n: number) => `Down ${n} places`,
+  },
+  "dashboard.step1": { tr: "ADIM 1", de: "SCHRITT 1", en: "STEP 1" },
+  "dashboard.joinTitle": { tr: "Oyuna katıl", de: "Spiel beitreten", en: "Join the game" },
+  "dashboard.joinBody": {
+    tr: "Telefonunun kamerasıyla QR kodu okut ya da oda kodunu gir.",
+    de: "Scanne den QR-Code mit deiner Handykamera oder gib den Raum-Code ein.",
+    en: "Scan the QR code with your phone camera or enter the room code.",
+  },
+  "dashboard.kioskStart": { tr: "Kiosk modunu başlat", de: "Kiosk-Modus starten", en: "Start kiosk mode" },
+  "dashboard.kioskExit": { tr: "Çıkmak için ekrana dokunun", de: "Zum Beenden auf den Bildschirm tippen", en: "Tap the screen to exit" },
   "host.step2": { tr: "ADIM 2: ", de: "SCHRITT 2: ", en: "STEP 2: " },
   "host.selectGame": { tr: "OYUN SEÇ", de: "SPIEL WÄHLEN", en: "SELECT GAME" },
   "host.joinGame": { tr: "Oyuna Katıl", de: "Spiel Beitreten", en: "Join Game" },
@@ -1745,11 +1752,9 @@ const translations = {
   "colors.startGame": { tr: "SAVAŞI BAŞLAT", de: "KRIEG STARTEN", en: "START WAR" },
   "colors.endGame": { tr: "OYUNU BİTİR VE LOBİYE DÖN", de: "SPIEL BEENDEN & ZUR LOBBY", en: "END GAME & RETURN TO LOBBY" },
   
-  // SPECTRUM
-  "spectrum.results": { tr: "Sonuçlar...", de: "Ergebnisse...", en: "Results..." },
-  "spectrum.redTeam": { tr: "KIRMIZI TAKIM", de: "TEAM ROT", en: "RED TEAM" },
-  "spectrum.blueTeam": { tr: "MAVİ TAKIM", de: "TEAM BLAU", en: "BLUE TEAM" },
-  "spectrum.tie": { tr: "BERABERE", de: "UNENTSCHIEDEN", en: "TIE" },
+  // Takım adları (Colors ve takım modları ortak)
+  "team.red": { tr: "KIRMIZI TAKIM", de: "TEAM ROT", en: "RED TEAM" },
+  "team.blue": { tr: "MAVİ TAKIM", de: "TEAM BLAU", en: "BLUE TEAM" },
 
   // ═══════════════════════════════════════════
   // GAME SETTINGS MODAL (HIGH READABILITY & CLARITY)

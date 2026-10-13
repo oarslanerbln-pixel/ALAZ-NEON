@@ -4,8 +4,24 @@ import type { NeonIcon } from "../components/NeonIcon";
 import type { GameType } from "../types/database";
 import type { TranslationKey } from "./i18n";
 
+/**
+ * Oyunun türü — dashboard karuselinde rozet olarak görünür; host gece
+ * akışını (ısın → zirve → nefes → final) kartlardan okuyabilsin.
+ * Bkz. docs/game-design-review.md §3.
+ */
+export type GameCategory = "knowledge" | "reflex" | "team" | "social" | "reward";
+
+export const GAME_CATEGORY_KEY = {
+  knowledge: "gameCategory.knowledge",
+  reflex: "gameCategory.reflex",
+  team: "gameCategory.team",
+  social: "gameCategory.social",
+  reward: "gameCategory.reward",
+} as const satisfies Record<GameCategory, TranslationKey>;
+
 export interface GameCard {
   id: GameType;
+  category: GameCategory;
   titlePrefix: string;
   titleHighlight: string;
   gradientText: string;
@@ -24,7 +40,7 @@ export interface GameCard {
  *
  * `id` alani `GameType` ile birebir ortusmeli: HostDisplay ve PlayerGame
  * yonlendirmesi bu degere bakiyor, dolayisiyla burada karti olmayan bir mod
- * uygulamada hicbir sekilde baslatilamaz. Echo, Pulse, Spectrum, Bar ve Kablo
+ * uygulamada hicbir sekilde baslatilamaz. Echo, Pulse, Bar ve Kablo
  * tam olarak bu yuzden uzun sure yazilmis ama erisilemez kaldi; dosyanin
  * sonundaki exhaustiveness kontrolu ayni hatayi derleme zamaninda yakaliyor.
  */
@@ -32,6 +48,7 @@ export interface GameCard {
 export const GAME_CARDS = [
   {
     id: "scattegories",
+    category: "knowledge",
     titlePrefix: "HENGAME",
     titleHighlight: "ARENA",
     gradientText: "from-alaz-orange to-yellow-500 drop-shadow-[0_0_10px_rgba(255,85,0,0.3)]",
@@ -46,6 +63,7 @@ export const GAME_CARDS = [
   },
   {
     id: "quiz",
+    category: "knowledge",
     titlePrefix: "HENGAME",
     titleHighlight: "QUIZ",
     gradientText: "from-neon-blue to-blue-400 drop-shadow-[0_0_10px_rgba(0,229,255,0.3)]",
@@ -60,6 +78,7 @@ export const GAME_CARDS = [
   },
   {
     id: "bomb",
+    category: "reflex",
     titlePrefix: "HENGAME",
     titleHighlight: "BOMB",
     gradientText: "from-red-500 to-orange-500 drop-shadow-[0_0_10px_rgba(255,0,0,0.3)]",
@@ -74,6 +93,7 @@ export const GAME_CARDS = [
   },
   {
     id: "sensor",
+    category: "reflex",
     titlePrefix: "HENGAME",
     titleHighlight: "SENSÖR",
     gradientText: "from-neon-pink to-purple-500 drop-shadow-[0_0_10px_rgba(255,0,255,0.3)]",
@@ -88,6 +108,7 @@ export const GAME_CARDS = [
   },
   {
     id: "overload",
+    category: "reflex",
     titlePrefix: "NEON",
     titleHighlight: "OVERLOAD",
     gradientText: "from-cyan-400 to-purple-500 drop-shadow-[0_0_10px_rgba(0,255,255,0.3)]",
@@ -102,6 +123,7 @@ export const GAME_CARDS = [
   },
   {
     id: "colors",
+    category: "team",
     titlePrefix: "NEON",
     titleHighlight: "SAVAŞLARI",
     gradientText: "from-purple-400 to-pink-500 drop-shadow-[0_0_10px_rgba(168,85,247,0.3)]",
@@ -116,6 +138,7 @@ export const GAME_CARDS = [
   },
   {
     id: "wheel",
+    category: "reward",
     titlePrefix: "HENGAME",
     titleHighlight: "ÇARK",
     gradientText: "from-cyber-yellow to-alaz-orange drop-shadow-[0_0_10px_rgba(255,215,0,0.3)]",
@@ -130,6 +153,7 @@ export const GAME_CARDS = [
   },
   {
     id: "vault",
+    category: "knowledge",
     titlePrefix: "NEON",
     titleHighlight: "ŞİFRE",
     gradientText: "from-emerald-400 to-teal-500 drop-shadow-[0_0_10px_rgba(16,185,129,0.3)]",
@@ -144,6 +168,7 @@ export const GAME_CARDS = [
   },
   {
     id: "unity",
+    category: "team",
     titlePrefix: "NEON",
     titleHighlight: "BİRLİK",
     gradientText: "from-amber-400 to-orange-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.3)]",
@@ -158,6 +183,7 @@ export const GAME_CARDS = [
   },
   {
     id: "echo",
+    category: "social",
     titlePrefix: "HENGAME",
     titleHighlight: "ECHO",
     gradientText: "from-indigo-400 to-violet-500 drop-shadow-[0_0_10px_rgba(99,102,241,0.3)]",
@@ -172,6 +198,7 @@ export const GAME_CARDS = [
   },
   {
     id: "pulse",
+    category: "team",
     titlePrefix: "NEON",
     titleHighlight: "PULSE",
     gradientText: "from-neon-blue to-cyan-300 drop-shadow-[0_0_10px_rgba(0,243,255,0.3)]",
@@ -185,21 +212,8 @@ export const GAME_CARDS = [
     borderAccent: "hover:border-neon-blue/60"
   },
   {
-    id: "spectrum",
-    titlePrefix: "NEON",
-    titleHighlight: "SPEKTRUM",
-    gradientText: "from-rose-400 to-sky-400 drop-shadow-[0_0_10px_rgba(244,63,94,0.3)]",
-    shadowColor: "rgba(244,63,94,0.3)",
-    icon: "users",
-    iconColor: "pink",
-    descKey: "dashboard.modeSpectrumDesc",
-    bgAccent: "bg-rose-500/20",
-    hoverBgAccent: "group-hover:bg-rose-500/40",
-    iconAccent: "bg-rose-500/10 border-rose-500/40",
-    borderAccent: "hover:border-rose-500/60"
-  },
-  {
     id: "bar",
+    category: "reflex",
     titlePrefix: "NEON",
     titleHighlight: "BAR",
     gradientText: "from-pink-400 to-fuchsia-500 drop-shadow-[0_0_10px_rgba(236,72,153,0.3)]",
@@ -214,6 +228,7 @@ export const GAME_CARDS = [
   },
   {
     id: "kablo",
+    category: "team",
     titlePrefix: "NEON",
     titleHighlight: "KABLO",
     gradientText: "from-yellow-400 to-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.3)]",
@@ -228,6 +243,7 @@ export const GAME_CARDS = [
   },
   {
     id: "ayna",
+    category: "social",
     titlePrefix: "HENGAME",
     titleHighlight: "AYNA",
     gradientText: "from-cyan-300 via-sky-300 to-violet-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.35)]",

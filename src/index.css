@@ -915,6 +915,38 @@
   will-change: transform;
 }
 
+/* ── fx katmanı (src/components/fx) — yalnızca transform animasyonu ──────── */
+.fx-beam {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 250%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%) rotate(0deg);
+  animation: fx-beam-spin 6s linear infinite;
+  will-change: transform;
+  pointer-events: none;
+}
+
+@keyframes fx-beam-spin {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.fx-aurora-blob {
+  position: absolute;
+  width: 70%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  animation: fx-aurora-drift 20s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes fx-aurora-drift {
+  0% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-42%, -56%) scale(1.15); }
+  100% { transform: translate(-58%, -45%) scale(0.92); }
+}
+
 /* ── TV Broadcast & HUD Helpers ── */
 .text-glow-gold {
   text-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 0 40px rgba(255, 170, 0, 0.3);
@@ -1014,7 +1046,9 @@
 
   .ambient-bg,
   .animate-scanline,
-  .podium-spotlight {
+  .podium-spotlight,
+  .fx-beam,
+  .fx-aurora-blob {
     animation: none !important;
   }
 }

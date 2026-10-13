@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, query, where, onSnapshot, doc, updateDoc, increment } from "firebase/firestore";
+import { collection, query, where, onSnapshot, doc, updateDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useLocale } from "../../../hooks/useLocale";
@@ -8,6 +8,9 @@ import type { Room, Player, Answer } from "../../../types/database";
 import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { NeonIcon } from "../../../components/NeonIcon";
+import { pointsFields } from "../../../lib/scoreWrites";
+import { finishNightRound } from "../../../lib/nightAwards";
+import { placementPointsByOrder } from "../../../lib/nightLeague";
 
 interface Props {
   room: Room;
@@ -88,7 +91,9 @@ export function HostVaultDisplay({ room, players, updateRoomStatus }: Props) {
         
         // Add score to winner
         const pRef = doc(db, "players", winnerId);
-        updateDoc(pRef, { total_score: increment(500) }).catch(console.error);
+        updateDoc(pRef, pointsFields(500)).catch(console.error);
+        // Gecelik lig: şifreyi çözen birinci, diğerleri katılım.
+        finishNightRound(room.id, placementPointsByOrder([winnerId], players.map((p) => p.id)));
 
         setTimeout(() => {
           updateRoomStatus("vault_reveal", { vault_winner_id: winnerId });

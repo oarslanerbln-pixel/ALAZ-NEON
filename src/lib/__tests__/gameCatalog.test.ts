@@ -4,7 +4,7 @@ import { GAME_CARDS } from "../gameCatalog";
 import { setLocale, t, type Locale } from "../i18n";
 
 /**
- * Bu paketin var olma sebebi somut: Echo, Pulse, Spectrum, Bar ve Kablo
+ * Bu paketin var olma sebebi somut: Echo, Pulse, Bar ve Kablo
  * modlarinin host ekrani, oyuncu kumandasi ve ceviri metinleri tamamen
  * yazilmisti — ama dashboard katalogunda kartlari olmadigi icin uygulamada
  * hicbir sekilde baslatilamiyorlardi. Kimse fark etmeden 5 oyun olu kod
@@ -21,7 +21,7 @@ const LOCALES: Locale[] = ["tr", "de", "en"];
  */
 const EXPECTED_GAME_IDS = [
   "scattegories", "quiz", "bomb", "sensor", "wheel", "overload", "echo",
-  "pulse", "spectrum", "colors", "vault", "unity", "bar", "kablo", "ayna",
+  "pulse", "colors", "vault", "unity", "bar", "kablo", "ayna",
 ] as const;
 
 describe("oyun katalogu", () => {

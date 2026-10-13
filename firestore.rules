@@ -121,7 +121,7 @@ service cloud.firestore {
       // Authenticated users can join a room (create their player profile)
       allow create: if isAuth() && request.resource.data.uid == request.auth.uid;
 
-      // A player's own game counters (Kablo, Colors, Spectrum, Bar) are
+      // A player's own game counters (Kablo, Colors, Bar) are
       // updated via increment() directly from the player's device. These
       // fields don't affect core scoring (total_score), which only the host
       // writes. Without this rule, every mini-game tap was silently
@@ -131,13 +131,12 @@ service cloud.firestore {
       function isValidIncrement() {
         return (request.resource.data.get('kablo_score', 0) - resource.data.get('kablo_score', 0)) <= 1 &&
                (request.resource.data.get('bar_score', 0) - resource.data.get('bar_score', 0)) <= 1 &&
-               (request.resource.data.get('colors_clicks', 0) - resource.data.get('colors_clicks', 0)) <= 30 &&
-               (request.resource.data.get('spectrum_clicks', 0) - resource.data.get('spectrum_clicks', 0)) <= 30;
+               (request.resource.data.get('colors_clicks', 0) - resource.data.get('colors_clicks', 0)) <= 30;
       }
 
       function isPlayerSelfUpdate() {
         return resource.data.uid == request.auth.uid &&
-          touchesOnly(['kablo_score', 'colors_clicks', 'spectrum_clicks', 'bar_score', 'last_active']) &&
+          touchesOnly(['kablo_score', 'colors_clicks', 'bar_score', 'last_active']) &&
           isValidIncrement();
       }
 

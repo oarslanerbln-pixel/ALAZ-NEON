@@ -6,6 +6,7 @@ import { doc, updateDoc, collection, query, where, getDocs } from "firebase/fire
 import { useToast } from "../../../contexts/ToastContextCore";
 import { useLocale } from "../../../hooks/useLocale";
 import { echoQuestionText } from "../../../lib/echoQuestions";
+import { activePlayers } from "../../../lib/liveness";
 import { gameTitle } from "../../../lib/gameCatalog";
 import { PlayerStageScreen } from "../components/PlayerStageScreen";
 
@@ -45,11 +46,9 @@ export function PlayerEchoController({ room, player }: Props) {
         // çalışıp Firestore'dan reddediliyordu — oylama hiç çalışmıyordu.
         const pList = snap.docs.map(d => ({ ...d.data(), id: d.id }) as Player);
         
-        const now = Date.now();
-        setPlayers(pList.filter(p => 
-          p.id !== player.id &&
-          (p.last_active ? (now - p.last_active < 30000) : true)
-        )); // Exclude self and ghosts
+        // Kendisi hariç, canlılık süzgecinden geçenler (süzgeç kimseyi
+        // bırakmazsa herkes — oylama boş listede kilitlenmesin).
+        setPlayers(activePlayers(pList.filter((p) => p.id !== player.id)));
       } catch (err) {
         console.error("Error fetching players:", err);
       } finally {

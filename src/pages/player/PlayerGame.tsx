@@ -8,7 +8,7 @@ import { NeonIcon } from "../../components/NeonIcon";
 import { HostOfflineBanner } from "../../components/HostOfflineBanner";
 import { DatabaseStatus } from "../../components/DatabaseStatus";
 import { RoomStatusScreen } from "../../components/RoomStatusScreen";
-import { resolvePlayerGameRoute } from "../../lib/gameRouting";
+import { isRetiredGame, resolvePlayerGameRoute } from "../../lib/gameRouting";
 import { useToast } from "../../contexts/ToastContextCore";
 import { sounds, SoundManager } from "../../lib/audio";
 import { useLocale } from "../../hooks/useLocale";
@@ -291,7 +291,7 @@ export function PlayerGame() {
 
       <main className={`flex-1 overflow-y-auto touch-auto p-4 md:p-6 relative z-10 ${(gameState === "review" || gameState === "standings" || gameState === "finished") ? "pb-[calc(9rem+env(safe-area-inset-bottom))]" : "pb-safe"}`}>
         <AnimatePresence mode="wait">
-          {(gameState === "lobby" || gameState === "night_lobby") && <PlayerLobby room={room} roomId={roomId} />}
+          {(gameState === "lobby" || gameState === "night_lobby" || isRetiredGame(room.active_game)) && <PlayerLobby room={room} roomId={roomId} playerId={playerId} />}
 
           {(gameState === "intro" || gameState === "gameIntro" || gameState === "countdown" || gameState === "ad_break") && (
             <motion.div

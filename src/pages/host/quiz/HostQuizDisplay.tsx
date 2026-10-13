@@ -14,6 +14,8 @@ import { KineticSpark } from "../../../components/KineticSpark";
 import type { Answer } from "../../../types/database";
 
 import { HostQuizIntro } from "./views/HostQuizIntro";
+import { TimerRing } from "../../../components/TimerRing";
+import { BeamBorder } from "../../../components/fx/BeamBorder";
 import { HostHeader } from "../components/HostHeader";
 import { HostLobby } from "../views/HostLobby";
 import { HostTutorial } from "../components/HostTutorial";
@@ -22,6 +24,8 @@ import { grantGameRewards } from "../../../lib/rewards";
 import { useVenue } from "../../../contexts/VenueContextCore";
 
 import type { Room, Player } from "../../../types/database";
+import { finishNightRound, NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
+import { nightPointsForPlayers } from "../../../lib/nightLeague";
 
 interface VoteStats {
   A: number;
@@ -51,10 +55,12 @@ export function HostQuizDisplay({
   const { t } = useLocale();
   const { venue } = useVenue();
 
-  const grantQuizRewards = () =>
+  const grantQuizRewards = () => {
     grantGameRewards("individual", players, venue).catch((err) =>
       console.error("[HostQuizDisplay] Ödül dağıtımı başarısız:", err),
     );
+    finishNightRound(room.id, nightPointsForPlayers("individual", players));
+  };
 
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get("roomId");
@@ -165,7 +171,8 @@ export function HostQuizDisplay({
     endingQuestionRef.current = true;
 
     SoundManager.getInstance().stopSound(sounds.GAME_PULSE);
-    SoundManager.getInstance().playSFX(sounds.SIREN);
+    // Siren her 30 sn'de bir kafede alarm gibi çalıyordu; açıklama vuruşu yeter.
+    SoundManager.getInstance().playSFX(sounds.CINEMATIC_BOOM, 0.6);
 
     await updateRoomStatus("question_reveal");
 
@@ -359,7 +366,7 @@ export function HostQuizDisplay({
     await batch.commit();
     streaksRef.current = {};
     setPlayerStreaks({});
-    await updateRoomStatus("quiz_lobby", { current_round: 0, current_question_index: 0 });
+    await updateRoomStatus("quiz_lobby", { current_round: 0, current_question_index: 0, ...NIGHT_ROUND_OPEN });
   };
 
   // Color scheme mappings for options
@@ -513,18 +520,31 @@ export function HostQuizDisplay({
                       </div>
                     </div>
 
-                    {/* Question Card */}
-                    <div className="bg-black/85 border border-blue-500/50 p-10 w-full text-center mb-8 rounded-2xl shadow-[0_0_50px_rgba(59,130,246,0.35)] backdrop-blur-md">
-                      <h1 className="text-3xl md:text-5xl font-black text-white leading-snug">{currentQuestion.text}</h1>
-                    </div>
-
-                    {/* Circular / Big Timer */}
-                    <div className="flex items-center justify-center mb-8">
-                      <div className={`text-8xl font-black tabular-nums tracking-tighter ${
-                        timeLeft <= 5 ? "text-red-500 animate-bounce scale-110 drop-shadow-[0_0_30px_rgba(239,68,68,1)]" : "text-cyan-400 drop-shadow-[0_0_20px_rgba(6,182,212,0.8)]"
-                      }`}>
-                        {timeLeft}
+                    {/* Soru kartı: kenarında süzülen ışık, süre azaldıkça kırmızıya döner. */}
+                    <BeamBorder
+                      rgb={timeLeft <= 5 ? "239,68,68" : "56,189,248"}
+                      duration={timeLeft <= 5 ? 2 : 6}
+                      radius="1.75rem"
+                      className="w-full mb-8 shadow-[0_0_60px_rgba(59,130,246,0.25)]"
+                      innerClassName="bg-[#05070d]/95"
+                    >
+                      <div className="p-10 text-center">
+                        <h1 className="text-3xl md:text-5xl font-black text-white leading-snug text-balance">{currentQuestion.text}</h1>
                       </div>
+                    </BeamBorder>
+
+                    {/* Boşalan süre halkası (HostPlaying ile aynı dil). */}
+                    <div className="flex items-center justify-center mb-8">
+                      <TimerRing
+                        timeLeft={timeLeft}
+                        maxTime={room.timer_setting || 30}
+                        tone={timeLeft <= 5 ? "critical" : timeLeft <= 10 ? "warning" : "calm"}
+                        size={150}
+                      >
+                        <span className={`text-6xl font-black tabular-nums tracking-tighter ${timeLeft <= 5 ? "text-red-500" : "text-white"}`}>
+                          {timeLeft}
+                        </span>
+                      </TimerRing>
                     </div>
 
                     {/* 4 Options Grid */}
