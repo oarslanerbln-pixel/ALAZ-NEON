@@ -6,6 +6,8 @@ import type { Room, Player } from "../../../types/database";
 import { db } from "../../../lib/firebase";
 import { doc, updateDoc } from "firebase/firestore";
 import { useToast } from "../../../contexts/ToastContextCore";
+import { gameTitle } from "../../../lib/gameCatalog";
+import { PlayerStageScreen } from "../components/PlayerStageScreen";
 
 interface Props {
   room: Room;
@@ -108,14 +110,7 @@ export function PlayerPulseController({ room, player }: Props) {
 
   if (room.status === "pulse_intro") {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center relative z-10">
-        <h2 className="text-3xl font-black text-white mb-4 uppercase tracking-widest animate-pulse">
-          HAZIR OL
-        </h2>
-        <p className="text-gray-400 uppercase tracking-widest font-bold">
-          {t("common.followMainScreen")}
-        </p>
-      </div>
+      <PlayerStageScreen icon="💓" tone="pink" eyebrow={gameTitle("pulse")} title={t("sensor.getReady")} body={t("pulse.tapAtBurst")} waiting />
     );
   }
 

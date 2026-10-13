@@ -252,3 +252,9 @@ type CoveredGameType = (typeof GAME_CARDS)[number]["id"];
  */
 type AssertNever<T extends never> = T;
 export type _EveryGameTypeHasACard = AssertNever<Exclude<GameType, CoveredGameType>>;
+
+/** Oyunun görünen adı ("NEON PULSE"); katalogda yoksa boş dize. */
+export function gameTitle(id: GameType | null | undefined): string {
+  const card = GAME_CARDS.find((c) => c.id === id);
+  return card ? `${card.titlePrefix} ${card.titleHighlight}` : "";
+}

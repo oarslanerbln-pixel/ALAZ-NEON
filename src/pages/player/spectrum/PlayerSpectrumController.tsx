@@ -4,6 +4,7 @@ import type { Room, Player } from "../../../types/database";
 import { db } from "../../../lib/firebase";
 import { doc, updateDoc, increment } from "firebase/firestore";
 import { useLocale } from "../../../hooks/useLocale";
+import { PlayerStageScreen } from "../components/PlayerStageScreen";
 
 interface Props {
   room: Room;
@@ -66,26 +67,17 @@ export function PlayerSpectrumController({ room, player }: Props) {
 
   if (room.status === "spectrum_intro") {
     return (
-      <div className={`flex-1 flex flex-col items-center justify-center p-6 text-center relative overflow-hidden
-        ${isRed ? "bg-[#990024]" : "bg-[#005580]"}
-      `}>
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay" />
-        <h2 className="text-3xl font-black text-white mb-4 uppercase tracking-widest z-10 drop-shadow-lg">
-          {t("spectrum.teamSet")}
-        </h2>
-        <div className={`w-32 h-32 rounded-full flex items-center justify-center z-10 border-4 shadow-2xl mb-6
-          ${isRed ? "border-[#ff003c] bg-[#ff003c]/30 shadow-[#ff003c]/50" : "border-neon-blue bg-neon-blue/30 shadow-neon-blue/50"}
-        `}>
-          <span className="text-6xl">{isRed ? "🔥" : "⚡"}</span>
-        </div>
-        <h1 className={`text-4xl font-black uppercase tracking-widest z-10
-          ${isRed ? "text-[#ff003c]" : "text-neon-blue"}
-        `}>
-          {isRed ? t("spectrum.redTeam") : t("spectrum.blueTeam")}
-        </h1>
-        <p className="mt-8 text-white/50 uppercase tracking-widest font-bold z-10 animate-pulse">
-          {t("spectrum.waitTV")}
-        </p>
+      // Takım rengi tüm ekranı boyuyor: misafir telefonu kaldırıp masadakilere
+      // gösterdiğinde hangi takımda olduğu uzaktan bile okunuyor.
+      <div className={`flex-1 flex flex-col ${isRed ? "bg-[#2a0010]" : "bg-[#001a2a]"}`}>
+        <PlayerStageScreen
+          icon={isRed ? "🔥" : "⚡"}
+          tone={isRed ? "red" : "blue"}
+          eyebrow={t("spectrum.teamSet")}
+          title={isRed ? t("spectrum.redTeam") : t("spectrum.blueTeam")}
+          hint={t("spectrum.waitTV")}
+          waiting
+        />
       </div>
     );
   }

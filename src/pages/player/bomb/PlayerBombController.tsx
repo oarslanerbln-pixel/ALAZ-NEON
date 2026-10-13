@@ -9,6 +9,8 @@ import { containsProfanity } from "../../../lib/profanity";
 import { looksLikeGibberish } from "../../../lib/wordValidation";
 import { useLocale } from "../../../hooks/useLocale";
 import { haptics } from "../../../lib/haptics";
+import { gameTitle } from "../../../lib/gameCatalog";
+import { PlayerStageScreen } from "../components/PlayerStageScreen";
 
 interface Props {
   room: Room;
@@ -113,24 +115,13 @@ export function PlayerBombController({ room, player }: Props) {
 
   if (currentLives <= 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-black text-white p-6 text-center">
-        <span className="text-7xl mb-4 grayscale">💀</span>
-        <h1 className="text-3xl font-black text-red-500 tracking-widest uppercase mb-2">
-          {t("bomb.eliminatedYou")}
-        </h1>
-        <p className="text-gray-400 text-sm max-w-xs">{t("bomb.watchOthers")}</p>
-      </div>
+      <PlayerStageScreen icon={<span className="grayscale">💀</span>} tone="red" title={t("bomb.eliminatedYou")} body={t("bomb.watchOthers")} />
     );
   }
 
   if (room.status === "bomb_intro") {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-black text-white p-6">
-        <div className="w-16 h-16 border-4 border-red-500 border-t-transparent rounded-full animate-spin mb-6" />
-        <h1 className="text-2xl font-black text-red-500 tracking-widest uppercase animate-pulse">
-          {t("bomb.preparing")}
-        </h1>
-      </div>
+      <PlayerStageScreen icon="💣" tone="red" eyebrow={gameTitle("bomb")} title={t("bomb.preparing")} waiting />
     );
   }
 
@@ -151,13 +142,7 @@ export function PlayerBombController({ room, player }: Props) {
 
   if (room.status === "finished") {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-black text-white p-6 text-center">
-        <span className="text-7xl mb-4">🏆</span>
-        <h1 className="text-3xl font-black text-amber-400 tracking-widest uppercase mb-2">
-          {t("bomb.gameOver")}
-        </h1>
-        <p className="text-gray-400">{t("bomb.resultsOnScreen")}</p>
-      </div>
+      <PlayerStageScreen icon="🏆" tone="amber" eyebrow={gameTitle("bomb")} title={t("bomb.gameOver")} hint={t("bomb.resultsOnScreen")} />
     );
   }
 

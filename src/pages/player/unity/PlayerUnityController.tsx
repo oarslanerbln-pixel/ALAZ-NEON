@@ -66,7 +66,7 @@ export function PlayerUnityController({ room }: Props) {
     <div className="flex flex-col h-full bg-black touch-none">
       <div className="p-4 text-center border-b border-white/10 shrink-0">
         <h2 className="text-xl font-black text-amber-400 tracking-widest uppercase">
-          {t("player.unityTitle", "NEON BİRLİK")}
+          {t("player.unityTitle")}
         </h2>
       </div>
 
@@ -100,10 +100,10 @@ export function PlayerUnityController({ room }: Props) {
               className="w-full max-w-[300px] aspect-square rounded-full bg-gradient-to-b from-amber-400 to-orange-600 shadow-[0_0_50px_rgba(245,158,11,0.5)] flex flex-col items-center justify-center border-8 border-white/20 active:border-white/50 active:shadow-[0_0_100px_rgba(245,158,11,0.8)] relative z-10"
             >
               <span className="text-5xl font-black text-white mix-blend-overlay uppercase tracking-widest">
-                BAS!
+                {t("unity.tap")}
               </span>
-              <span className="text-white/80 font-bold mt-2">
-                Senin Katkın: {localClicks}
+              <span className="text-white/80 font-bold mt-2 tabular-nums">
+                {t("unity.yourTaps", localClicks)}
               </span>
             </motion.button>
             
