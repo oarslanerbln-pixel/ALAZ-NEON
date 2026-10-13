@@ -73,5 +73,8 @@ Bunları baştan sona okuma, hedefli `grep` ile gir:
 - Commit mesajları Türkçe ve `tip(kapsam): özet` biçiminde (`feat(quiz): …`).
 
 Ayrıntılı kodlama standartları: `docs/coding-standards.md`.
+Görsel dil (ortak ekranlar, fx katmanı, yasaklar): `docs/motion-system.md` §6.
+Oyun kataloğu, gecelik skor ekonomisi ve yol haritası: `docs/game-design-review.md`.
+Puanı her zaman `lib/scoreWrites` üzerinden yaz (oyun + gecelik skor birlikte).
 Mimari ve hata ayıklama derinliği için `.claude/skills/` altındaki iki yetenek
 paketi gerektiğinde otomatik yüklenir.
