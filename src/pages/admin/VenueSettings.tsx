@@ -373,6 +373,7 @@ export function VenueSettings() {
                       type="button"
                       onClick={() => removeSponsorAd(ad.id)}
                       className="text-white/40 hover:text-[#ff003c] transition-colors shrink-0 text-lg leading-none px-2"
+                      aria-label="Kaldır"
                     >
                       ×
                     </button>
@@ -442,6 +443,7 @@ export function VenueSettings() {
                       type="button"
                       onClick={() => removeWheelSlice(slice.id)}
                       className="text-white/40 hover:text-[#ff003c] transition-colors shrink-0 text-lg leading-none px-2"
+                      aria-label="Kaldır"
                     >
                       ×
                     </button>
@@ -464,6 +466,7 @@ export function VenueSettings() {
               className={`w-14 h-8 rounded-full relative transition-colors shrink-0 ${
                 rewardsEnabled ? "bg-alaz-orange" : "bg-white/10"
               }`}
+              aria-label={rewardsEnabled ? "Ödül Sistemini Kapat" : "Ödül Sistemini Aç"}
             >
               <motion.div
                 animate={{ x: rewardsEnabled ? 24 : 4 }}
