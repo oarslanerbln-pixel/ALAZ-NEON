@@ -24,8 +24,8 @@ ağırlıkta, "tutarlı olan şampiyon olur". Kod: `lib/nightLeague` (saf, testl
 | NEON OVERLOAD | Refleks · sıcak patates | Hayatta kalan 1., sonra eleme sırasının tersi | |
 | NEON BİRLİK (Unity) | Ortak · dokunma | — | Herkes birlikte; kazanan yok |
 | NEON PULSE | Ortak · ritim | — | Zamanlama; bireysel sonuç var |
-| NEON BAR | Hafıza · sıra | — (`bar_score` sayaç) | Sırada: tamamlanan kokteyle göre sıra |
-| NEON KABLO | Bulmaca · takım | — (`kablo_score` sayaç) | |
+| NEON BAR | Hafıza · sıra | Tamamlanan kokteyl sayısı | |
+| NEON KABLO | Bulmaca · takım | Bağlanan devre sayısı | Ortak hedef, bireysel katkı sıralanır |
 | HENGAME ECHO | Sosyal · oylama | — | "Kim en çok…?" — puansız olması doğru |
 | HENGAME ÇARK | Ödül · şans | — | Oyun değil, ara gösteri — puansız olması doğru |
 
@@ -62,11 +62,8 @@ Enerji eğrisi: ısın → zirve → nefes → final. Örnek 90 dakikalık blok:
 
 ## 4. Sıradaki adımlar
 
-Karara bağlananlar (Ekim 2026): F1 usulü gecelik lig ✅, Spectrum kaldırıldı ✅.
-
-**P1 — Bar ve Kablo da lige girsin.** İkisinin de oyuncu başına sayacı var
-(`bar_score`, `kablo_score`); bitişte `placementPointsByScore` ile sıraya
-çevirmek yeterli.
+Karara bağlananlar (Ekim 2026): F1 usulü gecelik lig ✅, Spectrum kaldırıldı ✅,
+Bar ve Kablo lige girdi ✅.
 
 **P2 — TV'de lig anı.** Oyun sonu podyumunda "+25 gece puanı" rozeti ve
 dashboard'da sıra değişimi animasyonu (▲2) — misafir ligi oyunun içinde görsün.
