@@ -19,6 +19,9 @@ import { activePlayers as activePlayersOf } from "../../../lib/liveness";
 import { useLocale } from "../../../hooks/useLocale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useVenue } from "../../../contexts/VenueContextCore";
+import { AuroraBackdrop } from "../../../components/fx/AuroraBackdrop";
+import { BeamBorder } from "../../../components/fx/BeamBorder";
+import { GridPattern } from "../../../components/fx/GridPattern";
 
 
 
@@ -286,15 +289,13 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
   return (
     <TVScaleFrame>
     <div className="w-full h-full relative overflow-hidden font-sans selection:bg-alaz-orange selection:text-black">
-      {/* Light Pastel Background */}
-      <div className="absolute inset-0 bg-slate-50 z-0" />
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 z-0" />
-      <div className="absolute inset-0 z-0 opacity-40 mix-blend-overlay pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-white rounded-full blur-[100px] animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-white rounded-full blur-[120px] animate-pulse delay-1000" />
-      </div>
-
-      <div className="absolute inset-0 pointer-events-none z-50 opacity-[0.03] bg-[linear-gradient(rgba(255,255,255,0)_50%,rgba(0,0,0,1)_50%)] bg-[length:100%_4px]" />
+      {/* Koyu sahne. Eskiden açık pastel bir arka plan ve 100–120 px
+          bulanıklık filtreli, nabız atan beyaz bloblar vardı: loş mekânda göz
+          alıyor, ürünün geri kalanıyla çelişiyor ve TV'nin zayıf GPU'sunu
+          her karede yeniden boyamaya zorluyordu. */}
+      <div className="absolute inset-0 bg-[#05050a] z-0" />
+      <AuroraBackdrop colors={["255,85,0", "168,85,247", "34,211,238"]} intensity={0.16} className="z-0" />
+      <GridPattern className="z-0" />
 
       <div className="p-6 md:p-10 flex flex-col h-full relative z-10">
         <HostHeader
@@ -311,27 +312,28 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
               <div className="absolute -top-20 -right-20 w-40 h-40 bg-alaz-orange/20 rounded-full blur-[60px] pointer-events-none group-hover/qr:bg-alaz-orange/30 transition-colors duration-700" />
 
               <div className="relative z-10 flex flex-col items-center w-full">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="w-2 h-2 bg-alaz-orange rounded-full animate-pulse shadow-[0_0_10px_#ff5500]" />
-                  <span className="text-alaz-orange font-black text-[10px] uppercase tracking-[0.3em]">
-                    ADIM 1 / STEP 1
-                  </span>
-                </div>
-                
-                <h3 className="text-white font-black text-xl mb-1 uppercase tracking-widest text-center leading-tight">
-                  SİSTEME <span className="text-transparent bg-clip-text bg-gradient-to-r from-alaz-orange to-yellow-500">{t("host.login", "GİRİŞ YAP")}</span>
-                </h3>
-                
-                <p className="text-gray-300 text-[11px] font-medium text-center px-2 mb-4 leading-relaxed">
-                  Müşterilerinizin oyunlara katılabilmesi için önce yandaki QR kodu okutması veya oda kodunu girmesi gerekmektedir.
+                <p className="flex items-center gap-3 text-alaz-orange font-black text-xs uppercase tracking-[0.3em] mb-2">
+                  <span className="h-px w-6 bg-current opacity-50" aria-hidden="true" />
+                  {t("dashboard.step1")}
+                  <span className="h-px w-6 bg-current opacity-50" aria-hidden="true" />
                 </p>
 
-                <div className="bg-white p-4 rounded-2xl shadow-[0_0_30px_rgba(255,255,255,0.2)] border-[4px] border-white/5 relative group-hover/qr:scale-105 transition-transform duration-500">
-                  <QRCodeSVG value={joinUrl} size={140} bgColor="#ffffff" fgColor="#000000" level="H" marginSize={1} />
+                {/* Misafire konuşuyor: TV'yi okuyan, mekân sahibi değil misafir. */}
+                <h3 className="text-white font-black text-3xl mb-2 uppercase tracking-wide text-center leading-tight">
+                  {t("dashboard.joinTitle")}
+                </h3>
+
+                <p className="text-white/65 text-sm font-medium text-center px-2 mb-5 leading-relaxed text-balance">
+                  {t("dashboard.joinBody")}
+                </p>
+
+                {/* Odanın öbür ucundan okunabilsin: 140 px küçüktü. */}
+                <div className="bg-white p-4 rounded-2xl shadow-[0_0_40px_rgba(255,255,255,0.15)] relative">
+                  <QRCodeSVG value={joinUrl} size={210} bgColor="#ffffff" fgColor="#000000" level="H" marginSize={1} />
                 </div>
-                
-                <div className="mt-4 flex flex-col items-center">
-                  <span className="text-white/40 text-[10px] uppercase tracking-[0.3em] font-bold mb-2">ODA KODU</span>
+
+                <div className="mt-5 flex flex-col items-center">
+                  <span className="text-white/40 text-[11px] uppercase tracking-[0.3em] font-bold mb-2">{t("hostHeader.roomCode")}</span>
                   <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-xl flex items-center justify-center">
                     <p className="text-alaz-orange font-mono font-black text-3xl tracking-widest drop-shadow-[0_0_15px_rgba(255,85,0,0.5)]">{room.code}</p>
                   </div>
@@ -342,7 +344,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                     onClick={() => setIsKioskMode(true)}
                     className="mt-8 w-full py-3 bg-white/5 hover:bg-white/15 border border-white/20 rounded-xl text-white font-bold uppercase tracking-widest text-[10px] transition-colors"
                   >
-                    Kiosk Modunu Başlat
+                    {t("dashboard.kioskStart")}
                   </button>
                 )}
               </div>
@@ -375,8 +377,8 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
           {/* Game Selection Column */}
           <div className="lg:col-span-3 flex flex-col gap-3">
             <div className="relative w-full h-full flex flex-col items-center justify-center min-h-[500px]">
-              <h2 className="text-lg font-black text-slate-500 uppercase tracking-[0.3em] drop-shadow-sm mb-6">
-                {t("host.step2", "ADIM 2: ")}<span className="text-slate-800">{t("host.selectGame", "OYUN SEÇ")}</span>
+              <h2 className="text-lg font-black text-white/45 uppercase tracking-[0.3em] mb-6">
+                {t("host.step2")}<span className="text-white">{t("host.selectGame")}</span>
               </h2>
               
               <div className="relative w-full max-w-4xl aspect-[21/9] flex items-center justify-center perspective-1000">
@@ -385,7 +387,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                   onClick={() => paginate(-1)}
                   className="absolute left-0 z-20 w-16 h-16 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 transition-all hover:scale-110 shadow-xl -ml-8"
                 >
-                  <ChevronLeft className="w-8 h-8 text-slate-800 opacity-80" />
+                  <ChevronLeft className="w-8 h-8 text-white opacity-80" />
                 </button>
 
                 <div className="w-full h-full relative overflow-visible flex items-center justify-center px-4">
@@ -402,10 +404,17 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                       {(() => {
                         const game = GAMES[carouselIndex];
                         return (
+                          <BeamBorder
+                            rgb={rgbOf(game.shadowColor)}
+                            duration={7}
+                            radius="2rem"
+                            className="w-full h-full"
+                            innerClassName="bg-[#0b0b14]"
+                            style={{ boxShadow: `0 30px 80px ${game.shadowColor}` }}
+                          >
                           <button
                             onClick={() => handleStartGame(game.id)}
-                            className={`w-full h-full relative group overflow-hidden bg-[#0b0b14]/90 backdrop-blur-3xl border border-white/10 ${game.borderAccent} p-10 rounded-sm text-left transition-all duration-500 shadow-[0_20px_40px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.2)]`}
-                            style={{ boxShadow: `0 20px 50px ${game.shadowColor}, inset 0 1px 1px rgba(255,255,255,0.3)` }}
+                            className="w-full h-full relative group overflow-hidden rounded-[calc(2rem-1.5px)] p-10 text-left transition-all duration-500"
                           >
                             {/* Devasa Filigran İkon */}
                             <div className="absolute -right-10 -bottom-10 opacity-[0.03] group-hover:opacity-10 group-hover:scale-110 transition-all duration-1000 pointer-events-none rotate-12">
@@ -418,7 +427,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                             
                             <div className="relative z-10 flex flex-col h-full justify-between">
                               <div>
-                                <div className={`w-16 h-16 ${game.iconAccent} border-[1.5px] rounded-sm flex items-center justify-center mb-6 group-hover:rotate-12 group-hover:scale-110 transition-all duration-500 shadow-xl`}>
+                                <div className={`w-16 h-16 ${game.iconAccent} border-[1.5px] rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-12 group-hover:scale-110 transition-all duration-500 shadow-xl`}>
                                   <NeonIcon type={game.icon} color={game.iconColor} className="w-8 h-8" />
                                 </div>
                                 <h3 className="text-4xl sm:text-5xl font-black text-white mb-2 tracking-widest transition-colors uppercase">
@@ -430,12 +439,13 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                               </div>
                               
                               <div className="mt-8 flex items-center gap-4 text-white text-sm font-black tracking-[0.3em] uppercase opacity-70 group-hover:opacity-100 transition-all duration-300">
-                                <div className="bg-white/10 px-6 py-3 rounded-sm flex items-center gap-3 backdrop-blur-md border border-white/20 group-hover:bg-white/20 transition-colors">
+                                <div className="bg-white/10 px-6 py-3 rounded-xl flex items-center gap-3 backdrop-blur-md border border-white/20 group-hover:bg-white/20 transition-colors">
                                   {t("dashboard.startSession", "SESSION STARTEN")} <span className="text-xl leading-none group-hover:translate-x-3 transition-transform">→</span>
                                 </div>
                               </div>
                             </div>
                           </button>
+                          </BeamBorder>
                         );
                       })()}
                     </motion.div>
@@ -447,7 +457,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                   onClick={() => paginate(1)}
                   className="absolute right-0 z-20 w-16 h-16 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 transition-all hover:scale-110 shadow-xl -mr-8"
                 >
-                  <ChevronRight className="w-8 h-8 text-slate-800 opacity-80" />
+                  <ChevronRight className="w-8 h-8 text-white opacity-80" />
                 </button>
               </div>
               
@@ -463,7 +473,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                     }}
                     aria-label={`${g.titlePrefix} ${g.titleHighlight}`}
                     aria-current={idx === carouselIndex}
-                    className={`h-2 rounded-full transition-all duration-300 ${idx === carouselIndex ? 'w-8 bg-slate-800' : 'w-2 bg-slate-300 hover:bg-slate-400'}`}
+                    className={`h-2 rounded-full transition-all duration-300 ${idx === carouselIndex ? 'w-8 bg-white' : 'w-2 bg-white/25 hover:bg-white/50'}`}
                   />
                 ))}
               </div>
@@ -495,7 +505,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
               />
             </AnimatePresence>
             <div className="absolute top-8 right-8 text-white/30 text-[10px] uppercase tracking-widest bg-black/50 px-4 py-2 rounded-lg">
-              Çıkmak için ekrana dokunun
+              {t("dashboard.kioskExit")}
             </div>
             
             {/* Show QR code subtly in corner during kiosk mode */}
@@ -521,4 +531,10 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     </div>
     </TVScaleFrame>
   );
+}
+
+/** "rgba(255,85,0,0.4)" → "255,85,0" (BeamBorder ışık rengi için). */
+function rgbOf(color: string): string {
+  const m = color.match(/(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+  return m ? `${m[1]},${m[2]},${m[3]}` : "255,85,0";
 }
