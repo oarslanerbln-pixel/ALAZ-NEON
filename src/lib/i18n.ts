@@ -1375,6 +1375,7 @@ const translations = {
     de: "Schau zu, wie die anderen hochgehen!",
     en: "Watch the others blow up!",
   },
+  "bomb.changingHands": { tr: "Bomba yeni sahibine geçiyor…", de: "Die Bombe wechselt den Besitzer…", en: "The bomb is changing hands…" },
   "bomb.preparing": { tr: "BOMBA HAZIRLANIYOR", de: "BOMBE WIRD VORBEREITET", en: "PREPARING BOMB" },
   "bomb.explodedShort": { tr: "PATLADI!", de: "EXPLODIERT!", en: "EXPLODED!" },
   "bomb.watchMainScreen": {

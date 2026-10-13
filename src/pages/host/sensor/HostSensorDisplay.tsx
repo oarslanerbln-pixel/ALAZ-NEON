@@ -52,12 +52,12 @@ export function HostSensorDisplay({
     gameState === "sensor_buzzed" ||
     gameState === "sensor_reveal";
     
-  const currentImage: SensorImage | null =
-    (isSensorScreen && room.sensor_current_media
-      ? SENSOR_IMAGES.find(i => i.url === room.sensor_current_media) || SENSOR_IMAGES[0]
-      : null) || null;
-      
   const currentImageIndex = room.current_round || 0;
+  // Görsel alanı eksik ya da havuzdan kaldırılmış bir görseli gösteriyorsa
+  // TV kararmasın: tur sırasına göre havuzdan bir görsele düş.
+  const currentImage: SensorImage | null = isSensorScreen
+    ? SENSOR_IMAGES.find((i) => i.url === room.sensor_current_media) ?? SENSOR_IMAGES[currentImageIndex % SENSOR_IMAGES.length] ?? null
+    : null;
   const buzzerPlayerName = room.sensor_buzzer_player_id
     ? players.find(pl => pl.id === room.sensor_buzzer_player_id)?.nickname || null
     : null;
