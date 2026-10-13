@@ -97,3 +97,22 @@ export function rankDeltas(prevOrder: readonly string[], nextOrder: readonly str
   });
   return out;
 }
+
+type Standing = { id: string; nickname: string; night_score?: number };
+
+/** Gecelik sıralama: gece puanı, eşitlikte ad (TV ve telefon aynı sırayı görsün). */
+export function nightStandings<T extends Standing>(players: readonly T[]): T[] {
+  return [...players].sort((a, b) => (b.night_score ?? 0) - (a.night_score ?? 0) || a.nickname.localeCompare(b.nickname));
+}
+
+/**
+ * Bir oyuncunun gecelik sırası. Eşit puan aynı sırayı paylaşır (1, 2, 2, 4).
+ * Henüz kimse puan almadıysa `null` — "8 kişiden 1." demenin anlamı yok.
+ */
+export function nightRankOf(players: readonly Standing[], playerId: string): { rank: number; total: number; points: number } | null {
+  const me = players.find((p) => p.id === playerId);
+  if (!me || !players.some((p) => (p.night_score ?? 0) > 0)) return null;
+  const points = me.night_score ?? 0;
+  const ahead = players.filter((p) => (p.night_score ?? 0) > points).length;
+  return { rank: ahead + 1, total: players.length, points };
+}

@@ -6,6 +6,8 @@ import {
   nightPointsForPlayers,
   placementPointsByOrder,
   placementPointsByScore,
+  nightRankOf,
+  nightStandings,
   rankDeltas,
   teamPoints,
 } from "../nightLeague";
@@ -77,5 +79,28 @@ describe("nightPointsForPlayers", () => {
 describe("rankDeltas", () => {
   it("yükselen pozitif, düşen negatif, yeni gelen 0", () => {
     expect(rankDeltas(["a", "b", "c"], ["c", "a", "b", "d"])).toEqual({ c: 2, a: -1, b: -1, d: 0 });
+  });
+});
+
+describe("nightStandings / nightRankOf", () => {
+  const players = [
+    { id: "a", nickname: "Zeynep", night_score: 30 },
+    { id: "b", nickname: "Ali", night_score: 43 },
+    { id: "c", nickname: "Can", night_score: 30 },
+    { id: "d", nickname: "Deniz" },
+  ];
+
+  it("puana, eşitlikte ada göre sıralar", () => {
+    expect(nightStandings(players).map((p) => p.id)).toEqual(["b", "c", "a", "d"]);
+  });
+
+  it("eşit puan aynı sırayı paylaşır", () => {
+    expect(nightRankOf(players, "a")).toEqual({ rank: 2, total: 4, points: 30 });
+    expect(nightRankOf(players, "c")).toEqual({ rank: 2, total: 4, points: 30 });
+    expect(nightRankOf(players, "d")).toEqual({ rank: 4, total: 4, points: 0 });
+  });
+
+  it("henüz kimse puan almadıysa sıra yok", () => {
+    expect(nightRankOf([{ id: "x", nickname: "X" }], "x")).toBeNull();
   });
 });

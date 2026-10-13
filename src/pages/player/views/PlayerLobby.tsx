@@ -7,11 +7,14 @@ import { useLocale } from "../../../hooks/useLocale";
 import { PlayerBackground } from "../../../components/PlayerBackground";
 import { LanguageSwitcher } from "../../../components/LanguageSwitcher";
 import { PlayerStageScreen } from "../components/PlayerStageScreen";
-import type { Room } from "../../../types/database";
+import type { Player, Room } from "../../../types/database";
+import { nightRankOf } from "../../../lib/nightLeague";
 
 interface PlayerLobbyProps {
   room: Room | null;
   roomId: string | null;
+  /** Gecelik sıradaki yerini göstermek için (verilmezse kart gizli). */
+  playerId?: string | null;
 }
 
 /**
@@ -35,16 +38,22 @@ const TIPS = [
  * ETA: --:--" ve "RND/TMR" gibi süsler hiçbir şey anlatmıyordu; üstelik
  * dil seçici `absolute` olduğu için başlığın üstüne biniyordu.
  */
-export function PlayerLobby({ room, roomId }: PlayerLobbyProps) {
+export function PlayerLobby({ room, roomId, playerId }: PlayerLobbyProps) {
   const { t } = useLocale();
-  const [playerCount, setPlayerCount] = useState(0);
+  const [roster, setRoster] = useState<Pick<Player, "id" | "nickname" | "night_score">[]>([]);
+  const playerCount = roster.length;
+  // Oyunlar arası en çok görülen ekran: misafir gecenin neresinde olduğunu
+  // burada görsün. Aynı dinleyiciden geliyor — ek Firestore okuması yok.
+  const standing = playerId ? nightRankOf(roster, playerId) : null;
   const [tipIdx, setTipIdx] = useState(0);
 
   // Canlı oyuncu sayısı
   useEffect(() => {
     if (!roomId) return;
     const q = query(collection(db, "players"), where("room_id", "==", roomId));
-    const unsub = onSnapshot(q, (snap) => setPlayerCount(snap.size));
+    const unsub = onSnapshot(q, (snap) =>
+      setRoster(snap.docs.map((d) => ({ id: d.id, nickname: String(d.data().nickname ?? ""), night_score: d.data().night_score as number | undefined }))),
+    );
     return () => unsub();
   }, [roomId]);
 
@@ -91,6 +100,16 @@ export function PlayerLobby({ room, roomId }: PlayerLobbyProps) {
             <span className="w-2 h-2 rounded-full bg-emerald-400 motion-safe:animate-pulse" aria-hidden="true" />
             {t("waitingRoom.playersConnected", playerCount)}
           </span>
+
+          {standing && (
+            <div className="w-full max-w-xs rounded-2xl border border-amber-300/25 bg-amber-300/[0.06] px-5 py-4 backdrop-blur-md">
+              <p className="text-[11px] font-black uppercase tracking-[0.25em] text-amber-200/70">{t("lobby.nightTitle")}</p>
+              <div className="mt-2 flex items-baseline justify-between gap-3">
+                <span className="text-2xl font-black text-white tabular-nums">{t("lobby.nightRank", standing.rank, standing.total)}</span>
+                <span className="text-sm font-bold text-amber-200 tabular-nums">{t("lobby.nightPoints", standing.points)}</span>
+              </div>
+            </div>
+          )}
         </PlayerStageScreen>
       </div>
 

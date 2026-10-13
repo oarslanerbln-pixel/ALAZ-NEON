@@ -69,8 +69,12 @@ Bar ve Kablo lige girdi ✅.
 dashboard'daki gecenin liderleri listesi sıra değişince ▲/▼ gösteriyor
 (`rankDeltas`).
 
-**P2 — Telefonda lig.** Oyun sonu ekranında misafirin kendi "+N gece puanı"
-ve gecelik sırası (şu an yalnızca TV'de).
+**Telefonda lig ✅** — oyunlar arası lobide misafirin kendi gecelik sırası
+ve puanı ("2. / 8 · 61 gece puanı"); lobinin mevcut oyuncu dinleyicisinden,
+ek okuma yok. TV ve telefon aynı sırayı kullanır (`nightStandings`).
+
+**P2 — Saat farkı** (aşağıda) ve **gece finali**: son oyundan sonra TV'de
+"Gecenin şampiyonu" sahnesi (`nightStandings` ilk 3).
 
 **P2 — Saat farkı.** Oyuncu `last_active` kendi saatiyle yazılıyor; bomba ve
 echo hedef seçimi diğer telefonların saatini kıyaslıyor. Kalıcı çözüm:

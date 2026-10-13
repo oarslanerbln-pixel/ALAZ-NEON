@@ -184,6 +184,17 @@ const translations = {
     en: (rounds: number) =>
       `The game is starting. This exciting challenge will last ${rounds} rounds.`,
   },
+  "lobby.nightTitle": { tr: "Gecenin sıralaması", de: "Rangliste des Abends", en: "Tonight's standings" },
+  "lobby.nightRank": {
+    tr: (r: number, n: number) => `${r}. / ${n}`,
+    de: (r: number, n: number) => `Platz ${r} / ${n}`,
+    en: (r: number, n: number) => `#${r} of ${n}`,
+  },
+  "lobby.nightPoints": {
+    tr: (n: number) => `${n} gece puanı`,
+    de: (n: number) => `${n} Nachtpunkte`,
+    en: (n: number) => `${n} night points`,
+  },
   "lobby.roomCode": { tr: "ODA GİRİŞ KODU", de: "RAUM-CODE", en: "ROOM CODE" },
   "lobby.connect": { tr: "BAĞLAN", de: "VERBINDEN", en: "CONNECT" },
   "lobby.categories": { tr: "KATEGORİLER", de: "KATEGORIEN", en: "CATEGORIES" },

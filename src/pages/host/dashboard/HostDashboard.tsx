@@ -23,7 +23,7 @@ import { AuroraBackdrop } from "../../../components/fx/AuroraBackdrop";
 import { BeamBorder } from "../../../components/fx/BeamBorder";
 import { GridPattern } from "../../../components/fx/GridPattern";
 import { NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
-import { rankDeltas } from "../../../lib/nightLeague";
+import { nightStandings, rankDeltas } from "../../../lib/nightLeague";
 
 
 
@@ -281,9 +281,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
 
   // Gecenin liderleri: night_score F1 sıra puanlarıyla birikir (lib/nightLeague).
   // Eşitlikte ada göre — snapshot sırası değişince liste titremesin.
-  const leaderboard = [...players].sort(
-    (a, b) => (b.night_score ?? 0) - (a.night_score ?? 0) || a.nickname.localeCompare(b.nickname),
-  );
+  const leaderboard = nightStandings(players);
   const order = leaderboard.map((p) => p.id);
   const orderKey = order.join("|");
   // Sıra değiştiğinde önceki sırayı sakla: kim kaç basamak çıktı/düştü (▲/▼).
