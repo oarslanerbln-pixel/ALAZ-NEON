@@ -552,13 +552,6 @@ const translations = {
   // ═══════════════════════════════════════════
   // AYNA (dünyayı ve salonu tahmin et — bkz. lib/ayna.ts)
   // ═══════════════════════════════════════════
-  "spectrum.youWon": { tr: "KAZANDINIZ!", de: "GEWONNEN!", en: "YOU WON!" },
-  "spectrum.tap": { tr: "BAS!", de: "TIPP!", en: "TAP!" },
-  "spectrum.power": {
-    tr: (n: number) => `+${n} güç`,
-    de: (n: number) => `+${n} Power`,
-    en: (n: number) => `+${n} power`,
-  },
   "ayna.title": { tr: "AYNA", de: "SPIEGEL", en: "MIRROR" },
   "ayna.tagline": {
     tr: "Dünyayı ne kadar tanıyorsun? Peki bu salonu?",
@@ -949,11 +942,6 @@ const translations = {
     de: "Der gemeinsame Rhythmus-Test: Alle tippen genau in dem Moment, in dem der Kern explodiert.",
     en: "A shared rhythm test: everyone taps at the exact moment the core bursts.",
   },
-  "dashboard.modeSpectrumDesc": {
-    tr: "Takımlar rastgele kurulur, 30 saniyede en çok dokunan renk ekranı boyar.",
-    de: "Die Teams werden zufällig gelost — wer in 30 Sekunden am meisten tippt, färbt den Bildschirm.",
-    en: "Teams are drawn at random; whoever taps most in 30 seconds paints the screen.",
-  },
   "dashboard.modeBarDesc": {
     tr: "Tarifi ezberle, malzemeleri doğru sırayla dök. En çok tamamlayan barista kazanır.",
     de: "Rezept merken, Zutaten in der richtigen Reihenfolge eingießen. Wer am meisten schafft, gewinnt.",
@@ -974,7 +962,7 @@ const translations = {
   // OYUN MODLARI — misafir telefonu ve TV ekranı
   //
   // Bu modlar (çarkıfelek, overload, echo, pulse, unity, kasa, bar,
-  // spectrum, kablo) sonradan eklenirken metinleri doğrudan bileşenlerin
+  // kablo) sonradan eklenirken metinleri doğrudan bileşenlerin
   // içine sabit Türkçe olarak yazılmıştı. Varsayılan dil "de" ve asıl pazar
   // Berlin olduğu için Alman misafir kendi telefonunda Türkçe metin
   // görüyordu. İlk modlar (quiz/sensör/bomba) baştan çevrilmişti; bu blok
@@ -1122,16 +1110,10 @@ const translations = {
   "bar.wrongDrink": { tr: "YANLIŞ İÇECEK!", de: "FALSCHES GETRÄNK!", en: "WRONG DRINK!" },
   "colors.yourTapCount": { tr: "SENİN TIK SAYIN", de: "DEINE TIPPS", en: "YOUR TAPS" },
   "overload.youAreSafe": { tr: "GÜVENDESİN", de: "DU BIST SICHER", en: "YOU'RE SAFE" },
-  "spectrum.youLostCaps": { tr: "KAYBETTİNİZ", de: "IHR HABT VERLOREN", en: "YOU LOST" },
   "bar.ing.limeShort": { tr: "LİME", de: "LIMETTE", en: "LIME" },
   "bar.ing.orangeShort": { tr: "PORTAKAL", de: "ORANGE", en: "ORANGE" },
 
-  // ── Spectrum / Neon Savaşları ──
-  "spectrum.takeScreen": { tr: "EKRANI ELE GEÇİR", de: "EROBERT DEN BILDSCHIRM", en: "TAKE THE SCREEN" },
-  "spectrum.champion": { tr: "ŞAMPİYON", de: "CHAMPION", en: "CHAMPION" },
-  "spectrum.teamSet": { tr: "TAKIMIN BELLİ OLDU", de: "DEIN TEAM STEHT FEST", en: "YOUR TEAM IS SET" },
-  "spectrum.youLost": { tr: "KAYBETTİNİZ", de: "IHR HABT VERLOREN", en: "YOU LOST" },
-  "spectrum.waitTV": { tr: "TV Ekranını Bekle", de: "Warte auf den TV-Bildschirm", en: "Wait for the TV screen" },
+  // ── Neon Savaşları (Colors) ──
   "colors.teamAssigned": { tr: "TAKIMIN BELİRLENDİ", de: "DEIN TEAM WURDE ZUGETEILT", en: "YOUR TEAM IS ASSIGNED" },
   "colors.tapFast": { tr: "Tüm parmaklarınla olabildiğince hızlı tıkla!", de: "Tippe mit allen Fingern so schnell du kannst!", en: "Tap as fast as you can with every finger!" },
   "colors.hostHint": { tr: "TAKIMIN İÇİN EN HIZLI SEN TIKLA!", de: "TIPP AM SCHNELLSTEN FÜR DEIN TEAM!", en: "TAP FASTEST FOR YOUR TEAM!" },
@@ -1744,11 +1726,9 @@ const translations = {
   "colors.startGame": { tr: "SAVAŞI BAŞLAT", de: "KRIEG STARTEN", en: "START WAR" },
   "colors.endGame": { tr: "OYUNU BİTİR VE LOBİYE DÖN", de: "SPIEL BEENDEN & ZUR LOBBY", en: "END GAME & RETURN TO LOBBY" },
   
-  // SPECTRUM
-  "spectrum.results": { tr: "Sonuçlar...", de: "Ergebnisse...", en: "Results..." },
-  "spectrum.redTeam": { tr: "KIRMIZI TAKIM", de: "TEAM ROT", en: "RED TEAM" },
-  "spectrum.blueTeam": { tr: "MAVİ TAKIM", de: "TEAM BLAU", en: "BLUE TEAM" },
-  "spectrum.tie": { tr: "BERABERE", de: "UNENTSCHIEDEN", en: "TIE" },
+  // Takım adları (Colors ve takım modları ortak)
+  "team.red": { tr: "KIRMIZI TAKIM", de: "TEAM ROT", en: "RED TEAM" },
+  "team.blue": { tr: "MAVİ TAKIM", de: "TEAM BLAU", en: "BLUE TEAM" },
 
   // ═══════════════════════════════════════════
   // GAME SETTINGS MODAL (HIGH READABILITY & CLARITY)

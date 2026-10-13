@@ -1,38 +1,44 @@
 # HENGAME — Oyun Tasarımı Değerlendirmesi ve Yol Haritası
 
-Ekim 2026. 15 modun TV ve telefon ekranları sahte verilerle render edilip
+Ekim 2026. 14 modun TV ve telefon ekranları sahte verilerle render edilip
 kodla birlikte incelendi. Bu belge "hangi oyun ne işe yarıyor, gece nasıl
 akmalı, sırada ne var" sorularının tek cevap yeri; yeni mod eklemeden önce oku.
 
-## 1. Katalog — tür, gecelik skora katkı, durum
+## 1. Katalog — tür ve gecelik lig
 
-| Oyun | Tür | Gecelik skora katkı | Not |
+Gecelik lig **F1 usulü**: her oyun bitince sıraya göre 25/18/15/12/10/8/6/4/2/1,
+puan alamayan ya da ilk 10 dışı her katılımcıya 1; takım oyununda kazanan
+takımın her üyesine 10. Ham oyun puanı gecelik skora girmez — her oyun eşit
+ağırlıkta, "tutarlı olan şampiyon olur". Kod: `lib/nightLeague` (saf, testli),
+`lib/nightAwards` (oda `night_awarded` bayrağıyla tek seferlik transaction).
+
+| Oyun | Tür | Gecelik ligde sıra neye göre | Not |
 |---|---|---|---|
-| HENGAME ARENA | Bilgi · kelime | ✅ tur puanları | Klasik isim-şehir; en uzun mod |
-| HENGAME QUIZ | Bilgi · hız | ✅ 1000 (+hız 100–500, seri ×1.2/×1.5; final ×2) | Gecenin omurgası |
-| HENGAME AYNA | Bilgi · empati | ✅ tahmin puanı | Salon anketi: gece başına özgün içerik |
-| HENGAME BOMB | Kelime · gerilim | ✅ dayanılan rakip × 100 | Bomba sahibi ayrılırsa devrediliyor |
-| HENGAME SENSÖR | Görsel · buzzer | ✅ doğru başına 100 | |
-| NEON ŞİFRE (Vault) | Mantık · yarış | ✅ kazanan 500 | |
-| NEON SAVAŞLARI (Colors) | Takım · dokunma | ✅ kazanan takım 150 | |
-| NEON SPEKTRUM | Takım · dokunma | ❌ | Colors ile aynı mekanik (kırmızı/mavi, en çok dokunan) |
-| NEON BİRLİK (Unity) | Ortak · dokunma | ❌ | Herkes birlikte; kazanan yok |
-| NEON PULSE | Ortak · ritim | ❌ | Zamanlama; bireysel sonuç var, puan yok |
-| NEON OVERLOAD | Refleks · sıcak patates | ❌ (yalnızca mekân ödülü) | Hayatta kalan puan almıyor |
-| NEON BAR | Hafıza · sıra | ❌ (`bar_score` sayaç, toplama yansımıyor) | |
-| NEON KABLO | Bulmaca · takım | ❌ (`kablo_score` sayaç) | |
-| HENGAME ECHO | Sosyal · oylama | ❌ | "Kim en çok…?" — puansız olması doğru |
-| HENGAME ÇARK | Ödül · şans | ❌ | Oyun değil, ara gösteri — puansız olması doğru |
+| HENGAME ARENA | Bilgi · kelime | Oyun skoru (takım modunda takım toplamı) | Klasik isim-şehir; en uzun mod |
+| HENGAME QUIZ | Bilgi · hız | Oyun skoru (1000 + hız 100–500, seri ×1.2/×1.5; final ×2) | Gecenin omurgası |
+| HENGAME AYNA | Bilgi · empati | Toplam tahmin puanı | Salon anketi: gece başına özgün içerik |
+| HENGAME BOMB | Kelime · gerilim | Dayanılan rakip sayısı | Bomba sahibi ayrılırsa devrediliyor |
+| HENGAME SENSÖR | Görsel · buzzer | Oyun skoru (doğru başına 100) | |
+| NEON ŞİFRE (Vault) | Mantık · yarış | Şifreyi çözen 1., diğerleri katılım | |
+| NEON SAVAŞLARI (Colors) | Takım · dokunma | Kazanan takım 10, diğerleri 1 | |
+| NEON OVERLOAD | Refleks · sıcak patates | Hayatta kalan 1., sonra eleme sırasının tersi | |
+| NEON BİRLİK (Unity) | Ortak · dokunma | — | Herkes birlikte; kazanan yok |
+| NEON PULSE | Ortak · ritim | — | Zamanlama; bireysel sonuç var |
+| NEON BAR | Hafıza · sıra | — (`bar_score` sayaç) | Sırada: tamamlanan kokteyle göre sıra |
+| NEON KABLO | Bulmaca · takım | — (`kablo_score` sayaç) | |
+| HENGAME ECHO | Sosyal · oylama | — | "Kim en çok…?" — puansız olması doğru |
+| HENGAME ÇARK | Ödül · şans | — | Oyun değil, ara gösteri — puansız olması doğru |
 
-**Gözlem:** 15 modun 8'i gecelik sıralamaya hiç dokunmuyor. Misafir için
-"bu oyunu kazanmam bir şey değiştirir mi?" sorusunun cevabı tutarsız.
+**Kaldırılan:** NEON SPEKTRUM — Colors ile aynı mekanikti (iki takım, en çok
+dokunan) ve hiçbir puan/ödül vermiyordu. O anda Spectrum oynayan eski bir oda
+`isRetiredGame` korumasıyla host'ta ana ekrana, misafirde lobiye düşer.
 
 ## 2. Bu turda düzeltilenler (yol haritası P0)
 
 - **Gecelik skor ölüydü:** `night_score`'a katılımdaki 0 dışında hiçbir yer
-  yazmıyordu; TV ana ekranı gece boyu "0 Puan" gösteriyordu. Artık puan veren
-  her yol `lib/scoreWrites` kapısından geçiyor, TV "gecenin liderleri"ni
-  madalyalı sıralıyor. Kural testleriyle korunuyor (oyuncu yazamaz).
+  yazmıyordu; TV ana ekranı gece boyu "0 Puan" gösteriyordu. Artık F1 usulü
+  gecelik lig (§1); TV "gecenin liderleri"ni madalyalı sıralıyor. Kural
+  testleriyle korunuyor (oyuncu yazamaz).
 - **Bomba kilitlenmesi:** sahibi ayrılınca TV kararıp oyun duruyordu.
 - **Bomba kendine dönüyordu:** canlılık süzgeci kimseyi bırakmazsa.
 - **Alarm dili ve flaş:** "SİSTEM HACKLENDİ", siren, saniyede 4–5 parlama
@@ -54,21 +60,16 @@ Enerji eğrisi: ısın → zirve → nefes → final. Örnek 90 dakikalık blok:
 5. **Takım şovu:** Colors
 6. **Final:** Quiz (final turu ×2) → Çark (ödül dağıtımı)
 
-## 4. Sıradaki adımlar (karar bekleyenler — P1/P2)
+## 4. Sıradaki adımlar
 
-**P1 — Her oyun gece için anlamlı olsun (ürün kararı gerekli).**
-Seçenek A: puansız 6 moda Colors/Vault ölçeğinde puan (kazanan takım 150,
-hayatta kalan 300, ortak başarı herkese 100). Basit, ama Quiz soru başına
-~1500 verdiği için gecelik sıralamayı yine Quiz belirler.
-Seçenek B (önerilen): **F1 usulü yerleşme puanı** — her oyun bitince
-gecelik skora sıraya göre 25/18/15/12/10… eklenir, ham oyun puanı değil.
-Her oyun eşit ağırlıkta olur; "tutarlı olan şampiyon olur" stratejisi doğar
-ve TV'de tek cümleyle anlatılır. Uygulama: her modun bitişinde tek bir
-`awardPlacements(ranking)` çağrısı (lib/scoreWrites'a eklenir).
+Karara bağlananlar (Ekim 2026): F1 usulü gecelik lig ✅, Spectrum kaldırıldı ✅.
 
-**P1 — Katalog sadeleşmesi.** Spectrum ve Colors aynı mekanik (iki takım,
-en çok dokunan). Birini kataloğdan kaldırmak ya da Spectrum'a farklı bir
-kural (ör. hedef yüzdeyi tutturan takım kazanır) vermek seçimi kolaylaştırır.
+**P1 — Bar ve Kablo da lige girsin.** İkisinin de oyuncu başına sayacı var
+(`bar_score`, `kablo_score`); bitişte `placementPointsByScore` ile sıraya
+çevirmek yeterli.
+
+**P2 — TV'de lig anı.** Oyun sonu podyumunda "+25 gece puanı" rozeti ve
+dashboard'da sıra değişimi animasyonu (▲2) — misafir ligi oyunun içinde görsün.
 
 **P2 — Saat farkı.** Oyuncu `last_active` kendi saatiyle yazılıyor; bomba ve
 echo hedef seçimi diğer telefonların saatini kıyaslıyor. Kalıcı çözüm:
@@ -77,7 +78,7 @@ heartbeat `serverTimestamp()` + her cihazda sunucu saati ofseti tahmini.
 
 ## 5. Kontrol listesi — yeni mod eklerken
 
-- [ ] Kazananı varsa puanı `lib/scoreWrites` üzerinden yazıyor (gecelik skor).
+- [ ] Oyun skorunu `lib/scoreWrites`, bitişte gecelik ligi `finishNightRound` ile yazıyor; yeni oyun başlarken `NIGHT_ROUND_OPEN`.
 - [ ] Telefonda bekleme/bitti ekranı `PlayerStageScreen`, TV açılışı `GameIntroCinematic`.
 - [ ] Sahibi/hedefi olan bir oyuncu ayrılırsa oyun kilitlenmiyor (bkz. bomba devri).
 - [ ] Saniyede 3'ten fazla parlama, siren, alarm dili yok.

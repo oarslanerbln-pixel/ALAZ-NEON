@@ -38,9 +38,6 @@ export type RoomStatus =
   | "pulse_intro"
   | "pulse_active"
   | "pulse_reveal"
-  | "spectrum_intro"
-  | "spectrum_active"
-  | "spectrum_reveal"
   | "colors_intro"
   | "colors_active"
   | "colors_reveal"
@@ -63,7 +60,7 @@ export type RoomStatus =
   | "ayna_final";
 
 export type GameMode = "individual" | "team";
-export type GameType = "scattegories" | "quiz" | "bomb" | "sensor" | "wheel" | "overload" | "echo" | "pulse" | "spectrum" | "colors" | "vault" | "unity" | "bar" | "kablo" | "ayna";
+export type GameType = "scattegories" | "quiz" | "bomb" | "sensor" | "wheel" | "overload" | "echo" | "pulse" | "colors" | "vault" | "unity" | "bar" | "kablo" | "ayna";
 
 export interface QuizQuestion {
   id: string;
@@ -160,15 +157,6 @@ export interface Room {
   pulse_target_time?: number;
   pulse_clicks?: Record<string, number>;
   pulse_result?: number;
-  // Spectrum Game Fields
-  /**
-   * playerId -> takim. Echo'daki ile ayni sebeple nullable: takimlar yalnizca
-   * bu alan bosken yeniden kurulur, aksi halde ikinci tur eski (ve lobiden
-   * ayrilmis oyuncular iceren) kadroyla basliyor.
-   */
-  spectrum_teams?: Record<string, "red" | "blue"> | null;
-  spectrum_scores?: Record<"red" | "blue", number>;
-  spectrum_end_time?: number;
   // Ad Break Flow Control
   ad_break_next_state?: RoomStatus;
   // Colors Game Fields (Neon Wars)
@@ -238,7 +226,6 @@ export interface Player {
   lives?: number;
   last_active?: number;
   colors_clicks?: number;
-  spectrum_clicks?: number;
   bar_score?: number;
   kablo_score?: number;
 }

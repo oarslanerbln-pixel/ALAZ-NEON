@@ -183,7 +183,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       };
     }
 
-    // Echo / Spectrum / Pulse ekranlari kurulumlarini kendileri yapiyor, ama
+    // Echo / Pulse ekranlari kurulumlarini kendileri yapiyor, ama
     // bunu yalnizca ilgili alan BOSKEN yapiyorlar: alanlar burada
     // temizlenmezse ikinci tur onceki turun sorusu/oylari ve kadrosuyla
     // aciliyor. Ayrica dogrudan *_intro ile basliyoruz — "lobby" uzerinden
@@ -198,15 +198,6 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       };
     }
 
-    if (game === "spectrum") {
-      initialStatus = "spectrum_intro";
-      extraUpdates = {
-        ...extraUpdates,
-        spectrum_teams: null,
-        spectrum_scores: { red: 50, blue: 50 },
-      };
-    }
-
     if (game === "pulse") {
       initialStatus = "pulse_intro";
       extraUpdates = {
@@ -215,7 +206,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       };
     }
 
-    // Bar ve Kablo, Echo/Spectrum'un aksine "lobby"den kendini baslatmiyor:
+    // Bar ve Kablo, Echo'nun aksine "lobby"den kendini baslatmiyor:
     // ekranlari dogrudan *_intro durumunu bekliyor. Lobby ile acilirlarsa
     // hicbir dala girmeyip bos ekranda kaliyorlar.
     if (game === "bar") {

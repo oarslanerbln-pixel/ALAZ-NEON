@@ -40,7 +40,7 @@ export interface GameCard {
  *
  * `id` alani `GameType` ile birebir ortusmeli: HostDisplay ve PlayerGame
  * yonlendirmesi bu degere bakiyor, dolayisiyla burada karti olmayan bir mod
- * uygulamada hicbir sekilde baslatilamaz. Echo, Pulse, Spectrum, Bar ve Kablo
+ * uygulamada hicbir sekilde baslatilamaz. Echo, Pulse, Bar ve Kablo
  * tam olarak bu yuzden uzun sure yazilmis ama erisilemez kaldi; dosyanin
  * sonundaki exhaustiveness kontrolu ayni hatayi derleme zamaninda yakaliyor.
  */
@@ -210,21 +210,6 @@ export const GAME_CARDS = [
     hoverBgAccent: "group-hover:bg-neon-blue/40",
     iconAccent: "bg-neon-blue/10 border-neon-blue/40",
     borderAccent: "hover:border-neon-blue/60"
-  },
-  {
-    id: "spectrum",
-    category: "team",
-    titlePrefix: "NEON",
-    titleHighlight: "SPEKTRUM",
-    gradientText: "from-rose-400 to-sky-400 drop-shadow-[0_0_10px_rgba(244,63,94,0.3)]",
-    shadowColor: "rgba(244,63,94,0.3)",
-    icon: "users",
-    iconColor: "pink",
-    descKey: "dashboard.modeSpectrumDesc",
-    bgAccent: "bg-rose-500/20",
-    hoverBgAccent: "group-hover:bg-rose-500/40",
-    iconAccent: "bg-rose-500/10 border-rose-500/40",
-    borderAccent: "hover:border-rose-500/60"
   },
   {
     id: "bar",

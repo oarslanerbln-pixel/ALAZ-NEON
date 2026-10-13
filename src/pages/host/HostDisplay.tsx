@@ -31,7 +31,7 @@ import { HostPodium } from "./views/HostPodium";
 import { HostAdBreak } from "./views/HostAdBreak";
 import { HostDashboard } from "./dashboard/HostDashboard";
 import { HOST_GAME_DISPLAYS, preloadHostGameDisplays } from "./gameDisplays";
-import { resolveRoutedGame } from "../../lib/gameRouting";
+import { isRetiredGame, resolveRoutedGame } from "../../lib/gameRouting";
 import { HostTutorial } from "./components/HostTutorial";
 import { DatabaseStatus } from "../../components/DatabaseStatus";
 import { RoomStatusScreen } from "../../components/RoomStatusScreen";
@@ -87,7 +87,7 @@ export function HostDisplay() {
     );
   }
 
-  if (room.status === "night_lobby" || room.active_game === "none") {
+  if (room.status === "night_lobby" || room.active_game === "none" || isRetiredGame(room.active_game)) {
     return (
       <HostDashboard
         room={room}
