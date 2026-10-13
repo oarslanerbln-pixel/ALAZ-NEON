@@ -165,7 +165,8 @@ export function HostQuizDisplay({
     endingQuestionRef.current = true;
 
     SoundManager.getInstance().stopSound(sounds.GAME_PULSE);
-    SoundManager.getInstance().playSFX(sounds.SIREN);
+    // Siren her 30 sn'de bir kafede alarm gibi çalıyordu; açıklama vuruşu yeter.
+    SoundManager.getInstance().playSFX(sounds.CINEMATIC_BOOM, 0.6);
 
     await updateRoomStatus("question_reveal");
 

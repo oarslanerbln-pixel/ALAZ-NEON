@@ -208,7 +208,7 @@ function HostDisplayGame({
     setIsAnalyzing(true);
 
     await updateRoomStatus("review");
-    SoundManager.getInstance().playSFX(sounds.SIREN);
+    SoundManager.getInstance().playSFX(sounds.CINEMATIC_BOOM, 0.6);
 
     // Give players 2.5 seconds to auto-submit their final answers
     await new Promise((resolve) => setTimeout(resolve, 2500));
