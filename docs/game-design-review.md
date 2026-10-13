@@ -40,6 +40,8 @@ akmalı, sırada ne var" sorularının tek cevap yeri; yeni mod eklemeden önce 
 - **Quiz son 5 sn uyarısı** hiç tetiklenmiyordu; saat farkından etkilenmeyen
   süre çubuğu geldi.
 - **TV ana ekranı** açık pastel ve ağır blur filtreliydi; koyu premium sahne.
+- **Tür rozetleri:** `GameCard.category` (Bilgi/Refleks/Takım/Sosyal/Ödül)
+  dashboard karuselinde görünüyor; host gece akışını kartlardan okuyor.
 
 ## 3. Önerilen gece akışı (host için)
 
@@ -67,10 +69,6 @@ ve TV'de tek cümleyle anlatılır. Uygulama: her modun bitişinde tek bir
 **P1 — Katalog sadeleşmesi.** Spectrum ve Colors aynı mekanik (iki takım,
 en çok dokunan). Birini kataloğdan kaldırmak ya da Spectrum'a farklı bir
 kural (ör. hedef yüzdeyi tutturan takım kazanır) vermek seçimi kolaylaştırır.
-
-**P2 — Dashboard'da tür etiketleri.** `GameCard`'a `category`
-(Bilgi/Refleks/Takım/Sosyal/Ödül) ekleyip karuselde rozet olarak göstermek;
-host gece akışını kartlardan okuyabilsin.
 
 **P2 — Saat farkı.** Oyuncu `last_active` kendi saatiyle yazılıyor; bomba ve
 echo hedef seçimi diğer telefonların saatini kıyaslıyor. Kalıcı çözüm:

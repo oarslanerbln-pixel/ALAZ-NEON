@@ -1534,6 +1534,11 @@ const translations = {
   "host.redTeam": { tr: "Kırmızı Takım", de: "Team Rot", en: "Red Team" },
   "host.blueTeam": { tr: "Mavi Takım", de: "Team Blau", en: "Blue Team" },
   "host.participation": { tr: "Katılım", de: "Teilnahme", en: "Participation" },
+  "gameCategory.knowledge": { tr: "Bilgi", de: "Wissen", en: "Knowledge" },
+  "gameCategory.reflex": { tr: "Refleks", de: "Reflex", en: "Reflex" },
+  "gameCategory.team": { tr: "Takım", de: "Team", en: "Team" },
+  "gameCategory.social": { tr: "Sosyal", de: "Sozial", en: "Social" },
+  "gameCategory.reward": { tr: "Ödül", de: "Preis", en: "Prize" },
   "dashboard.step1": { tr: "ADIM 1", de: "SCHRITT 1", en: "STEP 1" },
   "dashboard.joinTitle": { tr: "Oyuna katıl", de: "Spiel beitreten", en: "Join the game" },
   "dashboard.joinBody": {

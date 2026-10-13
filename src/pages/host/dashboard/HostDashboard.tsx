@@ -14,7 +14,7 @@ import { db } from "../../../lib/firebase";
 
 import { getRandomSensorImage } from "../../../data/sensorImages";
 import { GameSettingsModal } from "../components/GameSettingsModal";
-import { GAME_CARDS as GAMES } from "../../../lib/gameCatalog";
+import { GAME_CARDS as GAMES, GAME_CATEGORY_KEY } from "../../../lib/gameCatalog";
 import { activePlayers as activePlayersOf } from "../../../lib/liveness";
 import { useLocale } from "../../../hooks/useLocale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -434,8 +434,13 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                             
                             <div className="relative z-10 flex flex-col h-full justify-between">
                               <div>
-                                <div className={`w-16 h-16 ${game.iconAccent} border-[1.5px] rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-12 group-hover:scale-110 transition-all duration-500 shadow-xl`}>
-                                  <NeonIcon type={game.icon} color={game.iconColor} className="w-8 h-8" />
+                                <div className="flex items-center gap-4 mb-6">
+                                  <div className={`w-16 h-16 ${game.iconAccent} border-[1.5px] rounded-2xl flex items-center justify-center group-hover:rotate-12 group-hover:scale-110 transition-all duration-500 shadow-xl`}>
+                                    <NeonIcon type={game.icon} color={game.iconColor} className="w-8 h-8" />
+                                  </div>
+                                  <span className="rounded-full border border-white/15 bg-white/[0.06] px-4 py-1.5 text-xs font-black uppercase tracking-[0.25em] text-white/70">
+                                    {t(GAME_CATEGORY_KEY[game.category])}
+                                  </span>
                                 </div>
                                 <h3 className="text-4xl sm:text-5xl font-black text-white mb-2 tracking-widest transition-colors uppercase">
                                   {game.titlePrefix} <span className={`text-transparent bg-clip-text bg-gradient-to-r ${game.gradientText}`}>{game.titleHighlight}</span>
