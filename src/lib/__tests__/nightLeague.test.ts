@@ -67,8 +67,8 @@ describe("nightPointsForPlayers", () => {
 
   it("bireysel modda sıra puanı", () => {
     expect(nightPointsForPlayers("individual", [
-      { id: "a", total_score: 10 },
-      { id: "b", total_score: 20 },
+      { id: "a", total_score: 10, team_name: null },
+      { id: "b", total_score: 20, team_name: null },
     ])).toEqual({ a: 18, b: 25 });
   });
 });
