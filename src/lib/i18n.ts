@@ -1070,6 +1070,12 @@ const translations = {
   "unity.failedDesc": { tr: "ENERJİ YETERSİZ KALDI", de: "DIE ENERGIE HAT NICHT GEREICHT", en: "NOT ENOUGH ENERGY" },
   "unity.surgeHappened": { tr: "Enerji patlaması gerçekleşti.", de: "Der Energieschub ist gelungen.", en: "The energy surge went off." },
   "unity.notEnough": { tr: "Yeterli enerji toplanamadı.", de: "Es wurde nicht genug Energie gesammelt.", en: "Not enough energy was gathered." },
+  "unity.tap": { tr: "BAS!", de: "DRÜCK!", en: "TAP!" },
+  "unity.yourTaps": {
+    tr: (n: number) => `Senin katkın: ${n}`,
+    de: (n: number) => `Dein Beitrag: ${n}`,
+    en: (n: number) => `Your taps: ${n}`,
+  },
   "unity.watchTimer": { tr: "TV Ekranına Bakarak Süreyi Takip Et", de: "Verfolge die Zeit auf dem TV-Bildschirm", en: "Watch the timer on the TV screen" },
 
   // ── Kasa (vault) ──
@@ -1486,6 +1492,7 @@ const translations = {
   "quiz.finishGame": { tr: "OYUNU TAMAMLA 🏆", de: "SPIEL BEENDEN 🏆", en: "FINISH GAME 🏆" },
   "quiz.champion": { tr: "HENGÂME ŞAMPİYONU", de: "HENGAME CHAMPION", en: "HENGAME CHAMPION" },
   "quiz.newGame": { tr: "YENİ OYUN BAŞLAT", de: "NEUES SPIEL STARTEN", en: "START NEW GAME" },
+  "quiz.timeLeft": { tr: "Kalan süre", de: "Verbleibende Zeit", en: "Time left" },
   "quiz.watchMainScreen": {
     tr: "TV ekranına odaklan, sorular açılmak üzere!",
     de: "Schau auf den TV-Bildschirm, die Fragen starten gleich!",

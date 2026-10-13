@@ -6,6 +6,8 @@ import { doc, updateDoc, collection, query, where, getDocs } from "firebase/fire
 import { useToast } from "../../../contexts/ToastContextCore";
 import { useLocale } from "../../../hooks/useLocale";
 import { echoQuestionText } from "../../../lib/echoQuestions";
+import { gameTitle } from "../../../lib/gameCatalog";
+import { PlayerStageScreen } from "../components/PlayerStageScreen";
 
 interface Props {
   room: Room;
@@ -83,14 +85,7 @@ export function PlayerEchoController({ room, player }: Props) {
 
   if (room.status === "echo_intro") {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center relative z-10">
-        <h2 className="text-3xl font-black text-white mb-4 uppercase tracking-widest">
-          {t("echo.questionComing")}
-        </h2>
-        <p className="text-gray-400 uppercase tracking-widest font-bold animate-pulse">
-          {t("common.followMainScreen")}
-        </p>
-      </div>
+      <PlayerStageScreen icon="💬" tone="pink" eyebrow={gameTitle("echo")} title={t("echo.questionComing")} waiting />
     );
   }
 

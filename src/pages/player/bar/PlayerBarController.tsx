@@ -7,6 +7,8 @@ import { haptics } from "../../../lib/haptics";
 import { useLocale } from "../../../hooks/useLocale";
 import { X, Check } from "lucide-react";
 import { SoundManager, sounds } from "../../../lib/audio";
+import { gameTitle } from "../../../lib/gameCatalog";
+import { PlayerStageScreen } from "../components/PlayerStageScreen";
 
 interface Props {
   room: Room;
@@ -93,15 +95,7 @@ export function PlayerBarController({ room, player }: Props) {
 
   if (room.status !== "bar_active") {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center min-h-[100dvh] bg-[#0d000f] text-white">
-        <span className="text-7xl mb-4 animate-bounce">🍹</span>
-        <h1 className="text-3xl font-black text-cyan-400 font-mono tracking-widest uppercase mb-2">
-          {t("player.barTitle")}
-        </h1>
-        <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">
-          {t("bar.hint")}
-        </p>
-      </div>
+      <PlayerStageScreen icon="🍹" tone="cyan" eyebrow={gameTitle("bar")} title={t("player.barTitle")} body={t("bar.hint")} waiting />
     );
   }
 

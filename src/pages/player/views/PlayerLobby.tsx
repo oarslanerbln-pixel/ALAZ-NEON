@@ -6,6 +6,7 @@ import { db } from "../../../lib/firebase";
 import { useLocale } from "../../../hooks/useLocale";
 import { PlayerBackground } from "../../../components/PlayerBackground";
 import { LanguageSwitcher } from "../../../components/LanguageSwitcher";
+import { PlayerStageScreen } from "../components/PlayerStageScreen";
 import type { Room } from "../../../types/database";
 
 interface PlayerLobbyProps {
@@ -73,24 +74,24 @@ export function PlayerLobby({ room, roomId }: PlayerLobbyProps) {
         <LanguageSwitcher />
       </div>
 
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center gap-5 py-8">
-        <div className="relative w-28 h-28 flex items-center justify-center" aria-hidden="true">
-          <span className="absolute inset-0 rounded-full border border-alaz-orange/40 motion-safe:animate-ping [animation-duration:2.4s]" />
-          <span className="absolute inset-2 rounded-full bg-alaz-orange/10 border border-alaz-orange/50 shadow-[0_0_40px_rgba(255,85,0,0.35)]" />
-          <Check className="relative w-12 h-12 text-alaz-orange" strokeWidth={2.5} />
-        </div>
-
-        <h1 className="text-4xl font-black text-white tracking-wide">{t("lobby.readyTitle")}</h1>
-        <p className="text-base text-white/70 max-w-xs leading-relaxed">{t("lobby.readyBody")}</p>
-
-        <span
-          className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm font-bold text-emerald-300"
-          role="status"
-          aria-live="polite"
+      <div className="relative z-10 flex-1 flex flex-col">
+        <PlayerStageScreen
+          icon={<Check className="w-12 h-12 text-alaz-orange" strokeWidth={2.5} />}
+          tone="orange"
+          title={t("lobby.readyTitle")}
+          body={t("lobby.readyBody")}
+          waiting
+          hint={null}
         >
-          <span className="w-2 h-2 rounded-full bg-emerald-400 motion-safe:animate-pulse" aria-hidden="true" />
-          {t("waitingRoom.playersConnected", playerCount)}
-        </span>
+          <span
+            className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm font-bold text-emerald-300"
+            role="status"
+            aria-live="polite"
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-400 motion-safe:animate-pulse" aria-hidden="true" />
+            {t("waitingRoom.playersConnected", playerCount)}
+          </span>
+        </PlayerStageScreen>
       </div>
 
       <div className="relative z-10 flex flex-col gap-3 pb-2">

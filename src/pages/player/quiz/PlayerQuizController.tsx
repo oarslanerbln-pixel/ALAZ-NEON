@@ -8,6 +8,9 @@ import { SoundManager, sounds } from "../../../lib/audio";
 import { haptics } from "../../../lib/haptics";
 import type { Room, Player } from "../../../types/database";
 import { useLocale } from "../../../hooks/useLocale";
+import { gameTitle } from "../../../lib/gameCatalog";
+import { PlayerStageScreen } from "../components/PlayerStageScreen";
+import { QuizTimerBar } from "./QuizTimerBar";
 
 interface PlayerQuizControllerProps {
   room: Room;
@@ -19,6 +22,10 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [gameState, setGameState] = useState(room.status);
+  const [urgent, setUrgent] = useState(false);
+  // Sayfa bir sorunun ortasında açıldıysa o sorunun başlangıcını görmedik;
+  // süre çubuğu o soru için host'un bitiş anına güvenecek (bkz. lib/countdown).
+  const [joinedMidQuestion] = useState(() => (room.status === "question_active" ? room.current_question_index ?? 0 : null));
 
   // Synchronous double-tap submission lock
   const hasSubmittedRef = useRef(false);
@@ -138,10 +145,16 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-4 min-h-screen bg-black text-white relative overflow-hidden select-none">
-      <ParticleBackground speedMultiplier={gameState === "question_active" && (room.time_left || 0) <= 5 ? 5 : 1} />
-      
-      {gameState === "question_active" && (room.time_left || 0) <= 5 && (
-        <div className="absolute inset-0 bg-red-600/15 animate-pulse pointer-events-none z-0" />
+      <ParticleBackground speedMultiplier={gameState === "question_active" && urgent ? 5 : 1} />
+
+      {gameState === "question_active" && (
+        <QuizTimerBar
+          key={room.current_question_index ?? 0}
+          durationSec={room.timer_setting || 30}
+          roundEndTime={room.round_end_time}
+          live={joinedMidQuestion !== (room.current_question_index ?? 0)}
+          onUrgentChange={setUrgent}
+        />
       )}
 
       {/* Top Status Header */}
@@ -167,17 +180,8 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, y: -20 }}
-              className="text-center"
             >
-              <div className="bg-black/80 border-2 border-blue-500/50 p-8 rounded-2xl shadow-[0_0_40px_rgba(59,130,246,0.3)] backdrop-blur-md">
-                <div className="text-5xl mb-4 animate-bounce">⚡</div>
-                <h2 className="text-2xl font-black text-blue-400 uppercase tracking-widest mb-3">
-                  {t("quiz.title")}
-                </h2>
-                <p className="text-gray-300 font-medium text-base leading-relaxed">
-                  {t("quiz.watchMainScreen")}
-                </p>
-              </div>
+              <PlayerStageScreen icon="💡" tone="blue" eyebrow={gameTitle("quiz")} title={t("lobby.readyTitle")} body={t("quiz.watchMainScreen")} waiting hint={null} />
             </motion.div>
           )}
 
@@ -188,19 +192,16 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.05 }}
-              className="text-center"
             >
-              <div className="bg-gradient-to-b from-blue-950/40 to-black/80 border border-blue-500/40 p-8 rounded-2xl shadow-[0_0_30px_rgba(59,130,246,0.2)]">
-                <span className="px-4 py-1.5 rounded-full bg-blue-500/20 border border-blue-500 text-blue-400 font-mono text-sm uppercase tracking-widest font-bold inline-block mb-4">
-                  {t("quiz.questionCounter", currentRound, totalRounds)}
-                </span>
-                <h2 className="text-3xl font-black text-white uppercase tracking-widest mb-3 drop-shadow-[0_0_20px_rgba(255,255,255,0.6)]">
-                  {t("quiz.getReady")}
-                </h2>
-                <p className="text-cyan-400 font-medium text-sm">
-                  {t("quiz.waitingForTimer")}
-                </p>
-              </div>
+              <PlayerStageScreen
+                icon="🧠"
+                tone="blue"
+                eyebrow={t("quiz.questionCounter", currentRound, totalRounds)}
+                title={t("quiz.getReady")}
+                body={t("quiz.waitingForTimer")}
+                waiting
+                hint={null}
+              />
             </motion.div>
           )}
 
@@ -314,21 +315,10 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="text-center"
             >
-              <div className="bg-black/80 border-2 border-alaz-orange/50 p-8 rounded-2xl shadow-[0_0_30px_rgba(255,77,0,0.3)] backdrop-blur-md">
-                <div className="text-4xl mb-3">🏆</div>
-                <h2 className="text-2xl font-black text-alaz-orange uppercase tracking-widest mb-2">
-                  {t("quiz.ranking")}
-                </h2>
-                <p className="text-gray-300 text-sm mb-6">
-                  {t("quiz.followRankingOnScreen")}
-                </p>
-                <div className="pt-4 border-t border-white/10 flex justify-between items-center px-4">
-                  <span className="text-gray-400 text-sm">{t("quiz.yourScore")}</span>
-                  <span className="text-3xl font-black text-alaz-orange">{player.total_score}</span>
-                </div>
-              </div>
+              <PlayerStageScreen icon="🏆" tone="orange" eyebrow={gameTitle("quiz")} title={t("quiz.ranking")} body={t("quiz.followRankingOnScreen")} hint={null}>
+                <ScoreTile label={t("quiz.yourScore")} score={player.total_score} />
+              </PlayerStageScreen>
             </motion.div>
           )}
 
@@ -338,17 +328,10 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
               key="finished"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="text-center"
             >
-              <div className="bg-gradient-to-b from-alaz-orange/25 to-black/90 border-2 border-alaz-orange p-8 rounded-2xl shadow-[0_0_50px_rgba(255,77,0,0.4)]">
-                <div className="text-5xl mb-3 animate-bounce">👑</div>
-                <h2 className="text-3xl font-black text-white uppercase tracking-widest mb-4">
-                  {t("quiz.gameOver")}
-                </h2>
-                <p className="text-gray-300 text-sm mb-2">{t("quiz.finalScore")}</p>
-                <div className="text-5xl font-black text-alaz-orange mb-4">{player.total_score}</div>
-                <p className="text-xs text-gray-400 uppercase tracking-widest">{t("quiz.watchMainScreen")}</p>
-              </div>
+              <PlayerStageScreen icon="👑" tone="orange" eyebrow={gameTitle("quiz")} title={t("quiz.gameOver")} hint={t("common.followMainScreen")}>
+                <ScoreTile label={t("quiz.finalScore")} score={player.total_score} />
+              </PlayerStageScreen>
             </motion.div>
           )}
 
@@ -359,15 +342,22 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex flex-col items-center justify-center text-center"
             >
-              <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4" />
-              <p className="text-gray-400 uppercase tracking-widest font-mono text-sm">{t("quiz.loading")}</p>
+              <PlayerStageScreen icon="💡" tone="blue" eyebrow={gameTitle("quiz")} title={t("quiz.loading")} waiting hint={null} />
             </motion.div>
           )}
           
         </AnimatePresence>
       </div>
+    </div>
+  );
+}
+
+function ScoreTile({ label, score }: { label: string; score: number }) {
+  return (
+    <div className="w-full max-w-xs rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 flex items-center justify-between backdrop-blur-md">
+      <span className="text-sm font-semibold text-white/60">{label}</span>
+      <span className="text-3xl font-black text-alaz-orange tabular-nums">{score}</span>
     </div>
   );
 }
