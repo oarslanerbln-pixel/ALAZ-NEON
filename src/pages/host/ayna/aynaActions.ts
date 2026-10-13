@@ -6,6 +6,7 @@ import { aynaQuestionById } from "../../../lib/aynaQuestions";
 import { AYNA_SURVEY_MS, applySurveyResults, isSalonId, salonTruth, tallySurvey } from "../../../lib/aynaSalon";
 import { toMillis } from "../../../lib/timestamps";
 import type { Answer, Room } from "../../../types/database";
+import { pointsFields } from "../../../lib/scoreWrites";
 
 /**
  * AYNA'nın host tarafı durum geçişleri.
@@ -143,7 +144,7 @@ export async function revealAynaRound(room: Room, playerIds: ReadonlySet<string>
     const totals: Record<string, ReturnType<typeof increment>> = {};
     for (const [playerId, p] of Object.entries(points)) {
       if (p <= 0) continue;
-      tx.update(doc(db, "players", playerId), { total_score: increment(p) });
+      tx.update(doc(db, "players", playerId), pointsFields(p));
       totals[`ayna_totals.${playerId}`] = increment(p);
     }
 

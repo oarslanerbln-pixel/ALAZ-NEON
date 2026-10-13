@@ -11,6 +11,7 @@ import { useVenue } from "../../../contexts/VenueContextCore";
 import { doc, writeBatch } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { KineticSpark } from "../../../components/KineticSpark";
+import { pointsFields } from "../../../lib/scoreWrites";
 
 interface Props {
   room: Room;
@@ -112,7 +113,7 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
           const rewardBatch = writeBatch(db);
           winners.forEach(p => {
             const pRef = doc(db, "players", p.id);
-            rewardBatch.update(pRef, { total_score: (p.total_score || 0) + 150 });
+            rewardBatch.update(pRef, pointsFields(150));
           });
           rewardBatch.commit().catch(err =>
             console.error("Error updating winner scores:", err)

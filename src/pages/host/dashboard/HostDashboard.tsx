@@ -358,15 +358,22 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                 {players.length === 0 ? (
                   <div className="text-gray-500 text-sm text-center mt-10">{t("dashboard.waiting")}</div>
                 ) : (
-                  players.map((p) => (
+                  // Gecenin liderleri: night_score gece boyu birikir (lib/scoreWrites).
+                  [...players]
+                    .sort((a, b) => (b.night_score ?? 0) - (a.night_score ?? 0))
+                    .map((p, i) => (
                     <motion.div
                       key={p.id}
+                      layout
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="bg-white/5 border border-white/10 p-3 rounded-xl flex justify-between items-center"
+                      className="bg-white/5 border border-white/10 p-3 rounded-xl flex justify-between items-center gap-3"
                     >
-                      <span className="font-bold text-white">{p.nickname}</span>
-                      <span className="text-alaz-orange font-mono text-sm">{t("dashboard.pointsSuffix", p.night_score || 0)}</span>
+                      <span className="w-6 text-center text-sm font-black text-white/40 tabular-nums" aria-hidden="true">
+                        {(p.night_score ?? 0) > 0 && i < 3 ? ["🥇", "🥈", "🥉"][i] : i + 1}
+                      </span>
+                      <span className="flex-1 truncate font-bold text-white">{p.nickname}</span>
+                      <span className="text-alaz-orange font-mono text-sm tabular-nums">{t("dashboard.pointsSuffix", p.night_score || 0)}</span>
                     </motion.div>
                   ))
                 )}

@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { doc, collection, query, where, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { Sentinel } from "../lib/sentinel";
 import { HOST_HEARTBEAT_MS } from "../lib/liveness";
+import { totalScoreFields } from "../lib/scoreWrites";
 import { useHeartbeat } from "./useHeartbeat";
 import type { Room, Player, Answer } from "../types/database";
 
@@ -138,9 +139,19 @@ export function useHostRoom(roomId: string | null) {
     }
   }, [roomId]);
 
+  // updatePlayerScore mutlak toplam alıyor; gecelik skora eklenecek artışı
+  // bulmak için oyuncunun bilinen son toplamı gerekiyor. Ref: callback'in
+  // kimliği her snapshot'ta değişmesin (çağıranların efektleri yeniden
+  // kurulmasın).
+  const playersRef = useRef(players);
+  useEffect(() => {
+    playersRef.current = players;
+  }, [players]);
+
   const updatePlayerScore = useCallback(async (playerId: string, totalScore: number) => {
     try {
-      await updateDoc(doc(db, "players", playerId), { total_score: totalScore });
+      const prev = playersRef.current.find((p) => p.id === playerId)?.total_score;
+      await updateDoc(doc(db, "players", playerId), totalScoreFields(prev, totalScore));
     } catch (err) {
       console.error("[useHostRoom] Skor güncellenemedi:", playerId, err);
     }

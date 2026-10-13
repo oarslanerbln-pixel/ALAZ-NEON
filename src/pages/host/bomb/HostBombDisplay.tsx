@@ -14,6 +14,7 @@ import { grantRewardToPlayers } from "../../../lib/rewards";
 import { useVenue } from "../../../contexts/VenueContextCore";
 import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
+import { totalScoreFields } from "../../../lib/scoreWrites";
 
 interface Props {
   room: Room;
@@ -137,9 +138,7 @@ export function HostBombDisplay({
         // Hayatta kalan tek oyuncu hiç elenmeden kazanıyor — podyumda 1.
         // sırada görünmesi için ona da aynı "outlasted rakip sayısı"
         // formülüyle herkesten yüksek skoru veriyoruz.
-        updateDoc(doc(db, "players", survivor.id), {
-          total_score: (players.length - 1) * 100,
-        }).catch((err) =>
+        updateDoc(doc(db, "players", survivor.id), totalScoreFields(survivor.total_score, (players.length - 1) * 100)).catch((err) =>
           console.error("[HostBombDisplay] Kazanan skoru yazılamadı:", err),
         );
       }
