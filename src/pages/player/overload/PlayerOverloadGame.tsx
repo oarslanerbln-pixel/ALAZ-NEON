@@ -100,7 +100,7 @@ export function PlayerOverloadGame({ room, player }: PlayerOverloadGameProps) {
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-3xl animate-bounce">⚡</span>
                 <h2 className="text-3xl font-black text-red-400 tracking-wider uppercase animate-pulse">
-                  VOLTAJ SENDE!
+                  {t("overload.voltageOnYou")}
                 </h2>
               </div>
 

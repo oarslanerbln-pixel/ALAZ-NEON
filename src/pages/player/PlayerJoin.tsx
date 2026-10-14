@@ -192,7 +192,7 @@ export function PlayerJoin() {
 
             {authChecking ? (
               <div className="flex justify-center items-center py-10">
-                <span className="text-alaz-orange font-bold uppercase tracking-widest animate-pulse">CONNECTING...</span>
+                <span className="text-alaz-orange font-bold uppercase tracking-widest animate-pulse">{t("join.connecting")}</span>
               </div>
             ) : !currentUser ? (
               <PhoneAuth onSuccess={() => {}} />
@@ -271,8 +271,8 @@ export function PlayerJoin() {
                     </label>
                     <div className="flex bg-[#ff003c]/5 border border-[#ff003c]/30 group-focus-within:border-[#ff003c] transition-colors">
                       <div className="px-4 py-4 border-r border-[#ff003c]/30 text-[#ff003c] font-bold bg-[#ff003c]/10 flex items-center justify-center">
-                        TEAM
-                      </div>
+                  {t("join.teamChip")}
+                </div>
                       <input
                         aria-label={t("join.teamLabel")}
                         type="text"

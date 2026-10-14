@@ -12,7 +12,7 @@ afterEach(() => {
   cleanup();
 });
 
-// Uygulamada tr/en sözlükleri seçilince tembel iniyor (lib/i18n.ts). Testler
-// dili eşzamanlı değiştirip hemen t() çağırıyor; sözlükleri baştan yükle ki
-// setLocale anında uygulansın.
-await Promise.all([loadLocale("tr"), loadLocale("en")]);
+// Uygulamada sözlükler tembel iniyor (lib/i18n.ts). Testler dili eşzamanlı
+// değiştirip hemen t() çağırıyor; üçünü de baştan yükle ki setLocale anında
+// uygulansın.
+await Promise.all([loadLocale("de"), loadLocale("tr"), loadLocale("en")]);

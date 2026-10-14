@@ -103,7 +103,7 @@ export function AttractMode({ onClose }: { onClose: () => void }) {
                 </div>
                 <div className="w-full h-44 bg-gradient-to-b from-[#1c1c28] to-[#0d0d14] border-t-2 border-t-gray-300 border-x border-white/10 rounded-t-3xl flex flex-col items-center justify-center shadow-lg">
                   <span className="text-4xl font-mono font-black text-gray-400">#02</span>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-gray-500 mt-1">SILBER</span>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-gray-500 mt-1">SILVER</span>
                 </div>
               </motion.div>
 

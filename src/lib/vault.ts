@@ -23,3 +23,37 @@ export function vaultWinner(guesses: readonly VaultGuess[], code: string | undef
   if (correct.length === 0) return null;
   return correct.reduce((first, g) => (toMillis(g.created_at) < toMillis(first.created_at) ? g : first)).player_id;
 }
+
+export type VaultFeedback = "correct" | "present" | "absent";
+
+/** Rastgele 4 haneli kasa kodu (1000–9999). */
+export function newVaultCode(random: () => number = Math.random): string {
+  return String(1000 + Math.floor(random() * 9000));
+}
+
+/**
+ * Tahminin ipucu (Mastermind): doğru yerde rakam "correct", kodda başka
+ * yerde varsa "present", yoksa "absent". Kod telefonda olmadığı için bunu
+ * host hesaplıyor (bkz. HostVaultDisplay).
+ */
+export function vaultFeedback(guess: string, code: string): VaultFeedback[] {
+  const feedback: VaultFeedback[] = Array(code.length).fill("absent");
+  const codeChars: (string | null)[] = code.split("");
+  const guessChars: (string | null)[] = guess.split("");
+  for (let i = 0; i < code.length; i++) {
+    if (guessChars[i] === codeChars[i]) {
+      feedback[i] = "correct";
+      codeChars[i] = null;
+      guessChars[i] = null;
+    }
+  }
+  for (let i = 0; i < code.length; i++) {
+    if (guessChars[i] === null || guessChars[i] === undefined) continue;
+    const index = codeChars.indexOf(guessChars[i]);
+    if (index !== -1) {
+      feedback[i] = "present";
+      codeChars[index] = null;
+    }
+  }
+  return feedback;
+}

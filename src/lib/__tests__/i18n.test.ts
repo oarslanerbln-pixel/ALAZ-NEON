@@ -93,13 +93,19 @@ describe("dil başına tembel yükleme", () => {
   });
 
   /** Sözlükleri henüz inmemiş, taze bir i18n modülü (uygulamanın açılış hâli). */
-  async function freshI18n() {
+  async function freshI18n(saved?: "tr" | "de" | "en") {
+    if (saved) localStorage.setItem("alaz_neon_locale", saved);
+    else localStorage.removeItem("alaz_neon_locale");
     vi.resetModules();
     return import("../i18n");
   }
 
   it("inmemiş dil indirilene kadar ekran eski dilde kalır; arka arkaya seçimde sonuncusu kazanır", async () => {
     const i18n = await freshI18n();
+    // Sözlüklerin hiçbiri giriş paketinde değil; uygulama ilk çizimi
+    // localeReady'yi bekleyerek yapıyor (main.tsx).
+    expect(i18n.t("common.back")).toBe("common.back");
+    await i18n.localeReady;
     expect(i18n.getLocale()).toBe("de");
 
     const first = i18n.setLocale("tr");
@@ -126,8 +132,7 @@ describe("dil başına tembel yükleme", () => {
   });
 
   it("kayıtlı dil açılışta yüklenir (localeReady)", async () => {
-    localStorage.setItem("alaz_neon_locale", "tr");
-    const i18n = await freshI18n();
+    const i18n = await freshI18n("tr");
     await i18n.localeReady;
     expect(i18n.getLocale()).toBe("tr");
     expect(i18n.t("common.back")).toBe("ANA SAYFA");

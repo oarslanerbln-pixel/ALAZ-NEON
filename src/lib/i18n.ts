@@ -8,7 +8,7 @@
  * (~84 KB) her telefonun ilk yüküne giriyordu.
  */
 
-import { de, type Dictionary } from "./i18n/de";
+import type { Dictionary } from "./i18n/de";
 
 export type Locale = "tr" | "de" | "en";
 export type TranslationKey = keyof Dictionary;
@@ -24,8 +24,11 @@ const LOCALES: readonly Locale[] = ["de", "tr", "en"];
 // tercihi localStorage'dan (varsa) önceliklidir.
 const DEFAULT_LOCALE: Locale = "de";
 
-const dictionaries: Partial<Record<Locale, Dictionary>> = { de };
-const loaders: Record<Exclude<Locale, "de">, () => Promise<Dictionary>> = {
+const dictionaries: Partial<Record<Locale, Dictionary>> = {};
+// Üç sözlük de tembel: `de` önceden giriş paketindeydi ve Türkçe/İngilizce
+// kullanan her misafir onu da indiriyordu (giriş paketi bütçesinin üçte biri).
+const loaders: Record<Locale, () => Promise<Dictionary>> = {
+  de: () => import("./i18n/de").then((m) => m.de),
   tr: () => import("./i18n/tr").then((m) => m.tr),
   en: () => import("./i18n/en").then((m) => m.en),
 };
@@ -36,7 +39,7 @@ export function loadLocale(locale: Locale): Promise<void> {
   if (dictionaries[locale]) return Promise.resolve();
   let pending = inFlight.get(locale);
   if (!pending) {
-    pending = loaders[locale as Exclude<Locale, "de">]()
+    pending = loaders[locale]()
       .then((dictionary) => {
         dictionaries[locale] = dictionary;
       })
@@ -129,18 +132,18 @@ export function setLocale(locale: Locale): Promise<void> {
 /** Kayıtlı dil hazır olduğunda (ya da indirilemezse açılış diliyle) çözülür; reddedilmez. */
 export const localeReady: Promise<void> = (() => {
   const saved = savedLocale();
-  if (!saved || saved === DEFAULT_LOCALE) {
-    applyLocale(DEFAULT_LOCALE, false);
-    return Promise.resolve();
-  }
-  requestedLocale = saved;
-  applyLocale(DEFAULT_LOCALE, false);
-  return loadLocale(saved).then(
-    () => {
-      if (requestedLocale === saved) applyLocale(saved, false);
-    },
-    () => {},
-  );
+  const initial = saved ?? DEFAULT_LOCALE;
+  requestedLocale = initial;
+  // Kayıtlı dil inemezse varsayılana düşülür; ekran ham anahtar göstermesin.
+  return loadLocale(initial)
+    .catch(() => loadLocale(DEFAULT_LOCALE).then(() => DEFAULT_LOCALE))
+    .then(
+      (loaded) => {
+        const locale = typeof loaded === "string" ? loaded : initial;
+        if (requestedLocale === initial) applyLocale(locale, false);
+      },
+      () => {},
+    );
 })();
 
 /**
@@ -148,7 +151,7 @@ export const localeReady: Promise<void> = (() => {
  * Supports both plain strings and function-based translations for interpolation.
  */
 export function t(key: TranslationKey, ...args: (string | number)[]): string {
-  const dictionary = dictionaries[currentLocale] ?? de;
+  const dictionary = dictionaries[currentLocale] ?? dictionaries[DEFAULT_LOCALE] ?? {};
   const val = (dictionary as Partial<Record<string, TranslationValue>>)[key];
   if (val === undefined) {
     // Kod tabanında `t("bir.anahtar", "Yedek Metin")` deseni yaygın: çağıran

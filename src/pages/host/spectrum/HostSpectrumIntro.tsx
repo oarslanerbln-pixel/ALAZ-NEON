@@ -82,7 +82,7 @@ export function HostSpectrumIntro({ onNext }: Props) {
           transition={{ delay: 3 }}
           className="mt-16 text-white/50 uppercase tracking-[0.5em] text-lg font-medium animate-pulse"
         >
-          Telefonuna deli gibi bas!
+          {t("spectrum.tapLikeCrazy")}
         </motion.p>
       </motion.div>
     </div>

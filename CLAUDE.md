@@ -60,15 +60,17 @@ koleksiyonları.
 Bunları baştan sona okuma, hedefli `grep` ile gir:
 
 - `src/lib/quizQuestions.ts` (~2100 satır) — quiz havuzu
-- `src/lib/i18n/{de,tr,en}.ts` (~940'ar satır) — dil başına çeviri sözlüğü
-  (`de` kaynak ve girişte; `tr`/`en` seçilince tembel iner, bkz. `lib/i18n.ts`)
+- `src/lib/i18n/{de,tr,en}.ts` (~1050'şer satır) — dil başına çeviri sözlüğü
+  (`de` tür kaynağı; üçü de tembel iner, giriş paketinde sözlük yok — ilk
+  çizim `localeReady`'yi bekler, bkz. `lib/i18n.ts`)
 
 ## Konvansiyonlar
 
 - Kullanıcıya görünen her metin `useLocale().t("anahtar")` üzerinden; tr/de/en
   üçü birden doldurulur: anahtar önce `i18n/de.ts`'e, sonra aynı türle
   `tr.ts`/`en.ts`'e. Eksik ya da fazla anahtar derleme hatasıdır
-  (`satisfies Dictionary`); `i18nKeys.test.ts` tanımsız `t()` çağrısını yakalar.
+  (`satisfies Dictionary`); `i18nKeys.test.ts` tanımsız `t()` çağrısını,
+  `hardcodedText.test.ts` misafir/TV ekranlarındaki sabit JSX metnini yakalar.
 - Günlük için `console.*` değil `createLogger("Kapsam")` (`lib/logger.ts`;
   ESLint `no-console`). `log.error` geçici ağ hataları dışında Sentry'ye gider.
   `@sentry/react`'i doğrudan içe aktarma; `lib/monitoring.ts` kullan — SDK
@@ -89,6 +91,11 @@ Bunları baştan sona okuma, hedefli `grep` ile gir:
 - Framer Motion geçişlerinde `<AnimatePresence mode="wait">` + benzersiz `key`.
 - Skor yazan her yol için `firestore.rules` tarafını da güncelle; istemci
   kurcalanabilir kabul edilir.
+- Oda belgesi herkese açık okunur: doğru cevap, kod gibi **gizli bilgi
+  odaya yazılmaz**. Host'a özel `rooms/{id}/secrets/{ad}` belgesine
+  (`lib/gameSecrets.ts`, `useRoomSecret`) yazılır, açıklama anında host
+  odaya kopyalar. Telefonun yüklediği koda da cevap konmaz (ör. Ayna
+  gerçekleri `lib/aynaFacts.ts`, yalnızca TV yükler).
 - Commit mesajları Türkçe ve `tip(kapsam): özet` biçiminde (`feat(quiz): …`).
 
 Ayrıntılı kodlama standartları: `docs/coding-standards.md`.

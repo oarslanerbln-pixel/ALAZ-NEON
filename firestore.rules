@@ -167,6 +167,18 @@ service cloud.firestore {
        * host'un açtığı tur için bir kez yazar; kayıtları yalnızca host
        * dinler ve sonucu reveal anında odaya kendisi yazar.
        */
+      /**
+       * Oyunun gizli bilgileri (docs/roadmap.md, cevap sızıntısı): quiz doğru
+       * cevapları, kasa kodu, Ayna gerçek değerleri. Önceden oda belgesinde
+       * duruyordu ve oda herkese açık okunuyor: misafir telefonundan doğru
+       * cevabı okuyabiliyordu. Yalnızca odanın host'u (TV) okur ve yazar;
+       * cevap açıklama anında odaya host tarafından yazılır.
+       */
+      match /secrets/{secretId} {
+        allow read, write: if isAuth() &&
+          get(/databases/$(database)/documents/rooms/$(roomId)).data.host_uid == request.auth.uid;
+      }
+
       match /inputs/{playerId} {
         function roomData() {
           return get(/databases/$(database)/documents/rooms/$(roomId)).data;
@@ -423,9 +435,14 @@ service cloud.firestore {
 
       allow create: if isAuth() && isValidAnswer();
 
-      // Answers are never edited after submission, only cleared out by the host
-      // between rounds/games.
-      allow update: if false;
+      // Cevap gönderildikten sonra değişmez. Tek istisna Şifre tahmininin
+      // ipucu: kod artık telefonda olmadığı için ipucunu host hesaplayıp
+      // yalnızca `feedback` alanına yazar (sahibi ve host okur).
+      allow update: if isAuth() && isAnswerRoomHost() &&
+        resource.data.round_letter == 'VAULT' &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['feedback']) &&
+        request.resource.data.feedback is list &&
+        request.resource.data.feedback.size() == 4;
       allow delete: if isAuth() && isAnswerRoomHost();
     }
 

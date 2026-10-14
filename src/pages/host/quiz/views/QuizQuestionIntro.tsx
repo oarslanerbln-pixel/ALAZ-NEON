@@ -34,7 +34,7 @@ export function QuizQuestionIntro({ currentQuestion, currentRoundNum, totalRound
         )}
         {isFinalRound && (
           <span className="px-6 py-2 rounded-full bg-red-600/30 border border-red-500 text-red-400 font-black tracking-widest uppercase text-xl animate-pulse">
-            💥 2X FİNAL
+            {t("quiz.doubleFinalBadge")}
           </span>
         )}
       </div>

@@ -11,6 +11,7 @@ import {
   tapRepeatedly,
   waitForStatus,
 } from "./support/games";
+import { queryDocs, readDoc } from "./support/emulator";
 import { t } from "./support/i18n";
 import { freshStart } from "./support/night";
 
@@ -170,15 +171,28 @@ test("şifre: doğru kodu giren kasayı açar ve 500 puan alır", async ({ brows
   await startGame(table.host, "NEON ŞİFRE");
   await waitForStatus(table.roomId, "vault_active", 20_000);
 
-  const code = String((await room(table.roomId)).vault_code);
+  // Kod oda belgesinde yok (misafir okuyabiliyordu); yalnızca host'un belgesinde.
+  expect((await room(table.roomId)).vault_code).toBe("");
+  const secret = await readDoc(`rooms/${table.roomId}/secrets/vault`);
+  const code = String(secret?.code);
   expect(code).toMatch(/^\d{4}$/);
-  for (const digit of code) {
-    await alfa.getByRole("button", { name: digit, exact: true }).click();
-  }
-  await alfa.getByRole("button", { name: t("player.vaultSubmit") }).click();
 
+  const enter = async (guess: string) => {
+    for (const digit of guess) await alfa.getByRole("button", { name: digit, exact: true }).click();
+    await alfa.getByRole("button", { name: t("player.vaultSubmit") }).click();
+  };
+
+  // Yanlış tahminin ipucunu TV hesaplayıp cevap belgesine yazıyor.
+  const wrong = String(((Number(code[0]) + 1) % 10)) + code.slice(1);
+  await enter(wrong);
+  await expect
+    .poll(async () => (await queryDocs("answers", "room_id", table.roomId)).find((a) => (a.data as { guess?: string })?.guess === wrong)?.feedback)
+    .toEqual(["absent", "correct", "correct", "correct"]);
+
+  await enter(code);
   await waitForStatus(table.roomId, "vault_reveal");
   expect((await room(table.roomId)).vault_winner_id).toBe(table.playerIds[0]);
+  expect((await room(table.roomId)).vault_code).toBe(code);
   await expect.poll(async () => (await player(table.playerIds[0])).total_score).toBe(500);
 
   await returnToLobbyFromHeader(table);
@@ -267,4 +281,6 @@ test("ayna: anket ve tahminler sonrası tur puanlanır", async ({ browser }) => 
   await waitForStatus(table.roomId, "ayna_reveal");
   const points = (await room(table.roomId)).ayna_round_points as Record<string, number>;
   expect(Object.keys(points).sort()).toEqual([...table.playerIds].sort());
+  // Gerçek değer yalnızca açıklamada odaya yazılıyor (telefon kodunda yok).
+  expect(typeof (await room(table.roomId)).ayna_round_truth).toBe("number");
 });

@@ -95,7 +95,7 @@ export function PlayerPulseController({ room, player }: Props) {
       resultNode = (
         <div className="mt-8">
           <h3 className="text-4xl font-black uppercase tracking-widest text-[#ff003c]">
-            BASMADIN!
+            {t("pulse.missedTap")}
           </h3>
         </div>
       );
@@ -115,7 +115,7 @@ export function PlayerPulseController({ room, player }: Props) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center relative z-10">
         <h2 className="text-3xl font-black text-white mb-4 uppercase tracking-widest animate-pulse">
-          HAZIR OL
+          {t("pulse.getReadyCaps")}
         </h2>
         <p className="text-gray-400 uppercase tracking-widest font-bold">
           {t("common.followMainScreen")}

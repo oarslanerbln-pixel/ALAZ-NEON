@@ -84,8 +84,8 @@ export function QuizReveal({ currentQuestion, voteStats, fastestWinner, onShowLe
                   {/* Vote stats footer */}
                   <div className="flex justify-between items-center mt-4 pt-3 border-t border-white/10 relative z-10 text-sm font-mono">
                     <span className={isCorrect ? "text-green-400 font-bold" : "text-gray-500"}>
-                      {count} Oyuncu
-                    </span>
+                {t("quiz.playerCount", count)}
+              </span>
                     <span className={`font-black ${isCorrect ? "text-green-400 text-lg" : "text-gray-500"}`}>
                       %{percentage}
                     </span>

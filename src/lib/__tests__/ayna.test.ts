@@ -10,7 +10,8 @@ import {
   summarizeGuesses,
   topScorers,
 } from "../ayna";
-import { AYNA_QUESTIONS, formatAynaDelta, formatAynaValue } from "../aynaQuestions";
+import { AYNA_QUESTIONS, aynaRoundQuestion, formatAynaDelta, formatAynaValue } from "../aynaQuestions";
+import { AYNA_FACTS, aynaFactById } from "../aynaFacts";
 
 describe("parseGuess — istemci kurcalanabilir", () => {
   it("geçerli sayıyı kabul eder", () => {
@@ -121,17 +122,33 @@ describe("AYNA soru havuzu", () => {
 
   it("her cevap skalaya sığıyor ve her sorunun kaynağı var", () => {
     for (const q of AYNA_QUESTIONS) {
-      expect(q.answer, q.id).toBeGreaterThanOrEqual(0);
-      expect(q.answer, q.id).toBeLessThanOrEqual(100);
+      const answer = aynaFactById(q.id)?.answer;
+      expect(answer, q.id).toBeGreaterThanOrEqual(0);
+      expect(answer, q.id).toBeLessThanOrEqual(100);
       expect(q.source.trim(), q.id).not.toBe("");
     }
+  });
+
+  it("her sorunun gerçeği TV'ye özel modülde, fazlası yok", () => {
+    expect(Object.keys(AYNA_FACTS).sort()).toEqual(AYNA_QUESTIONS.map((q) => q.id).sort());
+  });
+
+  it("telefon gerçeği yalnızca açıklamada odadan alır", () => {
+    const id = AYNA_QUESTIONS[0].id;
+    const before = aynaRoundQuestion(id, { ayna_round_truth: null, ayna_round_sample: null, ayna_round_insight: null }, "tr");
+    expect(before?.answer).toBe(0);
+    expect(before?.insight.tr).toBe("");
+    const fact = aynaFactById(id)!;
+    const after = aynaRoundQuestion(id, { ayna_round_truth: fact.answer, ayna_round_sample: null, ayna_round_insight: fact.insight }, "tr");
+    expect(after?.answer).toBe(fact.answer);
+    expect(after?.insight).toEqual(fact.insight);
   });
 
   it("her soru ve not üç dilde de dolu", () => {
     for (const q of AYNA_QUESTIONS) {
       for (const locale of ["tr", "de", "en"] as const) {
         expect(q.text[locale].trim(), `${q.id}.text.${locale}`).not.toBe("");
-        expect(q.insight[locale].trim(), `${q.id}.insight.${locale}`).not.toBe("");
+        expect(aynaFactById(q.id)!.insight[locale].trim(), `${q.id}.insight.${locale}`).not.toBe("");
         expect(q.text[locale].length, `${q.id} TV'de okunamayacak kadar uzun`).toBeLessThanOrEqual(130);
       }
     }

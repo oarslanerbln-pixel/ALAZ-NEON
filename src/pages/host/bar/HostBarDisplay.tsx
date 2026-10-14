@@ -218,7 +218,7 @@ export function HostBarDisplay({ room, players, updateRoomStatus }: Props) {
                 </h1>
                 
                 <h2 className="text-6xl md:text-7xl font-black text-white uppercase tracking-wider mb-8 drop-shadow-lg">
-                  {topPlayers[0]?.nickname || t("bar.unknown")} ({topPlayers[0]?.bar_score || 0} Kokteyl)
+                  {topPlayers[0]?.nickname || t("bar.unknown")} ({t("bar.cocktailCount", topPlayers[0]?.bar_score || 0)})
                 </h2>
 
                 <button

@@ -268,7 +268,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
               ) : (
                 <div className="flex flex-col items-center text-center mb-6">
                   <h1 className="text-5xl md:text-6xl font-black text-amber-400 uppercase tracking-widest animate-pulse">
-                    ⚡ AKTARILIYOR...
+                    {t("overload.passing")}
                   </h1>
                 </div>
               )}
@@ -297,7 +297,7 @@ export function HostOverloadDisplay({ room, players, updateRoomStatus }: HostOve
               </div>
               
               <div className="mt-4 px-6 py-2 rounded-full border border-white/10 bg-black/50 text-cyan-300 font-mono text-sm uppercase tracking-widest">
-                REFLEKS SÜRESİ: {room.overload_time_allowed?.toFixed(1)}S
+                {t("overload.reflexTime", room.overload_time_allowed?.toFixed(1) ?? "")}
               </div>
             </motion.div>
           )}

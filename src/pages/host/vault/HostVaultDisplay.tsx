@@ -9,7 +9,10 @@ import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { NeonIcon } from "../../../components/NeonIcon";
 import { createLogger } from "../../../lib/logger";
-import { newestFirst, vaultWinner } from "../../../lib/vault";
+import { newestFirst, newVaultCode, vaultFeedback, vaultWinner } from "../../../lib/vault";
+import { SECRET_DOC } from "../../../lib/gameSecrets";
+import { vaultFeedbackPayload, vaultSecretPayload } from "../../../lib/clientWrites";
+import { useRoomSecret, writeRoomSecret } from "../../../hooks/useRoomSecret";
 
 const log = createLogger("HostVaultDisplay");
 
@@ -25,6 +28,8 @@ export function HostVaultDisplay({ room, players, updateRoomStatus }: Props) {
   const [guesses, setGuesses] = useState<(Answer & { nickname: string })[]>([]);
   const [isExploding, setIsExploding] = useState(false);
   const awardedCodeRef = useRef<string | null>(null);
+  const feedbackSentRef = useRef(new Set<string>());
+  const code = useRoomSecret<{ code: string }>(room.id, SECRET_DOC.vault)?.code;
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
@@ -32,13 +37,16 @@ export function HostVaultDisplay({ room, players, updateRoomStatus }: Props) {
       Promise.resolve().then(() => setGameState("intro"));
       SoundManager.getInstance().playMusic(sounds.GAME_PULSE, 0.4);
       
-      timer = setTimeout(() => {
-        // Generate a random 4-digit code if not exists
-        const code = room.vault_code || Math.floor(1000 + Math.random() * 9000).toString();
-        updateRoomStatus("vault_active", { 
-          vault_code: code,
-          vault_winner_id: null 
-        });
+      timer = setTimeout(async () => {
+        // Kod yalnızca host'un okuduğu belgeye yazılır; oda belgesi herkese
+        // açık okunuyor (önceden misafir kodu telefonundan okuyabiliyordu).
+        try {
+          await writeRoomSecret(room.id, SECRET_DOC.vault, vaultSecretPayload(newVaultCode()));
+        } catch (err) {
+          log.error("Kasa kodu yazılamadı:", err);
+          return;
+        }
+        updateRoomStatus("vault_active", { vault_code: "", vault_winner_id: null });
       }, 5000);
     } else if (room.status === "vault_active") {
       Promise.resolve().then(() => setGameState("active"));
@@ -48,7 +56,7 @@ export function HostVaultDisplay({ room, players, updateRoomStatus }: Props) {
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [room.status, room.vault_code, updateRoomStatus]);
+  }, [room.status, room.id, updateRoomStatus]);
 
   // Listen for guesses during active state
   useEffect(() => {
@@ -64,6 +72,21 @@ export function HostVaultDisplay({ room, players, updateRoomStatus }: Props) {
       const known = snapshot.docs
         .map((docSnap) => docSnap.data() as Answer)
         .filter((data) => players.some((p) => p.id === data.player_id));
+
+      // İpucu telefonda hesaplanamıyor (kod orada yok): her yeni tahminin
+      // ipucunu cevap belgesine TV yazıyor, telefon kendi belgesini dinliyor.
+      if (code) {
+        for (const docSnap of snapshot.docs) {
+          const data = docSnap.data() as Answer & { feedback?: unknown };
+          const guess = data.data?.guess;
+          if (data.feedback || !guess || feedbackSentRef.current.has(docSnap.id)) continue;
+          feedbackSentRef.current.add(docSnap.id);
+          updateDoc(docSnap.ref, vaultFeedbackPayload(vaultFeedback(guess, code))).catch((err) => {
+            feedbackSentRef.current.delete(docSnap.id);
+            log.error("Şifre ipucu yazılamadı:", err);
+          });
+        }
+      }
       setGuesses(
         newestFirst(known).map((data) => ({
           ...data,
@@ -74,9 +97,9 @@ export function HostVaultDisplay({ room, players, updateRoomStatus }: Props) {
       // Kazanan kod başına bir kez ödüllendirilir: dinleyici her anlık
       // görüntüde (ve bağımlılık değişince yeniden kurulunca) tetikleniyor,
       // açıklamaya kadar geçen 3 sn'de puan defalarca ekleniyordu.
-      const winnerId = vaultWinner(known, room.vault_code);
-      if (winnerId && room.status === "vault_active" && awardedCodeRef.current !== room.vault_code) {
-        awardedCodeRef.current = room.vault_code ?? null;
+      const winnerId = vaultWinner(known, code);
+      if (winnerId && code && room.status === "vault_active" && awardedCodeRef.current !== code) {
+        awardedCodeRef.current = code;
         setIsExploding(true);
         SoundManager.getInstance().playSFX(sounds.SUCCESS);
         SoundManager.getInstance().stopSound(sounds.GAME_PULSE);
@@ -84,14 +107,15 @@ export function HostVaultDisplay({ room, players, updateRoomStatus }: Props) {
         updateDoc(doc(db, "players", winnerId), { total_score: increment(500) }).catch(log.error);
 
         setTimeout(() => {
-          updateRoomStatus("vault_reveal", { vault_winner_id: winnerId });
+          // Oyun bitti: kod artık açıklanabilir.
+          updateRoomStatus("vault_reveal", { vault_winner_id: winnerId, vault_code: code });
           setIsExploding(false);
         }, 3000);
       }
     });
 
     return () => unsubscribe();
-  }, [gameState, room.id, room.vault_code, room.status, players, updateRoomStatus]);
+  }, [gameState, room.id, code, room.status, players, updateRoomStatus]);
 
   const winner = players.find(p => p.id === room.vault_winner_id);
 
@@ -199,7 +223,7 @@ export function HostVaultDisplay({ room, players, updateRoomStatus }: Props) {
                   {winner?.nickname || t("bar.unknown")}
                 </h1>
                 <p className="text-3xl font-mono text-emerald-400 bg-emerald-400/10 px-8 py-4 rounded-xl border border-emerald-400/30">
-                  ŞİFRE: {room.vault_code}
+                  {t("vault.codeLabel", room.vault_code ?? "")}
                 </p>
                 <button
                   onClick={() => updateRoomStatus("lobby", { active_game: "none", vault_winner_id: null, vault_code: "" })}

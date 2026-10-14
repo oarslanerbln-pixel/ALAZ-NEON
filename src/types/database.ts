@@ -75,6 +75,14 @@ export interface QuizQuestion {
   funFact?: string;
 }
 
+/**
+ * Odaya yazılan (herkesin okuduğu) soru: doğru cevap ve bilgi notu yok.
+ * Onlar yalnızca host'un okuduğu `rooms/{id}/secrets/quiz` belgesinde
+ * (bkz. lib/gameSecrets.ts); doğru cevap açıklama anında `quiz_reveal` ile
+ * odaya yazılır.
+ */
+export type PublicQuizQuestion = Omit<QuizQuestion, "correctOption" | "funFact">;
+
 export interface Room {
   id: string;
   code: string;
@@ -122,7 +130,9 @@ export interface Room {
   used_sensor_images?: string[];
   used_bomb_categories?: string[];
   locale?: Locale;
-  quiz_questions?: QuizQuestion[];
+  quiz_questions?: PublicQuizQuestion[];
+  /** Açıklanan sorunun doğru cevabı; soru açıkken null. */
+  quiz_reveal?: { index: number; correctOption: QuizQuestion["correctOption"] } | null;
   /**
    * Host'un kurulum modalinde sectigi quiz konulari. Onceden bu secim
    * toplaniyordu ama hicbir yere yazilmiyordu — host kategori seciyor,
@@ -148,7 +158,6 @@ export interface Room {
   tutorial_step?: number;
   // Sensor Game Fields
   sensor_current_media?: string;
-  sensor_media_answer?: string;
   /** Doğru cevabın puanı (ayar; yoksa 1000). */
   sensor_point_reward?: number;
   sensor_buzzer_player_id?: string | null;
@@ -239,6 +248,8 @@ export interface Room {
    * sorularında `null` — onların cevabı soru havuzunda. Açıklamadan ÖNCE
    * yazılmıyor: oda dokümanı herkese açık.
    */
+  /** Açıklanan dünya sorusunun notu (dil başına); host açıklama anında yazar. */
+  ayna_round_insight?: Record<"tr" | "de" | "en", string> | null;
   ayna_round_truth?: number | null;
   ayna_round_sample?: number | null;
   // Mekan markalaması — oda açılırken o anki aktif mekan profilinden
