@@ -469,6 +469,29 @@ service cloud.firestore {
       allow write: if isStaff();
     }
 
+    // Mekan/kurum soru paketleri (docs/roadmap.md, 3.4). Personel yükler,
+    // TV (personel hesabı) oyun başında okur. Misafir okuyamaz: doğru
+    // cevaplar paketin içinde. Soruların ayrıntılı şeması istemcide
+    // (lib/quizPack.ts) yüklemede ve oyun başında doğrulanıyor; burada
+    // biçim, boyut ve sahiplik. Paket değiştirilmez: silinip yeniden yüklenir.
+    match /quiz_packs/{packId} {
+      allow read: if isStaff();
+      allow create: if isStaff() &&
+        request.resource.data.keys().hasOnly(['title', 'locale', 'questions', 'created_by', 'created_at']) &&
+        request.resource.data.keys().hasAll(['title', 'locale', 'questions', 'created_by', 'created_at']) &&
+        request.resource.data.created_by == request.auth.uid &&
+        request.resource.data.created_at == request.time &&
+        request.resource.data.title is string &&
+        request.resource.data.title.size() > 0 &&
+        request.resource.data.title.size() <= 60 &&
+        request.resource.data.locale in ['tr', 'de', 'en'] &&
+        request.resource.data.questions is list &&
+        request.resource.data.questions.size() >= 5 &&
+        request.resource.data.questions.size() <= 200;
+      allow update: if false;
+      allow delete: if isStaff();
+    }
+
     match /rewards/{rewardId} {
       // Önceden herhangi bir giriş yapmış oturum (anonim oyuncular DAHİL)
       // her ödülü okuyup "claimed" olarak işaretleyebiliyordu — bir oyuncu

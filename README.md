@@ -170,6 +170,22 @@ generated from `public/icon.svg` with `node scripts/generate-icons.mjs` (same
 file that is not in `public/`, when `public/` contains a file nothing uses, when an
 image exceeds 150 KB, or when `public/` grows past 4 MB.
 
+## ❓ Quiz content and question packs
+
+Built-in quiz questions live in `src/content/quiz/{tr,de,en}.json`. Every
+question is checked in CI against one schema (`src/lib/quizPack.ts`: four
+distinct answers, a valid correct answer, difficulty 1–3, length limits,
+unique ids and texts).
+
+Venues can add their own **question packs** (e.g. for a company event):
+staff open **/admin/content**, download the sample file, edit it and upload
+it. The file is validated before saving and every problem is listed with
+its question id. On the TV, the pack is then chosen under *question source*
+in the quiz settings; questions then come only from that pack. Packs are
+stored in the `quiz_packs` collection, readable and writable by staff only
+(the correct answers are inside), so deploy the rules after updating:
+`firebase deploy --only firestore:rules`.
+
 ## 🗑 Data retention (one-time console setup)
 
 Rooms, players and answers used to accumulate forever — the codebase contains no

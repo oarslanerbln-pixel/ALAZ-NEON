@@ -5,6 +5,7 @@ import { useLocale } from "../../../../hooks/useLocale";
 import { SoundManager, sounds } from "../../../../lib/audio";
 import { getCategoryPresets } from "../../../../lib/categoryPresets";
 import { toggleQuizTopic } from "../../../../lib/gameSettings";
+import { useQuizPacks } from "../../../../hooks/useQuizPacks";
 import { QUIZ_CATEGORIES } from "./gameMetas";
 import { OptionGrid } from "./OptionGrid";
 import { suffixed, WHITE_ACTIVE, type SectionProps } from "./sectionShared";
@@ -87,40 +88,78 @@ export function ScattegoriesSettings({ form, set }: SectionProps) {
 
 export function QuizSettings({ form, set }: SectionProps) {
   const { t } = useLocale();
+  // TV personel hesabıyla açık; paketleri yalnızca personel okuyabiliyor.
+  const packs = useQuizPacks(true);
 
   const toggleTopic = (id: string) => {
     SoundManager.getInstance().playSFX(sounds.CLICK);
     set("quizTopics", toggleQuizTopic(form.quizTopics, id));
   };
 
+  const choosePack = (id: string | null) => {
+    SoundManager.getInstance().playSFX(sounds.CLICK);
+    set("quizPackId", id);
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-cyan-400 font-black block mb-3">
-          {t("gameSettings.quizPool")}
-        </label>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {QUIZ_CATEGORIES.map((cat) => {
-            const isSelected = form.quizTopics.includes(cat.id);
-            return (
+      {packs && packs.length > 0 && (
+        <div>
+          <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-cyan-400 font-black block mb-3">
+            {t("gameSettings.quizSource")}
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {[{ id: null, label: t("gameSettings.quizSourceBuiltin") }, ...packs.map((p) => ({
+              id: p.id,
+              label: t("gameSettings.quizPackLabel", p.title, p.questionCount),
+            }))].map((source) => (
               <button
-                key={cat.id}
+                key={source.id ?? "builtin"}
                 type="button"
-                aria-pressed={isSelected}
-                onClick={() => toggleTopic(cat.id)}
-                className={`p-3.5 rounded-2xl border-2 text-left flex items-center justify-between transition-all cursor-pointer ${
-                  isSelected
+                aria-pressed={form.quizPackId === source.id}
+                onClick={() => choosePack(source.id)}
+                className={`p-3.5 rounded-2xl border-2 text-left text-xs sm:text-sm font-bold tracking-wide transition-all cursor-pointer ${
+                  form.quizPackId === source.id
                     ? "bg-cyan-500/25 border-cyan-400 text-white shadow-[0_0_20px_rgba(0,229,255,0.3)] font-black"
                     : "bg-white/5 border-white/15 text-gray-400 hover:bg-white/10 hover:text-white"
                 }`}
               >
-                <span className="text-xs sm:text-sm font-bold tracking-wide">{t(cat.labelKey)}</span>
-                {isSelected && <Check className="w-4 h-4 text-cyan-300 stroke-[3]" />}
+                {source.label}
               </button>
-            );
-          })}
+            ))}
+          </div>
+          {form.quizPackId && <p className="text-xs sm:text-sm text-gray-300 mt-2">{t("gameSettings.quizPackHint")}</p>}
         </div>
-      </div>
+      )}
+
+      {!form.quizPackId && (
+        <div>
+          <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-cyan-400 font-black block mb-3">
+            {t("gameSettings.quizPool")}
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {QUIZ_CATEGORIES.map((cat) => {
+              const isSelected = form.quizTopics.includes(cat.id);
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  aria-pressed={isSelected}
+                  onClick={() => toggleTopic(cat.id)}
+                  className={`p-3.5 rounded-2xl border-2 text-left flex items-center justify-between transition-all cursor-pointer ${
+                    isSelected
+                      ? "bg-cyan-500/25 border-cyan-400 text-white shadow-[0_0_20px_rgba(0,229,255,0.3)] font-black"
+                      : "bg-white/5 border-white/15 text-gray-400 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  <span className="text-xs sm:text-sm font-bold tracking-wide">{t(cat.labelKey)}</span>
+                  {isSelected && <Check className="w-4 h-4 text-cyan-300 stroke-[3]" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <OptionGrid

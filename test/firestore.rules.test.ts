@@ -7,6 +7,7 @@ import {
 } from "@firebase/rules-unit-testing";
 import { doc, setDoc, updateDoc, addDoc, collection, getDoc, getDocs, deleteDoc, query, where } from "firebase/firestore";
 import { beforeAll, afterAll, beforeEach, describe, it } from "vitest";
+import type { QuizPack } from "../src/lib/quizPack";
 
 // Uygulamanın yazdığı verinin kendisi: testler istemciden ayrışamasın diye
 // elle kopyalanmış nesneler yerine bu fonksiyonlar kullanılıyor (bkz.
@@ -30,6 +31,7 @@ import {
   profileCreatePayload,
   pulseInputPayload,
   quizAnswerPayload,
+  quizPackPayload,
   rewardClaimPayload,
   rewardPayload,
   roomCreatePayload,
@@ -1601,5 +1603,51 @@ describe("istemci yazma sözleşmesi (clientWrites)", () => {
       await assertSucceeds(updateDoc(doc(asHost(), "players", PLAYER_ID), lifetimeMarkerPayload(120)));
       await assertFails(updateDoc(doc(asPlayer(), "players", PLAYER_ID), lifetimeMarkerPayload(0)));
     });
+  });
+});
+
+describe("quiz_packs — mekan/kurum soru paketleri (3.4)", () => {
+  const pack = (count = 5): QuizPack => ({
+    title: "Yılbaşı Partisi",
+    locale: "tr",
+    questions: Array.from({ length: count }, (_, i) => ({
+      id: `firma_${i}`,
+      text: `Şirketimiz hangi yılda kuruldu? (${i})`,
+      options: { A: "1990", B: "2001", C: "2010", D: "2020" },
+      correctOption: "B" as const,
+      difficulty: 2 as const,
+    })),
+  });
+
+  it("personel paket yükler, okur ve siler", async () => {
+    await seedStaff();
+    const ref = await assertSucceeds(addDoc(collection(asVenueOwner(), "quiz_packs"), quizPackPayload(pack(), OWNER_UID)));
+    await assertSucceeds(getDocs(collection(asVenueOwner(), "quiz_packs")));
+    await assertSucceeds(deleteDoc(doc(asVenueOwner(), "quiz_packs", ref.id)));
+  });
+
+  it("misafir ve personel olmayan hesap paket yükleyemez ve okuyamaz (doğru cevaplar içinde)", async () => {
+    await seedStaff();
+    await assertFails(addDoc(collection(asPlayer(), "quiz_packs"), quizPackPayload(pack(), PLAYER_UID)));
+    await assertFails(addDoc(collection(asRandomSignup(), "quiz_packs"), quizPackPayload(pack(), RANDOM_SIGNUP_UID)));
+    await addDoc(collection(asVenueOwner(), "quiz_packs"), quizPackPayload(pack(), OWNER_UID));
+    await assertFails(getDocs(collection(asPlayer(), "quiz_packs")));
+    await assertFails(getDocs(collection(asGuest(), "quiz_packs")));
+  });
+
+  it("paket başkası adına yüklenemez, boyut ve dil sınırları uygulanır", async () => {
+    await seedStaff();
+    const packs = collection(asVenueOwner(), "quiz_packs");
+    await assertFails(addDoc(packs, quizPackPayload(pack(), "baska-uid")));
+    await assertFails(addDoc(packs, quizPackPayload(pack(4), OWNER_UID)));
+    await assertFails(addDoc(packs, quizPackPayload(pack(201), OWNER_UID)));
+    await assertFails(addDoc(packs, quizPackPayload({ ...pack(), locale: "fr" as QuizPack["locale"] }, OWNER_UID)));
+    await assertFails(addDoc(packs, { ...quizPackPayload(pack(), OWNER_UID), venue_id: "x" }));
+  });
+
+  it("paket değiştirilemez: silinip yeniden yüklenir", async () => {
+    await seedStaff();
+    const ref = await addDoc(collection(asVenueOwner(), "quiz_packs"), quizPackPayload(pack(), OWNER_UID));
+    await assertFails(updateDoc(doc(asVenueOwner(), "quiz_packs", ref.id), { title: "Yeni ad" }));
   });
 });

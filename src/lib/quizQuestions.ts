@@ -14,6 +14,11 @@ export interface QuizSelectionOptions {
   topics?: readonly string[];
   /** Yakinda sorulmus soru kimlikleri (bkz. questionHistory) — en yeni once. */
   recentIds?: readonly string[];
+  /**
+   * Mekan/kurum soru paketi (docs/roadmap.md, 3.4). Verilirse gomulu havuzun
+   * yerine kullanilir; konu filtresi uygulanmaz (paket kendi konusudur).
+   */
+  pool?: readonly QuizQuestion[];
 }
 
 function shuffle<T>(arr: readonly T[]): T[] {
@@ -53,9 +58,9 @@ export function getQuizQuestions(
   count: number = 5,
   options: QuizSelectionOptions = {},
 ): QuizQuestion[] {
-  const basePool = poolFor(locale);
+  const basePool = options.pool && options.pool.length > 0 ? options.pool : poolFor(locale);
 
-  const wanted = options.topics && options.topics.length > 0 ? new Set(options.topics) : null;
+  const wanted = !options.pool && options.topics && options.topics.length > 0 ? new Set(options.topics) : null;
   const filtered = wanted ? basePool.filter((q) => {
     const topic = topicOf(q);
     return topic !== null && wanted.has(topic);

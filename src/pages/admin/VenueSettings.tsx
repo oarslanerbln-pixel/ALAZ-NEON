@@ -9,6 +9,7 @@ import { StaffAccessNotice } from "../../components/StaffAccessNotice";
 import { useVenue } from "../../contexts/VenueContextCore";
 import { DEFAULT_VENUE_CONFIG, type Reward, type SponsorAd, type WheelSlice } from "../../types/database";
 import { errorMessage } from "../../lib/errors";
+import { useLocale } from "../../hooks/useLocale";
 
 const REWARD_TYPE_OPTIONS: { value: Reward["type"]; label: string }[] = [
   { value: "drink", label: "İçecek" },
@@ -28,6 +29,7 @@ const REWARD_TYPE_OPTIONS: { value: Reward["type"]; label: string }[] = [
  */
 export function VenueSettings() {
   const navigate = useNavigate();
+  const { t } = useLocale();
   const { venue } = useVenue();
   const { user: authUser, isStaff } = useIsStaff();
 
@@ -564,6 +566,12 @@ export function VenueSettings() {
                   className="block text-center text-[10px] uppercase tracking-widest text-alaz-orange hover:text-white border border-alaz-orange/30 hover:border-white/30 rounded-xl py-3 transition-colors"
                 >
                   Gecelik Rapor →
+                </Link>
+                <Link
+                  to="/admin/content"
+                  className="col-span-2 block text-center text-[10px] uppercase tracking-widest text-alaz-orange hover:text-white border border-alaz-orange/30 hover:border-white/30 rounded-xl py-3 transition-colors"
+                >
+                  {t("content.link")}
                 </Link>
               </div>
             </div>

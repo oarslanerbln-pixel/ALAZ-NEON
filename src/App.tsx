@@ -45,6 +45,9 @@ const RewardVerify = lazy(() =>
 const NightlyReport = lazy(() =>
   import("./pages/admin/NightlyReport").then((m) => ({ default: m.NightlyReport }))
 );
+const QuizPacks = lazy(() =>
+  import("./pages/admin/QuizPacks").then((m) => ({ default: m.QuizPacks }))
+);
 const NotFoundPage = lazy(() =>
   import("./pages/NotFoundPage").then((m) => ({ default: m.NotFoundPage }))
 );
@@ -102,6 +105,8 @@ function App() {
                 <Route path="/admin/rewards" element={<RewardVerify />} />
                 {/* Mekan sahibi: gecelik/haftalık/aylık özet rapor */}
                 <Route path="/admin/report" element={<NightlyReport />} />
+                {/* Mekan/kurum soru paketleri (docs/roadmap.md, 3.4) */}
+                <Route path="/admin/content" element={<QuizPacks />} />
                 
                 {/* B2B Pazarlama / Satış Sunum Sayfası */}
                 <Route path="/business" element={<B2BPitchPage />} />

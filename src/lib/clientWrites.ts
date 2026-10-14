@@ -2,6 +2,7 @@ import { arrayUnion, increment, serverTimestamp } from "firebase/firestore";
 
 import { retentionExpiry } from "./retention";
 import type { Reward, VenueConfig } from "../types/database";
+import type { QuizPack } from "./quizPack";
 
 /**
  * Kurallara tabi her istemci yazmasının verisi buradaki bir fonksiyondan
@@ -328,4 +329,17 @@ export function roomStatusPayload<T extends object>(status: string, extra: T): R
     if (value !== undefined) fields[key] = value;
   }
   return fields;
+}
+
+// ─── İçerik ─────────────────────────────────────────────────────────
+
+/** Personelin yüklediği soru paketi (docs/roadmap.md, 3.4); `parseQuizPack`'ten geçmiş olmalı. */
+export function quizPackPayload(pack: QuizPack, uid: string) {
+  return {
+    title: pack.title,
+    locale: pack.locale,
+    questions: pack.questions,
+    created_by: uid,
+    created_at: serverTimestamp(),
+  };
 }
