@@ -35,7 +35,9 @@ alanları dinler ve `answers` koleksiyonuna yazar. Player asla oda state'ini
 değiştirmez (buzz gibi yarışlı işlemler `runTransaction` ile).
 
 Firestore koleksiyonları: `rooms` (durum makinesi), `players` (skorlar),
-`answers` (cevaplar), ayrıca mekan/ödül/rapor koleksiyonları.
+`answers` (cevaplar), `events` (oyun telemetrisi; yalnızca host yazar),
+`quiz_packs` (soru paketleri; yalnızca personel), ayrıca mekan/ödül/rapor
+koleksiyonları.
 
 ## Dosya haritası
 

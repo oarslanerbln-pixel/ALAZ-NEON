@@ -19,6 +19,7 @@ import { activePlayers as activePlayersOf } from "../../../lib/liveness";
 import { assignColorsTeams, colorsTargetClicks } from "../../../lib/colorsTeams";
 import { RULE_DEFAULTS } from "../../../lib/gameSettings";
 import { loadQuizPack } from "../../../hooks/useQuizPacks";
+import { recordGameEvent } from "../../../hooks/gameEvents";
 import { useLocale } from "../../../hooks/useLocale";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -123,12 +124,15 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
         });
         rememberQuestions(questions.map((q) => q.id));
         const startState = (settings?.current_round === 0 || room.current_round === 0) ? "tutorial" : "quiz_intro";
+        const startedAt = Date.now();
         updateRoomStatus(startState, {
           ...extraUpdates,
           current_question_index: 0,
           quiz_questions: questions,
+          game_started_at: startedAt,
           ...(startState === "tutorial" ? { tutorial_step: 0 } : {})
         });
+        recordGameEvent({ type: "game_started", room, game, playerCount: players.length, startedAt });
       });
       return; // Async update handled above
     }
@@ -325,7 +329,11 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       await batch.commit();
     }
 
-    await updateRoomStatus(initialStatus, extraUpdates);
+    // Telemetri (docs/roadmap.md, 3.2): bitiş olayı useHostRoom'da, oyun
+    // panoya dönerken aynı başlangıç anıyla yazılır.
+    const startedAt = Date.now();
+    await updateRoomStatus(initialStatus, { ...extraUpdates, game_started_at: startedAt });
+    recordGameEvent({ type: "game_started", room, game, playerCount: players.length, startedAt });
   };
 
   const joinUrl = `${window.location.protocol}//${window.location.host}/join?code=${room.code}`;

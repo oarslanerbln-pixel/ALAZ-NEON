@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { doc, collection, query, where, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { roomStatusPayload } from "../lib/clientWrites";
@@ -7,6 +7,8 @@ import { playerCountUpdate } from "../lib/playerCount";
 import { useHeartbeat } from "./useHeartbeat";
 import type { Room, Player, Answer } from "../types/database";
 import { createLogger } from "../lib/logger";
+import { resolveActiveGame } from "../lib/gameRouting";
+import { recordGameEvent } from "./gameEvents";
 
 const log = createLogger("useHostRoom");
 
@@ -21,6 +23,11 @@ export function useHostRoom(roomId: string | null) {
   const [notFound, setNotFound] = useState(!roomId);
   const [error, setError] = useState<Error | null>(null);
   const [trackedRoomId, setTrackedRoomId] = useState(roomId);
+  // updateRoomStatus kararlı kalsın diye son oda/oyuncular ref'te.
+  const latest = useRef<{ room: Room | null; players: Player[] }>({ room: null, players: [] });
+  useEffect(() => {
+    latest.current = { room, players };
+  }, [room, players]);
 
   // roomId değişince state'i RENDER sırasında sıfırla — React'in
   // "prop değişince state'i ayarla" deseni. Effect içinde setState
@@ -140,6 +147,21 @@ export function useHostRoom(roomId: string | null) {
   ) => {
     if (!roomId) return;
     
+    // Oyun panoya dönüyor: bitiş olayı, başlangıçtaki anla eşleşerek yazılır
+    // (docs/roadmap.md, 3.2). Bütün oyun çıkışları buradan geçiyor.
+    const current = latest.current.room;
+    const endingGame = current && extra.active_game === "none" ? resolveActiveGame(current) : null;
+    if (current && endingGame && current.game_started_at) {
+      recordGameEvent({
+        type: "game_ended",
+        room: current,
+        game: endingGame,
+        playerCount: latest.current.players.length,
+        startedAt: current.game_started_at,
+        endedAt: Date.now(),
+      });
+    }
+
     // Optimistic UI Update
     setRoom((prev) => (prev ? { ...prev, status, ...extra } : prev));
     // Yazma hatası çağıranı patlatmasın: eskiden reject olunca

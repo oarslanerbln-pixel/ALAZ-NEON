@@ -7,6 +7,12 @@ import { useIsStaff } from "../../hooks/useIsStaff";
 import { StaffAccessNotice } from "../../components/StaffAccessNotice";
 import type { Room, Reward, GameType } from "../../types/database";
 import { errorMessage } from "../../lib/errors";
+import { createLogger } from "../../lib/logger";
+import type { VenueKpis } from "../../lib/venueKpis";
+import { loadVenueKpis } from "./report/venueKpiData";
+import { VenueKpiPanel } from "./report/VenueKpiPanel";
+
+const log = createLogger("NightlyReport");
 
 type RangePreset = "today" | "week" | "month";
 
@@ -58,6 +64,8 @@ interface ReportData {
   hourlyBreakdown: HourlyBucket[];
   rewardsGranted: number;
   rewardsClaimed: number;
+  /** Oyun olaylarından (3.2); yüklenemezse null, eski rapor yine görünür. */
+  kpis: VenueKpis | null;
 }
 
 export function NightlyReport() {
@@ -132,6 +140,12 @@ export function NightlyReport() {
       const playerCount = playersSnap.size;
       const avgPlayersPerRoom = rooms.length > 0 ? Math.round((playerCount / rooms.length) * 10) / 10 : 0;
 
+      const guestUids = playersSnap.docs.map((d) => String(d.data().uid ?? ""));
+      const kpis = await loadVenueKpis({ start, end, nightCount: rooms.length, guestUids }).catch((err) => {
+        log.error("KPI verisi yüklenemedi:", err);
+        return null;
+      });
+
       setData({
         roomCount: rooms.length,
         finishedCount,
@@ -141,6 +155,7 @@ export function NightlyReport() {
         hourlyBreakdown,
         rewardsGranted: rewards.length,
         rewardsClaimed: rewards.filter((r) => r.status === "claimed").length,
+        kpis,
       });
     } catch (err) {
       setErrorMsg(errorMessage(err));
@@ -160,7 +175,12 @@ export function NightlyReport() {
       `👥 Toplam Oyuncu: ${data.playerCount} (Oda başına ortalama: ${data.avgPlayersPerRoom})\n` +
       `🎁 Dağıtılan İkram: ${data.rewardsGranted} (Kullanılan: ${data.rewardsClaimed})\n` +
       `⚡ En Çok Oynanan Modlar: ` +
-      Object.entries(data.modeBreakdown).map(([k, v]) => `${k} (${v})`).join(", ");
+      (data.kpis && data.kpis.gamesPlayed > 0
+        ? data.kpis.topGames.map((g) => `${GAME_LABEL[g.game as GameType] ?? g.game} (${g.count})`).join(", ")
+        : Object.entries(data.modeBreakdown).map(([k, v]) => `${k} (${v})`).join(", ")) +
+      (data.kpis
+        ? `\n🔁 Tekil Misafir: ${data.kpis.uniqueGuests} (Geri dönen: ${data.kpis.returningGuests})`
+        : "");
 
     navigator.clipboard.writeText(summary);
     setCopied(true);
@@ -297,6 +317,12 @@ export function NightlyReport() {
               </div>
             </div>
 
+            {data.kpis && (
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-4">
+                <VenueKpiPanel kpis={data.kpis} />
+              </div>
+            )}
+
             {/* Hourly Traffic Distribution */}
             {data.hourlyBreakdown.length > 0 && (
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-4">
@@ -324,7 +350,8 @@ export function NightlyReport() {
               </div>
             )}
 
-            {Object.keys(data.modeBreakdown).length > 0 && (
+            {/* Oda bazlı eski döküm: yalnızca oyun kaydı olmayan aralıklarda. */}
+            {Object.keys(data.modeBreakdown).length > 0 && !(data.kpis && data.kpis.gamesPlayed > 0) && (
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
                 <p className="text-white/40 text-[10px] uppercase tracking-widest mb-4">🎮 Oyun Modu Popülaritesi</p>
                 <div className="space-y-2">

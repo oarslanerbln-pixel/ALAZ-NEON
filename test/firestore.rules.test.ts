@@ -21,6 +21,8 @@ import {
   counterIncrementPayload,
   echoInputPayload,
   emojiPulsePayload,
+  gameEventId,
+  gameEventPayload,
   heartbeatPayload,
   letterAnswerPayload,
   lifetimeCreditPayload,
@@ -1649,5 +1651,49 @@ describe("quiz_packs — mekan/kurum soru paketleri (3.4)", () => {
     await seedStaff();
     const ref = await addDoc(collection(asVenueOwner(), "quiz_packs"), quizPackPayload(pack(), OWNER_UID));
     await assertFails(updateDoc(doc(asVenueOwner(), "quiz_packs", ref.id), { title: "Yeni ad" }));
+  });
+});
+
+describe("events — oyun telemetrisi (3.2)", () => {
+  const STARTED = 1_760_000_000_000;
+  const event = (type: "game_started" | "game_ended", hostUid = HOST_UID) =>
+    gameEventPayload({
+      type,
+      roomId: ROOM_ID,
+      hostUid,
+      game: "quiz",
+      playerCount: 12,
+      startedAt: STARTED,
+      endedAt: type === "game_ended" ? STARTED + 600_000 : undefined,
+    });
+  const eventDoc = (db: ReturnType<typeof asHost>, type: "game_started" | "game_ended") =>
+    doc(db, "events", gameEventId(ROOM_ID, STARTED, type));
+
+  beforeEach(() => seed({ status: "lobby" }));
+
+  it("odanın host'u (personel) başlangıç ve bitiş olayını yazar, personel okur", async () => {
+    await seedStaff(HOST_UID);
+    await assertSucceeds(setDoc(eventDoc(asHost(), "game_started"), event("game_started")));
+    await assertSucceeds(setDoc(eventDoc(asHost(), "game_ended"), event("game_ended")));
+    await assertSucceeds(getDocs(collection(asHost(), "events")));
+  });
+
+  it("başka odanın personeli ve oyuncu olay yazamaz; oyuncu okuyamaz", async () => {
+    await seedStaff(HOST_UID);
+    await seedStaff(OWNER_UID);
+    await assertFails(setDoc(eventDoc(asVenueOwner(), "game_started"), event("game_started", OWNER_UID)));
+    await assertFails(setDoc(eventDoc(asPlayer(), "game_started"), event("game_started", PLAYER_UID)));
+    await setDoc(eventDoc(asHost(), "game_started"), event("game_started"));
+    await assertFails(getDocs(collection(asPlayer(), "events")));
+  });
+
+  it("olay değiştirilemez, silinemez; biçim ve sınırlar uygulanır", async () => {
+    await seedStaff(HOST_UID);
+    await setDoc(eventDoc(asHost(), "game_started"), event("game_started"));
+    await assertFails(setDoc(eventDoc(asHost(), "game_started"), event("game_started")));
+    await assertFails(deleteDoc(eventDoc(asHost(), "game_started")));
+    await assertFails(setDoc(eventDoc(asHost(), "game_ended"), { ...event("game_ended"), player_count: 501 }));
+    await assertFails(setDoc(eventDoc(asHost(), "game_ended"), { ...event("game_ended"), type: "score_changed" }));
+    await assertFails(setDoc(eventDoc(asHost(), "game_ended"), { ...event("game_ended"), nickname: "x" }));
   });
 });

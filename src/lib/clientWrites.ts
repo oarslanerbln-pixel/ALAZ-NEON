@@ -1,7 +1,7 @@
 import { arrayUnion, increment, serverTimestamp } from "firebase/firestore";
 
 import { retentionExpiry } from "./retention";
-import type { Reward, VenueConfig } from "../types/database";
+import type { GameType, Reward, VenueConfig } from "../types/database";
 import type { QuizPack } from "./quizPack";
 
 /**
@@ -341,5 +341,42 @@ export function quizPackPayload(pack: QuizPack, uid: string) {
     questions: pack.questions,
     created_by: uid,
     created_at: serverTimestamp(),
+  };
+}
+
+// ─── Telemetri ──────────────────────────────────────────────────────
+
+export type GameEventType = "game_started" | "game_ended";
+
+/** Belge kimliği: aynı olay iki kez yazılamaz (iki TV açıksa da tek kayıt). */
+export function gameEventId(roomId: string, startedAt: number, type: GameEventType): string {
+  return `${roomId}_${startedAt}_${type}`;
+}
+
+/**
+ * Oyun başlangıç/bitiş olayı (docs/roadmap.md, 3.2). Yalnızca TV (oda
+ * host'u, personel) yazar; mekan KPI raporu bunlardan hesaplanır.
+ */
+export function gameEventPayload(args: {
+  type: GameEventType;
+  roomId: string;
+  hostUid: string;
+  game: GameType;
+  playerCount: number;
+  startedAt: number;
+  endedAt?: number;
+  now?: number;
+}) {
+  const now = args.now ?? Date.now();
+  return {
+    type: args.type,
+    room_id: args.roomId,
+    host_uid: args.hostUid,
+    game: args.game,
+    player_count: args.playerCount,
+    started_at: args.startedAt,
+    ended_at: args.endedAt ?? null,
+    created_at: now,
+    expires_at: retentionExpiry(now),
   };
 }

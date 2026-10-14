@@ -133,6 +133,8 @@ export interface Room {
   quiz_double_final?: boolean;
   /** Seçilen mekan/kurum soru paketi (`quiz_packs`); yoksa gömülü havuz. */
   quiz_pack_id?: string | null;
+  /** Etkin oyunun başladığı an (epoch ms); oyun olayları (`events`) bununla eşleşir. */
+  game_started_at?: number;
   current_question_index?: number;
   next_letter?: string;
   // Bomb Game Fields
