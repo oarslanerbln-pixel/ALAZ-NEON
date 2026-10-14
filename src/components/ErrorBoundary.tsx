@@ -1,6 +1,10 @@
+import { t } from "../lib/i18n";
 import { Component } from "react";
 import type { ReactNode, ErrorInfo } from "react";
-import * as Sentry from "@sentry/react";
+import { captureException } from "../lib/monitoring";
+import { createLogger } from "../lib/logger";
+
+const log = createLogger("ErrorBoundary");
 
 interface Props {
   children?: ReactNode;
@@ -22,11 +26,10 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Uncaught error:", error, errorInfo);
-    // DSN ayarlanmadıysa main.tsx'te Sentry.init() hiç çağrılmıyor —
-    // captureException o durumda sessizce hiçbir şey yapmıyor (SDK'nın
-    // kendi no-op davranışı), burada ekstra bir if kontrolü gerekmiyor.
-    Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack } });
+    log.error("Uncaught error:", error, errorInfo);
+    // DSN ayarlanmadıysa izleme kapalı ve bu çağrı hiçbir şey yapmıyor;
+    // açıksa SDK henüz inmemiş olsa bile hata sıraya alınıp gönderiliyor.
+    captureException(error, { extra: { componentStack: errorInfo.componentStack } });
     this.setState({ errorInfo });
   }
 
@@ -34,9 +37,9 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-black text-red-500 p-8">
-          <h1 className="text-4xl font-bold mb-4">Bir Hata Oluştu</h1>
+          <h1 className="text-4xl font-bold mb-4">{t("errorBoundary.title", "Bir Hata Oluştu")}</h1>
           <p className="mb-4 text-white text-xl">
-            Lütfen bu ekranın fotoğrafını atın veya hatayı kopyalayın:
+            {t("errorBoundary.hint", "Lütfen bu ekranın fotoğrafını atın veya hatayı kopyalayın:")}
           </p>
           <div className="bg-gray-900 p-6 rounded-lg text-left w-full max-w-4xl overflow-auto border border-red-500">
             <h2 className="text-2xl font-mono text-red-400 mb-2">
@@ -50,7 +53,7 @@ export class ErrorBoundary extends Component<Props, State> {
             className="mt-8 px-6 py-3 bg-red-600 text-white rounded-lg font-bold"
             onClick={() => window.location.reload()}
           >
-            Sayfayı Yenile
+            {t("errorBoundary.reload", "Sayfayı Yenile")}
           </button>
         </div>
       );

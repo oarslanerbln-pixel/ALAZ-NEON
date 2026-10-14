@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import type { Room } from "../types/database";
+import { createLogger } from "../lib/logger";
+
+const log = createLogger("useRoom");
 
 export function useRoom(roomId: string | null) {
   const [room, setRoom] = useState<Room | null>(null);
@@ -36,7 +39,7 @@ export function useRoom(roomId: string | null) {
         setLoading(false);
       },
       (err) => {
-        console.error("Error fetching room:", err);
+        log.error("Error fetching room:", err);
         setError(err);
         setLoading(false);
       }
@@ -54,7 +57,7 @@ export function useRoom(roomId: string | null) {
     try {
       await updateDoc(doc(db, "rooms", roomId), updates as Record<string, unknown>);
     } catch (err) {
-      console.error("[useRoom] Oda güncellenemedi:", err);
+      log.error("Oda güncellenemedi:", err);
       setError(err as Error);
     }
   };

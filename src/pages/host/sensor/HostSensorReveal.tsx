@@ -33,6 +33,7 @@ export function HostSensorReveal({ currentImage, buzzerPlayerName, onNextRound }
         <div className="w-full aspect-video rounded-2xl overflow-hidden border border-green-500/50 shadow-[0_0_100px_rgba(34,197,94,0.3)] mb-10 relative">
           <img 
             src={currentImage.url}
+            alt=""
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />

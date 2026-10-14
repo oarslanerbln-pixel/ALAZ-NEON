@@ -2,6 +2,8 @@ import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { updateDoc, doc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
+import { wheelSpinPayload } from "../../../lib/clientWrites";
+import { reportWriteError } from "../../../lib/writeErrors";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useVenue } from "../../../contexts/VenueContextCore";
 import { DEFAULT_VENUE_CONFIG, type Room, type Player } from "../../../types/database";
@@ -49,12 +51,9 @@ export function PlayerWheelController({ room, player }: Props) {
     }
 
     try {
-      await updateDoc(doc(db, "rooms", room.id), {
-        status: "wheel_spinning",
-        wheel_result_index: selectedIndex
-      });
+      await updateDoc(doc(db, "rooms", room.id), wheelSpinPayload(selectedIndex));
     } catch (error) {
-      console.error("Error spinning wheel:", error);
+      reportWriteError("wheel_spin", error);
       isSpinningRef.current = false;
       setIsSpinning(false);
     }

@@ -6,9 +6,11 @@ import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../../lib/firebase";
 import { useIsStaff } from "../../hooks/useIsStaff";
 import { StaffAccessNotice } from "../../components/StaffAccessNotice";
+import { VenueSwitcher } from "../../components/VenueSwitcher";
 import { useVenue } from "../../contexts/VenueContextCore";
 import { DEFAULT_VENUE_CONFIG, type Reward, type SponsorAd, type WheelSlice } from "../../types/database";
 import { errorMessage } from "../../lib/errors";
+import { useLocale } from "../../hooks/useLocale";
 
 const REWARD_TYPE_OPTIONS: { value: Reward["type"]; label: string }[] = [
   { value: "drink", label: "İçecek" },
@@ -28,8 +30,9 @@ const REWARD_TYPE_OPTIONS: { value: Reward["type"]; label: string }[] = [
  */
 export function VenueSettings() {
   const navigate = useNavigate();
-  const { venue } = useVenue();
-  const { user: authUser, isStaff } = useIsStaff();
+  const { t } = useLocale();
+  const { venue, venueId, legacy } = useVenue();
+  const { user: authUser, isStaff, venues } = useIsStaff();
 
   const [name, setName] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
@@ -127,7 +130,11 @@ export function VenueSettings() {
     setErrorMsg("");
     setSaving(true);
     try {
-      await setDoc(doc(db, "app_config", "active_venue"), {
+      // Mekan belgesini yalnızca HENGAME ekibi açar; personel var olanı
+      // günceller (merge: ekibin yazdığı alanlar korunur). Göç edilmemiş
+      // varsayılan mekan hâlâ eski tek belgede (3.1, aşama A).
+      const target = legacy ? doc(db, "app_config", "active_venue") : doc(db, "venues", venueId);
+      await setDoc(target, {
         name: name.trim(),
         logo_url: logoUrl.trim() || null,
         primary_color: primaryColor,
@@ -140,7 +147,7 @@ export function VenueSettings() {
         sponsor_ads: sponsorAds,
         wheel_slices: wheelSlices,
         updated_at: Date.now(),
-      });
+      }, { merge: !legacy });
       setSavedAt(Date.now());
     } catch (err) {
       setErrorMsg(errorMessage(err));
@@ -160,7 +167,7 @@ export function VenueSettings() {
 
   // Giriş yok ya da hesap personel değil — ikisini de tek ekran anlatıyor.
   if (!authUser || !isStaff) {
-    return <StaffAccessNotice title="Mekan Ayarları" user={authUser} />;
+    return <StaffAccessNotice title="Mekan Ayarları" user={authUser} venues={venues} />;
   }
 
   return (
@@ -172,6 +179,9 @@ export function VenueSettings() {
               Mekan Ayarları
             </h1>
             <p className="text-white/40 text-xs mt-2">{authUser.email}</p>
+            <div className="mt-3">
+              <VenueSwitcher venues={venues} />
+            </div>
           </div>
           <button
             onClick={() => signOut(auth).then(() => navigate("/"))}
@@ -564,6 +574,18 @@ export function VenueSettings() {
                   className="block text-center text-[10px] uppercase tracking-widest text-alaz-orange hover:text-white border border-alaz-orange/30 hover:border-white/30 rounded-xl py-3 transition-colors"
                 >
                   Gecelik Rapor →
+                </Link>
+                <Link
+                  to="/admin/content"
+                  className="block text-center text-[10px] uppercase tracking-widest text-alaz-orange hover:text-white border border-alaz-orange/30 hover:border-white/30 rounded-xl py-3 transition-colors"
+                >
+                  {t("content.link")}
+                </Link>
+                <Link
+                  to="/admin/staff"
+                  className="block text-center text-[10px] uppercase tracking-widest text-alaz-orange hover:text-white border border-alaz-orange/30 hover:border-white/30 rounded-xl py-3 transition-colors"
+                >
+                  {t("staffAdmin.link")}
                 </Link>
               </div>
             </div>

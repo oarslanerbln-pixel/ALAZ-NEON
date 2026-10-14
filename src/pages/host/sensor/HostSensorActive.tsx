@@ -5,6 +5,7 @@ import type { Room } from "../../../types/database";
 import type { SensorImage } from "../../../data/sensorImages";
 import { safeForDisplay } from "../../../lib/profanity";
 import { SoundManager, sounds } from "../../../lib/audio";
+import { sensorPoints } from "../../../lib/gameSettings";
 
 interface Props {
   room: Room;
@@ -39,7 +40,7 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
       {/* TOP HEADER: Category & Clue */}
       <div className="absolute top-8 z-20 flex flex-col items-center">
         <span className="px-5 py-1.5 rounded-full border border-purple-500/40 bg-purple-500/10 text-purple-400 font-mono tracking-widest text-xs uppercase font-bold mb-1">
-          👁️ SENSÖR • GÖRSEL TAHMİN 👁️
+          {t("sensor.banner")}
         </span>
         <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-wider drop-shadow-md">
           {currentImage.category || "BU GÖRSELİ İLK KİM BİLECEK?"}
@@ -54,6 +55,7 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
           <motion.img 
             key={currentImage.url}
             src={currentImage.url}
+            alt=""
             initial={{ filter: "blur(40px) contrast(150%)", scale: 1.15, opacity: 0 }}
             animate={{ filter: "blur(0px) contrast(100%)", scale: 1, opacity: 1 }}
             transition={{ 
@@ -87,6 +89,7 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
         <div className="relative w-full max-w-5xl aspect-video rounded-3xl overflow-hidden shadow-[0_0_120px_rgba(239,68,68,0.4)] border-2 border-red-500/60 mt-12">
           <img 
             src={currentImage.url}
+            alt=""
             className="w-full h-full object-cover grayscale opacity-30"
             style={{ filter: "blur(25px)" }} 
           />
@@ -106,7 +109,7 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
               </div>
               
               <p className="text-2xl text-white font-black mb-6 tracking-wide">
-                ⚡ <span className="text-red-400 uppercase">{buzzerPlayerName || "BİRİ"}</span> BASTI!
+                ⚡ <span className="text-red-400 uppercase">{buzzerPlayerName || t("sensor.someone")}</span> {t("sensor.buzzedSuffix")}
               </p>
               
               {room.sensor_player_answer ? (
@@ -116,7 +119,7 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
                   className="mb-8 bg-white/5 border border-white/15 rounded-2xl p-6 w-full"
                 >
                   <p className="text-red-400 text-xs mb-2 uppercase tracking-widest font-mono">
-                    OYUNCUNUN TAHMİNİ:
+                    {t("sensor.playerGuess")}
                   </p>
                   <p className="text-4xl md:text-5xl font-black text-white tracking-wide uppercase drop-shadow-[0_0_20px_rgba(255,255,255,0.7)]">
                     "{safeForDisplay(room.sensor_player_answer)}"
@@ -149,7 +152,7 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
                     onClick={() => onEvaluate(true)}
                     className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 border border-emerald-400 text-white rounded-2xl font-black uppercase tracking-wider text-lg transition-all shadow-[0_0_30px_rgba(16,185,129,0.5)] transform active:scale-95 flex items-center justify-center gap-2"
                   >
-                    <span>✅</span> {t("sensor.correct")} (+1000)
+                    <span>✅</span> {t("sensor.correct")} (+{sensorPoints(room)})
                   </button>
                   <button 
                     onClick={() => onEvaluate(false)}

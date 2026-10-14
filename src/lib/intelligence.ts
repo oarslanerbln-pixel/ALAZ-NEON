@@ -9,6 +9,9 @@
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "./firebase";
 import type { RoundLog, RoundResultInfo, AnswerBreakdown } from "../types/database";
+import { createLogger } from "./logger";
+
+const logger = createLogger("intelligence");
 
 const LETTER_COMPLEXITY: Record<string, number> = {
   A: 10,
@@ -142,7 +145,7 @@ export async function logRoundIntelligence(
       created_at: Date.now()
     });
   } catch (error) {
-    console.error("Intelligence log failed:", error);
+    logger.error("Intelligence log failed:", error);
   }
 
   return log;

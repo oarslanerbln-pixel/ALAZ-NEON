@@ -16,9 +16,21 @@ import { getRandomSensorImage } from "../../../data/sensorImages";
 import { GameSettingsModal } from "../components/GameSettingsModal";
 import { GAME_CARDS as GAMES, GAME_CATEGORY_KEY } from "../../../lib/gameCatalog";
 import { activePlayers as activePlayersOf } from "../../../lib/liveness";
+import { assignColorsTeams, colorsTargetClicks } from "../../../lib/colorsTeams";
+import { RULE_DEFAULTS } from "../../../lib/gameSettings";
+import { loadQuizPack } from "../../../hooks/useQuizPacks";
+import { venueIdOf } from "../../../lib/venues";
+import { recordGameEvent } from "../../../hooks/gameEvents";
+import { writeRoomSecret } from "../../../hooks/useRoomSecret";
+import { SECRET_DOC, splitQuizQuestions } from "../../../lib/gameSecrets";
+import { quizSecretPayload } from "../../../lib/clientWrites";
 import { useLocale } from "../../../hooks/useLocale";
+import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useVenue } from "../../../contexts/VenueContextCore";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("HostDashboard");
 import { AuroraBackdrop } from "../../../components/fx/AuroraBackdrop";
 import { BeamBorder } from "../../../components/fx/BeamBorder";
 import { GridPattern } from "../../../components/fx/GridPattern";
@@ -40,6 +52,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
   const { t } = useLocale();
   const { venue } = useVenue();
   const [isKioskMode, setIsKioskMode] = useState(false);
+  useEscapeKey(isKioskMode, () => setIsKioskMode(false));
   const [kioskImageIndex, setKioskImageIndex] = useState(0);
 
   // Game Setup State
@@ -81,7 +94,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     try {
       await updateRoomStatus("closed", { active_game: "none" });
     } catch (err) {
-      console.error("[HostDashboard] Oda kapatılamadı:", err);
+      log.error("Oda kapatılamadı:", err);
     } finally {
       navigate("/");
     }
@@ -107,29 +120,51 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       Promise.all([
         import("../../../lib/quizQuestions"),
         import("../../../lib/questionHistory"),
-      ]).then(([{ getQuizQuestions }, { recentQuestionIds, rememberQuestions }]) => {
-        const questions = getQuizQuestions(room.locale || "tr", settings?.total_rounds || 3, {
+        // Seçili paket okunamaz ya da geçersizse gömülü havuza düşülür.
+        settings?.quiz_pack_id
+          ? loadQuizPack(venueIdOf(room), settings.quiz_pack_id).catch((err) => {
+              log.warn("Soru paketi okunamadı:", err);
+              return null;
+            })
+          : Promise.resolve(null),
+      ]).then(async ([{ getQuizQuestions }, { recentQuestionIds, rememberQuestions }, pack]) => {
+        const picked = getQuizQuestions(room.locale || "tr", settings?.total_rounds || 3, {
           topics: settings?.quiz_topics,
           recentIds: recentQuestionIds(),
+          pool: pack?.questions,
         });
-        rememberQuestions(questions.map((q) => q.id));
+        rememberQuestions(picked.map((q) => q.id));
+        // Doğru cevaplar odaya değil, yalnızca host'un okuduğu belgeye.
+        const { questions, secret } = splitQuizQuestions(picked);
+        await writeRoomSecret(room.id, SECRET_DOC.quiz, quizSecretPayload(secret)).catch((err) =>
+          log.error("Quiz cevapları yazılamadı:", err),
+        );
         const startState = (settings?.current_round === 0 || room.current_round === 0) ? "tutorial" : "quiz_intro";
+        const startedAt = Date.now();
         updateRoomStatus(startState, {
           ...extraUpdates,
           current_question_index: 0,
           quiz_questions: questions,
+          quiz_reveal: null,
+          game_started_at: startedAt,
           ...(startState === "tutorial" ? { tutorial_step: 0 } : {})
         });
+        recordGameEvent({ type: "game_started", room, game, playerCount: players.length, startedAt });
       });
       return; // Async update handled above
     }
     
     if (game === "bomb") {
-      // Canı olan VE hâlâ sinyal gönderen oyuncular: bomba, telefonu cebine
-      // koyup gitmiş bir misafire verilirse tur süre dolana kadar kilitlenir.
-      const activePlayers = activePlayersOf(
-        players.filter((p) => (p.lives === undefined ? 3 : p.lives) > 0),
-      );
+      // Herkes ayardaki canla başlar. Canlar önceden yalnızca "sıfırla"da
+      // geri geliyordu: gecenin ikinci bomba oyununda önceki oyunda elenenler
+      // hiç oynayamıyordu. Hâlâ sinyal gönderen oyunculardan biri başlar:
+      // bomba telefonu cebine koyup gitmiş bir misafire verilirse tur süre
+      // dolana kadar kilitlenir.
+      const lives = settings?.bomb_lives ?? RULE_DEFAULTS.bombLives;
+      const livesBatch = writeBatch(db);
+      players.forEach((p) => livesBatch.update(doc(db, "players", p.id), { lives }));
+      await livesBatch.commit();
+      const activePlayers = activePlayersOf(players);
       const randomPlayer = activePlayers.length > 0 ? activePlayers[Math.floor(Math.random() * activePlayers.length)] : null;
       const availableCategories = settings?.categories || room.categories || [];
       const randomCategory = availableCategories.length > 0 ? availableCategories[Math.floor(Math.random() * availableCategories.length)] : "GENEL";
@@ -143,19 +178,21 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
         active_letter: randomCategory,
         used_bomb_categories: [randomCategory],
         used_words: [],
-        bomb_speed_multiplier: 1.0,
+        // Ayardaki hız; önceden burada 1.0'a eziliyordu.
+        bomb_speed_multiplier: settings?.bomb_speed_multiplier ?? 1.0,
       };
     }
 
     if (game === "sensor") {
       const firstImg = getRandomSensorImage([]);
       initialStatus = "sensor_intro";
+      // Ayarlar (tur sayısı, bulanıklık süresi, puan) önceden burada
+      // atılıyordu: sensör önceki oyunun tur sayısıyla oynanıyordu.
       extraUpdates = {
-        active_game: game,
+        ...extraUpdates,
         current_round: 0,
         used_sensor_images: [firstImg.id],
         sensor_current_media: firstImg.url,
-        sensor_media_answer: firstImg.answer,
         sensor_buzzer_player_id: null,
         sensor_buzzer_timestamp: null,
         sensor_player_answer: null
@@ -179,11 +216,33 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
         overload_eliminated_ids: []
       };
     }
+    // Neon Savaşları: takımlar ve hedef burada kurulmazsa takım oyuncu
+    // kimliğinin son karakterinden çıkıyordu (iki oyuncu aynı takıma
+    // düşebiliyordu) ve hedef kalabalığa göre ayarlanmıyordu. Herkes oynar:
+    // bombada elenmiş (canı 0) oyuncu önceden takımsız kalıyordu.
     if (game === "colors") {
       initialStatus = "colors_intro";
       extraUpdates = {
         active_game: game,
+        colors_team_assignments: assignColorsTeams(players.map((p) => p.id)),
+        colors_target_clicks: colorsTargetClicks(players.length),
+        colors_win_condition: settings?.colors_win_condition ?? "domination",
+        colors_winner: null,
       };
+    }
+
+    // Şifre ve Birlik ekranları yalnızca *_intro durumundan ilerliyor;
+    // "lobby" ile açılınca anlatım ekranında donup kalıyorlardı. Önceki
+    // oyunun kodu ve hedefi de temizleniyor: yoksa ikinci Şifre oyunu aynı
+    // kodla, ikinci Birlik oyunu eski kalabalığın hedefiyle açılırdı.
+    if (game === "vault") {
+      initialStatus = "vault_intro";
+      extraUpdates = { ...extraUpdates, vault_code: "", vault_winner_id: null };
+    }
+
+    if (game === "unity") {
+      initialStatus = "unity_intro";
+      extraUpdates = { ...extraUpdates, unity_current: 0, unity_target: 0 };
     }
 
     // Echo / Pulse ekranlari kurulumlarini kendileri yapiyor, ama
@@ -264,11 +323,12 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       };
     }
 
-    // Bar ve Kablo skorlari oyuncu dokumaninda birikiyor ve hicbir yerde
-    // sifirlanmiyordu: ikinci Kablo turu, onceki turun toplami zaten hedefin
-    // ustunde oldugu icin aninca "kazanildi" ekranina duserdi.
-    if (game === "bar" || game === "kablo") {
-      const resetField = game === "bar" ? "bar_score" : "kablo_score";
+    // Bar, Kablo ve Neon Savaşları sayaçları oyuncu dokümanında birikiyor ve
+    // hiçbir yerde sıfırlanmıyordu: ikinci Kablo turu, önceki turun toplamı
+    // zaten hedefin üstünde olduğu için anında "kazanıldı" ekranına düşerdi.
+    const counterField = { bar: "bar_score", kablo: "kablo_score", colors: "colors_clicks" } as const;
+    if (game === "bar" || game === "kablo" || game === "colors") {
+      const resetField = counterField[game];
       const batch = writeBatch(db);
       players.forEach((p) => {
         batch.update(doc(db, "players", p.id), { [resetField]: 0 });
@@ -276,7 +336,11 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       await batch.commit();
     }
 
-    await updateRoomStatus(initialStatus, extraUpdates);
+    // Telemetri (docs/roadmap.md, 3.2): bitiş olayı useHostRoom'da, oyun
+    // panoya dönerken aynı başlangıç anıyla yazılır.
+    const startedAt = Date.now();
+    await updateRoomStatus(initialStatus, { ...extraUpdates, game_started_at: startedAt });
+    recordGameEvent({ type: "game_started", room, game, playerCount: players.length, startedAt });
   };
 
   const joinUrl = `${window.location.protocol}//${window.location.host}/join?code=${room.code}`;
@@ -308,6 +372,12 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
           room={room}
           exitConfirmKey="common.confirmEndNight"
           onExitToHome={endNight}
+          // Oyunlar arası sponsor reklam arası; yalnızca mekanın reklamı varsa.
+          onTriggerAdBreak={
+            (venue.sponsor_ads?.length ?? 0) > 0
+              ? () => updateRoomStatus("ad_break", { active_game: "none", ad_break_next_state: "night_lobby" })
+              : undefined
+          }
         />
 
         <div className="flex-1 mt-4 w-full max-w-[1600px] mx-auto px-4 grid grid-cols-1 lg:grid-cols-4 gap-4">
@@ -335,7 +405,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
 
                 {/* Odanın öbür ucundan okunabilsin: 140 px küçüktü. */}
                 <div className="bg-white p-4 rounded-2xl shadow-[0_0_40px_rgba(255,255,255,0.15)] relative">
-                  <QRCodeSVG value={joinUrl} size={210} bgColor="#ffffff" fgColor="#000000" level="H" marginSize={1} />
+                  <QRCodeSVG title={t("a11y.joinQr")} value={joinUrl} size={210} bgColor="#ffffff" fgColor="#000000" level="H" marginSize={1} />
                 </div>
 
                 <div className="mt-5 flex flex-col items-center">
@@ -416,7 +486,9 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
               <div className="relative w-full max-w-4xl aspect-[21/9] flex items-center justify-center perspective-1000">
                 {/* Carousel Left Arrow */}
                 <button
+                  type="button"
                   onClick={() => paginate(-1)}
+                  aria-label={t("dashboard.prevGame")}
                   className="absolute left-0 z-20 w-16 h-16 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 transition-all hover:scale-110 shadow-xl -ml-8"
                 >
                   <ChevronLeft className="w-8 h-8 text-white opacity-80" />
@@ -491,7 +563,9 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
 
                 {/* Carousel Right Arrow */}
                 <button
+                  type="button"
                   onClick={() => paginate(1)}
+                  aria-label={t("dashboard.nextGame")}
                   className="absolute right-0 z-20 w-16 h-16 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 transition-all hover:scale-110 shadow-xl -mr-8"
                 >
                   <ChevronRight className="w-8 h-8 text-white opacity-80" />
@@ -527,6 +601,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsKioskMode(false)}
+            role="presentation"
             className="fixed inset-0 z-[999] bg-black cursor-pointer flex items-center justify-center"
           >
             <AnimatePresence mode="wait">
@@ -549,7 +624,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
             <div className="absolute bottom-8 right-8 bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/20 flex flex-col items-center">
               <span className="text-white font-bold uppercase tracking-widest text-[10px] mb-2">{t("host.joinGame", "Oyuna Katıl")}</span>
               <div className="bg-white p-2 rounded-lg">
-                <QRCodeSVG value={joinUrl} size={80} bgColor="#ffffff" fgColor="#000000" level="H" />
+                <QRCodeSVG title={t("a11y.joinQr")} value={joinUrl} size={80} bgColor="#ffffff" fgColor="#000000" level="H" />
               </div>
               <span className="text-alaz-orange font-mono font-bold mt-2">{room.code}</span>
             </div>

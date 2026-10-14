@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { useLocale } from "../hooks/useLocale";
+import { useEscapeKey } from "../hooks/useEscapeKey";
 import { useTopPlayers } from "../hooks/useTopPlayers";
 import { useVenue } from "../contexts/VenueContextCore";
 
@@ -14,6 +15,7 @@ type Slide =
 
 export function AttractMode({ onClose }: { onClose: () => void }) {
   const { t } = useLocale();
+  useEscapeKey(true, onClose);
   const { venue } = useVenue();
   const [index, setIndex] = useState(0);
   // Eskiden burada sabit, uydurma bir üçlü vardı ("Ateşin_Oğlu", 12450 puan...)
@@ -53,6 +55,7 @@ export function AttractMode({ onClose }: { onClose: () => void }) {
       exit={{ opacity: 0 }}
       transition={{ duration: 1 }}
       onClick={onClose}
+      role="presentation"
       className="fixed inset-0 z-[100] bg-black overflow-hidden flex flex-col items-center justify-center cursor-pointer"
     >
       {/* Dynamic Background */}
@@ -100,7 +103,7 @@ export function AttractMode({ onClose }: { onClose: () => void }) {
                 </div>
                 <div className="w-full h-44 bg-gradient-to-b from-[#1c1c28] to-[#0d0d14] border-t-2 border-t-gray-300 border-x border-white/10 rounded-t-3xl flex flex-col items-center justify-center shadow-lg">
                   <span className="text-4xl font-mono font-black text-gray-400">#02</span>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-gray-500 mt-1">SILBER</span>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-gray-500 mt-1">SILVER</span>
                 </div>
               </motion.div>
 
@@ -220,7 +223,7 @@ export function AttractMode({ onClose }: { onClose: () => void }) {
         </div>
         <div className="bg-white p-3 rounded-xl">
           {/* Use window.location.origin to point to the current deployed URL */}
-          <QRCodeSVG value={`${typeof window !== 'undefined' ? window.location.origin : 'https://alaz-neon.app'}/join`} size={150} />
+          <QRCodeSVG title={t("a11y.joinQr")} value={`${typeof window !== 'undefined' ? window.location.origin : 'https://alaz-neon.app'}/join`} size={150} />
         </div>
         <div className="mt-4 text-alaz-orange font-black tracking-widest text-sm">
           {t("attract.joinNow")}

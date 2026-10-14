@@ -10,6 +10,7 @@
 
     /* Bundler mode */
     "moduleResolution": "bundler",
+    "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
@@ -31,5 +32,5 @@
    * projesi app projesinin .d.ts çıktılarını bekliyor ve derleme kilitleniyor.
    * Bağımsız `tsc -p tsconfig.test.json --noEmit` olarak çalıştırılıyor.
    */
-  "include": ["src", "test", "vitest.rules.config.ts"]
+  "include": ["src", "test", "e2e", "vitest.rules.config.ts", "playwright.config.ts"]
 }

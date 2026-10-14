@@ -2,10 +2,13 @@ import { collection, doc, getDocs, increment, query, runTransaction, where } fro
 
 import { db } from "../../../lib/firebase";
 import { aynaRoundKey, parseGuess, scoreGuess } from "../../../lib/ayna";
-import { aynaQuestionById } from "../../../lib/aynaQuestions";
+import { aynaFactById } from "../../../lib/aynaFacts";
 import { AYNA_SURVEY_MS, applySurveyResults, isSalonId, salonTruth, tallySurvey } from "../../../lib/aynaSalon";
 import { toMillis } from "../../../lib/timestamps";
 import type { Answer, Room } from "../../../types/database";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("aynaActions");
 import { pointsFields } from "../../../lib/scoreWrites";
 
 /**
@@ -39,6 +42,7 @@ function firstQuestionUpdates(room: Room): Partial<Room> {
     ayna_round_guesses: {},
     ayna_round_points: {},
     ayna_round_truth: null,
+    ayna_round_insight: null,
     ayna_round_sample: null,
   };
 }
@@ -57,7 +61,7 @@ async function fetchSurvey(room: Room): Promise<{ answers?: unknown }[]> {
     );
     return snap.docs.map((d) => d.data());
   } catch (err) {
-    console.error("[AYNA] Anket okunamadı:", err);
+    log.error("Anket okunamadı:", err);
     return [];
   }
 }
@@ -106,7 +110,7 @@ export async function revealAynaRound(room: Room, playerIds: ReadonlySet<string>
     truth = salonTruth(tally);
     sample = tally?.total ?? 0;
   } else {
-    truth = aynaQuestionById(questionId)?.answer ?? null;
+    truth = aynaFactById(questionId)?.answer ?? null;
   }
   // Gerçeği bilinmeyen tur (havuzdan kalkmış kimlik ya da eşiğin altında
   // kalmış salon sorusu — anket sonrası elendiği için beklenmez) TV'de
@@ -153,7 +157,10 @@ export async function revealAynaRound(room: Room, playerIds: ReadonlySet<string>
       ayna_round_guesses: guesses,
       ayna_round_points: points,
       ayna_scored_through: index,
-      ayna_round_truth: isSalonId(questionId) ? truth : null,
+      // Gerçek ve not yalnızca şimdi odaya yazılıyor; önceden dünya
+      // sorularının cevabı telefonun yüklediği kodda duruyordu.
+      ayna_round_truth: truth,
+      ayna_round_insight: isSalonId(questionId) ? null : (aynaFactById(questionId)?.insight ?? null),
       ayna_round_sample: sample,
       ...totals,
     });
@@ -172,6 +179,7 @@ function nextQuestionUpdates(room: Room, index: number): Partial<Room> {
     ayna_round_guesses: {},
     ayna_round_points: {},
     ayna_round_truth: null,
+    ayna_round_insight: null,
     ayna_round_sample: null,
   };
 }

@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, doc, setDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import type { User } from "firebase/auth";
 import { db, auth } from "../../lib/firebase";
-import { retentionExpiry } from "../../lib/retention";
+import { playerJoinPayload } from "../../lib/clientWrites";
 import { findJoinableRoomByCode } from "../../lib/roomQueries";
 import { useLocale } from "../../hooks/useLocale";
+import { useFollowRoomVenue } from "../../hooks/useFollowRoomVenue";
+import type { Room } from "../../types/database";
 import { errorMessage } from "../../lib/errors";
 import { PhoneAuth } from "../../components/PhoneAuth";
 import { LanguageSwitcher } from "../../components/LanguageSwitcher";
@@ -15,6 +17,9 @@ import { PlayerProfileCard } from "./components/PlayerProfileCard";
 import { PlayerRewards } from "./components/PlayerRewards";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { containsProfanity } from "../../lib/profanity";
+import { createLogger } from "../../lib/logger";
+
+const log = createLogger("PlayerJoin");
 
 export function PlayerJoin() {
   const navigate = useNavigate();
@@ -25,6 +30,9 @@ export function PlayerJoin() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [teamName, setTeamName] = useState("");
+  // Kodu girilen odanın mekanı: giriş ekranı o mekanın markasıyla görünür (3.1).
+  const [codeRoom, setCodeRoom] = useState<Pick<Room, "venue_id"> | null>(null);
+  useFollowRoomVenue(codeRoom);
   const [gameMode, setGameMode] = useState<"individual" | "team">("individual");
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authChecking, setAuthChecking] = useState(true);
@@ -56,7 +64,10 @@ export function PlayerJoin() {
         // Katilim akisiyla AYNI secim: kod cakismasinda burada baska bir
         // odanin modunu gosterip katilimda baskasina girmek olmasin.
         const room = await findJoinableRoomByCode(roomCode);
-        if (room) setGameMode(room.game_mode || "individual");
+        if (room) {
+          setGameMode(room.game_mode || "individual");
+          setCodeRoom({ venue_id: room.venue_id });
+        }
       };
       checkMode();
     }
@@ -102,18 +113,24 @@ export function PlayerJoin() {
            await updateNickname(nickname.trim());
         }
 
-        const playerRef = await addDoc(collection(db, "players"), {
-            room_id: room.id,
-            nickname: nickname.trim(),
-            team_name: room.game_mode === "team" ? teamName.trim() : null,
-            total_score: 0,
-            night_score: 0,
+        // Kimlik önceden üretilip setDoc ile yazılıyor, addDoc ile değil.
+        // addDoc "yoksa oluştur" koşuluyla yazar: oturum yeni açılmışken
+        // Firestore kimlik değişimiyle yazma bağlantısını yeniden kurup
+        // onaylanmamış yazmayı tekrar gönderirse, ilk gönderim çoktan
+        // kaydedildiği için ikincisi ALREADY_EXISTS ile düşüyor ve oyuncu
+        // "kayıt oluşturulamadı" görüyordu (uçtan uca testler yakaladı).
+        // setDoc'ta tekrar gönderim aynı verinin üzerine yazılmasıdır; kural
+        // bunu hiçbir alanı değiştirmeyen bir öz-güncelleme olarak kabul ediyor.
+        const playerRef = doc(collection(db, "players"));
+        await setDoc(
+          playerRef,
+          playerJoinPayload({
+            roomId: room.id,
             uid: currentUser?.uid || "anonymous",
-            created_at: Date.now(),
-            // Firestore TTL politikasi bu alana bakip dokumani siliyor
-            // (bkz. lib/retention.ts ve README).
-            expires_at: retentionExpiry(),
-        });
+            nickname: nickname.trim(),
+            teamName: room.game_mode === "team" ? teamName.trim() : null,
+          }),
+        );
 
         localStorage.setItem("cafe_game_playerId", playerRef.id);
         localStorage.setItem("cafe_game_roomId", room.id);
@@ -126,7 +143,7 @@ export function PlayerJoin() {
         return;
       }
     } catch (err) {
-      console.error(err);
+      log.error(err);
       setErrorMsg(t("join.errorGeneral"));
       setIsLoading(false);
     }
@@ -183,7 +200,7 @@ export function PlayerJoin() {
 
             {authChecking ? (
               <div className="flex justify-center items-center py-10">
-                <span className="text-alaz-orange font-bold uppercase tracking-widest animate-pulse">CONNECTING...</span>
+                <span className="text-alaz-orange font-bold uppercase tracking-widest animate-pulse">{t("join.connecting")}</span>
               </div>
             ) : !currentUser ? (
               <PhoneAuth onSuccess={() => {}} />
@@ -211,6 +228,7 @@ export function PlayerJoin() {
                     </div>
                   ) : (
                     <input
+                      aria-label={t("join.roomCode")}
                       type="text"
                       required
                       maxLength={4}
@@ -233,6 +251,7 @@ export function PlayerJoin() {
                 <div className="flex bg-white/[0.02] border border-white/10 rounded-2xl group-focus-within:border-alaz-orange/60 group-focus-within:bg-white/[0.04] transition-all shadow-inner overflow-hidden relative">
                   <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-alaz-orange/80 to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity" />
                   <input
+                    aria-label={t("join.nickname")}
                     type="text"
                     required
                     autoFocus={!!urlCode}
@@ -260,9 +279,10 @@ export function PlayerJoin() {
                     </label>
                     <div className="flex bg-[#ff003c]/5 border border-[#ff003c]/30 group-focus-within:border-[#ff003c] transition-colors">
                       <div className="px-4 py-4 border-r border-[#ff003c]/30 text-[#ff003c] font-bold bg-[#ff003c]/10 flex items-center justify-center">
-                        TEAM
-                      </div>
+                  {t("join.teamChip")}
+                </div>
                       <input
+                        aria-label={t("join.teamLabel")}
                         type="text"
                         required
                         value={teamName}

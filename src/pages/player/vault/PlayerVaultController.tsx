@@ -1,22 +1,26 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
-import { retentionExpiry } from "../../../lib/retention";
+import { vaultGuessPayload } from "../../../lib/clientWrites";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useLocale } from "../../../hooks/useLocale";
 import type { Room, Player } from "../../../types/database";
+import { createLogger } from "../../../lib/logger";
+import type { VaultFeedback } from "../../../lib/vault";
+
+const log = createLogger("PlayerVaultController");
 
 interface Props {
   room: Room;
   player: Player;
 }
 
-type Feedback = "correct" | "present" | "absent";
-
 interface GuessHistory {
+  id: string;
   guess: string;
-  feedback: Feedback[];
+  /** TV hesaplayıp yazana kadar null. */
+  feedback: VaultFeedback[] | null;
 }
 
 export function PlayerVaultController({ room, player }: Props) {
@@ -26,7 +30,6 @@ export function PlayerVaultController({ room, player }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasWon, setHasWon] = useState(false);
 
-  const targetCode = room.vault_code || "";
   const maxDigits = 4;
 
   const handleKeyPress = (key: string) => {
@@ -41,61 +44,42 @@ export function PlayerVaultController({ room, player }: Props) {
     }
   };
 
-  const calculateFeedback = (guess: string, target: string): Feedback[] => {
-    const feedback: Feedback[] = Array(maxDigits).fill("absent");
-    const targetChars = target.split("");
-    const guessChars = guess.split("");
-
-    // First pass: correct
-    for (let i = 0; i < maxDigits; i++) {
-      if (guessChars[i] === targetChars[i]) {
-        feedback[i] = "correct";
-        targetChars[i] = ""; // mark as used
-        guessChars[i] = ""; // mark as checked
-      }
-    }
-
-    // Second pass: present
-    for (let i = 0; i < maxDigits; i++) {
-      if (guessChars[i] === "") continue;
-      const index = targetChars.indexOf(guessChars[i]);
-      if (index !== -1) {
-        feedback[i] = "present";
-        targetChars[index] = ""; // mark as used
-      }
-    }
-
-    return feedback;
-  };
+  // Kod telefonda yok (önceden oda belgesinden okunabiliyordu): ipucunu TV
+  // hesaplayıp cevap belgesine yazıyor; telefon kendi cevabını dinliyor.
+  const watchers = useRef<(() => void)[]>([]);
+  useEffect(() => () => watchers.current.forEach((stop) => stop()), []);
 
   const handleSubmit = async () => {
     if (currentGuess.length !== maxDigits || isSubmitting || hasWon) return;
     setIsSubmitting(true);
-
-    const feedback = calculateFeedback(currentGuess, targetCode);
-    
-    setHistory(prev => [{ guess: currentGuess, feedback }, ...prev]);
-    
-    const isWin = feedback.every(f => f === "correct");
-    if (isWin) {
-      setHasWon(true);
-      SoundManager.getInstance().playSFX(sounds.SUCCESS);
-    } else {
-      SoundManager.getInstance().playSFX(sounds.FAILURE);
-    }
+    const guess = currentGuess;
 
     try {
-      await addDoc(collection(db, "answers"), {
-        room_id: room.id,
-        player_id: player.id,
-        round_letter: "VAULT",
-        round_index: 0,
-        data: { guess: currentGuess },
-        created_at: new Date().toISOString(),
-        expires_at: retentionExpiry(),
-      });
+      const ref = await addDoc(
+        collection(db, "answers"),
+        vaultGuessPayload({ roomId: room.id, playerId: player.id, guess }),
+      );
+      setHistory((prev) => [{ id: ref.id, guess, feedback: null }, ...prev]);
+      let stop = () => {};
+      stop = onSnapshot(
+        ref,
+        (snap) => {
+          const feedback = snap.data()?.feedback as VaultFeedback[] | undefined;
+          if (!feedback) return;
+          stop();
+          setHistory((prev) => prev.map((h) => (h.id === ref.id ? { ...h, feedback } : h)));
+          if (feedback.every((f) => f === "correct")) {
+            setHasWon(true);
+            SoundManager.getInstance().playSFX(sounds.SUCCESS);
+          } else {
+            SoundManager.getInstance().playSFX(sounds.FAILURE);
+          }
+        },
+        (err) => log.error("Şifre ipucu okunamadı:", err),
+      );
+      watchers.current.push(() => stop());
     } catch (err) {
-      console.error(err);
+      log.error(err);
     }
 
     setCurrentGuess("");
@@ -116,16 +100,17 @@ export function PlayerVaultController({ room, player }: Props) {
       {/* History */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col-reverse gap-2">
         <AnimatePresence>
-          {history.map((h, i) => (
+          {history.map((h) => (
             <motion.div
-              key={i}
+              key={h.id}
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               className="flex justify-center gap-2"
             >
               {h.guess.split("").map((digit, j) => {
-                const fb = h.feedback[j];
-                const bg = fb === "correct" ? "bg-emerald-500" : fb === "present" ? "bg-amber-500" : "bg-zinc-800";
+                const fb = h.feedback?.[j];
+                const bg =
+                  fb === "correct" ? "bg-emerald-500" : fb === "present" ? "bg-amber-500" : fb ? "bg-zinc-800" : "bg-zinc-700 animate-pulse";
                 return (
                   <div key={j} className={`w-12 h-12 rounded-lg flex items-center justify-center font-black text-2xl text-white ${bg}`}>
                     {digit}

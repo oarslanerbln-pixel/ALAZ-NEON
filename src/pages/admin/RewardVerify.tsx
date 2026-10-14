@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
-import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
+import { where, doc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../../lib/firebase";
+import { rewardClaimPayload } from "../../lib/clientWrites";
 import { useIsStaff } from "../../hooks/useIsStaff";
+import { useVenue } from "../../contexts/VenueContextCore";
+import { loadVenueDocs } from "../../hooks/venueDocs";
 import { StaffAccessNotice } from "../../components/StaffAccessNotice";
+import { VenueSwitcher } from "../../components/VenueSwitcher";
 import type { Reward } from "../../types/database";
 import { errorMessage } from "../../lib/errors";
 
@@ -28,7 +32,8 @@ const REWARD_TYPE_LABEL: Record<Reward["type"], string> = {
  */
 export function RewardVerify() {
   const navigate = useNavigate();
-  const { user: authUser, isStaff } = useIsStaff();
+  const { user: authUser, isStaff, venues } = useIsStaff();
+  const { venueId } = useVenue();
 
   const [code, setCode] = useState("");
   const [searching, setSearching] = useState(false);
@@ -55,13 +60,13 @@ export function RewardVerify() {
     resetLookup();
     setSearching(true);
     try {
-      const q = query(collection(db, "rewards"), where("code", "==", normalized));
-      const snapshot = await getDocs(q);
-      if (snapshot.empty) {
+      // Yalnızca seçili mekanın ödülleri (3.1): başka mekanın kodu burada bulunmaz.
+      const matches = await loadVenueDocs("rewards", venueId, where("code", "==", normalized));
+      if (matches.length === 0) {
         setErrorMsg("Bu kodla eşleşen bir ödül bulunamadı.");
         return;
       }
-      const docSnap = snapshot.docs[0];
+      const docSnap = matches[0];
       setFound({ id: docSnap.id, ...docSnap.data() } as Reward & { id: string });
     } catch (err) {
       setErrorMsg(errorMessage(err));
@@ -85,10 +90,7 @@ export function RewardVerify() {
     setRedeeming(true);
     setErrorMsg("");
     try {
-      await updateDoc(doc(db, "rewards", found.id), {
-        status: "claimed",
-        claimed_at: Date.now(),
-      });
+      await updateDoc(doc(db, "rewards", found.id), rewardClaimPayload());
       setRedeemedNickname(found.nickname);
       setFound(null);
       setCode("");
@@ -109,7 +111,7 @@ export function RewardVerify() {
   }
 
   if (!authUser || !isStaff) {
-    return <StaffAccessNotice title="Ödül Doğrula" user={authUser} />;
+    return <StaffAccessNotice title="Ödül Doğrula" user={authUser} venues={venues} />;
   }
 
   return (
@@ -121,6 +123,9 @@ export function RewardVerify() {
               Ödül Doğrula
             </h1>
             <p className="text-white/40 text-xs mt-2">{authUser.email}</p>
+            <div className="mt-3">
+              <VenueSwitcher venues={venues} />
+            </div>
           </div>
           <button
             onClick={() => signOut(auth).then(() => navigate("/"))}

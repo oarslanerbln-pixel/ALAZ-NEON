@@ -1,18 +1,22 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { signOut, type User } from "firebase/auth";
 
 import { auth } from "../lib/firebase";
+import { useLocale } from "../hooks/useLocale";
+import { VenueSwitcher } from "./VenueSwitcher";
 
 interface Props {
   /** Ekran başlığı — yetki yokken de gösteriliyor ki kullanıcı nerede olduğunu bilsin. */
   title: string;
   /** Oturum sahibi; null ise hiç giriş yapılmamış. */
   user: User | null;
+  /** Hesabın personeli olduğu mekanlar (useIsStaff); başka mekandaysa seçim gösterilir. */
+  venues?: string[];
 }
 
 /**
- * Yönetim ekranlarının (mekan ayarları, ödül doğrulama, gecelik rapor)
- * ortak "yetkin yok" ekranı.
+ * Personel gerektiren ekranların (mekan ayarları, ödül doğrulama, gecelik
+ * rapor, oyun kurulumu) ortak "yetkin yok" ekranı.
  *
  * Üç ekran da aynı kontrolü kendi içinde tekrarlıyordu ve üçü de yanlış
  * soruyu soruyordu: "e-posta/şifre ile mi girdin?". /register herkese açık
@@ -24,22 +28,34 @@ interface Props {
  * firestore.rules'taki isStaff(). Buradaki kontrol atlansa bile yazma
  * işlemleri sunucu tarafında reddedilir.
  */
-export function StaffAccessNotice({ title, user }: Props) {
+export function StaffAccessNotice({ title, user, venues }: Props) {
+  const { t } = useLocale();
+  const location = useLocation();
+  // useAuth her ziyaretçiyi anonim oturumla açıyor: anonim hesap "giriş
+  // yapılmamış" demek. Eskiden bu durumda giriş bağlantısı yerine "bu hesap
+  // personel değil" çıkıyordu ve TV'deki kurulum ekranından çıkış yolu yoktu.
+  const signedIn = user !== null && !user.isAnonymous;
+  const loginHref = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white p-6 text-center gap-6">
       <h1 className="text-2xl font-black uppercase tracking-widest text-alaz-orange">{title}</h1>
 
-      {!user ? (
+      {!signedIn ? (
         <>
-          <p className="text-white/50 max-w-sm">
-            Bu ekran yalnızca işletme hesabıyla giriş yapıldığında açılır.
-          </p>
+          <p className="text-white/50 max-w-sm">{t("staff.loginRequired")}</p>
           <Link
-            to="/login"
+            to={loginHref}
             className="px-8 py-3 bg-alaz-orange text-black font-black uppercase tracking-widest rounded-xl"
           >
-            Giriş Yap
+            {t("staff.login")}
           </Link>
+        </>
+      ) : venues && venues.length > 0 ? (
+        // Personel, ama seçili mekanın değil (3.1): mekanını seçsin.
+        <>
+          <p className="text-white/50 max-w-sm">{t("staff.otherVenue")}</p>
+          <VenueSwitcher venues={venues} />
         </>
       ) : (
         <>
@@ -47,22 +63,17 @@ export function StaffAccessNotice({ title, user }: Props) {
               oyuncu hesabıyla /admin adresine gelmenin normal sonucu — hata
               değil. Eskiden bu hesap ekranı açıp gerçekten yazabiliyordu. */}
           <p className="text-white/50 max-w-sm">
-            <span className="text-white/80 font-bold">{user.email || "Bu hesap"}</span> bir
-            işletme personeli hesabı değil. Yönetim ekranları yalnızca mekan sahibinin
-            yetkilendirdiği hesaplara açık.
+            {t("staff.notStaff", user.email || t("staff.thisAccount"))}
           </p>
-          <p className="text-white/30 text-xs max-w-sm">
-            Mekan sahibiyseniz: Firebase Console → Firestore → <code>staff</code>{" "}
-            koleksiyonuna bu hesabın kimliğiyle bir doküman ekleyin.
-          </p>
+          <p className="text-white/30 text-xs max-w-sm">{t("staff.ownerHint")}</p>
           <code className="text-[10px] text-white/40 bg-white/5 border border-white/10 px-3 py-2 rounded-lg break-all max-w-sm">
-            staff/{user.uid}
+            {user.uid}
           </code>
           <button
             onClick={() => signOut(auth)}
             className="text-[10px] uppercase tracking-widest text-white/40 hover:text-white border border-white/10 px-4 py-2 rounded-lg transition-colors"
           >
-            Çıkış Yap
+            {t("staff.signOut")}
           </button>
         </>
       )}

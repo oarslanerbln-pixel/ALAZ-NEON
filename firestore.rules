@@ -34,92 +34,288 @@ service cloud.firestore {
       );
     }
 
+    /**
+     * Çok mekan (docs/design/3.1-cok-mekan.md). Mekan personeli
+     * `venues/{venueId}/staff/{uid}` kaydıyla tanımlanır. Geçiş (aşama A):
+     * global `staff` kaydı `default` mekanın personeli sayılır; göç bitince
+     * (aşama C) bu geri dönüş kaldırılır. Blaze sonrası custom claim de
+     * kabul ediliyor (`venues` haritası).
+     */
+    function isPlatformAdmin() {
+      return isAuth() && exists(/databases/$(database)/documents/platform_admins/$(request.auth.uid));
+    }
+
+    function isStaffOf(venueId) {
+      return isAuth() && venueId is string && (
+        request.auth.token.get('venues', {}).get(venueId, null) != null ||
+        exists(/databases/$(database)/documents/venues/$(venueId)/staff/$(request.auth.uid)) ||
+        (venueId == 'default' && isStaff())
+      );
+    }
+
+    function isOwnerOf(venueId) {
+      let path = /databases/$(database)/documents/venues/$(venueId)/staff/$(request.auth.uid);
+      return isAuth() && exists(path) && get(path).data.role == 'owner';
+    }
+
+    /** Odanın mekanı; mekansız (bu sürümden önce açılmış) oda `default`. */
+    function roomVenue(roomId) {
+      return get(/databases/$(database)/documents/rooms/$(roomId)).data.get('venue_id', 'default');
+    }
+
     // A write may touch these fields and nothing else.
     function touchesOnly(fields) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
     }
 
-    // Bomb mode: the player currently holding the bomb passes it on.
-    function isBombPass() {
-      return resource.data.status == 'bomb_active' &&
-        touchesOnly(['previous_bomb_target_player', 'bomb_target_player', 'used_words']);
+    function playerDoc(playerId) {
+      return get(/databases/$(database)/documents/players/$(playerId)).data;
     }
 
-    // Sensor mode: the first player to hit the buzzer claims the round.
-    function isSensorBuzz() {
+    // Bu oturumun, bu odadaki o oyuncu kaydının sahibi mi.
+    function actsAs(playerId, roomId) {
+      return playerDoc(playerId).uid == request.auth.uid &&
+        playerDoc(playerId).room_id == roomId;
+    }
+
+    /**
+     * Oyuncunun oda dokümanına yazabildiği üç sıra/yarış hamlesi: bomba
+     * paslama, buzzer ve overload savuşturma. Bunlar odada kalıyor çünkü
+     * sonucun anında herkese yayılması gerekiyor; host üzerinden
+     * aktarmak her hamleye TV gecikmesi eklerdi (docs/roadmap.md, 1.3).
+     *
+     * Eskiden yalnızca alan listesi ve oda durumu kontrol ediliyordu: odada
+     * olmayan biri de bombayı istediğine atabiliyor, başkası adına buzzer'a
+     * basabiliyordu. Her hamle artık yazanın kimliğine bağlı: yalnızca
+     * sırası gelen ve bu odadaki oyuncu yazabilir.
+     */
+
+    // Bomba: yalnızca bombayı tutan oyuncu, odadaki birine paslar;
+    // kullanılmış kelime listesi yalnızca büyüyebilir (arrayUnion).
+    function isBombPass(roomId) {
+      let d = request.resource.data;
+      let oldWords = resource.data.get('used_words', []);
+      let newWords = d.get('used_words', []);
+      return resource.data.status == 'bomb_active' &&
+        touchesOnly(['previous_bomb_target_player', 'bomb_target_player', 'used_words']) &&
+        actsAs(resource.data.bomb_target_player, roomId) &&
+        d.previous_bomb_target_player == resource.data.bomb_target_player &&
+        playerDoc(d.bomb_target_player).room_id == roomId &&
+        newWords.hasAll(oldWords) &&
+        newWords.size() <= oldWords.size() + 1;
+    }
+
+    // Sensör: ilk basan turu kilitler — yalnızca kendi adına.
+    function isSensorBuzz(roomId) {
       return resource.data.status == 'sensor_active' &&
         request.resource.data.status == 'sensor_buzzed' &&
-        touchesOnly(['status', 'sensor_buzzer_player_id', 'sensor_buzzer_timestamp']);
+        touchesOnly(['status', 'sensor_buzzer_player_id', 'sensor_buzzer_timestamp']) &&
+        actsAs(request.resource.data.sensor_buzzer_player_id, roomId);
     }
 
-    // Sensor mode: the player who buzzed types in their answer.
-    function isSensorAnswer() {
+    // Sensör: cevabı yalnızca buzzer'a basan oyuncu yazar.
+    function isSensorAnswer(roomId) {
       return resource.data.status == 'sensor_buzzed' &&
-        touchesOnly(['sensor_player_answer']);
+        touchesOnly(['sensor_player_answer']) &&
+        request.resource.data.sensor_player_answer is string &&
+        request.resource.data.sensor_player_answer.size() <= 100 &&
+        actsAs(resource.data.sensor_buzzer_player_id, roomId);
     }
 
-    // Overload mode: the current target deflects the bomb onward, which
-    // also shrinks the timer for the next round. Client writes this
-    // directly from the player's phone (HostOverloadDisplay runs status
-    // "playing", not a dedicated overload_* status), and this case was
-    // missing entirely — every deflect tap was silently permission-denied,
-    // so the target could never pass it on and just watched time run out.
-    function isOverloadDeflect() {
+    // Çark: sırası gelen oyuncu (wheel_spinner_id) çarkı bir kez çevirir.
+    // Kural yoktu: telefondaki "çevir" düğmesi her seferinde reddediliyordu.
+    // Sonucu çeviren telefon seçiyor; dilim aralığı ve tek çevirme sınırı
+    // burada, sonucu sunucuya taşımak Cloud Function işi (karar D2).
+    // Dilimler mekan ayarında (app_config), odada değil: üst sınır kaba.
+    function isWheelSpin(roomId) {
+      let d = request.resource.data;
+      return resource.data.status == 'wheel_active' &&
+        d.status == 'wheel_spinning' &&
+        touchesOnly(['status', 'wheel_result_index']) &&
+        resource.data.get('wheel_result_index', null) == null &&
+        d.wheel_result_index is int &&
+        d.wheel_result_index >= 0 &&
+        d.wheel_result_index < 64 &&
+        actsAs(resource.data.wheel_spinner_id, roomId);
+    }
+
+    // Overload: hedef oyuncu bombayı "passing" durumuna atar; sonraki hedefi
+    // ve kısalan süreyi host seçer (HostOverloadDisplay). Kural eskiden
+    // istemcinin yazmadığı overload_time_allowed'ı beyaz listeye almış,
+    // yazdığı overload_last_target_id'yi almamıştı: her savuşturma sessizce
+    // reddediliyordu.
+    function isOverloadDeflect(roomId) {
       return resource.data.status == 'playing' &&
-        touchesOnly(['overload_target_id', 'overload_time_allowed']);
-    }
-
-    // Echo modu: oyuncu telefonundan oyunu oda dokumanindaki echo_votes
-    // haritasina yaziyor (`echo_votes.<playerId>`). Ic ice alan yazimi
-    // affectedKeys() tarafinda ust seviye 'echo_votes' olarak gorunur.
-    // Bu kural olmadan her oy sessizce permission-denied oluyordu —
-    // overload savusturmasindaki ile tipatip ayni kirik.
-    function isEchoVote() {
-      return resource.data.status == 'echo_active' &&
-        touchesOnly(['echo_votes']);
-    }
-
-    // Pulse modu: oyuncu, cekirdegin patladigini dusundugu anin zaman
-    // damgasini pulse_clicks haritasina yaziyor. Echo ile ayni sekil.
-    function isPulseTap() {
-      return resource.data.status == 'pulse_active' &&
-        touchesOnly(['pulse_clicks']);
+        touchesOnly(['overload_target_id', 'overload_last_target_id']) &&
+        request.resource.data.overload_target_id == 'passing' &&
+        request.resource.data.overload_last_target_id == resource.data.overload_target_id &&
+        actsAs(resource.data.overload_target_id, roomId);
     }
 
     match /rooms/{roomId} {
       // Anyone can read the room data
       allow read: if true;
 
-      // Only authenticated users can create a room. The creator must set themselves as the host.
-      allow create: if isAuth() && request.resource.data.host_uid == request.auth.uid;
+      // Oda yalnızca personel hesabıyla açılır (docs/roadmap.md, karar D1).
+      // Eskiden her anonim oturum host olabiliyordu; ödül ve kalıcı puan
+      // yazma yetkisi "odanın host'u" üzerinden aktığı için oda açmak
+      // hepsinin kapısıydı. TV/tablet bir kez personel hesabıyla giriş yapar.
+      // Oda mekanın personeliyle açılır; mekan sonradan değişmez. Mekansız
+      // oda yalnızca geçiş süresince eski istemciden (global personel) gelir.
+      allow create: if request.resource.data.host_uid == request.auth.uid && (
+        (request.resource.data.get('venue_id', null) == null && isStaff()) ||
+        isStaffOf(request.resource.data.get('venue_id', null))
+      );
 
-      // The host owns the room and may change anything in it. Players also have
-      // to write a handful of specific fields as part of normal play — passing
-      // the bomb, hitting the sensor buzzer, submitting the buzzer answer — and
-      // the client does those writes directly from the player's device. A
-      // host-only rule therefore silently breaks bomb and sensor mode entirely.
-      // Each player-allowed write is pinned to its own field whitelist and to
-      // the room status in which it actually makes sense.
+      // Odayı host serbestçe günceller. Oyuncu yalnızca yukarıdaki üç
+      // kimliğe bağlı sıra/yarış hamlesini yazabilir; echo oyu ve pulse
+      // dokunuşu artık aşağıdaki `inputs` alt koleksiyonunda.
       allow update: if isAuth() && (
-        resource.data.host_uid == request.auth.uid ||
-        isBombPass() ||
-        isSensorBuzz() ||
-        isSensorAnswer() ||
-        isOverloadDeflect() ||
-        isEchoVote() ||
-        isPulseTap()
+        (resource.data.host_uid == request.auth.uid &&
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['venue_id', 'host_uid'])) ||
+        isBombPass(roomId) ||
+        isSensorBuzz(roomId) ||
+        isSensorAnswer(roomId) ||
+        isOverloadDeflect(roomId) ||
+        isWheelSpin(roomId)
       );
 
       // Only the host can delete the room.
       allow delete: if isAuth() && resource.data.host_uid == request.auth.uid;
+
+      /**
+       * Emoji tepkileri (src/hooks/useEmojiPulse.ts): telefon tek bir
+       * `emojiPulse` dokümanının üzerine yazar, TV onu dinler.
+       *
+       * Bu alt koleksiyon için hiç kural yoktu — `match /rooms/{roomId}`
+       * alt koleksiyonları kapsamaz, varsayılan ret her tepkiyi sessizce
+       * düşürüyordu. Yazan, bu odadaki kendi oyuncu kaydını göstermek
+       * zorunda: odada olmayan biri TV'ye bir şey basamaz.
+       */
+      /**
+       * Oyuncu girişleri: echo oyu ve pulse dokunuşu (docs/roadmap.md, 1.3).
+       *
+       * Eskiden oda dokümanındaki echo_votes/pulse_clicks haritalarına
+       * yazılıyordu: her oy odadaki her telefona bir okuma olarak yayılıyor
+       * (30 kişilik bir tur ≈ 930 okuma), harita da başkasının oyunu ezecek
+       * şekilde yazılabiliyordu. Artık her oyuncu yalnızca kendi kaydına,
+       * host'un açtığı tur için bir kez yazar; kayıtları yalnızca host
+       * dinler ve sonucu reveal anında odaya kendisi yazar.
+       */
+      /**
+       * Oyunun gizli bilgileri (docs/roadmap.md, cevap sızıntısı): quiz doğru
+       * cevapları, kasa kodu, Ayna gerçek değerleri. Önceden oda belgesinde
+       * duruyordu ve oda herkese açık okunuyor: misafir telefonundan doğru
+       * cevabı okuyabiliyordu. Yalnızca odanın host'u (TV) okur ve yazar;
+       * cevap açıklama anında odaya host tarafından yazılır.
+       */
+      match /secrets/{secretId} {
+        allow read, write: if isAuth() &&
+          get(/databases/$(database)/documents/rooms/$(roomId)).data.host_uid == request.auth.uid;
+      }
+
+      match /inputs/{playerId} {
+        function roomData() {
+          return get(/databases/$(database)/documents/rooms/$(roomId)).data;
+        }
+
+        function isHostOfRoom() {
+          return roomData().host_uid == request.auth.uid;
+        }
+
+        // Kayıt her tur yeniden yazılıyor; aynı tura ikinci yazma yok.
+        function isFreshRound() {
+          return resource == null || resource.data.round != request.resource.data.round;
+        }
+
+        function isEchoInput() {
+          let d = request.resource.data;
+          return roomData().status == 'echo_active' &&
+            d.keys().hasOnly(['round', 'echo_vote']) &&
+            d.echo_vote is string &&
+            d.echo_vote != playerId &&
+            playerDoc(d.echo_vote).room_id == roomId;
+        }
+
+        function isPulseInput() {
+          let d = request.resource.data;
+          return roomData().status == 'pulse_active' &&
+            d.keys().hasOnly(['round', 'pulse_click']) &&
+            d.pulse_click is number;
+        }
+
+        allow get: if isAuth() && (actsAs(playerId, roomId) || isHostOfRoom());
+        allow list: if isAuth() && isHostOfRoom();
+
+        // Unity: oyuncu bu turdaki toplam dokunuşunu yazar; toplam yalnızca
+        // artabilir ve bir yazmada en fazla 30 artar (clientWrites.UNITY_MAX_STEP).
+        // Eskiden dokunuşlar oda dokümanına increment ile yazılıyordu ve
+        // bunun için kural yoktu: her dokunuş reddediliyordu.
+        function isUnityInput() {
+          let d = request.resource.data;
+          let prev = (resource != null && resource.data.round == d.round)
+            ? resource.data.get('unity_clicks', 0)
+            : 0;
+          return roomData().status == 'unity_active' &&
+            d.keys().hasOnly(['round', 'unity_clicks']) &&
+            d.unity_clicks is int &&
+            d.unity_clicks >= prev &&
+            d.unity_clicks <= prev + 30;
+        }
+
+        allow create, update: if isAuth() &&
+          actsAs(playerId, roomId) &&
+          request.resource.data.round == roomData().input_round &&
+          ((isFreshRound() && (isEchoInput() || isPulseInput())) || isUnityInput());
+
+        allow delete: if isAuth() && isHostOfRoom();
+      }
+
+      match /transient/{docId} {
+        allow read: if true;
+
+        function isEmojiPulse() {
+          let data = request.resource.data;
+          let player = get(/databases/$(database)/documents/players/$(data.player_id)).data;
+          return docId == 'emojiPulse' &&
+            data.keys().hasOnly(['emoji', 'timestamp', 'player_id']) &&
+            data.emoji is string && data.emoji.size() > 0 && data.emoji.size() <= 16 &&
+            data.timestamp is number &&
+            player.uid == request.auth.uid &&
+            player.room_id == roomId;
+        }
+
+        allow create, update: if isAuth() && isEmojiPulse();
+        allow delete: if isAuth() &&
+          get(/databases/$(database)/documents/rooms/$(roomId)).data.host_uid == request.auth.uid;
+      }
     }
 
     match /players/{playerId} {
       // Anyone can see the players
       allow read: if true;
       
-      // Authenticated users can join a room (create their player profile)
-      allow create: if isAuth() && request.resource.data.uid == request.auth.uid;
+      /**
+       * Odaya katılım (src/pages/player/PlayerJoin.tsx). Yalnızca uid
+       * kontrol ediliyordu: oyuncu `total_score: 9999` ile katılabiliyordu
+       * ve ödül kazananı total_score'a göre seçildiği için bu, ödül kuralı
+       * ne kadar sıkı olursa olsun bedava kupon demekti. Katılım artık
+       * PlayerJoin'in yazdığı şemaya, sıfır puana ve canlı bir odaya bağlı
+       * (kapalı durumlar lib/roomCodes.ts'teki CLOSED_STATUSES ile aynı).
+       */
+      function isValidJoin() {
+        let data = request.resource.data;
+        return data.uid == request.auth.uid &&
+          data.keys().hasOnly(['room_id', 'nickname', 'team_name', 'total_score', 'night_score', 'uid', 'created_at', 'expires_at']) &&
+          data.total_score == 0 &&
+          data.get('night_score', 0) == 0 &&
+          data.nickname is string && data.nickname.size() > 0 && data.nickname.size() <= 20 &&
+          (data.get('team_name', null) == null ||
+            (data.team_name is string && data.team_name.size() <= 20)) &&
+          !(get(/databases/$(database)/documents/rooms/$(data.room_id)).data.status in ['closed', 'finished']);
+      }
+
+      allow create: if isAuth() && isValidJoin();
 
       // A player's own game counters (Kablo, Colors, Bar) are
       // updated via increment() directly from the player's device. These
@@ -157,15 +353,43 @@ service cloud.firestore {
       );
     }
 
-    // ALAZ League Rules
+    /**
+     * ALAZ League profili (src/hooks/useUserProfile.ts).
+     *
+     * Okuma: yalnızca sahibi. Profil telefon numarasını taşıyor ve okuma
+     * herkese açıktı — kayıtlı bütün numaralar listelenebiliyordu (KVKK).
+     * Uygulamada başkasının profilini okuyan bir ekran yok; liderlik
+     * tablosu `players` koleksiyonundan besleniyor.
+     *
+     * Puan: kalıcı puanı ve ligi istemci kendisi yazamaz. Eskiden puanı
+     * oyuncunun kendi cihazı increment() ile yazıyordu ve alan kısıtı
+     * yoktu; konsoldan tek satırla lig tablosunun tepesine çıkılıyordu.
+     * Puanı artık oyun sırasında personel hesaplı host ekranı yazıyor
+     * (src/hooks/useLifetimeScoreSync.ts) ve yalnızca o alana dokunabiliyor.
+     */
     match /users/{userId} {
-      // Anyone can read profiles for the leaderboard
-      allow read: if true;
-      
-      // Users can only create or update their own profile
-      allow create, update: if isAuth() && request.auth.uid == userId;
-      
-      // Do not allow deletion of profiles directly
+      function isValidNickname() {
+        return request.resource.data.get('nickname', '') is string &&
+          request.resource.data.get('nickname', '').size() <= 20;
+      }
+
+      allow read: if isAuth() && request.auth.uid == userId;
+
+      allow create: if isAuth() && request.auth.uid == userId &&
+        request.resource.data.keys().hasOnly(['phone_number', 'nickname', 'total_lifetime_score', 'current_league', 'created_at', 'last_active']) &&
+        request.resource.data.get('total_lifetime_score', 0) == 0 &&
+        request.resource.data.get('current_league', 'BRONZE') == 'BRONZE' &&
+        isValidNickname();
+
+      allow update: if isAuth() && (
+        (request.auth.uid == userId &&
+          touchesOnly(['nickname', 'last_active']) &&
+          isValidNickname()) ||
+        (isStaff() &&
+          touchesOnly(['total_lifetime_score']) &&
+          request.resource.data.total_lifetime_score is number)
+      );
+
       allow delete: if false;
     }
 
@@ -200,23 +424,60 @@ service cloud.firestore {
       allow delete: if isAuth() && resource.data.host_uid == request.auth.uid;
     }
 
+    /**
+     * Oyuncu cevapları (bkz. src/lib/clientWrites.ts → *AnswerPayload,
+     * vaultGuessPayload, aynaGuessPayload).
+     *
+     * Okuma: yalnızca cevabın sahibi ve odanın host'u. Eskiden herkese
+     * açıktı: hızlı oyuncunun cevabı tur bitmeden okunup kopyalanabiliyordu.
+     * Oyuncunun "zaten cevapladım mı" sorguları player_id ile, host'un
+     * sorguları room_id ile süzülüyor; kural ikisini de kanıtlayabiliyor.
+     *
+     * Yazma: oyuncu yalnızca kendi kaydı adına, kendi odasına, o oda cevap
+     * kabul ederken ve sabit şemayla yazabilir. Oyuncunun odası kontrol
+     * edilmiyordu ve alan/boyut sınırı yoktu.
+     */
     match /answers/{answerId} {
-      // Anyone can read answers (host needs to tally scores; players see their own review).
-      allow read: if true;
+      function isAnswerOwner() {
+        return playerDoc(resource.data.player_id).uid == request.auth.uid;
+      }
 
-      // A player may only submit an answer under their own player_id, and that
-      // player document must actually belong to them (uid match). This was
-      // previously unmatched by any rule, which meant Firestore's default-deny
-      // silently rejected every answer submission in every game mode.
-      allow create: if isAuth() &&
-        request.resource.data.player_id is string &&
-        get(/databases/$(database)/documents/players/$(request.resource.data.player_id)).data.uid == request.auth.uid;
+      function isAnswerRoomHost() {
+        return get(/databases/$(database)/documents/rooms/$(resource.data.room_id)).data.host_uid == request.auth.uid;
+      }
 
-      // Answers are never edited after submission, only cleared out by the host
-      // between rounds/games.
-      allow update: if false;
-      allow delete: if isAuth() &&
-        get(/databases/$(database)/documents/rooms/$(resource.data.room_id)).data.host_uid == request.auth.uid;
+      // Cevap kabul eden oda durumları. 'review': klasik turda süre bitince
+      // telefonun otomatik gönderimi host incelemeye geçtikten sonra varabilir.
+      function acceptsAnswers(roomId) {
+        return get(/databases/$(database)/documents/rooms/$(roomId)).data.status in
+          ['playing', 'review', 'question_active', 'vault_active', 'ayna_active'];
+      }
+
+      function isValidAnswer() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['room_id', 'player_id', 'round_letter', 'round_index', 'data', 'created_at', 'expires_at']) &&
+          d.keys().hasAll(['room_id', 'player_id', 'round_letter', 'data']) &&
+          d.room_id is string &&
+          d.player_id is string &&
+          actsAs(d.player_id, d.room_id) &&
+          d.round_letter is string && d.round_letter.size() <= 32 &&
+          d.data is map && d.data.size() <= 24 &&
+          acceptsAnswers(d.room_id);
+      }
+
+      allow read: if isAuth() && (isAnswerOwner() || isAnswerRoomHost());
+
+      allow create: if isAuth() && isValidAnswer();
+
+      // Cevap gönderildikten sonra değişmez. Tek istisna Şifre tahmininin
+      // ipucu: kod artık telefonda olmadığı için ipucunu host hesaplayıp
+      // yalnızca `feedback` alanına yazar (sahibi ve host okur).
+      allow update: if isAuth() && isAnswerRoomHost() &&
+        resource.data.round_letter == 'VAULT' &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['feedback']) &&
+        request.resource.data.feedback is list &&
+        request.resource.data.feedback.size() == 4;
+      allow delete: if isAuth() && isAnswerRoomHost();
     }
 
     /**
@@ -259,6 +520,120 @@ service cloud.firestore {
       allow write: if isStaff();
     }
 
+    /**
+     * Mekanlar (docs/design/3.1-cok-mekan.md). Marka herkese açık okunur
+     * (giriş ekranı ve telefon gösteriyor). Mekanı HENGAME ekibi açar
+     * (platform_admins, karar D5); ayarlarını mekanın personeli düzenler.
+     */
+    match /venues/{venueId} {
+      allow read: if true;
+      allow create, delete: if isPlatformAdmin();
+      // Personel markayı ve ödülü düzenler; sözleşme alanları (plan,
+      // limitler) yalnızca HENGAME ekibinin.
+      allow update: if isPlatformAdmin() || (isStaffOf(venueId) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan', 'limits']));
+
+      // Personel listesi: sahip personel ekler ve çıkarır; kimse kendini
+      // ekleyemez ya da sahip yapamaz. Sahibi yalnızca HENGAME ekibi atar.
+      match /staff/{uid} {
+        allow read: if isAuth() && (request.auth.uid == uid || isStaffOf(venueId) || isPlatformAdmin());
+        allow create: if (isPlatformAdmin() || (isOwnerOf(venueId) && uid != request.auth.uid &&
+            request.resource.data.role == 'staff')) &&
+          request.resource.data.keys().hasOnly(['uid', 'role', 'added_at', 'added_by']) &&
+          request.resource.data.uid == uid &&
+          request.resource.data.role in ['owner', 'staff'] &&
+          request.resource.data.added_by == request.auth.uid &&
+          request.resource.data.added_at is int;
+        allow update: if false;
+        allow delete: if isPlatformAdmin() ||
+          (isOwnerOf(venueId) && uid != request.auth.uid && resource.data.role == 'staff');
+      }
+
+      // Mekan/kurum soru paketleri (docs/roadmap.md, 3.4): yalnızca o mekanın
+      // personeli (doğru cevaplar içinde, karar D7: paket mekanın). Soruların
+      // ayrıntılı şeması istemcide (lib/quizPack.ts) yüklemede ve oyun
+      // başında doğrulanıyor; burada biçim, boyut ve sahiplik. Paket
+      // değiştirilmez: silinip yeniden yüklenir.
+      match /quiz_packs/{packId} {
+        allow read: if isStaffOf(venueId);
+        allow create: if isStaffOf(venueId) &&
+          request.resource.data.keys().hasOnly(['title', 'locale', 'questions', 'created_by', 'created_at']) &&
+          request.resource.data.keys().hasAll(['title', 'locale', 'questions', 'created_by', 'created_at']) &&
+          request.resource.data.created_by == request.auth.uid &&
+          request.resource.data.created_at == request.time &&
+          request.resource.data.title is string &&
+          request.resource.data.title.size() > 0 &&
+          request.resource.data.title.size() <= 60 &&
+          request.resource.data.locale in ['tr', 'de', 'en'] &&
+          request.resource.data.questions is list &&
+          request.resource.data.questions.size() >= 5 &&
+          request.resource.data.questions.size() <= 200;
+        allow update: if false;
+        allow delete: if isStaffOf(venueId);
+      }
+    }
+
+    // Personel giriş yapınca üye olduğu mekanları listeler (collection group
+    // sorgusu `staff` where uid == kendisi).
+    match /{path=**}/staff/{uid} {
+      allow read: if isAuth() && resource.data.uid == request.auth.uid;
+    }
+
+
+    // Oyun telemetrisi (docs/roadmap.md, 3.2): TV her oyunun başında ve
+    // sonunda bir olay yazar; mekan KPI raporu bunlardan hesaplanır. Yalnızca
+    // kendi odasının host'u (personel) yazar, personel okur. Olaylar
+    // değiştirilemez; TTL (expires_at) ile silinir.
+    match /events/{eventId} {
+      // Okuma yalnızca kaydın mekanının personeline: rapor sorgusu
+      // `venue_id ==` ile süzülmek zorunda.
+      allow read: if isStaffOf(resource.data.venue_id);
+      allow create: if isStaffOf(request.resource.data.venue_id) &&
+        request.resource.data.keys().hasOnly(['type', 'room_id', 'venue_id', 'host_uid', 'game', 'player_count', 'started_at', 'ended_at', 'created_at', 'expires_at']) &&
+        request.resource.data.venue_id == roomVenue(request.resource.data.room_id) &&
+        request.resource.data.host_uid == request.auth.uid &&
+        request.resource.data.type in ['game_started', 'game_ended'] &&
+        request.resource.data.game is string &&
+        request.resource.data.player_count is int &&
+        request.resource.data.player_count >= 0 &&
+        request.resource.data.player_count <= 500 &&
+        request.resource.data.started_at is int &&
+        (request.resource.data.ended_at == null || request.resource.data.ended_at is int) &&
+        request.resource.data.created_at is int &&
+        request.resource.data.expires_at is timestamp &&
+        get(/databases/$(database)/documents/rooms/$(request.resource.data.room_id)).data.host_uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Sponsor gösterim kaydı (proof-of-play, docs/roadmap.md 3.3): TV her
+    // reklamdan sonra bir kayıt yazar; sponsora sunulan rapor ve fatura
+    // dökümü bunlardan. Yalnızca odanın host'u (personel) yazar, personel
+    // okur; kayıt değiştirilemez ve silinemez (TTL hariç).
+    match /ad_impressions/{impressionId} {
+      allow read: if isStaffOf(resource.data.venue_id);
+      allow create: if isStaffOf(request.resource.data.venue_id) &&
+        request.resource.data.keys().hasOnly(['ad_id', 'sponsor_name', 'ad_type', 'room_id', 'venue_id', 'host_uid', 'started_at', 'shown_ms', 'planned_ms', 'completed', 'audience', 'created_at', 'expires_at']) &&
+        request.resource.data.venue_id == roomVenue(request.resource.data.room_id) &&
+        request.resource.data.host_uid == request.auth.uid &&
+        request.resource.data.ad_type in ['image', 'video'] &&
+        request.resource.data.ad_id is string &&
+        request.resource.data.sponsor_name is string &&
+        request.resource.data.sponsor_name.size() <= 80 &&
+        request.resource.data.started_at is int &&
+        request.resource.data.shown_ms is int &&
+        request.resource.data.shown_ms >= 0 &&
+        request.resource.data.shown_ms <= 600000 &&
+        request.resource.data.planned_ms is int &&
+        request.resource.data.completed is bool &&
+        request.resource.data.audience is int &&
+        request.resource.data.audience >= 0 &&
+        request.resource.data.audience <= 500 &&
+        request.resource.data.created_at is int &&
+        request.resource.data.expires_at is timestamp &&
+        get(/databases/$(database)/documents/rooms/$(request.resource.data.room_id)).data.host_uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
     match /rewards/{rewardId} {
       // Önceden herhangi bir giriş yapmış oturum (anonim oyuncular DAHİL)
       // her ödülü okuyup "claimed" olarak işaretleyebiliyordu — bir oyuncu
@@ -268,24 +643,40 @@ service cloud.firestore {
       // ekranı) ya da işletme hesabına (RewardVerify doğrulama ekranı,
       // kodla arama yapıyor — resource.data.uid personelin kendi uid'i
       // değil) açık.
-      allow read: if isAuth() &&
-        (resource.data.uid == request.auth.uid || isStaff());
+      //
+      // Çok mekan: ödülü kendi mekanının personeli okur. Geçiş (aşama A):
+      // global personel hepsini okur; mekansız eski ödül `default`'tur.
+      allow read: if isAuth() && (
+        resource.data.uid == request.auth.uid ||
+        isStaff() ||
+        isStaffOf(resource.data.get('venue_id', 'default'))
+      );
 
       // Ödül üretimi host tarafında (kazanan OYUNCULAR adına) oluyor —
       // host'un kendi kimliği kazananınkinden farklı, bu yüzden "sadece
-      // kendi uid'in için yaz" kısıtı burada uygulanamıyor. Üretimde bu
-      // Cloud Function'a taşınmalı (bkz. app_config'teki benzer not);
-      // MVP için en azından bir client'ın doğrudan "claimed" (kullanılmış)
-      // bir ödül YARATMASI engelleniyor.
-      allow create: if isAuth() &&
+      // kendi uid'in için yaz" kısıtı burada uygulanamıyor.
+      //
+      // Eskiden yalnızca status kontrol ediliyordu: herhangi bir anonim
+      // oturum konsoldan kendine "available" bir kupon yazıp barda kodla
+      // kullanabiliyordu. Artık yazan personel hesabı olmalı ve ödül, o
+      // hesabın host'u olduğu bir odaya bağlı olmalı (karar D1, bkz.
+      // docs/roadmap.md). Kalıcı çözüm Cloud Function (karar D2).
+      allow create: if (
+          request.resource.data.get('venue_id', null) == null
+            ? isStaff()
+            : isStaffOf(request.resource.data.venue_id) &&
+              request.resource.data.venue_id == roomVenue(request.resource.data.room_id)
+        ) &&
+        request.resource.data.keys().hasOnly(['uid', 'nickname', 'type', 'title', 'description', 'status', 'code', 'earned_at', 'expires_at', 'room_id', 'venue_id']) &&
         request.resource.data.status == 'available' &&
-        !('claimed_at' in request.resource.data);
+        request.resource.data.room_id is string &&
+        get(/databases/$(database)/documents/rooms/$(request.resource.data.room_id)).data.host_uid == request.auth.uid;
 
       // Asıl güvenlik sınırı burada: "kullanıldı" işaretlemek yalnızca
       // işletme hesabına (barda doğrulama yapan personel) açık, ve yalnızca
       // status/claimed_at alanlarına dokunabiliyor — başka bir alanı
       // (uid, code, title...) değiştiremiyor.
-      allow update: if isStaff() &&
+      allow update: if (isStaff() || isStaffOf(resource.data.get('venue_id', 'default'))) &&
         touchesOnly(['status', 'claimed_at']);
 
       allow delete: if false;

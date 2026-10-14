@@ -1,6 +1,8 @@
-export const HERO_IMAGES = [
-  "/bg-shisha-1.jpg", // Otantik tuğla duvarlı sıcak nargile salonu
-  "/bg-shisha-2.jpg", // Nargile, çay ve sıcak bokeh detay masası
-  "/bg-shisha-3.jpg", // Rahat koltuklu otantik VIP nargile köşesi
-  "/bg-shisha-4.jpg", // Akşam günbatımı teras nargile lounge
+import type { BackdropSource } from "../components/BackdropImage";
+
+export const HERO_IMAGES: readonly BackdropSource[] = [
+  { avif: "/bg-shisha-1.avif", webp: "/bg-shisha-1.webp" }, // Otantik tuğla duvarlı sıcak nargile salonu
+  { avif: "/bg-shisha-2.avif", webp: "/bg-shisha-2.webp" }, // Nargile, çay ve sıcak bokeh detay masası
+  { avif: "/bg-shisha-3.avif", webp: "/bg-shisha-3.webp" }, // Rahat koltuklu otantik VIP nargile köşesi
+  { avif: "/bg-shisha-4.avif", webp: "/bg-shisha-4.webp" }, // Akşam günbatımı teras nargile lounge
 ];

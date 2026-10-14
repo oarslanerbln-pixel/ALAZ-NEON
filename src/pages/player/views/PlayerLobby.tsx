@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { Check } from "lucide-react";
-import { db } from "../../../lib/firebase";
 import { useLocale } from "../../../hooks/useLocale";
 import { PlayerBackground } from "../../../components/PlayerBackground";
 import { LanguageSwitcher } from "../../../components/LanguageSwitcher";
 import { PlayerStageScreen } from "../components/PlayerStageScreen";
-import type { Player, Room } from "../../../types/database";
-import { nightRankOf } from "../../../lib/nightLeague";
+import type { Room } from "../../../types/database";
+import { useNightStanding } from "../../../hooks/useNightStanding";
 
 interface PlayerLobbyProps {
   room: Room | null;
@@ -40,22 +38,17 @@ const TIPS = [
  */
 export function PlayerLobby({ room, roomId, playerId }: PlayerLobbyProps) {
   const { t } = useLocale();
-  const [roster, setRoster] = useState<Pick<Player, "id" | "nickname" | "night_score">[]>([]);
-  const playerCount = roster.length;
-  // Oyunlar arası en çok görülen ekran: misafir gecenin neresinde olduğunu
-  // burada görsün. Aynı dinleyiciden geliyor — ek Firestore okuması yok.
-  const standing = playerId ? nightRankOf(roster, playerId) : null;
   const [tipIdx, setTipIdx] = useState(0);
 
-  // Canlı oyuncu sayısı
-  useEffect(() => {
-    if (!roomId) return;
-    const q = query(collection(db, "players"), where("room_id", "==", roomId));
-    const unsub = onSnapshot(q, (snap) =>
-      setRoster(snap.docs.map((d) => ({ id: d.id, nickname: String(d.data().nickname ?? ""), night_score: d.data().night_score as number | undefined }))),
-    );
-    return () => unsub();
-  }, [roomId]);
+  // Canlı oyuncu sayısı host'un oda dokümanına yazdığı sayaçtan geliyor.
+  // Eskiden her telefon odanın bütün `players` sorgusunu dinliyordu; her
+  // oyuncunun canlılık sinyali bütün lobiye birer okuma olarak yansıyordu
+  // (bkz. lib/playerCount.ts). Sayaç yoksa (alan eklenmeden önce açılmış
+  // oda) yanlış bir "0 oyuncu" yerine rozet hiç gösterilmiyor.
+  const playerCount = room?.player_count;
+  // Oyunlar arası en çok görülen ekran: misafir gecenin neresinde olduğunu
+  // burada görsün. Puan yalnızca oyun bitişinde değiştiği için tek okuma.
+  const standing = useNightStanding(roomId, playerId, room?.night_awarded);
 
   // İpucu her 4 sn'de bir değişir
   useEffect(() => {
@@ -92,6 +85,7 @@ export function PlayerLobby({ room, roomId, playerId }: PlayerLobbyProps) {
           waiting
           hint={null}
         >
+        {typeof playerCount === "number" && (
           <span
             className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm font-bold text-emerald-300"
             role="status"
@@ -100,6 +94,7 @@ export function PlayerLobby({ room, roomId, playerId }: PlayerLobbyProps) {
             <span className="w-2 h-2 rounded-full bg-emerald-400 motion-safe:animate-pulse" aria-hidden="true" />
             {t("waitingRoom.playersConnected", playerCount)}
           </span>
+        )}
 
           {standing && (
             <div className="w-full max-w-xs rounded-2xl border border-amber-300/25 bg-amber-300/[0.06] px-5 py-4 backdrop-blur-md">

@@ -1,19 +1,33 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { doc, collection, query, where, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { Sentinel } from "../lib/sentinel";
+import { roomStatusPayload } from "../lib/clientWrites";
 import { HOST_HEARTBEAT_MS } from "../lib/liveness";
+import { playerCountUpdate } from "../lib/playerCount";
 import { useHeartbeat } from "./useHeartbeat";
 import type { Room, Player, Answer } from "../types/database";
+import { createLogger } from "../lib/logger";
+import { resolveActiveGame } from "../lib/gameRouting";
+import { recordGameEvent } from "./gameEvents";
+
+const log = createLogger("useHostRoom");
 
 export function useHostRoom(roomId: string | null) {
   const [room, setRoom] = useState<Room | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
+  // Oyuncu listesi sunucudan en az bir kez geldi mi — o zamana kadar
+  // `players` boş başlangıç değeri, sayaç olarak yazılmamalı.
+  const [playersLoaded, setPlayersLoaded] = useState(false);
   const [submittedPlayerIds, setSubmittedPlayerIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(Boolean(roomId));
   const [notFound, setNotFound] = useState(!roomId);
   const [error, setError] = useState<Error | null>(null);
   const [trackedRoomId, setTrackedRoomId] = useState(roomId);
+  // updateRoomStatus kararlı kalsın diye son oda/oyuncular ref'te.
+  const latest = useRef<{ room: Room | null; players: Player[] }>({ room: null, players: [] });
+  useEffect(() => {
+    latest.current = { room, players };
+  }, [room, players]);
 
   // roomId değişince state'i RENDER sırasında sıfırla — React'in
   // "prop değişince state'i ayarla" deseni. Effect içinde setState
@@ -22,6 +36,7 @@ export function useHostRoom(roomId: string | null) {
     setTrackedRoomId(roomId);
     setRoom(null);
     setPlayers([]);
+    setPlayersLoaded(false);
     setSubmittedPlayerIds([]);
     setError(null);
     setLoading(Boolean(roomId));
@@ -45,7 +60,7 @@ export function useHostRoom(roomId: string | null) {
           setNotFound(false);
         } else {
           // Oda silinmiş ya da hiç yok — sessizce null'da kalma, bildir
-          console.error("[useHostRoom] Oda bulunamadı:", roomId);
+          log.error("Oda bulunamadı:", roomId);
           setRoom(null);
           setNotFound(true);
         }
@@ -53,7 +68,7 @@ export function useHostRoom(roomId: string | null) {
       },
       (err) => {
         // Firestore kural reddi / offline / kota — eskiden sessizce yutuluyordu
-        console.error("[useHostRoom] Oda dinlenemedi:", err);
+        log.error("Oda dinlenemedi:", err);
         setError(err);
         setLoading(false);
       }
@@ -69,9 +84,12 @@ export function useHostRoom(roomId: string | null) {
           pList.push({ id: d.id, ...d.data() } as Player);
         });
         setPlayers(pList);
+        // Önbellekten gelen ilk görüntü eksik olabilir; sayaç yalnızca
+        // sunucunun onayladığı listeyle yazılsın.
+        if (!snapshot.metadata.fromCache) setPlayersLoaded(true);
       },
       (err) => {
-        console.error("[useHostRoom] Oyuncular dinlenemedi:", err);
+        log.error("Oyuncular dinlenemedi:", err);
         setError(err);
       }
     );
@@ -82,24 +100,13 @@ export function useHostRoom(roomId: string | null) {
       snapshot.docChanges().forEach((change) => {
         if (change.type === "added") {
           const newAnswer = { id: change.doc.id, ...change.doc.data() } as Answer;
-          
-          let totalAnswerLength = 0;
-          if (newAnswer.data) {
-            Object.values(newAnswer.data).forEach(val => {
-              totalAnswerLength += val ? val.toString().length : 0;
-            });
-          }
-
-          const dummyText = "X".repeat(totalAnswerLength);
-          Sentinel.processIncomingAnswer(newAnswer.player_id, dummyText);
-
           setSubmittedPlayerIds((prev) => [
             ...new Set([...prev, newAnswer.player_id]),
           ]);
         }
       });
     }, (err) => {
-      console.error("[useHostRoom] Cevaplar dinlenemedi:", err);
+      log.error("Cevaplar dinlenemedi:", err);
       setError(err);
     });
 
@@ -109,6 +116,20 @@ export function useHostRoom(roomId: string | null) {
       answersUnsub();
     };
   }, [roomId]);
+
+  // Lobi sayacı: telefonlar oyuncu sayısını oda dokümanından okuyor (bkz.
+  // lib/playerCount.ts). Yalnızca sayı değişince yazılıyor; heartbeat'lerin
+  // ürettiği anlık görüntüler yazma doğurmuyor.
+  const roomLoaded = room !== null;
+  const storedPlayerCount = room?.player_count;
+  useEffect(() => {
+    if (!roomId || !roomLoaded) return;
+    const next = playerCountUpdate(storedPlayerCount, players.length, playersLoaded);
+    if (next === null) return;
+    updateDoc(doc(db, "rooms", roomId), { player_count: next }).catch((err) =>
+      log.error("Oyuncu sayısı yazılamadı:", err),
+    );
+  }, [roomId, roomLoaded, storedPlayerCount, players.length, playersLoaded]);
 
   // Reset submitted IDs when letter changes
   useEffect(() => {
@@ -126,14 +147,29 @@ export function useHostRoom(roomId: string | null) {
   ) => {
     if (!roomId) return;
     
+    // Oyun panoya dönüyor: bitiş olayı, başlangıçtaki anla eşleşerek yazılır
+    // (docs/roadmap.md, 3.2). Bütün oyun çıkışları buradan geçiyor.
+    const current = latest.current.room;
+    const endingGame = current && extra.active_game === "none" ? resolveActiveGame(current) : null;
+    if (current && endingGame && current.game_started_at) {
+      recordGameEvent({
+        type: "game_ended",
+        room: current,
+        game: endingGame,
+        playerCount: latest.current.players.length,
+        startedAt: current.game_started_at,
+        endedAt: Date.now(),
+      });
+    }
+
     // Optimistic UI Update
     setRoom((prev) => (prev ? { ...prev, status, ...extra } : prev));
     // Yazma hatası çağıranı patlatmasın: eskiden reject olunca
     // startGame/handleSpinnerComplete yarıda kalıp oyun donuyordu.
     try {
-      await updateDoc(doc(db, "rooms", roomId), { status, ...extra });
+      await updateDoc(doc(db, "rooms", roomId), roomStatusPayload(status, extra));
     } catch (err) {
-      console.error("[useHostRoom] Oda güncellenemedi:", status, err);
+      log.error("Oda güncellenemedi:", status, err);
       setError(err as Error);
     }
   }, [roomId]);
@@ -142,7 +178,7 @@ export function useHostRoom(roomId: string | null) {
     try {
       await updateDoc(doc(db, "players", playerId), { total_score: totalScore });
     } catch (err) {
-      console.error("[useHostRoom] Skor güncellenemedi:", playerId, err);
+      log.error("Skor güncellenemedi:", playerId, err);
     }
   }, []);
 

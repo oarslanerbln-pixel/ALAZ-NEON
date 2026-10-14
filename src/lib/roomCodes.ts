@@ -1,5 +1,8 @@
 import { generateCode } from "./codes";
 import type { Room } from "../types/database";
+import { createLogger } from "./logger";
+
+const log = createLogger("roomCodes");
 
 /**
  * Oda kodu seçim mantığı — saf, Firestore'a hiç dokunmuyor.
@@ -91,12 +94,11 @@ export async function allocateRoomCode<T extends RoomLike>(
       const existing = await fetchRoomsWithCode(code);
       if (!existing.some((room) => isRoomLive(room))) return code;
     } catch (err) {
-      console.error("[allocateRoomCode] Kod kontrolü yapılamadı:", err);
+      log.error("Kod kontrolü yapılamadı:", err);
       return code;
     }
   }
-  console.warn(
-    `[allocateRoomCode] ${attempts} denemede boş kod bulunamadı; son kod kullanılıyor.`,
+  log.warn(`${attempts} denemede boş kod bulunamadı; son kod kullanılıyor.`,
   );
   return code;
 }

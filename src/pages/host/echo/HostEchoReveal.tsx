@@ -80,7 +80,7 @@ export function HostEchoReveal({ room, players, onFinish }: Props) {
                 {topVotedPlayer.nickname}
               </motion.h1>
               <p className="text-alaz-orange font-mono text-3xl mt-4 tracking-[0.2em] font-bold">
-                {Object.values(room.echo_votes || {}).filter(v => v === topVotedPlayer.id).length} OY
+                {t("echo.votesCount", Object.values(room.echo_votes || {}).filter(v => v === topVotedPlayer.id).length)}
               </p>
             </>
           ) : (

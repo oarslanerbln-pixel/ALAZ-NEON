@@ -3,6 +3,9 @@ import { doc, increment, runTransaction } from "firebase/firestore";
 import type { Room } from "../types/database";
 import { db } from "./firebase";
 import type { NightPoints } from "./nightLeague";
+import { createLogger } from "./logger";
+
+const log = createLogger("nightAwards");
 
 /**
  * Oyun (yeniden) başlarken odaya yazılır: bir sonraki bitişte gecelik puan
@@ -39,5 +42,5 @@ export async function awardNightPoints(roomId: string, points: NightPoints): Pro
 /** Oyun bitişini asla engellememeli: hata yalnızca konsola düşer. */
 export function finishNightRound(roomId: string | undefined, points: NightPoints): void {
   if (!roomId) return;
-  awardNightPoints(roomId, points).catch((err) => console.error("[nightAwards] Gecelik puan yazılamadı:", err));
+  awardNightPoints(roomId, points).catch((err) => log.error("Gecelik puan yazılamadı:", err));
 }

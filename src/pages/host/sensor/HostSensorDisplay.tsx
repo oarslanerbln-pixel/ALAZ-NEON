@@ -17,7 +17,11 @@ import type { Room, Player } from "../../../types/database";
 // New modular components
 import { HostSensorIntro } from "./HostSensorIntro";
 import { HostSensorActive } from "./HostSensorActive";
+import { sensorPoints } from "../../../lib/gameSettings";
 import { HostSensorReveal } from "./HostSensorReveal";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("HostSensorDisplay");
 import { finishNightRound, NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
 import { nightPointsForPlayers } from "../../../lib/nightLeague";
 
@@ -34,8 +38,8 @@ export function HostSensorDisplay({
 }) {
   const { venue } = useVenue();
   const grantSensorRewards = () => {
-    grantGameRewards("individual", players, venue).catch((err) =>
-      console.error("[HostSensorDisplay] Ödül dağıtımı başarısız:", err),
+    grantGameRewards(room.id, "individual", players, venue).catch((err) =>
+      log.error("Ödül dağıtımı başarısız:", err),
     );
     finishNightRound(room.id, nightPointsForPlayers("individual", players));
   };
@@ -86,7 +90,7 @@ export function HostSensorDisplay({
         await batch.commit();
       }
     } catch (e) {
-      console.warn("Could not delete old answers:", e);
+      log.warn("Could not delete old answers:", e);
     }
 
     const firstImg = getRandomSensorImage([]);
@@ -94,7 +98,6 @@ export function HostSensorDisplay({
       current_round: 0,
       used_sensor_images: [firstImg.id],
       sensor_current_media: firstImg.url,
-      sensor_media_answer: firstImg.answer,
       sensor_buzzer_player_id: null,
       sensor_buzzer_timestamp: null,
       sensor_player_answer: null
@@ -113,10 +116,11 @@ export function HostSensorDisplay({
   const handleEvaluate = async (isCorrect: boolean) => {
     if (isCorrect && room.sensor_buzzer_player_id) {
       SoundManager.getInstance().playSFX(sounds.SUCCESS);
-      // Add 100 points to the buzzer player's EXISTING total, not overwrite it
+      // Ayardaki puan, oyuncunun MEVCUT toplamına eklenir. TV düğmesi ve
+      // ayar penceresi "+1000" diyordu ama burada 100 ekleniyordu.
       const buzzerPlayer = players.find(p => p.id === room.sensor_buzzer_player_id);
       const currentScore = buzzerPlayer?.total_score ?? 0;
-      await updatePlayerScore(room.sensor_buzzer_player_id, currentScore + 100);
+      await updatePlayerScore(room.sensor_buzzer_player_id, currentScore + sensorPoints(room));
       await updateRoomStatus("sensor_reveal");
     } else {
       SoundManager.getInstance().playSFX(sounds.FAILURE);
@@ -143,7 +147,6 @@ export function HostSensorDisplay({
       current_round: nextIdx,
       used_sensor_images: [...used, nextImg.id],
       sensor_current_media: nextImg.url,
-      sensor_media_answer: nextImg.answer,
       sensor_buzzer_player_id: null,
       sensor_buzzer_timestamp: null,
       sensor_player_answer: null
@@ -156,7 +159,7 @@ export function HostSensorDisplay({
       const batch = writeBatch(db);
       players.forEach(p => {
         const pRef = doc(db, "players", p.id);
-        batch.update(pRef, { total_score: 0 });
+        batch.update(pRef, { total_score: 0, lifetime_credited: 0 });
       });
 
       const q = query(collection(db, "answers"), where("room_id", "==", roomId));
@@ -166,7 +169,7 @@ export function HostSensorDisplay({
       await batch.commit();
       await updateRoomStatus("lobby", { active_game: "none", current_round: 0, ...NIGHT_ROUND_OPEN });
     } catch (err) {
-      console.error("Error resetting sensor game:", err);
+      log.error("Error resetting sensor game:", err);
     }
   };
 

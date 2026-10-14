@@ -103,8 +103,10 @@ describe("aynaRoundQuestion", () => {
     expect(q).toMatchObject({ category: "salon", answer: 64, unit: "percent", source: "Bu salon · 18 kişi" });
   });
 
-  it("dünya sorusunu havuzdan verir", () => {
-    expect(aynaRoundQuestion("ayna-vaccines", {}, "en")?.answer).toBe(84);
+  it("dünya sorusunun metni havuzdan, gerçeği yalnızca açıklamada odadan gelir", () => {
+    expect(aynaRoundQuestion("ayna-vaccines", {}, "en")?.text.en).toMatch(/vaccine/);
+    expect(aynaRoundQuestion("ayna-vaccines", {}, "en")?.answer).toBe(0);
+    expect(aynaRoundQuestion("ayna-vaccines", { ayna_round_truth: 84 }, "en")?.answer).toBe(84);
   });
 
   it("bilinmeyen kimlikte undefined", () => {

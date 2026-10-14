@@ -3,12 +3,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { db } from "../../../lib/firebase";
 import { doc, updateDoc, runTransaction } from "firebase/firestore";
+import { sensorAnswerPayload, sensorBuzzPayload } from "../../../lib/clientWrites";
 import { useToast } from "../../../contexts/ToastContextCore";
 import { useLocale } from "../../../hooks/useLocale";
 import { haptics } from "../../../lib/haptics";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { gameTitle } from "../../../lib/gameCatalog";
 import { PlayerStageScreen } from "../components/PlayerStageScreen";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("PlayerSensorController");
 
 interface Props {
   room: Room;
@@ -50,14 +54,10 @@ export function PlayerSensorController({ room, player }: Props) {
           throw new Error("Geç kaldın!");
         }
 
-        transaction.update(roomRef, {
-          status: "sensor_buzzed",
-          sensor_buzzer_player_id: player.id,
-          sensor_buzzer_timestamp: Date.now()
-        });
+        transaction.update(roomRef, sensorBuzzPayload(player.id));
       });
     } catch (err) {
-      console.error(err);
+      log.error(err);
       if (err instanceof Error && err.message !== "Geç kaldın!") {
         showToast(t("sensor.toastError"), "error");
       } else {
@@ -82,12 +82,10 @@ export function PlayerSensorController({ room, player }: Props) {
 
     try {
       const roomRef = doc(db, "rooms", room.id);
-      await updateDoc(roomRef, {
-        sensor_player_answer: answer.trim()
-      });
+      await updateDoc(roomRef, sensorAnswerPayload(answer));
       setAnswer("");
     } catch (err) {
-      console.error(err);
+      log.error(err);
       showToast(t("sensor.toastSubmitFailed"), "error");
     } finally {
       isSubmittingRef.current = false;
@@ -155,6 +153,7 @@ export function PlayerSensorController({ room, player }: Props) {
               
               <form onSubmit={handleSubmitAnswer} className="w-full flex flex-col gap-4">
                 <input 
+                  aria-label={t("sensor.writeAndSend")}
                   type="text"
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value)}

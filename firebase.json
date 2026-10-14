@@ -1,23 +1,7 @@
 {
   "firestore": {
-    "rules": "firestore.rules"
-  },
-  "hosting": {
-    "public": "dist",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ],
-    "predeploy": [
-      "npm run build"
-    ]
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   },
   "emulators": {
     "firestore": {
@@ -26,6 +10,9 @@
     "ui": {
       "enabled": false
     },
-    "singleProjectMode": true
+    "singleProjectMode": true,
+    "auth": {
+      "port": 9099
+    }
   }
 }

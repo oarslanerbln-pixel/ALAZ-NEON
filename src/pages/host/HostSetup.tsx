@@ -1,8 +1,9 @@
 import { useState, useRef } from "react";
+import { DEFAULT_VENUE_ID } from "../../lib/venues";
 import { useNavigate } from "react-router-dom";
 import { collection, addDoc } from "firebase/firestore";
 import { db, auth } from "../../lib/firebase";
-import { retentionExpiry } from "../../lib/retention";
+import { roomCreatePayload } from "../../lib/clientWrites";
 import { allocateRoomCode } from "../../lib/roomQueries";
 import { motion } from "framer-motion";
 import { NeonIcon } from "../../components/NeonIcon";
@@ -11,6 +12,12 @@ import { useLocale } from "../../hooks/useLocale";
 import { useToast } from "../../contexts/ToastContextCore";
 import { errorMessage } from "../../lib/errors";
 import { useVenue } from "../../contexts/VenueContextCore";
+import { useIsStaff } from "../../hooks/useIsStaff";
+import { StaffAccessNotice } from "../../components/StaffAccessNotice";
+import { VenueSwitcher } from "../../components/VenueSwitcher";
+import { createLogger } from "../../lib/logger";
+
+const log = createLogger("HostSetup");
 
 // Premium Dynamic Glass Panel with Spinning Neon Core
 function GlassPanel({ 
@@ -57,9 +64,12 @@ export function HostSetup() {
   const navigate = useNavigate();
   const { t, locale } = useLocale();
   const { showToast } = useToast();
-  const { venue } = useVenue();
+  const { venue, loading: venueLoading } = useVenue();
   const [isCreating, setIsCreating] = useState(false);
   const isCreatingRef = useRef(false);
+  // Oda yalnızca personel hesabıyla açılabiliyor (firestore.rules, karar
+  // D1): ödül ve kalıcı puan yazma yetkisi odanın host'u üzerinden akıyor.
+  const { user: staffUser, isStaff, venues } = useIsStaff();
 
   const startLobby = async () => {
     if (isCreatingRef.current) return;
@@ -72,37 +82,41 @@ export function HostSetup() {
     try {
       const roomCode = await allocateRoomCode();
 
-      const docRef = await addDoc(collection(db, "rooms"), {
+      const docRef = await addDoc(
+        collection(db, "rooms"),
+        roomCreatePayload({
           code: roomCode,
-          status: "night_lobby",
-          active_game: "none",
-          categories: [],
-          timer_setting: 60,
-          total_rounds: 3,
-          current_round: 0,
-          time_left: 0,
-          game_mode: "individual",
-          locale: locale,
-          created_at: Date.now(),
-          // Firestore TTL politikasi bu alana bakip dokumani siliyor
-          // (bkz. lib/retention.ts ve README).
-          expires_at: retentionExpiry(),
-          host_uid: auth.currentUser?.uid || "anonymous",
-          // Aktif mekan markasının anlık kopyası — canlı referans değil,
-          // bkz. types/database.ts Room.venue_* alanlarındaki not.
-          venue_name: venue.name,
-          venue_logo_url: venue.logo_url || null,
-          venue_primary_color: venue.primary_color || null,
-        });
+          hostUid: auth.currentUser?.uid || "anonymous",
+          // TV'de seçili mekan (VenueContext); kurallar personelin o mekana
+          // üye olmasını şart koşuyor.
+          venueId: venue.id || DEFAULT_VENUE_ID,
+          locale,
+          venue,
+        }),
+      );
         
         navigate(`/host/display?roomId=${docRef.id}`);
       } catch (err) {
-        console.error("Error creating room:", err);
+        log.error("Error creating room:", err);
         showToast(t("setup.errorCreate") + errorMessage(err), "error");
         isCreatingRef.current = false;
         setIsCreating(false);
       }
   };
+
+  if (staffUser === undefined || (staffUser && isStaff === undefined)) {
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center font-mono">
+        <div className="text-alaz-orange text-sm uppercase tracking-[0.5em] animate-pulse">
+          {t("common.loading")}
+        </div>
+      </div>
+    );
+  }
+
+  if (!staffUser || !isStaff) {
+    return <StaffAccessNotice title={t("setup.staffTitle")} user={staffUser} venues={venues} />;
+  }
 
   return (
     <div className="flex-1 w-full min-h-screen relative overflow-hidden bg-slate-50">
@@ -116,6 +130,12 @@ export function HostSetup() {
         />
       </div>
 
+      {/* Birden çok mekanlı personel TV'yi hangi mekan için açtığını seçer (3.1). */}
+      {venues && venues.length > 1 && (
+        <div className="fixed top-4 right-4 z-20 rounded-xl bg-black/80 px-3 py-2">
+          <VenueSwitcher venues={venues} />
+        </div>
+      )}
       <div className="p-10 max-w-5xl mx-auto w-full relative z-10">
         <motion.div
           key="content"
@@ -165,7 +185,8 @@ export function HostSetup() {
                 
                 <button
                   onClick={startLobby}
-                  disabled={isCreating}
+                  // Mekan belgesi gelmeden açılan oda yanlış marka/ödülle açılırdı.
+                  disabled={isCreating || venueLoading}
                   className="relative w-full py-5 sm:py-6 bg-gradient-to-b from-[#0a0f18] to-[#04080c] hover:from-[#0f1724] hover:to-[#080d14] border border-[#00f3ff]/30 hover:border-[#00f3ff]/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all duration-300 text-lg sm:text-2xl font-sans font-black uppercase tracking-[0.18em] rounded-xl disabled:opacity-50 disabled:pointer-events-none"
                 >
                   <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(0,243,255,0.1),transparent)] translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
@@ -227,23 +248,23 @@ export function HostSetup() {
               <div className="space-y-4 relative z-10">
                 <div className="flex items-center justify-between text-[11px] group/item">
                   <span className="text-white font-bold tracking-wider group-hover/item:text-neon-blue transition-colors">HENGAME <span className="opacity-70 text-cyan-400">QUIZ</span></span>
-                  <span className="text-neon-blue font-black border border-neon-blue/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(0,243,255,0.2)]">KELİME</span>
+                  <span className="text-neon-blue font-black border border-neon-blue/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(0,243,255,0.2)]">{t("setup.tagWord")}</span>
                 </div>
                 <div className="flex items-center justify-between text-[11px] group/item">
                   <span className="text-white font-bold tracking-wider group-hover/item:text-red-500 transition-colors">HENGAME <span className="opacity-70 text-orange-500">BOMB</span></span>
-                  <span className="text-red-500 font-black border border-red-500/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(255,0,0,0.2)]">ZAMAN</span>
+                  <span className="text-red-500 font-black border border-red-500/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(255,0,0,0.2)]">{t("setup.tagTime")}</span>
                 </div>
                 <div className="flex items-center justify-between text-[11px] group/item">
                   <span className="text-white font-bold tracking-wider group-hover/item:text-neon-pink transition-colors">HENGAME <span className="opacity-70 text-purple-400">SENSÖR</span></span>
-                  <span className="text-neon-pink font-black border border-neon-pink/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(255,0,255,0.2)]">HAREKET</span>
+                  <span className="text-neon-pink font-black border border-neon-pink/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(255,0,255,0.2)]">{t("setup.tagMotion")}</span>
                 </div>
                 <div className="flex items-center justify-between text-[11px] group/item">
                   <span className="text-white font-bold tracking-wider group-hover/item:text-cyber-yellow transition-colors">HENGAME <span className="opacity-70 text-yellow-500">ÇARK</span></span>
-                  <span className="text-cyber-yellow font-black border border-cyber-yellow/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(255,215,0,0.2)]">ŞANS</span>
+                  <span className="text-cyber-yellow font-black border border-cyber-yellow/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(255,215,0,0.2)]">{t("setup.tagLuck")}</span>
                 </div>
                 <div className="flex items-center justify-between text-[11px] group/item">
                   <span className="text-white font-bold tracking-wider group-hover/item:text-purple-400 transition-colors">NEON <span className="opacity-70 text-pink-500">SAVAŞLARI</span></span>
-                  <span className="text-purple-400 font-black border border-purple-400/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(168,85,247,0.2)]">TAKIM</span>
+                  <span className="text-purple-400 font-black border border-purple-400/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(168,85,247,0.2)]">{t("setup.tagTeam")}</span>
                 </div>
               </div>
                 <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-neon-blue/5 blur-3xl rounded-full" />

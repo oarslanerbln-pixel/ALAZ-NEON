@@ -48,33 +48,162 @@ The game expects the following Firestore collections:
 ## 🔐 Staff access (required before first use)
 
 Admin screens — venue settings (`/admin/venue`), reward verification
-(`/admin/rewards`) and the nightly report (`/admin/report`) — are restricted to
-**staff accounts**. Staff status is *not* implied by how you signed in: `/register`
-is a public player sign-up that also creates email/password accounts, so
-"signed in with a password" would mean "anyone who registered".
+(`/admin/rewards`) and the nightly report (`/admin/report`) — **and opening a game
+room on the TV/tablet (`/host/setup`)** are restricted to **staff accounts**. Staff
+status is *not* implied by how you signed in: `/register` is a public player
+sign-up that also creates email/password accounts, so "signed in with a password"
+would mean "anyone who registered".
 
-Authority comes from a document in the `staff` collection:
+The host screen needs a staff account because reward coupons and lifetime league
+points are written by the room's host: the rules only accept them from a staff
+account that hosts the room. Sign the TV/tablet in once with a staff account; the
+session persists. Players keep joining anonymously via the QR code.
+
+Staff belong to a **venue** (one project serves several venues; design:
+`docs/design/3.1-cok-mekan.md`):
 
 ```
-staff/<uid>        # the document's existence grants access; contents are free-form
+venues/<venueId>                 # branding, rewards, sponsor ads, wheel (public read)
+venues/<venueId>/staff/<uid>     # { uid, role: "owner" | "staff", added_by, added_at }
+platform_admins/<uid>            # HENGAME team: opens venues, assigns owners
+staff/<uid>                      # legacy: counts as staff of venue "default" during migration
 ```
 
-No client can write this collection (`allow write: if false` in `firestore.rules`),
-so an account cannot grant itself access. To add a staff member:
+Nobody can add themselves. The HENGAME team opens a venue and assigns its
+owner with the admin script; the owner then manages staff in the app:
 
-1. Have the person register at `/register` (or create the account in
-   Firebase Console → Authentication).
-2. Copy their **User UID** from Firebase Console → Authentication → Users.
-   (An account that signs in and opens an admin screen is also shown its own
-   `staff/<uid>` path on the access-denied screen.)
-3. Firebase Console → Firestore → create collection `staff`, document ID `<uid>`,
-   with any field (e.g. `added_at`).
+1. The new staff member registers at `/register` and opens any admin screen;
+   the access-denied screen shows their **account ID**.
+2. The owner opens **/admin/staff** (Venue settings → Staff), pastes the ID
+   and adds them. Removing works from the same list.
 
-To revoke access, delete that document.
+An account can be staff at several venues; admin screens and the TV setup
+then show a venue picker, and the choice is remembered on the device.
+
+Venue administration (`scripts/venue-admin.mjs`, Admin SDK, **dry run by
+default**, `--apply` writes):
+
+```bash
+# Emulator first:
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node scripts/venue-admin.mjs migrate --project demo-hengame
+# Production reads the service account from FIREBASE_SERVICE_ACCOUNT_JSON
+# (environment setting; never commit it or paste it anywhere):
+node scripts/venue-admin.mjs create-venue kadikoy-neon --name "Kadıköy Neon"
+node scripts/venue-admin.mjs add-owner kadikoy-neon <uid>
+node scripts/venue-admin.mjs migrate --owner <uid>   # stage A: venues/default + copy legacy staff
+node scripts/venue-admin.mjs backfill                # stage B: venue_id on older records
+```
+
+Venue-scoped report queries need the composite indexes in
+`firestore.indexes.json`: `firebase deploy --only firestore:rules,firestore:indexes`.
 
 > When the project moves to the Blaze plan, a `staff: true` **custom claim** set via
 > the Admin SDK is also accepted, with no rule changes needed — it avoids the
 > per-evaluation `get()` that the allowlist costs.
+
+## 🛡 App Check (recommended, one-time console setup)
+
+[App Check](https://firebase.google.com/docs/app-check) makes Firestore accept
+requests only from this web app (reCAPTCHA v3 attestation), so scripts and other
+sites cannot burn the daily quota. The client side is already wired up
+(`src/lib/appCheckSetup.ts`); it stays **off** until a site key is configured.
+
+1. **reCAPTCHA v3 key** — <https://www.google.com/recaptcha/admin/create>,
+   type *Score based (v3)*, domains: your production domains (e.g. the Vercel
+   domain). Do **not** add `localhost` (that would let anyone pass from their
+   own machine; local development uses debug tokens, step 5).
+2. **Register the app** — Firebase Console → App Check → Apps → your web app →
+   reCAPTCHA v3 → paste the **secret** key. The secret key lives only in the
+   console, never in this repo or in `VITE_*` variables.
+3. **Site key** — set `VITE_RECAPTCHA_SITE_KEY` (public) in the hosting
+   environment (and `.env.local`), then redeploy.
+4. **Monitor, then enforce** — App Check → APIs → Cloud Firestore shows
+   verified vs. unverified requests. TVs and phones still running an older
+   build show up as unverified until they reload. When verified traffic is
+   ≥ ~95 %, click **Enforce** for Cloud Firestore.
+5. **Local development / CI** — with the site key set, `npm run dev` prints an
+   *AppCheck debug token* in the browser console; add it under App Check →
+   Apps → ⋮ → *Manage debug tokens*. For CI, register a fixed token and set it
+   as `VITE_APPCHECK_DEBUG_TOKEN`. The Firestore emulator (rules tests) does not
+   enforce App Check.
+
+> reCAPTCHA v3 shows a small badge in the bottom-right corner. If you hide it,
+> Google requires the reCAPTCHA attribution text to be shown elsewhere.
+
+## 🚀 Deployment and security headers
+
+**Vercel is the only hosting target.** `firebase.json` holds only Firestore rules
+and emulator settings, so a bare `firebase deploy` can no longer publish an
+outdated site to Firebase Hosting. Deploy rules with
+`firebase deploy --only firestore:rules`.
+
+`vercel.json` sets:
+
+- `/assets/*` (content-hashed): cached for a year, `immutable`.
+- `public/` media: cached for a day, `stale-while-revalidate`.
+- every response: `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, HSTS,
+  and a `Permissions-Policy` that keeps the screen wake lock (`screen-wake-lock=(self)`)
+  and blocks camera/microphone/geolocation.
+- a **Content-Security-Policy**, currently **Report-Only**: violations are logged to the
+  browser console but nothing is blocked. The end-to-end tests apply the *same* policy
+  in enforcing mode and fail on any violation. To enforce it in production, rename the
+  header key to `Content-Security-Policy` after a few nights with clean consoles on the
+  TV and phones (phone sign-in and App Check use reCAPTCHA, which the tests do not
+  cover).
+
+## 🩺 Error monitoring (optional)
+
+Errors reach [Sentry](https://sentry.io) when `VITE_SENTRY_DSN` is set; without it,
+monitoring is fully off. The SDK is not in the initial bundle: it loads when the
+browser is idle or on the first error, and errors caught before that are queued.
+
+- **Release:** every build is tagged `hengame@<commit>` (Vercel/GitHub provide the
+  commit), so an error points to the deploy that caused it.
+- **Tags:** `role` (host/player), `room_id`, `game` and `status` are attached
+  while the TV or phone screen is open.
+- **Readable stack traces:** set `SENTRY_AUTH_TOKEN`, `SENTRY_ORG` and
+  `SENTRY_PROJECT` in the **build** environment only (Vercel → Settings →
+  Environment Variables; not `VITE_*`, never in the repo). The build then uploads
+  hidden source maps and deletes them from `dist/`, so source code is not served.
+  The token needs the *Releases: Admin* scope and *Project: Read & Write*.
+- **Logging:** application code logs through `createLogger(scope)`
+  (`src/lib/logger.ts`); `console.*` is blocked by ESLint. `log.error` reports to
+  Sentry except transient network errors, at most 5 per scope per session.
+
+## 🖼 Images and static assets
+
+Background images ship as **AVIF + WebP** pairs (`<picture>` via
+`src/components/BackdropImage.tsx`); the originals are not kept in `public/`.
+To add or replace one, list the original in `scripts/optimize-images.mjs` and run:
+
+```bash
+npm i --no-save sharp
+node scripts/optimize-images.mjs <folder-with-originals>
+```
+
+App icons (`public/icons/*.png`, used by the manifest and iOS home screen) are
+generated from `public/icon.svg` with `node scripts/generate-icons.mjs` (same
+`sharp` prerequisite).
+
+`src/lib/__tests__/publicAssets.test.ts` fails the build when the code requests a
+file that is not in `public/`, when `public/` contains a file nothing uses, when an
+image exceeds 150 KB, or when `public/` grows past 4 MB.
+
+## ❓ Quiz content and question packs
+
+Built-in quiz questions live in `src/content/quiz/{tr,de,en}.json`. Every
+question is checked in CI against one schema (`src/lib/quizPack.ts`: four
+distinct answers, a valid correct answer, difficulty 1–3, length limits,
+unique ids and texts).
+
+Venues can add their own **question packs** (e.g. for a company event):
+staff open **/admin/content**, download the sample file, edit it and upload
+it. The file is validated before saving and every problem is listed with
+its question id. On the TV, the pack is then chosen under *question source*
+in the quiz settings; questions then come only from that pack. Packs are
+stored per venue in `venues/<venueId>/quiz_packs`, readable and writable
+by that venue's staff only (the correct answers are inside), so deploy the rules after updating:
+`firebase deploy --only firestore:rules`.
 
 ## 🗑 Data retention (one-time console setup)
 
@@ -96,6 +225,8 @@ per collection:
 | `players`  | `expires_at` |
 | `answers`  | `expires_at` |
 | `ayna_survey` | `expires_at` |
+| `events`   | `expires_at` |
+| `ad_impressions` | `expires_at` |
 
 Or with the gcloud CLI:
 

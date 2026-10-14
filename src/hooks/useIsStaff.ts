@@ -1,66 +1,96 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
-import { doc, onSnapshot } from "firebase/firestore";
-
+import { collectionGroup, doc, onSnapshot, query, where } from "firebase/firestore";
 import { auth, db } from "../lib/firebase";
+import { createLogger } from "../lib/logger";
+import { DEFAULT_VENUE_ID } from "../lib/venues";
+import { useVenue } from "../contexts/VenueContextCore";
+
+const log = createLogger("useIsStaff");
 
 export interface StaffState {
   /** Oturum çözülene kadar undefined; sonra hesap ya da null. */
   user: User | null | undefined;
-  /** Hesap personel listesinde mi. Oturum/kayıt çözülene kadar undefined. */
+  /** Hesap SEÇİLİ mekanın personeli mi. Oturum/kayıt çözülene kadar undefined. */
   isStaff: boolean | undefined;
+  /** Hesabın personeli olduğu mekanlar; çözülene kadar undefined. */
+  venues: string[] | undefined;
+  /** Mekanda sahip mi (personel ekleyip çıkarabilir). */
+  isOwner: boolean;
 }
 
 /**
- * "Bu hesap işletme personeli mi?" sorusunun tek cevap yeri.
+ * "Bu hesap bu mekanın personeli mi?" sorusunun tek cevap yeri
+ * (docs/design/3.1-cok-mekan.md).
  *
- * Önceden her yönetim ekranı bunu kendi başına `providerData` içinde
- * "password" sağlayıcısı arayarak karar veriyordu. Ama /register herkese
- * açık bir oyuncu kayıt ekranı ve orada da e-posta/şifre hesabı açılıyor —
- * yani o kontrol "kayıt olan herkes personeldir" demekti. Yetkinin kaynağı
- * artık Firestore'daki staff/{uid} dokümanı; bu doküman hiçbir istemciden
- * yazılamıyor (bkz. firestore.rules), yalnızca Firebase Console'dan ya da
- * Admin SDK ile ekleniyor.
+ * - Üyelik `venues/{v}/staff/{uid}` kayıtlarından gelir (collection group
+ *   sorgusu; kural yalnızca kişinin kendi kayıtlarını okutuyor). Bu kayıtları
+ *   istemciden yalnızca mekanın sahibi yazabiliyor, sahibi HENGAME ekibi
+ *   atıyor (firestore.rules).
+ * - Geçiş (aşama A): eski global `staff/{uid}` kaydı `default` mekanın
+ *   personeli sayılır.
+ * - Hesap seçili mekanın personeli değilse ve tek bir mekanı varsa o mekan
+ *   kendiliğinden seçilir; birden çoksa ekran VenueSwitcher gösterir.
  *
- * Kural okumayı yalnızca kişinin KENDİ kaydına açtığı için burada yapılan
- * dinleme hiçbir zaman izin hatası vermiyor: kayıt yoksa doküman "yok"
- * olarak dönüyor.
+ * Önceden yetki `providerData`'da "password" sağlayıcısı aranarak veriliyordu;
+ * /register herkese açık olduğu için bu "kayıt olan herkes personeldir"
+ * demekti. Hata hâlinde yetki VERİLMEZ: güvenlik kararı kapalı tarafa düşer.
  */
 export function useIsStaff(): StaffState {
+  const { venueId, selectVenue } = useVenue();
   const [user, setUser] = useState<User | null | undefined>(undefined);
-  /**
-   * Cevabı hangi hesap için aldığımızı da tutuyoruz: hesap değiştiğinde
-   * (çıkış → başka hesapla giriş) önceki hesabın cevabı bir an için yeni
-   * hesaba ait sanılmasın diye. Efekt gövdesinde setState yok — durum
-   * yalnızca dinleyici geri çağrılarından güncelleniyor.
-   */
-  const [answer, setAnswer] = useState<{ uid: string; isStaff: boolean } | null>(null);
+  /** Cevabın hangi hesap için olduğu: hesap değişince eski cevap yeni hesaba sızmasın. */
+  const [legacy, setLegacy] = useState<{ uid: string; staff: boolean } | null>(null);
+  const [memberships, setMemberships] = useState<{ uid: string; venues: { id: string; role: string }[] } | null>(null);
 
   useEffect(() => onAuthStateChanged(auth, setUser), []);
 
   useEffect(() => {
     if (!user) return;
     const uid = user.uid;
-    return onSnapshot(
+    const stopLegacy = onSnapshot(
       doc(db, "staff", uid),
-      (snap) => setAnswer({ uid, isStaff: snap.exists() }),
+      (snap) => setLegacy({ uid, staff: snap.exists() }),
       (err) => {
-        console.error("[useIsStaff] Personel kaydı okunamadı:", err);
-        // Hata hâlinde yetki VERMİYORUZ: güvenlik kararı her zaman kapalı
-        // tarafa düşmeli.
-        setAnswer({ uid, isStaff: false });
+        log.error("Personel kaydı okunamadı:", err);
+        setLegacy({ uid, staff: false });
       },
     );
+    const stopVenues = onSnapshot(
+      query(collectionGroup(db, "staff"), where("uid", "==", uid)),
+      (snap) =>
+        setMemberships({
+          uid,
+          venues: snap.docs
+            .map((d) => ({ id: d.ref.parent.parent?.id ?? "", role: String(d.data().role ?? "staff") }))
+            .filter((v) => v.id),
+        }),
+      (err) => {
+        log.error("Mekan üyelikleri okunamadı:", err);
+        setMemberships({ uid, venues: [] });
+      },
+    );
+    return () => {
+      stopLegacy();
+      stopVenues();
+    };
   }, [user]);
 
-  const isStaff =
-    user === undefined
-      ? undefined // oturum henüz çözülmedi
-      : user === null
-        ? false // giriş yok
-        : answer?.uid === user.uid
-          ? answer.isStaff
-          : undefined; // bu hesabın kaydı henüz okunmadı
+  const resolved = !!user && legacy?.uid === user.uid && memberships?.uid === user.uid;
+  const venues = useMemo(
+    () =>
+      resolved && legacy && memberships
+        ? [...new Set([...memberships.venues.map((v) => v.id), ...(legacy.staff ? [DEFAULT_VENUE_ID] : [])])]
+        : undefined,
+    [resolved, legacy, memberships],
+  );
 
-  return { user, isStaff };
+  // Seçili mekanın personeli değil ama tek mekanı varsa onu seç.
+  useEffect(() => {
+    if (venues && venues.length === 1 && venues[0] !== venueId) selectVenue(venues[0]);
+  }, [venues, venueId, selectVenue]);
+
+  const isStaff = user === undefined ? undefined : user === null ? false : venues ? venues.includes(venueId) : undefined;
+  const isOwner = resolved && !!memberships?.venues.some((v) => v.id === venueId && v.role === "owner");
+  return { user, isStaff, venues, isOwner };
 }

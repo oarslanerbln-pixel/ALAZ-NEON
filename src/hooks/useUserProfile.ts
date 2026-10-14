@@ -2,7 +2,12 @@ import { useState, useEffect } from "react";
 import { doc, setDoc, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "../lib/firebase";
+import { nicknamePayload, profileCreatePayload } from "../lib/clientWrites";
+import { normalizeProfile } from "../lib/userProfile";
 import type { UserProfile } from "../types/database";
+import { createLogger } from "../lib/logger";
+
+const log = createLogger("useUserProfile");
 
 export function useUserProfile() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -39,24 +44,20 @@ export function useUserProfile() {
 
       profileUnsub.current = onSnapshot(userRef, async (docSnap) => {
         if (docSnap.exists()) {
-          setProfile({ uid, ...docSnap.data() } as UserProfile);
+          setProfile(normalizeProfile(uid, docSnap.data()));
           setLoading(false);
         } else {
           // Create initial profile if it doesn't exist
-          const newProfile: Omit<UserProfile, "uid"> = {
-            phone_number,
+          const newProfile: Omit<UserProfile, "uid"> = profileCreatePayload({
+            phoneNumber: phone_number,
             nickname: `PLAYER_${uid.substring(0, 4)}`,
-            total_lifetime_score: 0,
-            current_league: "BRONZE",
-            created_at: Date.now(),
-            last_active: Date.now(),
-          };
+          });
           await setDoc(userRef, newProfile);
           setProfile({ uid, ...newProfile } as UserProfile);
           setLoading(false);
         }
       }, (error) => {
-        console.error("Error fetching user profile:", error);
+        log.error("Error fetching user profile:", error);
         setLoading(false);
       });
     });
@@ -70,7 +71,7 @@ export function useUserProfile() {
   const updateNickname = async (newNickname: string) => {
     if (!auth.currentUser) return;
     const userRef = doc(db, "users", auth.currentUser.uid);
-    await setDoc(userRef, { nickname: newNickname }, { merge: true });
+    await setDoc(userRef, nicknamePayload(newNickname), { merge: true });
   };
 
   return { profile, loading, updateNickname };

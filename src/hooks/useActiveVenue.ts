@@ -2,35 +2,65 @@ import { useState, useEffect } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { DEFAULT_VENUE_CONFIG, type VenueConfig } from "../types/database";
+import { DEFAULT_VENUE_ID } from "../lib/venues";
+import { createLogger } from "../lib/logger";
 
-const ACTIVE_VENUE_PATH = ["app_config", "active_venue"] as const;
+const log = createLogger("useActiveVenue");
 
 /**
- * O anda "aktif" mekan markasını canlı dinler (app_config/active_venue).
+ * Bir mekanın ayarlarını (marka, ödül şablonu, reklamlar, çark) canlı dinler:
+ * `venues/{venueId}` (docs/design/3.1-cok-mekan.md).
  *
- * Oda oluşturulmadan önceki ekranlarda (landing, login, host kurulumu)
- * kullanılır — satıcı bir mekana giderken bu tek dokümanı güncelleyip
- * tüm bu ekranların markasını demoya özel değiştirir. Doküman hiç
- * oluşturulmamışsa (ilk kurulum) varsayılan HENGAME markasına düşer.
+ * Geçiş (aşama A): `default` mekanın belgesi göç betiği çalışana kadar yok;
+ * o sürece eski tek belge `app_config/active_venue` okunur. Hiçbiri yoksa
+ * (ilk kurulum) varsayılan HENGAME markası.
  */
-export function useActiveVenue(): { venue: VenueConfig; loading: boolean } {
-  const [venue, setVenue] = useState<VenueConfig>(DEFAULT_VENUE_CONFIG);
-  const [loading, setLoading] = useState(true);
+export function useVenueConfig(venueId: string): { venue: VenueConfig; loading: boolean; legacy: boolean } {
+  const [state, setState] = useState<{ key: string; venue: VenueConfig; legacy: boolean } | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(
-      doc(db, ...ACTIVE_VENUE_PATH),
+    let legacyUnsub: (() => void) | null = null;
+    const stopLegacy = () => {
+      legacyUnsub?.();
+      legacyUnsub = null;
+    };
+    const unsub = onSnapshot(
+      doc(db, "venues", venueId),
       (snap) => {
-        setVenue(snap.exists() ? { ...DEFAULT_VENUE_CONFIG, ...snap.data() } as VenueConfig : DEFAULT_VENUE_CONFIG);
-        setLoading(false);
+        if (snap.exists()) {
+          stopLegacy();
+          setState({ key: venueId, venue: { ...DEFAULT_VENUE_CONFIG, ...(snap.data() as Partial<VenueConfig>), id: venueId }, legacy: false });
+          return;
+        }
+        if (venueId !== DEFAULT_VENUE_ID) {
+          setState({ key: venueId, venue: { ...DEFAULT_VENUE_CONFIG, id: venueId }, legacy: false });
+          return;
+        }
+        if (legacyUnsub) return;
+        legacyUnsub = onSnapshot(
+          doc(db, "app_config", "active_venue"),
+          (legacy) =>
+            setState({
+              key: venueId,
+              venue: { ...DEFAULT_VENUE_CONFIG, ...(legacy.exists() ? (legacy.data() as Partial<VenueConfig>) : {}), id: venueId },
+              legacy: true,
+            }),
+          (err) => log.error("Mekan ayarları okunamadı:", err),
+        );
       },
       (err) => {
-        console.error("[useActiveVenue] Mekan ayarları okunamadı:", err);
-        setLoading(false);
+        log.error("Mekan ayarları okunamadı:", err);
+        setState({ key: venueId, venue: { ...DEFAULT_VENUE_CONFIG, id: venueId }, legacy: false });
       },
     );
-    return () => unsubscribe();
-  }, []);
+    return () => {
+      unsub();
+      stopLegacy();
+    };
+  }, [venueId]);
 
-  return { venue, loading };
+  if (!state || state.key !== venueId) {
+    return { venue: { ...DEFAULT_VENUE_CONFIG, id: venueId }, loading: true, legacy: false };
+  }
+  return { venue: state.venue, loading: false, legacy: state.legacy };
 }

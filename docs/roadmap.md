@@ -1,0 +1,741 @@
+# HENGAME — Analiz ve Yol Haritası (2026 Q4 – 2027 Q1)
+
+> Anlık görüntü: 2026-10-04, `main` @ `f473ac7`. Her bulgu ölçülmüş veriye ve
+> `dosya:satır` kanıtına dayanır. Önem ölçeği: **Kritik / Yüksek / Orta / Düşük**.
+> Efor: **S** ≤ 1 gün, **M** 2–4 gün, **L** 1–2 hafta.
+
+## 1. Yönetici özeti
+
+Mühendislik tabanı sağlam: typecheck, lint, 247 birim test ve build temiz; CI'da
+emulator üzerinde kural testleri koşuyor; oyun ekranları rota ve oyun bazında
+`lazy`; saf oyun mantığı `src/lib` altında toplanmış. Ürünün büyümesini
+sınırlayan üç yapısal sorun var:
+
+1. **Güven sınırı istemcide.** Para değeri taşıyan iki akış (ödül kuponu, lig
+   puanı) herhangi bir anonim oturumdan sahtelenebiliyor; `users` koleksiyonu
+   telefon numaralarını herkese okutuyor.
+2. **Spark kotası oyuncu sayısının karesiyle tükeniyor.** Lobideki oyuncu
+   sayacı + 15 sn heartbeat, 30 kişilik lobide dakikada ~3.700 okuma üretiyor;
+   günlük 50.000 okuma ≈ **13 dakikada** biter.
+3. **Kural ↔ istemci uyumsuzluğu sessiz kırılma üretiyor.** Kural yorumlarında
+   kayıtlı 4 olay (answers, overload, echo, oyuncu sayaçları) aynı kalıptı;
+   bugün **emoji tepkileri** kural eksikliği yüzünden çalışmıyor.
+
+Önerilen sıra: **Faz 0** (1 hafta) güvenlik + kırık özellik → **Faz 1** (2–3
+hafta) maliyet ve "host tek yazardır" ilkesine dönüş → **Faz 2** (3–4 hafta)
+kalite güvencesi, performans, gözlemlenebilirlik → **Faz 3** (2027 Q1) çok
+mekanlı B2B ürün.
+
+## 2. Yöntem — kullanılan uzmanlık mercekleri
+
+| Mercek | Veri kaynağı |
+|---|---|
+| Uygulama güvenliği & gizlilik | `firestore.rules` satır satır; istemcideki tüm yazma yolları (`grep updateDoc/setDoc/addDoc/increment`) |
+| Firebase maliyet & ölçek | 14 `onSnapshot` dinleyicisinin envanteri, heartbeat sıklığı, fan-out hesabı |
+| Mimari & kod sağlığı | Dosya boyutları; `.claude/skills/alaz-neon-architecture` ilkeleriyle kıyas |
+| Kalite güvencesi | Test envanteri, `.github/workflows/ci.yml` |
+| Web performansı | `vite build` çıktısı, `public/` varlık boyutları |
+| Bağımlılık güvenliği | `npm audit --omit=dev`, `npm outdated` |
+| UX / erişilebilirlik / PWA | `public/manifest.json`, aria/role sayımı, Wake Lock kullanımı |
+| Ürün & B2B | Mimari skill'deki DOOH/gelir modeli, `app_config/active_venue` tek kiracı yapısı |
+
+### Ölçüm anlık görüntüsü
+
+| Metrik | Değer |
+|---|---|
+| `src/` TS/TSX satırı | 34.694 (15 oyun modu) |
+| Birim test | 26 dosya / 247 test, tamamı geçiyor (~10 sn) |
+| Bileşen / hook / E2E testi | 3 / 0 / 0 |
+| Kural testi | 842 satır, emulator, CI'da koşuyor |
+| typecheck · lint · build | temiz |
+| Landing ilk yük (JS, gzip) | ≈ 360 KB (index 125 + firebase 175 + motion 49 + react 13) + CSS 34 KB |
+| `public/` | 18 MB; 15 arka plan görseli 0,39–1,07 MB |
+| Prod bağımlılık açığı | 7 yüksek (çoğu transitif; firebase/grpc, react-router, vite, postcss) |
+| 700+ satırlık bileşen | 3 (`GameSettingsModal` 859, `HostQuizDisplay` 840, `HostDisplay` 717) |
+| `console.*` çağrısı | 91 |
+
+## 3. Bulgular
+
+### 3.1 Güvenlik & gizlilik
+
+| # | Önem | Bulgu | Kanıt |
+|---|---|---|---|
+| S1 | **Kritik** | **Ödül kuponu sahteciliği.** `rewards` create yalnızca `status == 'available'` istiyor; `uid`, `code`, `title` serbest. Anonim bir oturum konsoldan kendine kupon yazar, barda kodla doğrulatır → doğrudan mali kayıp. | `firestore.rules:281`, `src/lib/rewards.ts:42` |
+| S2 | **Kritik** | **Lig puanı sahteciliği.** `users/{uid}` create/update alan kısıtsız; `total_lifetime_score` ve `current_league` oyuncu cihazından `increment(delta)` ile yazılıyor. Leaderboard ve sadakat mekaniği güvenilmez. | `firestore.rules:167`, `src/hooks/usePlayer.ts:98` |
+| S3 | **Yüksek (KVKK)** | **Telefon numarası sızıntısı.** `users` herkese okunur (`read: if true`) ve telefonla girişte `phone_number` tutuluyor → kayıtlı tüm numaralar listelenebilir. | `firestore.rules:164`, `src/hooks/useUserProfile.ts:47` |
+| S4 | **Yüksek** | **Puanlı katılım.** `players` create yalnızca `uid` kontrol ediyor; oyuncu `total_score: 9999` ile katılabilir. Ödül kazananı bu puanla seçildiği için S1 kapatılsa bile ödül alınır. | `firestore.rules:122` |
+| S5 | **Yüksek** | **Oda üzerindeki oyuncu istisnaları kimliğe bağlı değil.** Odada olmayan biri bombayı paslayabilir, `sensor_buzzer_player_id` ile başkası adına buzz'a basabilir, `echo_votes`/`pulse_clicks` haritasının tamamını ezebilir, `overload_time_allowed`'ı keyfi ayarlayabilir. | `firestore.rules:44-87` |
+| S6 | Orta | `answers` herkese okunur, alan/boyut/oda durumu kısıtı yok: cevap tur bitmeden okunup kopyalanabilir; büyük yazmalarla kota tüketilebilir. | `firestore.rules:206-214` |
+| S7 | Orta | Oda açmak yetki istemiyor (her anonim oturum host olabilir) ve App Check yok → kota/spam saldırı yüzeyi. | `firestore.rules:94` |
+| S8 | Düşük | 7 yüksek seviye bağımlılık açığı. Tarayıcıda pratik istismar olasılığı düşük (react-router açığı SSR/turbo-stream, grpc Node tarafı) ama yamalar sürüm içi. | `npm audit --omit=dev` |
+
+**Kök neden:** Spark planında güvenilir sunucu yok; "kim kime puan/ödül
+yazabilir" sorusu yalnızca kurallarla çözülmek zorunda ve şu an her anonim
+oturum potansiyel host. Kural tarafında yapılabilecek çok şey var (Faz 0);
+kalıcı çözüm için **D1** ve **D2** karar noktalarına bakın.
+
+### 3.2 Firebase maliyet & ölçek
+
+Her oyuncu 15 sn'de bir `players/{id}.last_active` yazıyor
+(`src/lib/liveness.ts:23`, `src/pages/player/PlayerGame.tsx:81`). Lobideki her
+telefon yalnızca oyuncu **sayısını** göstermek için odanın tüm `players`
+sorgusunu dinliyor (`src/pages/player/views/PlayerLobby.tsx:45-46`). Her
+heartbeat N+1 dinleyiciye okuma olarak düşer:
+
+```
+lobi okuma/dk ≈ N × 4 × (N + 1)
+```
+
+| Oyuncu (N) | Okuma/dk | Spark günlük 50k okuma ne kadar dayanır |
+|---|---|---|
+| 10 | 440 | ~1 sa 54 dk |
+| 20 | 1.680 | ~30 dk |
+| 30 | 3.720 | ~13 dk |
+
+| # | Önem | Bulgu |
+|---|---|---|
+| M1 | **Kritik** | Lobi sayacı için tüm `players` sorgusu dinleniyor (yukarıdaki N² fan-out). |
+| M2 | Yüksek | Oyun sırasında da host dinleyicisi heartbeat başına okuma alıyor: 30 oyuncu × 4/dk × 240 dk ≈ **28.800 okuma** — 4 saatlik bir gecede tek başına günlük kotanın %58'i. |
+| M3 | Yüksek | `echo_votes`, `pulse_clicks`, bomb/overload pasları oda dokümanına yazılıyor; oda dokümanını herkes dinlediği için her girdi N'e yayılıyor (30 kişilik echo turu ≈ 930 okuma; host-only bir koleksiyonda 30). |
+| M4 | Orta | Kota görünürlüğü yok: oturum başına okuma/yazma ölçümü ve konsol kullanım alarmı tanımsız. |
+
+### 3.3 Mimari & kod sağlığı
+
+| # | Önem | Bulgu |
+|---|---|---|
+| A1 | Yüksek | **"Host tek yazardır" ilkesi 6 istisnayla delinmiş** (`firestore.rules:44-87`). Her yeni oyun yeni bir istisna ve yeni bir sessiz-kırılma riski demek. M3 ve S5 ile aynı kök. |
+| A2 | Yüksek | **Kural ↔ istemci yazma sözleşmesi test edilmiyor.** Güncel örnek: `rooms/{id}/transient/emojiPulse` için kural yok; `match /rooms/{roomId}` alt koleksiyonları kapsamaz → her emoji tepkisi permission-denied, hata yalnızca console'a düşüyor (`src/hooks/useEmojiPulse.ts:39-43`). |
+| A3 | Orta | Büyük bileşenler: `GameSettingsModal` (859), `HostQuizDisplay` (840), `HostDisplay` (717). Durum mantığı bileşen içinde; birim testle kapsanamıyor. |
+| A4 | Orta | Sentinel yalnızca cevap **uzunluğunu** görüyor (`"X".repeat(n)`, `src/hooks/useHostRoom.ts:93`); "hile koruması" iddiasını karşılamıyor. Hile önlemenin asıl yeri kurallar (3.1). |
+| A5 | Orta | **Tek kiracı:** aktif mekan tek doküman (`app_config/active_venue`), `isStaff()` global. İkinci mekan satıldığında A'nın personeli B'nin markasını ve ödüllerini değiştirebilir. |
+| A6 | Düşük | 91 `console.*` çağrısı; seviyeli, Sentry'ye breadcrumb düşen merkezi bir logger yok. |
+
+### 3.4 Kalite güvencesi
+
+| # | Önem | Bulgu |
+|---|---|---|
+| Q1 | Yüksek | **Çok cihazlı uçtan uca test yok.** Ürünün çekirdek riski "host status değiştirdi, telefon siyah ekran" sınıfı; birim testler bunu yakalayamaz. Ortamda Chromium + Playwright hazır; Firestore emulator CI'da zaten var. |
+| Q2 | Orta | Hook testi 0, bileşen testi 3. Para değerli mantık (ör. `usePlayer.ts:80-100` puan deltası) test dışı. |
+| Q3 | Orta | CI'da güvenlik/performans kapısı yok: `npm audit` eşiği, bundle bütçesi, coverage eşiği. |
+| + | — | Güçlü yan: 842 satırlık emulator kural testi ve "kaynak ağacı temiz mi" adımı korunmalı. |
+
+### 3.5 Web performansı
+
+| # | Önem | Bulgu |
+|---|---|---|
+| P1 | Yüksek | Telefon görselleri ağır: `player-bg-*.png` 0,77–0,89 MB, `wait-*.png` 0,59–0,66 MB; `public/` toplam 18 MB. Mekân Wi-Fi'ı/4G'de oyuncunun ilk ekranını geciktiriyor. AVIF/WebP + 1080 px ile tipik olarak %85+ küçülme. |
+| P2 | Orta | Ana chunk 381 KB (125 KB gzip): tr/de/en sözlüğünün tamamı (`i18n.ts`, 1.917 satır) ve Sentry statik içeride. |
+| P3 | Düşük | `vendor-firebase` 175 KB gzip; `firebase/auth` ve Firestore landing ilk boyamasından sonra yüklenebilir. |
+| + | — | Güçlü yan: oyun ekranları `gameDisplays.ts`/`gameControllers.ts` ile oyun bazında lazy; jsPDF/html2canvas yalnızca raporda yükleniyor. |
+
+### 3.6 Gözlemlenebilirlik & operasyon
+
+| # | Önem | Bulgu |
+|---|---|---|
+| O1 | Yüksek | Sentry DSN opsiyonel; `release` ve sourcemap yüklemesi yok → prod stack trace'leri minify. Rol (host/player), `room_id`, oyun etiketi yok. |
+| O2 | Orta | Kullanım telemetrisi yok: oyun başına oyuncu, tur tamamlama, terk oranı, oturum başına okuma. Aynı veri B2B satış argümanı. |
+| O3 | Düşük | İki dağıtım hedefi (`vercel.json` + Firebase Hosting); güvenlik başlıkları (CSP, Permissions-Policy) ve `/assets/*` uzun önbellek tanımı yok. |
+
+### 3.7 UX, erişilebilirlik, PWA
+
+| # | Önem | Bulgu |
+|---|---|---|
+| U1 | Yüksek | **Wake Lock yok.** Telefon ekranı kararınca heartbeat duruyor → oyuncu "ölü" sayılıyor, bomb/overload hedeflemesinden düşüyor; TV/tablet uykuya geçebilir. |
+| U2 | Orta | PWA: manifest yalnız SVG ikon (iOS ana ekran PNG ister); `orientation: portrait-primary` tüm uygulamaya uygulanıyor (yatay host kurulu PWA'da dik zorlanır); service worker yok. |
+| U3 | Orta | ~100 TSX dosyasında 69 aria/role. Reduced-motion global çözülmüş (iyi); player kumandalarında odak sırası, küçük neon metin kontrastı, ekran okuyucu etiketleri taranmalı. |
+| U4 | Düşük | Yazma hataları kullanıcıya görünmüyor (ör. emoji); toast/Sentry yerine console. |
+
+### 3.8 Ürün & B2B
+
+| # | Bulgu |
+|---|---|
+| B1 | Çok mekan (multi-tenant) modeli yok (A5) — satışın ölçeklenmesinin ön koşulu. |
+| B2 | `ad_break` statüsü tiplerde tanımlı ama sponsor ekranı ve **doğrulanabilir gösterim kaydı** (proof-of-play: sponsor, süre, izleyen oyuncu sayısı) yok; DOOH geliri bu kayıt olmadan satılamaz. |
+| B3 | Mekan KPI'ı yok: gece başına tekil oyuncu, geri dönüş oranı (`retention.ts` hazır), ödül kullanım oranı, en çok oynanan oyun. `NightlyReport` genişletilebilir. |
+| B4 | Soru havuzları TS kaynak dosyalarında (quiz tr/de/en 558–819 satır, ayna 702). Mekan/kurum özel soru paketi satmak için JSON + şema doğrulama hattı gerekir. |
+
+## 4. Karar noktaları
+
+| # | Karar | Öneri | Gerekçe |
+|---|---|---|---|
+| D1 | Host = personel hesabı mı? | **Evet, Faz 0'da.** TV/tablet bir kez personel hesabıyla giriş yapar. | Oda açma, ödül yazma ve kalıcı puan yazma `isStaff()`'a bağlanır → S1, S2, S7 tek hamlede kapanır; Spark'ta kalınır. Maliyet: kurulumda tek giriş adımı. |
+| D2 | Blaze + Cloud Functions ne zaman? | **Faz 3**, çok mekan ve sponsor geliri başladığında. | Ödül üretimi, puanlama (answers → skor), staff custom claim ve zamanlanmış temizlik sunucuya taşınır. Blaze'de sert tavan yok → bütçe alarmı şart. |
+| D3 | Presence: Firestore heartbeat mi RTDB `onDisconnect` mi? | Önce M1/M2 düzeltmesi, sonra ölçümle karar. | RTDB presence Firestore okuması tüketmez; Spark'ta 100 eşzamanlı bağlantı sınırı tek mekan için yeterli. |
+
+## 5. Yol haritası
+
+### Faz 0 — Acil (1 hafta): güvenlik ve kırık özellik
+
+Her madde önce **kırmızı** kural testiyle (saldırı senaryosu) başlar, sonra kural, sonra istemci uyarlaması.
+
+> **Durum (2026-10-04): tamamlandı.** D1 onaylandı. 19 saldırı/yeni davranış
+> testi önce kırmızı doğrulandı, ardından kural testleri 102/102 yeşil.
+> Uygulamadaki sapmalar tablonun altında.
+
+| İş | Kapsar | Efor | Kabul kriteri | Durum |
+|---|---|---|---|---|
+| 0.1 `players` create: alan whitelist, `total_score == 0`, oda mevcut ve katılıma açık | S4 | S | Puanlı katılım kural testinde reddedilir | ✅ |
+| 0.2 D1: `rooms` create ve `rewards` create `isStaff()`; ödül `room_id` taşır, yazan o odanın host'u | S1, S7 | M | Anonim kupon yazımı reddedilir | ✅ |
+| 0.3 `users` update yalnız `nickname`/`last_active`; puan/lig alanlarını host (personel) oyun sonunda yazar | S2 | M | Oyuncu kendi puanını değiştiremez; `usePlayer` senkronu host'a taşınmış | ✅ |
+| 0.4 PII: başka uid'nin profil okuması reddedilir | S3 | S | Telefon numarası yalnızca sahibine okunur | ✅ |
+| 0.5 Emoji alt koleksiyonu kuralı (oda oyuncusu, alan whitelist, boyut) + test | A2 | S | Emoji tepkisi TV'de görünür | ✅ |
+| 0.6 Sürüm içi yamalar (firebase 12.19, react-router 7.18.4, vite 7.3.6) | S8 | S | Prod ağacında yalnızca upstream'de çözümsüz bulgu kalır | ✅ |
+
+Uygulama notları:
+
+- **0.3:** Kalıcı puan, oyun boyunca host ekranından aktarılıyor
+  (`hooks/useLifetimeScoreSync.ts`, saf mantık `lib/lifetimeScore.ts`).
+  "Ne kadar aktarıldı" bilgisi oyuncu dokümanında (`lifetime_credited`)
+  kalıcı. Bu sayede host sayfası yenilense de puan iki kez eklenmiyor,
+  arada kazanılan puan da kaybolmuyor.
+- **0.4:** `users_public` ayrımına gerek kalmadı. Başkasının profilini okuyan
+  bir ekran yok; liderlik tablosu `players` koleksiyonundan besleniyor. Bu
+  yüzden okuma sahibine kısıtlandı.
+- **0.6:** Kalan tek bulgu `firebase` → `@firebase/firestore` →
+  `@grpc/grpc-js@1.9`. Firestore bu sürümü sabitliyor; en güncel firebase
+  (12.19) de aynı. grpc yalnızca Node tarafında kullanılıyor, tarayıcı
+  paketine girmiyor (`dist/` içinde doğrulandı). Upstream düzeltmesi
+  bekleniyor; 2.6'daki audit kapısı bu bulguyu istisna listesinde tutmalı.
+- **Geçiş etkisi:** Yayından önce anonim oturumla açılmış odalar oynanmaya
+  devam eder. Ancak bu odalarda ödül ve kalıcı puan yazılamaz. TV'nin bir kez
+  personel hesabıyla giriş yapması gerekir (README → Staff access).
+
+### Faz 1 — Maliyet ve "host tek yazar" (2–3 hafta)
+
+> **Durum (2026-10-04): 1.1 ve 1.2 tamamlandı.** 30 oyunculu lobi hesabı:
+> önce ≈ 3.780 okuma/dk (oyuncu sinyallerinin lobiye yayılması 3.720 + host
+> sinyali 60), şimdi ≈ 120 okuma/dk (host'a düşen oyuncu sinyalleri 60 + host
+> sinyali 60). Oyuncu sayacı yalnızca katılım/ayrılmada yazılıyor. 4 saatlik
+> gecede host'a düşen sinyal okuması 28.800 → 14.400. Bunun bedeli, kilitli
+> telefonun hedef dışı kalma süresinin en fazla 30 sn'den en fazla 60 sn'ye
+> çıkması. Tek bir geciken sinyal hâlâ oyuncuyu elemiyor.
+>
+> **1.3 tamamlandı — karma model (kullanıcı kararı, 2026-10-04).**
+> - **Herkesin aynı anda yazdığı girişler** (echo oyu, pulse dokunuşu)
+>   `rooms/{id}/inputs/{playerId}` kaydına taşındı. Oyuncu tur başına
+>   (`rooms.input_round`) bir kez, yalnızca kendi kaydına yazar. Kaydı
+>   yalnızca host okur ve sonucu reveal anında odaya kendisi yazar.
+>   30 kişilik bir oylama turu ≈ 930 → 30 okuma; oylar artık ezilemiyor.
+> - **Sıra/yarış hamleleri** (bomba paslama, buzzer, overload savuşturma)
+>   odada kaldı, çünkü sonucun anında herkese yayılması gerekiyor. Host
+>   üzerinden aktarmak her hamleye TV gecikmesi eklerdi. Bu hamleler artık
+>   kimliğe bağlı: yalnızca sırası gelen ve bu odadaki oyuncu yazabilir.
+>   Kabul kriterinden sapma: odada bu üç kimlik bağlı istisna kalıyor.
+> - **Yol üstünde bulunan iki canlı hata:**
+>   - Overload savuşturması kural beyaz listesiyle uyuşmuyordu; her
+>     savuşturma reddediliyordu (A2 kalıbı).
+>   - Echo intro zamanlayıcısı her host yeniden çiziminde sıfırlanıyordu;
+>     kalabalık odada intro bitmeyebiliyordu.
+>
+>   İkisi de testle sabitlendi.
+> - **Açık kalan:** `inputs` ve `transient` alt koleksiyonları TTL kapsamında
+>   değil (oda silinse de kalır). Pulse dokunuş anı hâlâ telefon saatinden
+>   geliyor; hedef zaman herkese açık olduğu için kusursuz dokunuş
+>   sahtelenebilir. Sunucu saatine geçiş ayrı iş.
+>
+> **1.4 tamamlandı.**
+> - **Tek kaynak:** Kurallara tabi her istemci yazmasının verisi artık
+>   `src/lib/clientWrites.ts`'ten geliyor. Kural testleri de aynı
+>   fonksiyonları kullanıyor; test ile istemci ayrışamıyor.
+> - **Sözleşme testi** (`writeContract.test.ts`):
+>   - Oyuncu tarafındaki dosyalar yazma verisini satır içinde kuramaz.
+>   - Her yazma fonksiyonu en az bir emulator kural testinde kullanılmak
+>     zorunda.
+>   - Testi olmayan bir yazma yolu CI'dan geçemiyor.
+> - **Envanterin bulduğu üç canlı kırık daha (düzeltildi):**
+>   - **Çark:** "çevir" düğmesi için kural yoktu. Artık kimliğe bağlı bir
+>     sıra hamlesi.
+>   - **Unity:** Dokunuşlar odaya yazılıyordu ve bunun için kural yoktu.
+>     Olsa da tek dokümana saniyede 30 yazma olurdu. Artık her oyuncu kendi
+>     giriş kaydına yazıyor, host toplayıp odaya yazıyor.
+>   - **Renk/spektrum sayaçları:** Tek yazmadaki artış sınırı aştığında
+>     sayaç bir daha hiç yazılamıyordu. Artık her yazma sınıra kırpılıyor.
+> - **Hata görünürlüğü:** `reportWriteError` kural reddi ve geçersiz veri
+>   hatalarını yazmanın adıyla Sentry'ye gönderiyor. Bağlantı hataları yalnızca
+>   konsola düşüyor. Kullanıcıya ayrı bir toast eklenmedi; mevcut ekranlar
+>   kendi hata mesajlarını göstermeye devam ediyor.
+>
+> **1.5 tamamlandı.**
+> - **Okuma:** `answers` artık yalnızca cevabın sahibine ve odanın host'una
+>   açık; tur bitmeden başkasının cevabını kopyalamak mümkün değil. Mevcut
+>   sorgular zaten `player_id` ya da `room_id` ile süzüldüğü için istemci
+>   değişikliği gerekmedi.
+> - **Yazma:** Oyuncu yalnızca kendi odasına, oda cevap kabul ederken yazabiliyor
+>   (`playing`, `review`, `question_active`, `vault_active`, `ayna_active`).
+>   Şema sabit ve sınırlı: en fazla 24 veri anahtarı, tur anahtarı en fazla
+>   32 karakter.
+> - **Açık kalan:** Tek tek değerlerin uzunluğu kuralla sınırlanamıyor
+>   (kurallar harita değerleri üzerinde döngü kuramaz); istemci giriş
+>   sınırları geçerli. Kasa oyununda tahmin sayısı sınırsız, ama yalnızca
+>   `vault_active` sırasında yazılabiliyor.
+>
+> **1.6 kod tarafı hazır, konsol adımları bekliyor.**
+> - **İstemci:** App Check (reCAPTCHA v3) kuruldu
+>   (`lib/appCheckSetup.ts`, `lib/firebase.ts`). `VITE_RECAPTCHA_SITE_KEY`
+>   tanımlı değilse devreye girmiyor, uygulama bugünkü gibi çalışıyor.
+>   Geliştirmede hata ayıklama jetonu kullanılıyor; CI için sabit jeton
+>   desteği var.
+> - **Bekleyen (konsol, proje sahibi):**
+>   1. reCAPTCHA v3 anahtarı oluştur.
+>   2. Firebase konsolunda uygulamayı App Check'e kaydet.
+>   3. Site anahtarını barındırma ortamına ekle.
+>   4. Birkaç gün izle, sonra Cloud Firestore için **Enforce**.
+>
+>   Adımlar: README → App Check.
+> - **Maliyet:** `vendor-firebase` paketi +5 KB (gzip).
+
+| İş | Kapsar | Efor | Kabul kriteri |
+|---|---|---|---|
+| 1.1 Host `rooms.player_count` yazar; `PlayerLobby` `players` dinleyicisini bırakır | M1 | S | 30 kişilik lobide ≤ 150 okuma/dk |
+| 1.2 Oyuncu heartbeat'i 15 → 30 sn, `liveness.ts` eşikleri orantılı; ardından D3 ölçümü | M2, D3 | S | `liveness` testleri güncel; host okumaları yarıya iner |
+| 1.3 Echo/pulse girişleri `rooms/{id}/inputs/{playerId}` kaydına; bomba, buzzer ve overload odada ama kimliğe bağlı (karma model) | M3, S5, A1 | L | Oyuncu başkası adına ya da başkasının oyunu ezerek yazamaz; toplu girişler N'e yayılmaz |
+| 1.4 Yazma sözleşmesi: tek kaynaklı yazma verisi (`clientWrites`) + her yazma için emulator testi + `reportWriteError` (sözleşme ihlali → Sentry) | A2, U4 | M | Testsiz yazma yolu CI'dan geçmez |
+| 1.5 `answers` create: alan whitelist, boyut sınırı, oda durumu; okuma yalnız host + sahibi | S6 | M | Kural testleri |
+| 1.6 App Check (reCAPTCHA) — önce izleme, sonra zorunlu | S7 | S | Doğrulanmış istek ≥ %95 olunca enforce |
+
+### Faz 2 — Kalite, performans, gözlemlenebilirlik (3–4 hafta)
+
+> **Durum (2026-10-04): 2.1 başladı — altyapı ve çekirdek akış hazır.**
+> - **Altyapı:**
+>   - `npm run test:e2e`: uygulamayı e2e kipinde derler, Firestore + Auth
+>     emulator'ünü başlatır ve Playwright (1.56.1, sabit) ile koşar.
+>   - Personel hesabı emulator'de tohumlanıyor.
+>   - Her cihaz ayrı bir tarayıcı bağlamında çalışıyor.
+>   - CI'da ayrı bir iş olarak koşuyor.
+> - **Kapsam:**
+>   - Personel kapısı.
+>   - TV odayı açar, üç telefon katılır, lobi sayaçları güncellenir.
+>   - Echo oylaması giriş kayıtları üzerinden tamamlanır, sonuç TV'de ilan
+>     edilir.
+>
+>   Oyun kapsamı 1/15 → 15/15 (aşağıda, "2.1 tamamlandı").
+> - **İlk koşunun bulduğu üç canlı hata (düzeltildi):**
+>   - Eksik profil kaydı (yalnızca takma ad) katılım ekranını
+>     `phone_number.replace` üzerinde çökertiyordu.
+>   - Katılım formundaki tipsiz "ÇIKIŞ YAP" ve ödül düğmeleri formu gönderme
+>     düğmesi sayılıyordu: takma adda Enter / "Git" tuşu oyuncunun oturumunu
+>     kapatıyordu.
+>   - Oturum yeni açılmışken katılım yazması tekrar gönderilirse
+>     `ALREADY_EXISTS` ile düşüyordu. Yazma artık tekrarlanabilir
+>     (önceden üretilmiş kimlik + `setDoc`).
+>
+> **2.5 tamamlandı (Wake Lock).**
+> - TV oda açık olduğu sürece, telefon oyuncu odadayken ekranı uyanık tutar
+>   (`lib/wakeLock.ts` + `useWakeLock`).
+> - Sekme gizlenince tarayıcının bıraktığı kilit görünürlük dönüşünde
+>   yeniden alınıyor.
+> - Reddedilen ya da görünürken bırakılan kilit (iOS jest şartı, pil
+>   tasarrufu) ilk dokunuşta bir kez daha isteniyor; al-bırak döngüsü yok.
+> - API'si olmayan tarayıcıda hiçbir şey yapılmaz. 9 birim testi; E2E
+>   senaryosu TV ve üç telefonun kilidi tuttuğunu doğruluyor.
+>
+> **2.2 tamamlandı (görsel hattı).** `public/` 18 MB → 3.5 MB.
+> - Kullanılan 7 arka plan AVIF + WebP'ye çevrildi (`<picture>`,
+>   `BackdropImage`): telefon başına ~6 MB yerine ~0.5 MB. Görseller
+>   dekoratif: `alt=""`, `fetchpriority="low"`, `decoding="async"`.
+> - Hiçbir yerde kullanılmayan 10 görsel (~8 MB) silindi.
+> - 16 ekranın istediği ama hiç var olmayan `/noise.png` ve `/grid.svg`
+>   eklendi (her yüklemede 404 veriyordu).
+> - TV müziği 256 → 128 kbps (4.9 → 2.4 MB).
+> - `publicAssets.test.ts`: eksik dosya, ölü varlık, görsel başına 150 KB
+>   ve `public/` < 4 MB bütçesini her PR'da denetler.
+> - Dönüştürme `scripts/optimize-images.mjs` ile tekrarlanabilir (sharp
+>   bağımlılık değil, yalnızca görsel değişince kurulur).
+>
+> **2.6 tamamlandı (CI kapıları).** Hepsi `verify` işinde, her PR'da:
+> - **Kapsama:** `npm run test:coverage`; `src/lib` satır %85, ifade %84
+>   (eşik 80/80, fonksiyon 85, dal 70). SDK/Web Audio bağlamaları
+>   (`firebase.ts`, `soundSynth.ts`) kapsam dışı, gerekçesi yapılandırmada.
+>   Eşiğe ulaşmak için iki gerçek test eklendi: ~110 parametreli çevirinin
+>   üç dilde çalıştırılması, her Firestore yazma yükünde `undefined` alan
+>   olmaması (Firestore bu durumda yazmayı tümüyle reddediyor).
+> - **Paket bütçesi:** `npm run check:bundle`; ilk yük JS 360 KB gzip
+>   (sınır 378), giriş 123 (130), en büyük tembel parça 123 (130).
+> - **Audit:** `npm run check:audit`; üretim bağımlılıklarında high+ açık
+>   CI'ı kırar. Tek istisna grpc (GHSA-m9gg-hp2v-232j, tarayıcı paketinde
+>   yok — `dist/` içinde doğrulandı), son gözden geçirme tarihi geçince
+>   istisna kendiliğinden düşer.
+> - **Bağımlılıklar:** vitest 4.1.11 (kritik açık kapandı) ve uyumlu
+>   güncellemeler; geliştirme açıkları 34 → 16. Kalanlar yalnızca
+>   firebase-tools/firebase zincirinde, düzeltme sürümü yok.
+>
+> **2.3 tamamlandı (tembel yükleme).** Giriş paketi 123 → 25 KB gzip
+> (hedef ≤ 80), ilk yük JS 360 → 341 KB; bütçe sınırları da çekildi.
+> - **i18n:** sözlük dil başına üç dosyaya bölündü (753 anahtar, TS AST ile
+>   mekanik). Açılış dili `de` girişte; `tr`/`en` seçilince ayrı parça.
+>   Kayıtlı dil farklıysa ilk render'dan önce iner (`localeReady`). Arka
+>   arkaya seçimde sonuncusu kazanır, indirme hatasında dil değişmez.
+>   Eksik çeviri artık derleme hatası (`satisfies Dictionary`).
+> - **Sentry:** `lib/monitoring.ts` cephesi. SDK (~29 KB) boşta ya da ilk
+>   hatada iner. Arada yakalanan hatalar (yakalanmamış hata ve reddedilen
+>   sözler dahil) sıraya alınıp gönderilir. Önceden DSN tanımlı üretim
+>   derlemesinde SDK girişteydi; CI'ın DSN'siz ölçümü bunu göremiyordu.
+>   `import("@sentry/react")` tüm ad alanını (156 KB) çektiği için ince bir
+>   yeniden dışa aktarma modülü (`sentrySdk.ts`) kullanılıyor.
+> - **Satıcı parçaları:** `react-dom/client` ve `firebase/auth` uygulama
+>   girişinden satıcı parçalarına taşındı (her yayında yeniden inmiyor).
+> - Firestore paketindeki `re2js` (~141 KB ham) Firestore'un kendi
+>   bağımlılığı; tam SDK gerektiği için (onSnapshot) şimdilik kalıyor.
+>
+> **2.4 tamamlandı (gözlemlenebilirlik).**
+> - **Release:** her derleme `hengame@<commit>` (Vercel/GitHub commit'i,
+>   yoksa `git rev-parse`).
+> - **Kaynak haritaları:** `SENTRY_AUTH_TOKEN/ORG/PROJECT` yalnızca derleme
+>   ortamında tanımlıysa gizli haritalar üretilip yüklenir ve `dist/`'ten
+>   silinir. Sahte kimlikle denendi: yükleme başarısız olsa bile harita
+>   yayına çıkmıyor ve derleme kırılmıyor.
+> - **Etiketler:** TV ve telefon ekranında `role`, `room_id`, `game`,
+>   `status`. SDK inmeden verilenler saklanıp sıradaki hatalardan önce
+>   uygulanır.
+> - **Logger:** 87 `console.error/warn` çağrısı (44 dosya) AST ile
+>   `createLogger(kapsam)`'a taşındı; ESLint `no-console` korur. Eskiden
+>   hiçbiri bize ulaşmıyordu. `error` artık Sentry'ye gidiyor: geçici ağ
+>   hataları hariç, kapsam başına oturumda en fazla 5. Yazma hataları
+>   eskisi gibi yalnızca sözleşme ihlalinde raporlanıyor.
+> - `@sentry/vite-plugin` 5.x (4.x eski `unplugin` zinciri getiriyordu).
+>
+> **2.10 tamamlandı (yayın).**
+> - **Tek hedef Vercel.** `firebase.json`'dan hosting bloğu çıkarıldı:
+>   çıplak `firebase deploy` artık eski bir siteyi Firebase Hosting'e
+>   yayınlayamaz. Kurallar `--only firestore:rules` ile dağıtılıyor.
+> - **Önbellek:** `/assets/*` bir yıl `immutable`; `public/` medyası 1 gün
+>   + `stale-while-revalidate`.
+> - **Güvenlik başlıkları:** `nosniff`, `X-Frame-Options: DENY`,
+>   `Referrer-Policy`, HSTS ve `Permissions-Policy`. Sonuncusu ekran
+>   kilidine (2.5) izin verip kamera/mikrofon/konumu kapatıyor.
+> - **CSP üretimde Report-Only.** `vite preview` aynı politikayı
+>   vercel.json'dan okuyup zorlayıcı kipte uyguluyor. E2E tüm akışlarda
+>   ihlal olmadığını doğruluyor; kırmızı deneme ile toplayıcının çalıştığı
+>   görüldü. reCAPTCHA (telefon girişi, App Check) testte yok; birkaç gece
+>   temiz konsoldan sonra anahtar adı değiştirilerek zorlanacak.
+> - `hostingHeaders.test.ts` başlık sözleşmesini denetliyor.
+>
+> **2.9 tamamlandı — karar: sadeleştir.** Sentinel kaldırıldı.
+> - Radar yalnızca cevabın toplam uzunluğunu (`"X".repeat(n)`) görüyordu.
+>   Gönderim zamanını da istemci belirliyor; bağlanabilecek gerçek bir
+>   sinyal yok.
+> - Kripto katmanı, React zaten kaçışladığı halde cevabı HTML-kaçışlıyordu:
+>   TV'de `Ankara'da` → `Ankara&#x27;da` görünüyor, puanlamaya bozulmuş
+>   metin gidiyordu.
+> - Hileye karşı asıl sınır kurallar (Faz 0–1: kimlik, oda durumu, alan
+>   kümesi).
+> - Yerine `lib/answerText.ts` geldi: NFC, görünmez/bidi karakter temizliği,
+>   boşluk sadeleştirme ve 40 karakter sınırı (kod noktası, emoji
+>   bölünmez). Kural dili harita değerlerinin uzunluğunu sınırlayamadığı
+>   için TV tarafında uygulanıyor; oyuncu girişinde de `maxLength` aynı.
+>
+> **2.8 tamamlandı (PWA).**
+> - PNG ikonlar `icon.svg`'den üretildi (`scripts/generate-icons.mjs`): 192,
+>   512, maskable 512 ve iOS 180 (`apple-touch-icon` artık PNG; iOS SVG
+>   kabul etmiyor).
+> - `orientation: any`: yatay TV/tablet kurulu uygulamada dik
+>   zorlanmıyordu. `id` ve `scope` eklendi.
+> - **Service worker bilinçli olarak yok.** Canlı oyunda çevrimdışı kullanım
+>   yok, eski sürüm önbelleği riski ise gerçek (yayın sonrası eski parça
+>   zaten `staleChunk` ile ele alınıyor). Chrome kurulum için artık SW
+>   istemiyor.
+> - Lighthouse'un PWA kategorisi kaldırıldığı için kabul ölçütü
+>   `pwaManifest.test.ts`'e taşındı: kurulum alanları ve PNG ikonların
+>   gerçek boyutları (IHDR) denetleniyor.
+>
+> **2.11 tamamlandı (erişilebilirlik).**
+> - **Statik tarama** (`a11yLabels.test.ts`, TS AST) ilk koşuda şunları
+>   buldu, hepsi düzeltildi:
+>   - 5 adsız ikon düğmesi
+>   - 3 `alt`'sız görsel (sensör görseli `alt=""`, cevabı ele vermesin)
+>   - 6 klavyeyle erişilemeyen tıklanabilir öğe
+>   - 11 etiketle ilişkilendirilmemiş girdi
+>
+>   Form içindeki tipsiz düğme de kural oldu (2.1'de bulunan oturum kapatma
+>   hatası).
+> - **Klavye:** inceleme ekranındaki cevap kartları `role="button"`,
+>   `aria-pressed`, Enter/Boşluk ve odak halkası aldı. Modal, ödül, ekran
+>   koruyucu ve kiosk katmanları Escape ile kapanıyor (`useEscapeKey`).
+>   2X anahtarı `role="switch"` oldu.
+> - **Çalışma zamanı** (`@axe-core/playwright`): açılış, katılım, telefon
+>   lobisi, TV panosu ve echo kumandasında WCAG 2.1 A/AA ihlali 0. İlk
+>   koşu QR kodunun adsız `<svg>`'sini yakaladı; QR'lara başlık eklendi.
+> - **Kontrast:** axe, neon arka plan görselleri ve gradyanlar yüzünden
+>   ~13–26 öğe/ekran için karar veremiyor ("incomplete"). Bunlar testte not
+>   olarak raporlanıyor; elle gözden geçirme gerekiyor.
+>
+> **2.7 başladı — `GameSettingsModal` ayrıştırıldı** (868 → 187 satır).
+> - **Önce kalkan:** `e2e/game-settings.spec.ts` klasik oyun ve quiz
+>   ayarlarını seçip odaya yazılanları doğruluyor. Kalkan eski kodda yeşil
+>   olduğu görüldükten sonra ayrıştırmaya geçildi.
+> - **Durum:** 17 `useState` → tek form nesnesi. Oyun varsayılanları ve odaya
+>   yazılan ayarlar `lib/gameSettings.ts`'te (saf, 9 birim testi).
+> - **Görünüm:** 14 kez kopyalanmış seçenek ızgarası → `OptionGrid`. Oyun
+>   başına bölümler iki dosyada, meta veriler ayrı modülde; hepsi < 400
+>   satır.
+> - **Bulgu (davranış korunarak bırakıldı):** "can sayısı" (bomba sabit 3
+>   kullanıyor), "2X final", "tarif hızı" ve "zafer koşulu" seçimleri hiçbir
+>   yere yazılmıyor; ekranda seçilebiliyor ama etkisi yok. Ya bağlanmalı ya
+>   kaldırılmalı (ürün kararı).
+>
+> **`HostQuizDisplay` ayrıştırıldı** (843 → 395 satır).
+> - **Önce kalkan:** `e2e/quiz.spec.ts`, iki telefonla iki soru oynatıp
+>   puanları doğruluyor: doğru 1000, en hızlıya +500, üst üste doğruya ×1.2
+>   (ALFA 1500 → 3300, BETA 0). Eski kodda art arda yeşil görüldü.
+> - **Puanlama** `lib/quizScoring.ts`'e taşındı (saf, 8 birim testi): hız
+>   sırası, seri çarpanı, final ×2, ilk cevap kuralı, en hızlı doğru.
+> - **Görünümler:** durum başına beş bileşen (`views/Quiz*.tsx`) mekanik
+>   olarak çıkarıldı; JSX ve çeviri anahtarları aynı (anahtar kümesi
+>   karşılaştırılarak doğrulandı).
+>
+> **2.7 tamamlandı — `HostDisplay` ayrıştırıldı** (700 → 76 satır yönlendirici).
+> - **Önce kalkan:** `e2e/classic.spec.ts`, iki telefonla bir tur oynatıyor.
+>   Host'un yazdığı puan, odadaki gerçek cevaplardan saf puanlama
+>   fonksiyonuyla hesaplananla birebir aynı ve tek seferlik; ardından
+>   inceleme → sıralama → ikinci tur.
+> - **Kalkanın bulduğu canlı hata:** ikinci tura geçerken `tutorial_step:
+>   undefined` yazılıyor, TV "bağlantı hatası"na düşüyordu; klasik oyun
+>   1. turdan öteye geçemiyordu. Yığında düzeltildi ve `roomStatusPayload`
+>   ile genelleştirildi. Ayrıca main'e minimal hotfix:
+>   oarslanerbln-pixel/alaz-neon#338.
+> - **Yapı:** `classic/useClassicGame.ts` (durum + akış, 375),
+>   `classic/HostDisplayGame.tsx` (çizim, 198), `useClassicMusic` ve
+>   genel `useRoundTimer` (3 birim testi). Harf seçimi, cevap geçerliliği
+>   değiştirme ve podyum istatistikleri `lib/classicRound.ts`'te (6 test).
+> - **Yan bulgu:** anlatım düğmesinde Framer ölçeklemesi ile CSS
+>   `transition-all` aynı `transform`'u canlandırıp düğmeyi fare üzerindeyken
+>   titretiyordu; geçiş renklere sınırlandı.
+> - **Sonuç:** üç büyük bileşen 868 / 843 / 700 → 187 / 394 / 76 satır. Yeni
+>   dosyaların hepsi < 400 satır. E2E 7 senaryo; tam takım ve klasik test
+>   art arda yeşil.
+>
+> **2.1 tamamlandı — oyun kapsamı 15/15.** `e2e/games.spec.ts` kalan 12 modu
+> TV + iki telefonla oynatıyor:
+> - **İskelet:** panodan başlat → telefonda kumanda açılır → bir tur oynanır
+>   (puan, giriş kaydı ya da oda alanı doğrulanır) → TV lobiye döner.
+>   Telefonlar da bekleme ekranına dönüyor.
+> - **Yardımcılar:** `e2e/support/games.ts`.
+> - **Cihaz sızıntısı giderildi:** her testten önce önceki testin tarayıcı
+>   bağlamları kapatılıyor (`freshStart`). Kapatılmayan sekmeler silinen
+>   odaları dinleyip worker boyunca birikiyordu.
+> - **Bulunan dört canlı hata (düzeltildi):**
+>   - **Şifre ve Birlik hiç başlamıyordu.** Pano odayı `lobby` ile açıyordu;
+>     iki ekran yalnızca `*_intro`'dan ilerlediği için anlatım ekranında
+>     donuyordu.
+>   - **Şifre kazananı 500 yerine ~14.500 puan alıyordu.** Cevap dinleyicisi
+>     açıklamaya kadar geçen 3 sn'de her anlık görüntüde +500 ekliyordu.
+>     Artık kod başına bir kez ödüllendiriliyor. Kazanan belge kimliği
+>     sırasına göre değil, en erken doğru tahmine göre seçiliyor
+>     (`lib/vault.ts`).
+>   - **Önceki oyunun kodu kalıyordu.** İkinci Şifre oyunu aynı kodla
+>     açılıyordu; ikinci Birlik oyunu eski kalabalığın hedefini
+>     kullanıyordu. Başlangıçta temizleniyorlar.
+>   - **Neon Savaşları takımları dengesizdi.** Panodan başlatılınca takımlar
+>     kurulmuyordu: takım oyuncu kimliğinin son karakterinden çıkıyordu (iki
+>     oyuncu aynı takıma düşebiliyordu). Hedef kalabalığa göre ayarlanmıyor,
+>     önceki oyunun dokunuşları sıfırlanmıyordu. Artık `lib/colorsTeams.ts`
+>     ile dengeli dağıtılıyor.
+>
+> **Ayar penceresi ↔ oyun bağı tamamlandı (2.7 yan bulgusu).** Pencerede
+> görünüp oyuna hiç geçmeyen ayarlar bağlandı: her biri odaya yazılıyor ve
+> oyun okuyor (`buildRoomSettings`; alan yoksa `RULE_DEFAULTS`).
+> - **Bomba:**
+>   - Seçilen can (1/2/3) oyun başında her oyuncuya veriliyor. Canlar
+>     önceden yalnızca "sıfırla"da geri geliyordu: gecenin ikinci bomba
+>     oyununda önceki oyunda elenenler oynayamıyordu.
+>   - Hız çarpanı başlangıçta 1.0'a eziliyordu.
+> - **Quiz:** "2X final" kapatılabiliyor.
+> - **Sensör:**
+>   - Tur sayısı ve bulanıklık süresi başlangıçta atılıyordu; önceki oyunun
+>     tur sayısı kullanılıyordu.
+>   - Doğru cevap ayardaki puanı (1000) veriyor. TV düğmesi "+1000" derken
+>     100 ekleniyordu.
+> - **Bar:** tarif hızı (Normal 4,5 sn / Turbo 3 sn).
+> - **Neon Savaşları:**
+>   - "45 sn süre düellosu" hiç yoktu. Artık TV geri sayıyor, süre sonunda
+>     önde olan kazanıyor, eşitlik berabere (`colorsOutcome`).
+>   - Bombada elenen oyuncu takımsız kalmıyor.
+> - **Dil:** penceredeki Almanca sabit metinler (tarif hızı, kazanma koşulu,
+>   quiz konuları) üç dile taşındı.
+
+| İş | Kapsar | Efor | Kabul kriteri |
+|---|---|---|---|
+| 2.1 Playwright çok-context E2E (1 host + 3 oyuncu, emulator); her oyun için lobi → tur → podyum duman testi; CI job | Q1 | L | 15 oyun modu yeşil |
+| 2.2 Görsel hattı: AVIF/WebP, telefon 1080 px / TV 1920 px, `loading`/`fetchpriority` | P1 | S | `public/` < 4 MB; player ilk ekran görseli ≤ 150 KB |
+| 2.3 i18n dil başına lazy; Sentry boşta yüklenir | P2 | M | Ana chunk ≤ 80 KB gzip |
+| 2.4 Sentry `release` + sourcemap + rol/oda/oyun etiketi; `console.*` → logger | O1, A6 | M | Prod hatası okunur stack trace ile gelir |
+| 2.5 Wake Lock: oyun sırasında host + player, görünürlük dönüşünde yeniden al | U1 | S | 10 dk dokunulmayan telefon kararmaz |
+| 2.6 CI kapıları: audit eşiği, bundle bütçesi, `src/lib` coverage ≥ %80 | Q3 | S | Kapılar her PR'da çalışır |
+| 2.7 Büyük bileşen ayrıştırma (E2E kalkanı geldikten sonra): durum mantığı `src/lib`'e | A3, Q2 | M | Her biri < 400 satır; davranış değişmez |
+| 2.8 PWA: PNG ikonlar, `orientation: any`, (ops.) service worker kabuğu | U2 | S | Lighthouse PWA kontrolleri geçer |
+| 2.9 Sentinel: gerçek sinyale bağla ya da sadeleştir | A4 | S | Karar + uygulama |
+| 2.10 Tek hosting hedefi + güvenlik başlıkları + asset önbelleği | O3 | S | Başlıklar prod'da doğrulanmış |
+| 2.11 Erişilebilirlik taraması (player kumandaları, kontrast, odak) | U3 | M | `a11yLabels.test` kapsamı genişletilmiş |
+
+### Faz 3 — Ürün büyümesi (2027 Q1)
+
+| İş | Kapsar | Efor |
+|---|---|---|
+| 3.1 Çok mekan: `venues/{venueId}`, mekan başına personel, oda ↔ mekan bağı, `isStaffOf(venueId)` + veri göçü ✅ (aşama A) | A5, B1 | L |
+| 3.2 Telemetri (`events`, host yazar) + mekan KPI paneli / haftalık rapor ✅ | O2, B3 | M |
+| 3.3 Sponsor ekranı + proof-of-play kaydı ve sponsor raporu ✅ | B2 | M |
+| 3.4 İçerik hattı: JSON + şema doğrulama + mekan/kurum özel soru paketi ✅ | B4 | M |
+| 3.5 D2: Blaze + Cloud Functions (ödül, puanlama, custom claim, temizlik), bütçe alarmıyla | D2 | L |
+
+> **3.4 tamamlandı (içerik hattı).**
+> - **JSON:** quiz havuzları `src/content/quiz/{tr,de,en}.json` dosyalarında
+>   (220 soru, içerik birebir). Geliştirici olmayan bir editör de
+>   düzenleyebilir.
+> - **Tek şema:** `lib/quizPack.ts`. Gömülü havuzlar CI'da (quizContent
+>   testi), yüklenen paketler yüklemede ve oyun başında aynı kurallarla
+>   doğrulanıyor. Hatalar kod + soru kimliği olarak dönüyor, ekran üç dilde
+>   açıklıyor.
+> - **Soru paketleri:** personel `/admin/content`'te JSON paketi yüklüyor;
+>   örnek dosya oradan indiriliyor. Paket `quiz_packs` koleksiyonunda
+>   duruyor; yalnızca personel okuyup yazabiliyor (doğru cevaplar içinde).
+>   Paket değiştirilmiyor, silinip yeniden yükleniyor. TV quiz ayarlarında
+>   "soru kaynağı" seçiliyor; seçilince sorular yalnızca paketten geliyor.
+> - **Kalkan:**
+>   - 4 kural testi (yetki, sahiplik, boyut/dil, değişmezlik).
+>   - Şema ve seçim birim testleri.
+>   - `e2e/content.spec.ts`: hatalı dosya reddi, yükleme, TV'de seçim,
+>     odaya paketten soru yazılması, erişilebilirlik.
+> - **Yayında gereken:** `firebase deploy --only firestore:rules`; yeni
+>   koleksiyonun kuralı olmadan yükleme reddedilir.
+> - **3.1 ile:** paketler artık mekanın (`venues/{v}/quiz_packs`, karar D7).
+>
+> **3.2 tamamlandı (telemetri + mekan KPI'ları).**
+> - **Olaylar:** TV her oyunun başında ve sonunda `events`'e bir olay
+>   yazıyor (oyun, oyuncu sayısı, başlangıç/bitiş). Başlangıç panodan
+>   (HostDashboard), bitiş tüm çıkışların geçtiği `useHostRoom` içinden
+>   yazılıyor.
+> - **Erişim:** yalnızca odanın host'u (personel) yazar, personel okur.
+>   Olaylar değiştirilemez; belge kimliği olaydan türediği için iki TV
+>   açıkken de tek kayıt kalıyor. TTL `expires_at` ile.
+> - **KPI'lar:** `lib/venueKpis.ts` (saf, birim testli): oynanan oyun ve
+>   gece başına, en çok oynananlar, oyun başına oyuncu, ortalama süre (90
+>   dk üstü "TV açık kaldı" sayılmıyor), en yoğun saat, tekil ve geri dönen
+>   misafir (son 90 gün). `/admin/report` bunları gösteriyor ve özete
+>   ekliyor.
+> - **Düzeltilen ölçüm hatası:** "en çok oynanan oyun" odanın SON oyunundan
+>   sayılıyordu. Bir gece onlarca oyun barındırdığı için yanıltıcıydı.
+>   Telemetrisi olmayan eski aralıklarda eski döküm gösteriliyor.
+> - **Kalkan:**
+>   - 3 kural testi.
+>   - KPI birim testleri.
+>   - `e2e/telemetry.spec.ts`: olay çifti ve raporda görünüm.
+> - **Yayında gereken:** kural dağıtımı ve `events` için TTL politikası
+>   (README).
+>
+> **Cevap sızıntısı kapatıldı.** Oda belgesi herkese açık okunuyor; misafir
+> telefonundan ya da tarayıcı konsolundan doğru cevabı okuyabiliyordu. Ödül
+> puana bağlı olduğu için gerçek bir hile yoluydu.
+> - **Quiz:** doğru cevap ve bilgi notu host'a özel
+>   `rooms/{id}/secrets/quiz` belgesinde. Odaya yalnızca açık soru
+>   yazılıyor; doğru cevap açıklama anında `quiz_reveal` ile geliyor. Bu
+>   durumdan sonra kurallar cevap kabul etmiyor.
+> - **Şifre:** kod `secrets/vault`'ta. İpucu (doğru yer / var / yok)
+>   önceden telefonda koddan hesaplanıyordu; artık TV hesaplayıp tahminin
+>   `feedback` alanına yazıyor (yalnızca host, yalnızca bu alan). Kod
+>   oyun bitince açıklanıyor.
+> - **Ayna:** gerçek değerler ve notlar telefonun indirdiği koddaydı.
+>   Artık yalnızca TV'nin yüklediği `lib/aynaFacts.ts`'te; açıklamada
+>   odaya yazılıyor.
+> - **Sensör:** okunmayan `sensor_media_answer` alanı artık yazılmıyor.
+> - **Yan düzeltme:** quiz "tekrar oyna" seçili soru paketini yok sayıp
+>   gömülü havuza dönüyordu.
+> - **Kalkan:**
+>   - 4 kural testi (gizli belge yalnızca host; ipucunu yalnızca host
+>     yazar).
+>   - Birim testleri.
+>   - E2E: odada cevap yok, açıklamada geliyor; Şifre ipucu TV'den.
+>
+> **Giriş paketi ve dil artıkları.**
+> - **Sözlük:** `de` da tembel iniyor; Türkçe/İngilizce misafir artık
+>   Almanca sözlüğü indirmiyor. Giriş paketi 26,4 → 10,5 KB gzip, ilk yük
+>   JS 343 → 327 KB. Bütçe buna sıkılaştırıldı (13 / 340 KB).
+> - **Sabit metinler:** misafir ve TV ekranlarındaki ~55 sabit metin üç
+>   dile taşındı. Örnekler: telefonda "HIZLA BAS!", "Senin Katkın:"; TV'de
+>   "ŞİFRE:", "OYUNCUNUN TAHMİNİ:"; giriş sayfası Almanca "JETZT
+>   BEITRETEN"; hata ekranı.
+> - **Kalkan:** `hardcodedText.test.ts` (AST taraması). Yalnızca marka/süs
+>   metinlerine izin veriyor.
+> - **Kalan:** `src/pages/admin/` (yalnızca personel) hâlâ sabit Türkçe.
+>
+> **3.3 tamamlandı (sponsor ekranı + proof-of-play).**
+> - **Reklam arası her yerde:** artık yalnızca klasik oyunda değil, TV
+>   panosundan oyunlar arasında da veriliyor (mekanın reklamı varsa).
+>   Telefonlar reklam ekranını gösteriyor.
+> - **Gösterim kaydı (`ad_impressions`):** her reklam için sponsor,
+>   ekranda kalınan süre, planlanan süre, sonuna kadar gösterildi mi
+>   (atlanan ya da kesilen de kaydediliyor) ve bağlı misafir sayısı. Yalnızca
+>   odanın host'u yazar, personel okur; kayıt değiştirilemez, silinemez.
+> - **Rapor:** `/admin/report`'ta sponsor başına gösterim, tam gösterim
+>   oranı, ekran süresi, ortalama izleyici; satır satır döküm CSV olarak
+>   (sponsora ek / fatura). Mantık `lib/sponsorReport.ts`'te.
+> - **Düzeltilen iki hata:**
+>   - Görsel reklamın zamanlayıcısı TV'nin her oda güncellemesinde baştan
+>     başlıyordu; reklam hiç bitmeyebiliyordu.
+>   - Yüklenemeyen video reklam arasını sonsuza dek kilitliyordu.
+> - **Kalkan:**
+>   - 3 kural testi.
+>   - Rapor birim testleri.
+>   - `e2e/sponsor.spec.ts`: reklam arası, kayıt, rapor.
+> - **Yayında gereken:** kural dağıtımı ve `ad_impressions` için TTL
+>   (README).
+>
+> **3.1 tamamlandı (çok mekan, göç aşaması A).** Tasarım ve kararlar (D4–D7):
+> `docs/design/3.1-cok-mekan.md`.
+> - **Model:** `venues/{v}` (marka, ödül, sponsor, çark), `venues/{v}/staff/{uid}`
+>   (`owner` | `staff`), `venues/{v}/quiz_packs`, `platform_admins/{uid}`.
+>   `rooms`, `rewards`, `events`, `ad_impressions` `venue_id` taşıyor; değer
+>   kuralla odanınkine eşitleniyor, oda açıldıktan sonra değişmiyor.
+> - **Kurallar:** `isStaffOf(venueId)` (üyelik belgesi; Blaze sonrası custom
+>   claim de geçerli). Geçişte global `staff/{uid}` `default` mekanın
+>   personeli sayılıyor, mekansız eski kayıt `default`'un.
+> - **İstemci:**
+>   - Personel girişte üye olduğu mekanları görüyor; tek mekan kendiliğinden
+>     seçiliyor, birden çoksa seçim kutusu (seçim cihazda saklanıyor).
+>   - TV ve telefon markayı odanın mekanından alıyor.
+>   - Rapor, ödül doğrulama, soru paketleri, KPI ve sponsor dökümü seçili
+>     mekana süzülüyor (`hooks/venueDocs.ts`).
+>   - Sahip `/admin/staff`'ta hesap kimliğiyle personel ekleyip çıkarıyor.
+> - **Yönetim:** `scripts/venue-admin.mjs` (Admin SDK, varsayılan kuru
+>   çalışma): mekan açma, sahip atama, göç (A) ve geri doldurma (B).
+>   Bileşik indeksler `firestore.indexes.json`'da.
+> - **Kalkan:**
+>   - 3.1 kural matrisi (A mekanının personeli B'nin verisine dokunamaz,
+>     sahip yalnızca personel ekler/çıkarır, sözleşme alanları ekibin).
+>   - `e2e/venues.spec.ts`: sahip personel ekler → yeni personel o mekanın
+>     gecesini açar; iki mekanlı hesap mekan seçer, rapor seçili mekanın.
+> - **Yayında gereken** (sırayla, mekan saatleri dışında):
+>   1. Kurallar ve indeksler:
+>      `firebase deploy --only firestore:rules,firestore:indexes`.
+>   2. `node scripts/venue-admin.mjs migrate --owner <uid>` önce kuru, sonra
+>      `--apply`; ardından `backfill` (servis hesabıyla, onaylı).
+> - **Sonraki adım (aşama C):** global `staff` geri dönüşü kurallardan
+>   kalkar. Geçişte global personel tüm mekanların ödüllerini kural
+>   düzeyinde okuyabiliyor (istemci süzüyor); bu yüzden ikinci mekan,
+>   geri doldurma ve C aşamasından sonra açılmalı.
+
+## 6. Başarı metrikleri
+
+| Metrik | Bugün | Faz 1 sonu | Faz 2 sonu |
+|---|---|---|---|
+| Anonim oturumdan sahte ödül/puan | mümkün | kural testleriyle reddediliyor | — |
+| 30 oyunculu lobi okuma/dk | ~3.720 | ≤ 150 | ≤ 150 |
+| 30 kişi × 4 saat gece, toplam okuma | kota aşımı | ≤ 30.000 (kotanın %60'ı) | — |
+| Bilinen sessiz permission-denied | 1 (emoji) | 0 + sözleşme testi | 0 |
+| E2E kapsanan oyun modu | 0 / 15 | — | 15 / 15 ✅ |
+| Player ilk yük (JS gzip + ilk görsel) | ~360 KB + ~0,8 MB | — | ≤ 300 KB + ≤ 150 KB |
+| Prod yüksek seviye açık | 7 | 0 | 0 |
+
+## 7. Risk kaydı
+
+| Risk | Olasılık | Etki | Önlem |
+|---|---|---|---|
+| Kural sıkılaştırması mevcut bir oyun akışını kırar | Yüksek | Yüksek | Her kural değişikliği ilgili istemci yolunun emulator testiyle aynı PR'da; 1.4 sözleşme testi önce |
+| D1 (host = personel) mekan kurulumunu zorlaştırır | Orta | Orta | TV'de kalıcı oturum; personel girişi için QR |
+| Şema göçü (`users_public`, `venues`) açık sekmelerdeki eski istemcileri kırar | Orta | Orta | Çift yazma dönemi; `staleChunk` yeniden yükleme zaten mevcut |
+| Blaze maliyet sürprizi | Düşük | Orta | Bütçe alarmı; Functions'ta min instance 0 |
+
+## 8. Sonraki adım
+
+Faz 0 tek PR serisi olarak açılır: (a) saldırı senaryolarını kanıtlayan kırmızı
+kural testleri, (b) kurallar, (c) istemci uyarlaması. **D1 kararı 0.2 ve 0.3'ün
+ön koşuludur** — onay gelince başlanabilir.

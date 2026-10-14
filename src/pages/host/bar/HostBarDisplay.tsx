@@ -6,6 +6,7 @@ import type { Room, Player } from "../../../types/database";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { HostHeader } from "../components/HostHeader";
 import { KineticSpark } from "../../../components/KineticSpark";
+import { RULE_DEFAULTS } from "../../../lib/gameSettings";
 import { finishNightRound } from "../../../lib/nightAwards";
 import { placementPointsByScore } from "../../../lib/nightLeague";
 
@@ -92,20 +93,21 @@ export function HostBarDisplay({ room, players, updateRoomStatus }: Props) {
       }
     }, 500);
 
-    // Recipe rotation every 4.5 seconds
+    // Tarif ayardaki aralıkla değişir (Normal 4,5 sn / Turbo 3 sn).
+    const recipeMs = (room.bar_recipe_seconds ?? RULE_DEFAULTS.barRecipeSeconds) * 1000;
     const recipeInterval = setInterval(() => {
       const remaining = Math.max(0, Math.floor((room.bar_end_time! - Date.now()) / 1000));
       if (remaining > 0) {
         const recipe = Array.from({ length: 4 }).map(() => COLORS[Math.floor(Math.random() * COLORS.length)]);
         updateRoomStatus("bar_active", { bar_active_recipe: recipe });
       }
-    }, 4500);
+    }, recipeMs);
 
     return () => {
       clearInterval(timerInterval);
       clearInterval(recipeInterval);
     };
-  }, [gameState, room.bar_end_time, updateRoomStatus]);
+  }, [gameState, room.bar_end_time, room.bar_recipe_seconds, updateRoomStatus]);
 
   const sortedPlayers = [...players].sort((a, b) => (b.bar_score || 0) - (a.bar_score || 0));
   const topPlayers = sortedPlayers.slice(0, 5);
@@ -230,7 +232,7 @@ export function HostBarDisplay({ room, players, updateRoomStatus }: Props) {
                 </h1>
                 
                 <h2 className="text-6xl md:text-7xl font-black text-white uppercase tracking-wider mb-8 drop-shadow-lg">
-                  {topPlayers[0]?.nickname || t("bar.unknown")} ({topPlayers[0]?.bar_score || 0} Kokteyl)
+                  {topPlayers[0]?.nickname || t("bar.unknown")} ({t("bar.cocktailCount", topPlayers[0]?.bar_score || 0)})
                 </h2>
 
                 <button

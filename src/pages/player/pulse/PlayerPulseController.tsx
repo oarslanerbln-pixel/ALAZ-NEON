@@ -4,10 +4,16 @@ import { useLocale } from "../../../hooks/useLocale";
 
 import type { Room, Player } from "../../../types/database";
 import { db } from "../../../lib/firebase";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { useToast } from "../../../contexts/ToastContextCore";
+import { isInputForRound } from "../../../lib/roomInputs";
+import { pulseInputPayload } from "../../../lib/clientWrites";
+import { useOwnRoomInput } from "../../../hooks/useRoomInputs";
 import { gameTitle } from "../../../lib/gameCatalog";
 import { PlayerStageScreen } from "../components/PlayerStageScreen";
+import { createLogger } from "../../../lib/logger";
+
+const log = createLogger("PlayerPulseController");
 
 interface Props {
   room: Room;
@@ -15,25 +21,28 @@ interface Props {
 }
 
 export function PlayerPulseController({ room, player }: Props) {
-  const [hasClicked, setHasClicked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSubmittingRef = useRef(false);
   const { showToast } = useToast();
   const { t } = useLocale();
-  
+
+  // Dokunuş oyuncunun kendi giriş kaydına yazılıyor (bkz. lib/roomInputs.ts);
+  // sonucu host reveal anında room.pulse_clicks'e topluyor.
+  const ownInput = useOwnRoomInput(room.id, player.id);
+  const hasClicked = isInputForRound(ownInput, room.input_round);
 
   // Reset local state
   useEffect(() => {
     if (room.status === "pulse_intro" || room.status === "pulse_active") {
-      const myClick = room.pulse_clicks?.[player.id];
-      setHasClicked(!!myClick);
       isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
-  }, [room.status, room.pulse_clicks, player.id]);
+  }, [room.status]);
 
   const handlePulse = async () => {
     if (hasClicked || isSubmittingRef.current || room.status !== "pulse_active") return;
+    const round = room.input_round;
+    if (typeof round !== "number") return;
     isSubmittingRef.current = true;
     setIsSubmitting(true);
     
@@ -44,13 +53,9 @@ export function PlayerPulseController({ room, player }: Props) {
     }
 
     try {
-      const roomRef = doc(db, "rooms", room.id);
-      await updateDoc(roomRef, {
-        [`pulse_clicks.${player.id}`]: clickTime
-      });
-      setHasClicked(true);
+      await setDoc(doc(db, "rooms", room.id, "inputs", player.id), pulseInputPayload(round, clickTime));
     } catch (err) {
-      console.error(err);
+      log.error(err);
       showToast(t("pulse.connectionError", "Bağlantı hatası!"), "error");
     } finally {
       isSubmittingRef.current = false;
@@ -92,7 +97,7 @@ export function PlayerPulseController({ room, player }: Props) {
       resultNode = (
         <div className="mt-8">
           <h3 className="text-4xl font-black uppercase tracking-widest text-[#ff003c]">
-            BASMADIN!
+            {t("pulse.missedTap")}
           </h3>
         </div>
       );

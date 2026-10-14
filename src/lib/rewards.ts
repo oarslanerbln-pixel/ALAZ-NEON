@@ -1,8 +1,10 @@
 import { collection, doc, writeBatch } from "firebase/firestore";
+import { DEFAULT_VENUE_ID } from "./venues";
 import { db } from "./firebase";
 import { generateCode } from "./codes";
 import { resolveWinners, type Winner } from "./rewardWinners";
-import type { GameMode, Player, Reward, VenueConfig } from "../types/database";
+import { rewardPayload } from "./clientWrites";
+import type { GameMode, Player, VenueConfig } from "../types/database";
 
 /**
  * Belirtilen kazananlara mekan şablonundan bir Reward dokümanı yazar.
@@ -18,8 +20,12 @@ import type { GameMode, Player, Reward, VenueConfig } from "../types/database";
  * Firestore yazma hatası (izin, bağlantı vb.) oyunun bitişini ENGELLEMEMELİ
  * — bu yüzden çağıran taraf hatayı yutup sadece konsola loglamalı, ödül
  * dağıtımı oyunun kendisinden daha az kritik.
+ *
+ * `roomId` zorunlu: kural ödülü yalnızca personel hesabıyla açılmış ve
+ * yazanın host'u olduğu bir odaya bağlıysa kabul ediyor (firestore.rules).
  */
 export async function grantRewardToPlayers(
+  roomId: string,
   winners: Winner[],
   venue: VenueConfig,
 ): Promise<void> {
@@ -29,39 +35,23 @@ export async function grantRewardToPlayers(
 
   const batch = writeBatch(db);
   const now = Date.now();
-  // Firestore `set()` undefined alan kabul etmiyor (hata fırlatıyor) — bu
-  // yüzden geçerlilik günü tanımlı değilse expires_at anahtarını objeye hiç
-  // eklemiyoruz, `undefined` olarak set etmiyoruz.
-  const validityDays = venue.reward_validity_days;
-  const expiresAt =
-    typeof validityDays === "number" && validityDays > 0
-      ? now + validityDays * 24 * 60 * 60 * 1000
-      : null;
-
   for (const { uid, nickname } of validWinners) {
     const rewardRef = doc(collection(db, "rewards"));
-    const reward: Omit<Reward, "id"> = {
-      uid,
-      nickname,
-      type: venue.reward_type || "drink",
-      title: venue.reward_title.trim(),
-      description: venue.reward_description?.trim() || "",
-      status: "available",
-      code: generateCode(6),
-      earned_at: now,
-      ...(expiresAt !== null ? { expires_at: expiresAt } : {}),
-    };
-    batch.set(rewardRef, reward);
+    batch.set(
+      rewardRef,
+      rewardPayload({ roomId, venueId: venue.id || DEFAULT_VENUE_ID, uid, nickname, venue, code: generateCode(6), now }),
+    );
   }
   await batch.commit();
 }
 
 /** Puan bazlı oyunlar için: kazananı puana göre bulur, sonra ödülü yazar. */
 export async function grantGameRewards(
+  roomId: string,
   gameMode: GameMode,
   players: Player[],
   venue: VenueConfig,
 ): Promise<void> {
   const winners = resolveWinners(gameMode, players);
-  await grantRewardToPlayers(winners, venue);
+  await grantRewardToPlayers(roomId, winners, venue);
 }

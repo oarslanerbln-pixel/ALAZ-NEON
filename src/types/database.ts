@@ -72,6 +72,14 @@ export interface QuizQuestion {
   funFact?: string;
 }
 
+/**
+ * Odaya yazılan (herkesin okuduğu) soru: doğru cevap ve bilgi notu yok.
+ * Onlar yalnızca host'un okuduğu `rooms/{id}/secrets/quiz` belgesinde
+ * (bkz. lib/gameSecrets.ts); doğru cevap açıklama anında `quiz_reveal` ile
+ * odaya yazılır.
+ */
+export type PublicQuizQuestion = Omit<QuizQuestion, "correctOption" | "funFact">;
+
 export interface Room {
   id: string;
   code: string;
@@ -84,7 +92,7 @@ export interface Room {
    */
   created_at?: number;
   /**
-   * Host ekraninin son sinyali (epoch ms). TV tarayicisi 15 sn'de bir
+   * Host ekraninin son sinyali (epoch ms). TV tarayicisi 30 sn'de bir
    * guncelliyor (bkz. useHostRoom). Oyuncu tarafi bu alana bakip "host
    * cevrimdisi" uyarisi gosteriyor — onceden host kopunca oda sonsuza kadar
    * donuk kaliyor, misafire hicbir aciklama cikmiyordu.
@@ -92,6 +100,13 @@ export interface Room {
   host_last_active?: number;
   /** Bu oyunun gecelik lig puanları dağıtıldı mı (bkz. lib/nightAwards). */
   night_awarded?: boolean;
+  /**
+   * Odadaki oyuncu sayısı — yalnızca host yazar, yalnızca katılım/ayrılmada
+   * değişir (bkz. lib/playerCount.ts). Lobideki telefonlar sayıyı buradan
+   * okuyor; bütün `players` sorgusunu dinlemek okuma kotasını bitiriyordu.
+   * Alan eklenmeden önce açılmış odalarda yok.
+   */
+  player_count?: number;
   /**
    * Firestore TTL politikasinin baktigi alan — bu tarihten sonra dokuman
    * otomatik siliniyor (bkz. lib/retention.ts ve README). TTL yalnizca bu
@@ -102,6 +117,8 @@ export interface Room {
   active_game?: GameType | "none";
   game_type?: GameType; // Legacy
   host_uid?: string;
+  /** Odanın mekanı (docs/design/3.1-cok-mekan.md); bu sürümden önceki odalarda yok = "default". */
+  venue_id?: string;
   categories: string[];
   timer_setting: number;
   total_rounds: number;
@@ -114,13 +131,21 @@ export interface Room {
   used_sensor_images?: string[];
   used_bomb_categories?: string[];
   locale?: Locale;
-  quiz_questions?: QuizQuestion[];
+  quiz_questions?: PublicQuizQuestion[];
+  /** Açıklanan sorunun doğru cevabı; soru açıkken null. */
+  quiz_reveal?: { index: number; correctOption: QuizQuestion["correctOption"] } | null;
   /**
    * Host'un kurulum modalinde sectigi quiz konulari. Onceden bu secim
    * toplaniyordu ama hicbir yere yazilmiyordu — host kategori seciyor,
    * hicbir sey olmuyordu.
    */
   quiz_topics?: string[];
+  /** Son soru çift puan (ayar penceresindeki "2X final"). Alan yoksa açık. */
+  quiz_double_final?: boolean;
+  /** Seçilen mekan/kurum soru paketi (`quiz_packs`); yoksa gömülü havuz. */
+  quiz_pack_id?: string | null;
+  /** Etkin oyunun başladığı an (epoch ms); oyun olayları (`events`) bununla eşleşir. */
+  game_started_at?: number;
   current_question_index?: number;
   next_letter?: string;
   // Bomb Game Fields
@@ -128,11 +153,14 @@ export interface Room {
   previous_bomb_target_player?: string | null;
   used_words?: string[];
   bomb_speed_multiplier?: number;
+  /** Oyun başında her oyuncuya verilen can (ayar; yoksa 3). */
+  bomb_lives?: number;
   // Tutorial Fields
   tutorial_step?: number;
   // Sensor Game Fields
   sensor_current_media?: string;
-  sensor_media_answer?: string;
+  /** Doğru cevabın puanı (ayar; yoksa 1000). */
+  sensor_point_reward?: number;
   sensor_buzzer_player_id?: string | null;
   sensor_buzzer_timestamp?: number | null;
   sensor_player_answer?: string | null;
@@ -152,10 +180,20 @@ export interface Room {
    * ikinci Echo turu bir onceki gecenin sorusuyla ve oylariyla aciliyordu.
    */
   echo_question?: string | null;
+  /**
+   * Echo oylarının SONUCU: host reveal anında rooms/{id}/inputs kayıtlarından
+   * toplayıp yazar (bkz. lib/roomInputs.ts). Oyuncular buraya yazamaz.
+   */
   echo_votes?: Record<string, string>;
   // Pulse Game Fields
   pulse_target_time?: number;
+  /** Pulse dokunuşlarının SONUCU — echo_votes ile aynı şekilde host yazar. */
   pulse_clicks?: Record<string, number>;
+  /**
+   * Host'un açtığı giriş turu (epoch ms). Oyuncu girişi yalnızca bu tura
+   * ait olarak ve tur başına bir kez yazılabilir (firestore.rules → inputs).
+   */
+  input_round?: number;
   pulse_result?: number;
   // Ad Break Flow Control
   ad_break_next_state?: RoomStatus;
@@ -165,6 +203,10 @@ export interface Room {
   colors_blue_score?: number;
   colors_team_assignments?: Record<string, "red" | "blue">;
   colors_end_time?: number;
+  /** "domination": çubuk bir uca dayanınca biter; "timed": süre sonunda önde olan kazanır. */
+  colors_win_condition?: "domination" | "timed";
+  /** Biten oyunun sonucu; TV açıklaması bunu gösterir. */
+  colors_winner?: "red" | "blue" | "draw" | null;
   // Vault Game Fields
   vault_code?: string;
   vault_winner_id?: string | null;
@@ -175,6 +217,8 @@ export interface Room {
   // Bar Game Fields
   bar_active_recipe?: string[];
   bar_end_time?: number;
+  /** Tarifin değişme aralığı, saniye (ayar; yoksa 4,5). */
+  bar_recipe_seconds?: number;
   // Kablo Game Fields
   kablo_winner_id?: string | null;
   // AYNA Game Fields (bkz. lib/ayna.ts). Soru METNİ değil kimliği saklanıyor:
@@ -196,6 +240,8 @@ export interface Room {
    * sorularında `null` — onların cevabı soru havuzunda. Açıklamadan ÖNCE
    * yazılmıyor: oda dokümanı herkese açık.
    */
+  /** Açıklanan dünya sorusunun notu (dil başına); host açıklama anında yazar. */
+  ayna_round_insight?: Record<"tr" | "de" | "en", string> | null;
   ayna_round_truth?: number | null;
   ayna_round_sample?: number | null;
   // Mekan markalaması — oda açılırken o anki aktif mekan profilinden
@@ -228,6 +274,12 @@ export interface Player {
   colors_clicks?: number;
   bar_score?: number;
   kablo_score?: number;
+  /**
+   * total_score'un ne kadarının users/{uid}.total_lifetime_score'a
+   * aktarıldığı (bkz. lib/lifetimeScore.ts). Yalnızca host yazar; katılım
+   * kuralı bu alanı kabul etmez.
+   */
+  lifetime_credited?: number;
 }
 
 export interface Answer {
@@ -336,6 +388,8 @@ export interface WheelSlice {
  * böylece marka sonradan değişse bile geçmiş odalar etkilenmez.
  */
 export interface VenueConfig {
+  /** Mekan belgesinin kimliği; belgede saklanmaz, okuyan kanca ekler. */
+  id?: string;
   name: string;
   logo_url?: string;
   /** Hex renk, örn. "#ff5500". Boşsa varsayılan HENGAME turuncusu kullanılır. */
@@ -427,6 +481,10 @@ export interface Reward {
   status: "available" | "claimed";
   code: string;
   earned_at: number;
+  /** Ödülün kazanıldığı oda — kural, yazanın bu odanın host'u olmasını şart koşuyor. */
+  room_id?: string;
+  /** Ödülün mekanı; bu sürümden önceki ödüllerde yok = "default". */
+  venue_id?: string;
   claimed_at?: number;
   /**
    * `venue.reward_validity_days`'e göre kazanıldığı anda hesaplanıp

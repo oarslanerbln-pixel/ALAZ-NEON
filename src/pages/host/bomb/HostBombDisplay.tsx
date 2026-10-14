@@ -14,6 +14,10 @@ import { grantRewardToPlayers } from "../../../lib/rewards";
 import { useVenue } from "../../../contexts/VenueContextCore";
 import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
+import { createLogger } from "../../../lib/logger";
+import { RULE_DEFAULTS } from "../../../lib/gameSettings";
+
+const log = createLogger("HostBombDisplay");
 import { finishNightRound, NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
 import { placementPointsByScore } from "../../../lib/nightLeague";
 
@@ -58,7 +62,7 @@ export function HostBombDisplay({
         bomb_speed_multiplier: 1.0,
       });
     } catch (err) {
-      console.error("Error starting bomb game:", err);
+      log.error("Error starting bomb game:", err);
     }
   };
 
@@ -68,7 +72,7 @@ export function HostBombDisplay({
         status: "bomb_intro",
       });
     } catch (error) {
-      console.error("Error completing tutorial:", error);
+      log.error("Error completing tutorial:", error);
     }
   }, [room.id]);
 
@@ -81,7 +85,7 @@ export function HostBombDisplay({
         round_end_time: Date.now() + initialTime * 1000,
       });
     } catch (error) {
-      console.error("Error transitioning to active:", error);
+      log.error("Error transitioning to active:", error);
     }
   }, [room.id]);
 
@@ -120,7 +124,7 @@ export function HostBombDisplay({
         status: "bomb_explosion"
       });
     } catch (error) {
-      console.error("Error on explosion:", error);
+      log.error("Error on explosion:", error);
     }
   }, [room.id, players]);
 
@@ -141,7 +145,7 @@ export function HostBombDisplay({
         // sırada görünmesi için ona da aynı "outlasted rakip sayısı"
         // formülüyle herkesten yüksek skoru veriyoruz.
         updateDoc(doc(db, "players", survivor.id), { total_score: survivorScore }).catch((err) =>
-          console.error("[HostBombDisplay] Kazanan skoru yazılamadı:", err),
+          log.error("Kazanan skoru yazılamadı:", err),
         );
       }
       // Gecelik lig: dayanılan rakip sayısına göre sıra (kazananın skoru
@@ -154,10 +158,11 @@ export function HostBombDisplay({
       );
       if (survivor?.uid) {
         grantRewardToPlayers(
+          room.id,
           [{ uid: survivor.uid, nickname: survivor.nickname }],
           venue,
         ).catch((err) =>
-          console.error("[HostBombDisplay] Ödül dağıtımı başarısız:", err),
+          log.error("Ödül dağıtımı başarısız:", err),
         );
       }
       await updateDoc(doc(db, "rooms", room.id), {
@@ -198,7 +203,7 @@ export function HostBombDisplay({
   // oyunu keserse tek bir kazanan seçmek keyfi olurdu.
   const handleEndGameEarly = () => {
     updateDoc(doc(db, "rooms", room.id), { status: "finished" }).catch((err) =>
-      console.error("[HostBombDisplay] Erken bitirme başarısız:", err),
+      log.error("Erken bitirme başarısız:", err),
     );
   };
 
@@ -208,7 +213,7 @@ export function HostBombDisplay({
         const batch = writeBatch(db);
         players.forEach(p => {
           const pRef = doc(db, "players", p.id);
-          batch.update(pRef, { total_score: 0, lives: 3 });
+          batch.update(pRef, { total_score: 0, lives: room.bomb_lives ?? RULE_DEFAULTS.bombLives, lifetime_credited: 0 });
         });
         await batch.commit();
 
@@ -219,9 +224,9 @@ export function HostBombDisplay({
         });
       });
     } catch (err) {
-      console.error("Error resetting bomb game:", err);
+      log.error("Error resetting bomb game:", err);
     }
-  }, [room.id, players]);
+  }, [room.id, room.bomb_lives, players]);
 
   return (
     <TVScaleFrame>

@@ -131,7 +131,7 @@ export function HostStandings({ room, players, roundResults, onNextStep }: HostS
           </h2>
         </div>
         <div className="flex items-center gap-4 border-l border-white/10 pl-6">
-          <span className="text-white/40 text-xs tracking-widest uppercase font-bold">Round</span>
+          <span className="text-white/40 text-xs tracking-widest uppercase font-bold">{t("standings.round")}</span>
           <span className="text-white font-black text-2xl tabular-nums">
             {room?.current_round}
             <span className="text-white/20 mx-1.5">/</span>

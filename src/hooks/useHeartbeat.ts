@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { doc, updateDoc } from "firebase/firestore";
 
 import { db } from "../lib/firebase";
+import { heartbeatPayload } from "../lib/clientWrites";
 
 type HeartbeatTarget =
   | { collection: "rooms"; field: "host_last_active" }
@@ -15,8 +16,8 @@ type HeartbeatTarget =
  * iki ayrı kopya vardı ve ikisi de arka planda yazmaya devam ediyordu:
  * kilitli telefon sinyal gönderip "canlı" görünüyor (bombayı alıp tur boyunca
  * kilitliyordu), her yazma da odadaki her dinleyiciye bir okuma olarak
- * yansıyordu. Geri dönüşte anlık sinyal, oyuncunun 15 sn beklemeden tekrar
- * hedeflenebilir olmasını sağlıyor.
+ * yansıyordu. Geri dönüşte anlık sinyal, oyuncunun bir sonraki pingi
+ * beklemeden tekrar hedeflenebilir olmasını sağlıyor.
  */
 export function useHeartbeat(
   target: HeartbeatTarget["collection"],
@@ -28,7 +29,7 @@ export function useHeartbeat(
     if (!docId) return;
     const ref = doc(db, target, docId);
     const beat = () => {
-      updateDoc(ref, { [field]: Date.now() }).catch(() => {});
+      updateDoc(ref, heartbeatPayload(field)).catch(() => {});
     };
 
     let timer: ReturnType<typeof setInterval> | null = null;

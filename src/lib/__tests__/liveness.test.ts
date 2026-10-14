@@ -10,8 +10,12 @@ describe("isPlayerActive", () => {
     expect(isPlayerActive(player(NOW - 5_000), NOW)).toBe(true);
   });
 
-  it("30 saniyedir sessiz oyuncu aktif değil", () => {
-    expect(isPlayerActive(player(NOW - 31_000), NOW)).toBe(false);
+  it("tek bir pingi gecikmiş (45 sn sessiz) oyuncu hâlâ aktif", () => {
+    expect(isPlayerActive(player(NOW - 45_000), NOW)).toBe(true);
+  });
+
+  it("60 saniyedir sessiz oyuncu aktif değil", () => {
+    expect(isPlayerActive(player(NOW - 61_000), NOW)).toBe(false);
   });
 
   it("sinyali hiç olmayan oyuncu AKTİF sayılıyor", () => {
@@ -25,13 +29,13 @@ describe("isPlayerActive", () => {
 describe("activePlayers", () => {
   it("sessizleri eliyor", () => {
     const live = player(NOW - 1_000);
-    const ghost = player(NOW - 60_000);
+    const ghost = player(NOW - 90_000);
     expect(activePlayers([live, ghost], NOW)).toEqual([live]);
   });
 
   it("herkes sessizse listeyi olduğu gibi veriyor — oyun kilitlenmesin", () => {
-    const a = player(NOW - 60_000);
-    const b = player(NOW - 90_000);
+    const a = player(NOW - 90_000);
+    const b = player(NOW - 120_000);
     expect(activePlayers([a, b], NOW)).toHaveLength(2);
   });
 

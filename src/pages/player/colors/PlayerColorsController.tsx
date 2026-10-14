@@ -2,7 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { db } from "../../../lib/firebase";
-import { doc, increment, updateDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
+import { counterIncrementPayload, counterStep } from "../../../lib/clientWrites";
+import { reportWriteError } from "../../../lib/writeErrors";
 import { haptics } from "../../../lib/haptics";
 import { useLocale } from "../../../hooks/useLocale";
 
@@ -36,17 +38,17 @@ export function PlayerColorsController({ room, player }: Props) {
     if (room.status !== "colors_active" || !team) return;
 
     const interval = setInterval(() => {
-      const clicksToFlush = pendingClicksRef.current;
+      // Kural tek yazmada en fazla COUNTER_MAX_STEP artışa izin veriyor;
+      // fazlası sonraki turlara kalıyor (bkz. counterStep).
+      const clicksToFlush = counterStep("colors_clicks", pendingClicksRef.current);
       if (clicksToFlush > 0 && !isFlushingRef.current) {
         isFlushingRef.current = true;
-        pendingClicksRef.current = 0;
+        pendingClicksRef.current -= clicksToFlush;
         
         const playerRef = doc(db, "players", player.id);
         
-        updateDoc(playerRef, {
-          colors_clicks: increment(clicksToFlush)
-        }).catch(err => {
-          console.error("Failed to flush clicks to Firestore:", err);
+        updateDoc(playerRef, counterIncrementPayload("colors_clicks", clicksToFlush)).catch(err => {
+          reportWriteError("colors_clicks", err);
           pendingClicksRef.current += clicksToFlush;
         }).finally(() => {
           isFlushingRef.current = false;
@@ -111,7 +113,7 @@ export function PlayerColorsController({ room, player }: Props) {
               <span className="text-8xl mb-2 animate-pulse pointer-events-none">⚡</span>
               
               <h1 className="text-white font-black text-6xl md:text-7xl uppercase tracking-wider drop-shadow-[0_0_30px_rgba(0,0,0,0.8)] pointer-events-none">
-                HIZLA BAS!
+                {t("colors.tapFastCta")}
               </h1>
               
               <div className="mt-6 bg-black/40 border border-white/20 px-8 py-3 rounded-3xl backdrop-blur-md pointer-events-none">
@@ -142,8 +144,8 @@ export function PlayerColorsController({ room, player }: Props) {
               {t("colors.resultsOnTV")}
             </p>
             <div className="bg-black/40 border border-white/20 p-6 rounded-2xl backdrop-blur-md">
-              <span className="text-xs font-mono text-gray-300 uppercase block mb-1">TOPLAM KATKIN:</span>
-              <span className="text-5xl font-black text-white">{localClicks} TIK</span>
+              <span className="text-xs font-mono text-gray-300 uppercase block mb-1">{t("colors.yourTotal")}</span>
+              <span className="text-5xl font-black text-white">{t("colors.tapCount", localClicks)}</span>
             </div>
           </motion.div>
         )}

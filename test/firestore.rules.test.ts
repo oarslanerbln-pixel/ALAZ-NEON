@@ -5,8 +5,51 @@ import {
   assertSucceeds,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, setDoc, updateDoc, addDoc, collection, getDoc, getDocs, deleteDoc, query, where, increment } from "firebase/firestore";
+import { doc, setDoc, updateDoc, addDoc, collection, collectionGroup, getDoc, getDocs, deleteDoc, query, where, increment } from "firebase/firestore";
 import { beforeAll, afterAll, beforeEach, describe, it } from "vitest";
+import type { QuizPack } from "../src/lib/quizPack";
+
+// Uygulamanın yazdığı verinin kendisi: testler istemciden ayrışamasın diye
+// elle kopyalanmış nesneler yerine bu fonksiyonlar kullanılıyor (bkz.
+// src/lib/clientWrites.ts ve src/lib/__tests__/writeContract.test.ts).
+import {
+  COUNTER_MAX_STEP,
+  UNITY_MAX_STEP,
+  adImpressionPayload,
+  aynaGuessPayload,
+  aynaSurveyPayload,
+  bombPassPayload,
+  counterIncrementPayload,
+  echoInputPayload,
+  emojiPulsePayload,
+  gameEventId,
+  gameEventPayload,
+  heartbeatPayload,
+  letterAnswerPayload,
+  lifetimeCreditPayload,
+  lifetimeMarkerPayload,
+  nicknamePayload,
+  overloadDeflectPayload,
+  playerJoinPayload,
+  profileCreatePayload,
+  pulseInputPayload,
+  quizAnswerPayload,
+  quizPackPayload,
+  quizSecretPayload,
+  rewardClaimPayload,
+  rewardPayload,
+  venueStaffPayload,
+  roomCreatePayload,
+  roomStatusPayload,
+  sensorAnswerPayload,
+  sensorBuzzPayload,
+  unityInputPayload,
+  vaultFeedbackPayload,
+  vaultGuessPayload,
+  vaultSecretPayload,
+  wheelSpinPayload,
+  type PlayerCounter,
+} from "../src/lib/clientWrites";
 
 /**
  * Firestore güvenlik kuralı testleri.
@@ -119,62 +162,166 @@ beforeEach(async () => {
 });
 
 describe("answers koleksiyonu", () => {
-  beforeEach(() => seed());
+  beforeEach(() => seed({ status: "playing" }));
+
+  /** PlayerGame'in klasik turda gerçekte yazdığı cevap. */
+  const answer = (overrides: Record<string, unknown> = {}) => ({
+    ...letterAnswerPayload({
+      roomId: ROOM_ID,
+      playerId: PLAYER_ID,
+      letter: "A",
+      roundIndex: 1,
+      data: { Şehir: "Ankara" },
+    }),
+    ...overrides,
+  });
+  const answers = (db: ReturnType<typeof asPlayer>) => collection(db, "answers");
 
   it("oyuncu kendi player_id'si ile cevap gönderebilir", async () => {
-    await assertSucceeds(
-      addDoc(collection(asPlayer(), "answers"), {
-        room_id: ROOM_ID,
-        player_id: PLAYER_ID,
-        round_letter: "A",
-        data: { Şehir: "Ankara" },
-        created_at: new Date().toISOString(),
-      })
-    );
+    await assertSucceeds(addDoc(answers(asPlayer()), answer()));
   });
 
   it("oyuncu başkasının adına cevap gönderemez", async () => {
-    await assertFails(
-      addDoc(collection(asPlayer(), "answers"), {
-        room_id: ROOM_ID,
-        player_id: OTHER_PLAYER_ID,
-        round_letter: "A",
-        data: { Şehir: "Ankara" },
-      })
-    );
+    await assertFails(addDoc(answers(asPlayer()), answer({ player_id: OTHER_PLAYER_ID })));
   });
 
   it("giriş yapmamış kullanıcı cevap gönderemez", async () => {
-    await assertFails(
-      addDoc(collection(asGuest(), "answers"), {
-        room_id: ROOM_ID,
-        player_id: PLAYER_ID,
-        round_letter: "A",
-        data: {},
-      })
-    );
+    await assertFails(addDoc(answers(asGuest()), answer()));
   });
 
   it("gönderilmiş cevap sonradan değiştirilemez", async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
-      await setDoc(doc(ctx.firestore(), "answers", "a1"), {
-        room_id: ROOM_ID,
-        player_id: PLAYER_ID,
-        round_letter: "A",
-        data: { Şehir: "Ankara" },
-      });
+      await setDoc(doc(ctx.firestore(), "answers", "a1"), answer());
     });
     await assertFails(
       updateDoc(doc(asPlayer(), "answers", "a1"), { data: { Şehir: "Adana" } })
     );
   });
+
+  // Oyuncu kaydının odası kontrol edilmiyordu: bir odanın oyuncusu başka
+  // odanın turuna cevap basabiliyordu.
+  it("oyuncu kendi odası dışındaki bir odaya cevap yazamaz", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "rooms", "room-2"), { host_uid: HOST_UID, status: "playing" });
+    });
+    await assertFails(addDoc(answers(asPlayer()), answer({ room_id: "room-2" })));
+  });
+
+  it("cevap kabul etmeyen oda durumunda (lobi, bitmiş oyun) yazılamaz", async () => {
+    await seed({ status: "lobby" });
+    await assertFails(addDoc(answers(asPlayer()), answer()));
+    await seed({ status: "finished" });
+    await assertFails(addDoc(answers(asPlayer()), answer()));
+  });
+
+  it("süre bitip host incelemeye geçtiğinde otomatik gönderim hâlâ kabul edilir", async () => {
+    await seed({ status: "review" });
+    await assertSucceeds(addDoc(answers(asPlayer()), answer()));
+  });
+
+  it("şema dışı alan, dev veri haritası ya da uzun tur anahtarı yazılamaz", async () => {
+    await assertFails(addDoc(answers(asPlayer()), answer({ score: 9999 })));
+    const huge = Object.fromEntries(Array.from({ length: 40 }, (_, i) => [`k${i}`, "x"]));
+    await assertFails(addDoc(answers(asPlayer()), answer({ data: huge })));
+    await assertFails(addDoc(answers(asPlayer()), answer({ round_letter: "X".repeat(64) })));
+  });
+
+  describe("okuma", () => {
+    beforeEach(async () => {
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), "answers", "mine"), answer());
+      });
+    });
+
+    // Cevaplar herkese açıktı: hızlı oyuncunun cevabı tur bitmeden okunup
+    // kopyalanabiliyordu.
+    it("başka bir oyuncu ya da girişsiz kullanıcı cevabı okuyamaz", async () => {
+      await assertFails(getDoc(doc(asStranger(), "answers", "mine")));
+      await assertFails(getDoc(doc(asGuest(), "answers", "mine")));
+    });
+
+    it("başka bir oyuncu odanın bütün cevaplarını sorgulayamaz", async () => {
+      await assertFails(
+        getDocs(query(answers(asStranger()), where("room_id", "==", ROOM_ID)))
+      );
+    });
+
+    it("oyuncu kendi cevabını okuyabilir ve kendi cevaplarını sorgulayabilir", async () => {
+      await assertSucceeds(getDoc(doc(asPlayer(), "answers", "mine")));
+      // PlayerQuizController / PlayerAynaController'ın "zaten cevapladım mı" sorgusu.
+      await assertSucceeds(
+        getDocs(
+          query(
+            answers(asPlayer()),
+            where("room_id", "==", ROOM_ID),
+            where("player_id", "==", PLAYER_ID),
+            where("round_letter", "==", "A")
+          )
+        )
+      );
+    });
+
+    it("host odanın cevaplarını sorgulayabilir", async () => {
+      await assertSucceeds(
+        getDocs(query(answers(asHost()), where("room_id", "==", ROOM_ID), where("round_letter", "==", "A")))
+      );
+    });
+  });
 });
+
+// Odadaki diğer oyuncu (OTHER_PLAYER_ID'nin sahibi).
+const asStranger = () => testEnv.authenticatedContext(STRANGER_UID).firestore();
 
 describe("rooms — bomba paslama", () => {
   beforeEach(() => seed({ status: "bomb_active", bomb_target_player: PLAYER_ID, used_words: [] }));
 
-  it("oyuncu bombayı paslayabilir", async () => {
+  it("bombayı tutan oyuncu paslayabilir", async () => {
     await assertSucceeds(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        previous_bomb_target_player: PLAYER_ID,
+        bomb_target_player: OTHER_PLAYER_ID,
+        used_words: ["kelime"],
+      })
+    );
+  });
+
+  // Paslama kuralı yalnızca alan listesine bakıyordu: bombayı tutmayan biri
+  // de bombayı istediğine atabiliyor, turu kilitleyebiliyordu.
+  it("bombayı tutmayan oyuncu paslayamaz", async () => {
+    await assertFails(
+      updateDoc(doc(asStranger(), "rooms", ROOM_ID), {
+        previous_bomb_target_player: OTHER_PLAYER_ID,
+        bomb_target_player: PLAYER_ID,
+        used_words: ["kelime"],
+      })
+    );
+  });
+
+  it("paslayan kendini başkası gibi gösteremez", async () => {
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        previous_bomb_target_player: OTHER_PLAYER_ID,
+        bomb_target_player: OTHER_PLAYER_ID,
+        used_words: ["kelime"],
+      })
+    );
+  });
+
+  it("bomba odada olmayan birine paslanamaz", async () => {
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        previous_bomb_target_player: PLAYER_ID,
+        bomb_target_player: "uydurma-oyuncu",
+        used_words: ["kelime"],
+      })
+    );
+  });
+
+  it("kullanılmış kelimeler silinemez", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), { used_words: ["elma", "armut"] });
+    });
+    await assertFails(
       updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
         previous_bomb_target_player: PLAYER_ID,
         bomb_target_player: OTHER_PLAYER_ID,
@@ -198,6 +345,7 @@ describe("rooms — bomba paslama", () => {
     });
     await assertFails(
       updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        previous_bomb_target_player: PLAYER_ID,
         bomb_target_player: OTHER_PLAYER_ID,
       })
     );
@@ -217,6 +365,26 @@ describe("rooms — sensör buzzer", () => {
     );
   });
 
+  it("başka bir oyuncunun adına buzzer'a basılamaz", async () => {
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
+        status: "sensor_buzzed",
+        sensor_buzzer_player_id: OTHER_PLAYER_ID,
+        sensor_buzzer_timestamp: Date.now(),
+      })
+    );
+  });
+
+  it("odada olmayan biri buzzer'a basamaz", async () => {
+    await assertFails(
+      updateDoc(doc(asRandomSignup(), "rooms", ROOM_ID), {
+        status: "sensor_buzzed",
+        sensor_buzzer_player_id: "uydurma-oyuncu",
+        sensor_buzzer_timestamp: Date.now(),
+      })
+    );
+  });
+
   it("oyuncu doğrudan cevap ekranına atlayamaz", async () => {
     await assertFails(
       updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
@@ -226,16 +394,33 @@ describe("rooms — sensör buzzer", () => {
     );
   });
 
-  it("buzzer'a basıldıktan sonra oyuncu cevabını yazabilir", async () => {
-    await testEnv.withSecurityRulesDisabled(async (ctx) => {
-      await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), {
-        status: "sensor_buzzed",
-        sensor_buzzer_player_id: PLAYER_ID,
+  describe("buzzer'a basıldıktan sonra", () => {
+    beforeEach(async () => {
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), {
+          status: "sensor_buzzed",
+          sensor_buzzer_player_id: PLAYER_ID,
+        });
       });
     });
-    await assertSucceeds(
-      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { sensor_player_answer: "Kahve" })
-    );
+
+    it("basan oyuncu cevabını yazabilir", async () => {
+      await assertSucceeds(
+        updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { sensor_player_answer: "Kahve" })
+      );
+    });
+
+    it("basmayan oyuncu cevap yazamaz", async () => {
+      await assertFails(
+        updateDoc(doc(asStranger(), "rooms", ROOM_ID), { sensor_player_answer: "Çay" })
+      );
+    });
+
+    it("cevap TV'yi taşıracak uzunlukta olamaz", async () => {
+      await assertFails(
+        updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { sensor_player_answer: "X".repeat(500) })
+      );
+    });
   });
 });
 
@@ -244,21 +429,34 @@ describe("rooms — overload savuşturma", () => {
     seed({ status: "playing", overload_target_id: PLAYER_ID, overload_time_allowed: 10 })
   );
 
-  it("hedef olan oyuncu bombayı savuşturup paslayabilir", async () => {
-    await assertSucceeds(
-      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
-        overload_target_id: null,
-        overload_time_allowed: 9,
-      })
+  /** PlayerOverloadGame'in savuşturmada gerçekte yazdığı alanlar. */
+  const deflect = (from: string) => overloadDeflectPayload(from);
+
+  // Eski test istemcinin YAZMADIĞI bir veriyi deniyordu (overload_time_allowed);
+  // istemcinin yazdığı overload_last_target_id beyaz listede yoktu, yani
+  // canlıda her savuşturma reddediliyordu.
+  it("hedef olan oyuncu savuşturabilir (istemcinin gerçek yazımı)", async () => {
+    await assertSucceeds(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), deflect(PLAYER_ID)));
+  });
+
+  it("hedef olmayan oyuncu savuşturamaz", async () => {
+    await assertFails(updateDoc(doc(asStranger(), "rooms", ROOM_ID), deflect(OTHER_PLAYER_ID)));
+  });
+
+  it("savuşturan kendini başkası gibi gösteremez", async () => {
+    await assertFails(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), deflect(OTHER_PLAYER_ID)));
+  });
+
+  // Sonraki hedefi ve kısalan süreyi host seçiyor; oyuncu süreyi yazabiliyordu.
+  it("oyuncu tur süresini yazamaz", async () => {
+    await assertFails(
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { overload_time_allowed: 999 })
     );
   });
 
   it("oyuncu savuşturma bahanesiyle oda durumunu değiştiremez", async () => {
     await assertFails(
-      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
-        overload_target_id: null,
-        status: "finished",
-      })
+      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { ...deflect(PLAYER_ID), status: "finished" })
     );
   });
 
@@ -266,77 +464,144 @@ describe("rooms — overload savuşturma", () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), { status: "lobby" });
     });
-    await assertFails(
-      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
-        overload_target_id: null,
-        overload_time_allowed: 9,
-      })
-    );
+    await assertFails(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), deflect(PLAYER_ID)));
   });
 });
 
-describe("rooms — echo oylamasi", () => {
-  beforeEach(() => seed({ status: "echo_active", echo_question: "Kim?", echo_votes: {} }));
+/**
+ * Oyuncu girişleri (rooms/{id}/inputs/{playerId}): echo oyu ve pulse
+ * dokunuşu. Eskiden oda dokümanındaki haritalara yazılıyordu; her oy
+ * odadaki her telefona bir okuma olarak yayılıyordu ve haritanın tamamı
+ * başkasının oyunu ezecek şekilde yazılabiliyordu. Artık her oyuncu yalnızca
+ * kendi kaydına, tur başına bir kez yazıyor; kayıtları yalnızca host
+ * okuyor, sonucu reveal anında odaya o yazıyor.
+ */
+const inputRef = (db: ReturnType<typeof asPlayer>, playerId: string) =>
+  doc(db, "rooms", ROOM_ID, "inputs", playerId);
 
-  it("oyuncu kendi oyunu yazabilir", async () => {
+describe("rooms/{id}/inputs — echo oyu", () => {
+  const ROUND = 7;
+  beforeEach(() => seed({ status: "echo_active", echo_question: "Kim?", echo_votes: {}, input_round: ROUND }));
+
+  it("oyuncu oyunu kendi giriş kaydına yazabilir", async () => {
     await assertSucceeds(
-      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
-        [`echo_votes.${PLAYER_ID}`]: OTHER_PLAYER_ID,
-      })
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND, echo_vote: OTHER_PLAYER_ID })
     );
   });
 
-  it("oyuncu oy bahanesiyle oda durumunu degistiremez", async () => {
+  it("oyuncu artık oda dokümanına oy yazamaz", async () => {
     await assertFails(
       updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
         [`echo_votes.${PLAYER_ID}`]: OTHER_PLAYER_ID,
-        status: "finished",
       })
     );
   });
 
-  it("oylama acik degilken oy yazilamaz", async () => {
+  it("başka bir oyuncunun kaydına oy yazılamaz", async () => {
+    await assertFails(
+      setDoc(inputRef(asPlayer(), OTHER_PLAYER_ID), { round: ROUND, echo_vote: PLAYER_ID })
+    );
+  });
+
+  it("kendine ya da odada olmayan birine oy verilemez", async () => {
+    await assertFails(
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND, echo_vote: PLAYER_ID })
+    );
+    await assertFails(
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND, echo_vote: "uydurma-oyuncu" })
+    );
+  });
+
+  it("aynı turda ikinci kez oy verilemez", async () => {
+    await assertSucceeds(
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND, echo_vote: OTHER_PLAYER_ID })
+    );
+    await assertFails(
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND, echo_vote: OTHER_PLAYER_ID })
+    );
+  });
+
+  it("yeni turda yeniden oy verilebilir", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(inputRef(ctx.firestore(), PLAYER_ID), { round: ROUND - 1, echo_vote: OTHER_PLAYER_ID });
+    });
+    await assertSucceeds(
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND, echo_vote: OTHER_PLAYER_ID })
+    );
+  });
+
+  it("eski tur numarasıyla oy verilemez", async () => {
+    await assertFails(
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND - 1, echo_vote: OTHER_PLAYER_ID })
+    );
+  });
+
+  it("oylama açık değilken oy verilemez", async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), { status: "echo_reveal" });
     });
     await assertFails(
-      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
-        [`echo_votes.${PLAYER_ID}`]: OTHER_PLAYER_ID,
-      })
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND, echo_vote: OTHER_PLAYER_ID })
     );
+  });
+
+  describe("okuma", () => {
+    beforeEach(async () => {
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(inputRef(ctx.firestore(), PLAYER_ID), { round: ROUND, echo_vote: OTHER_PLAYER_ID });
+      });
+    });
+
+    it("oyuncu kendi oyunu okuyabilir (telefon yenilenince 'oy verdin' korunur)", async () => {
+      await assertSucceeds(getDoc(inputRef(asPlayer(), PLAYER_ID)));
+    });
+
+    it("diğer oyuncular kimin kime oy verdiğini okuyamaz", async () => {
+      await assertFails(getDoc(inputRef(asStranger(), PLAYER_ID)));
+      await assertFails(getDocs(collection(asStranger(), "rooms", ROOM_ID, "inputs")));
+    });
+
+    it("host bütün girişleri listeleyebilir", async () => {
+      await assertSucceeds(getDocs(collection(asHost(), "rooms", ROOM_ID, "inputs")));
+    });
   });
 });
 
-describe("rooms — pulse dokunusu", () => {
+describe("rooms/{id}/inputs — pulse dokunuşu", () => {
+  const ROUND = 3;
   beforeEach(() =>
-    seed({ status: "pulse_active", pulse_target_time: Date.now() + 10000, pulse_clicks: {} })
+    seed({ status: "pulse_active", pulse_target_time: Date.now() + 10000, pulse_clicks: {}, input_round: ROUND })
   );
 
-  it("oyuncu kendi dokunus zamanini yazabilir", async () => {
+  it("oyuncu dokunuş zamanını kendi giriş kaydına yazabilir", async () => {
     await assertSucceeds(
-      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
-        [`pulse_clicks.${PLAYER_ID}`]: Date.now(),
-      })
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND, pulse_click: Date.now() })
     );
   });
 
-  it("oyuncu dokunus bahanesiyle baska alan yazamaz", async () => {
+  it("oyuncu artık oda dokümanına dokunuş yazamaz", async () => {
     await assertFails(
       updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
         [`pulse_clicks.${PLAYER_ID}`]: Date.now(),
-        total_score: 9999,
       })
     );
   });
 
-  it("tur bittikten sonra dokunus yazilamaz", async () => {
+  it("dokunuş bahanesiyle başka alan ya da echo oyu yazılamaz", async () => {
+    await assertFails(
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND, pulse_click: Date.now(), total_score: 9999 })
+    );
+    await assertFails(
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND, echo_vote: OTHER_PLAYER_ID })
+    );
+  });
+
+  it("tur bittikten sonra dokunuş yazılamaz", async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), { status: "pulse_reveal" });
     });
     await assertFails(
-      updateDoc(doc(asPlayer(), "rooms", ROOM_ID), {
-        [`pulse_clicks.${PLAYER_ID}`]: Date.now(),
-      })
+      setDoc(inputRef(asPlayer(), PLAYER_ID), { round: ROUND, pulse_click: Date.now() })
     );
   });
 });
@@ -364,8 +629,118 @@ describe("rooms — host yetkisi", () => {
     await assertFails(deleteDoc(doc(asPlayer(), "rooms", ROOM_ID)));
   });
 
+  // Lobideki telefonlar sayıyı artık bu alandan okuyor (lib/playerCount.ts).
+  it("lobi sayacını (player_count) yalnızca host yazabilir", async () => {
+    await assertSucceeds(updateDoc(doc(asHost(), "rooms", ROOM_ID), { player_count: 3 }));
+    await assertFails(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { player_count: 99 }));
+  });
+
+  // Klasik oyunda ikinci tura geçiş: alan yoksa hiç yazılmamalı (undefined
+  // Firestore'da hata). Oda durumunu yalnızca host ilerletir.
+  it("oda durumunu (roomStatusPayload) yalnızca host ilerletir", async () => {
+    const payload = roomStatusPayload("countdown", { tutorial_step: undefined, used_letters: ["A", "K"] });
+    await assertSucceeds(updateDoc(doc(asHost(), "rooms", ROOM_ID), payload));
+    await assertFails(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), payload));
+  });
+
   it("oda herkes tarafından okunabilir (telefonlar PIN ile bağlanıyor)", async () => {
     await assertSucceeds(getDoc(doc(asGuest(), "rooms", ROOM_ID)));
+  });
+});
+
+describe("rooms — oda açma yalnızca personel hesabına açık", () => {
+  // HostSetup'ın yazdığı oda dokümanının özü.
+  const roomPayload = (hostUid: string) => ({
+    code: "QWER",
+    host_uid: hostUid,
+    status: "night_lobby",
+    active_game: "none",
+    categories: [],
+    timer_setting: 60,
+    total_rounds: 3,
+    current_round: 0,
+    game_mode: "individual",
+    created_at: Date.now(),
+  });
+
+  it("personel hesabı kendi adına oda açabilir", async () => {
+    await seedStaff(HOST_UID);
+    await assertSucceeds(setDoc(doc(asHost(), "rooms", "room-new"), roomPayload(HOST_UID)));
+  });
+
+  // Her anonim oturum host olabiliyordu: ödül ve kalıcı puan yazma yetkisi
+  // "odanın host'u" üzerinden aktığı için oda açmak hepsinin kapısıydı.
+  it("anonim oturum oda açamaz", async () => {
+    await assertFails(setDoc(doc(asPlayer(), "rooms", "room-anon"), roomPayload(PLAYER_UID)));
+  });
+
+  it("personel başka bir hesap adına oda açamaz", async () => {
+    await seedStaff(HOST_UID);
+    await assertFails(setDoc(doc(asHost(), "rooms", "room-proxy"), roomPayload(PLAYER_UID)));
+  });
+});
+
+describe("rooms/{id}/transient — emoji tepkileri", () => {
+  beforeEach(() => seed({ status: "playing" }));
+
+  const pulseRef = (db: ReturnType<typeof asPlayer>) =>
+    doc(db, "rooms", ROOM_ID, "transient", "emojiPulse");
+
+  // Bu alt koleksiyon için hiç kural yoktu: `match /rooms/{roomId}` alt
+  // koleksiyonları kapsamaz, varsayılan ret her tepkiyi sessizce düşürüyordu.
+  it("odadaki oyuncu emoji gönderebilir", async () => {
+    await assertSucceeds(
+      setDoc(pulseRef(asPlayer()), { emoji: "🔥", timestamp: Date.now(), player_id: PLAYER_ID })
+    );
+  });
+
+  it("TV tepkiyi okuyabilir", async () => {
+    await assertSucceeds(getDoc(pulseRef(asGuest())));
+  });
+
+  it("başka bir oyuncunun adına emoji gönderilemez", async () => {
+    await assertFails(
+      setDoc(pulseRef(asPlayer()), { emoji: "🔥", timestamp: Date.now(), player_id: OTHER_PLAYER_ID })
+    );
+  });
+
+  it("odada olmayan biri emoji gönderemez", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "players", "player-elsewhere"), {
+        room_id: "baska-oda",
+        uid: PLAYER_UID,
+        nickname: "GEZGIN",
+        team_name: null,
+        total_score: 0,
+      });
+    });
+    await assertFails(
+      setDoc(pulseRef(asPlayer()), { emoji: "🔥", timestamp: Date.now(), player_id: "player-elsewhere" })
+    );
+  });
+
+  it("emoji yerine uzun metin ya da ek alan yazılamaz", async () => {
+    await assertFails(
+      setDoc(pulseRef(asPlayer()), { emoji: "X".repeat(64), timestamp: Date.now(), player_id: PLAYER_ID })
+    );
+    await assertFails(
+      setDoc(pulseRef(asPlayer()), {
+        emoji: "🔥",
+        timestamp: Date.now(),
+        player_id: PLAYER_ID,
+        message: "TV'de reklam",
+      })
+    );
+  });
+
+  it("emojiPulse dışında bir transient dokümanı yazılamaz", async () => {
+    await assertFails(
+      setDoc(doc(asPlayer(), "rooms", ROOM_ID, "transient", "baska"), {
+        emoji: "🔥",
+        timestamp: Date.now(),
+        player_id: PLAYER_ID,
+      })
+    );
   });
 });
 
@@ -417,6 +792,74 @@ describe("players — skor bütünlüğü", () => {
         nickname: "SAHTE",
         total_score: 0,
       })
+    );
+  });
+
+  /** PlayerJoin'in gerçekte yazdığı katılım dokümanı. */
+  const joinPayload = (overrides: Record<string, unknown> = {}) => ({
+    ...playerJoinPayload({ roomId: ROOM_ID, uid: PLAYER_UID, nickname: "YENI", teamName: null }),
+    ...overrides,
+  });
+
+  // Ödül kazananı total_score'a göre seçiliyor: puanlı katılım, ödül
+  // kuralları ne kadar sıkı olursa olsun bedava kupon demek.
+  it("oyuncu odaya puanla katılamaz", async () => {
+    await assertFails(
+      addDoc(collection(asPlayer(), "players"), joinPayload({ total_score: 9999 }))
+    );
+  });
+
+  it("oyuncu odaya gece puanıyla katılamaz", async () => {
+    await assertFails(
+      addDoc(collection(asPlayer(), "players"), joinPayload({ night_score: 9999 }))
+    );
+  });
+
+  it("katılım dokümanına beyaz liste dışı alan sokulamaz", async () => {
+    await assertFails(
+      addDoc(collection(asPlayer(), "players"), joinPayload({ lives: 99 }))
+    );
+    await assertFails(
+      addDoc(collection(asPlayer(), "players"), joinPayload({ lifetime_credited: -5000 }))
+    );
+  });
+
+  it("var olmayan bir odaya oyuncu oluşturulamaz", async () => {
+    await assertFails(
+      addDoc(collection(asPlayer(), "players"), joinPayload({ room_id: "yok-boyle-oda" }))
+    );
+  });
+
+  it("bitmiş odaya katılınamaz", async () => {
+    await seed({ status: "finished" });
+    await assertFails(addDoc(collection(asPlayer(), "players"), joinPayload()));
+  });
+
+  // Oturum yeni açılmışken Firestore yazmayı tekrar gönderebiliyor
+  // (PlayerJoin). Aynı veriyle ikinci yazma zararsız olmalı, hata değil.
+  it("katılım yazmasının aynen tekrar gönderilmesi kabul edilir", async () => {
+    const payload = playerJoinPayload({
+      roomId: ROOM_ID,
+      uid: PLAYER_UID,
+      nickname: "YENI",
+      teamName: null,
+      now: 1_700_000_000_000,
+    });
+    await assertSucceeds(setDoc(doc(asPlayer(), "players", "player-retry"), payload));
+    await assertSucceeds(setDoc(doc(asPlayer(), "players", "player-retry"), payload));
+  });
+
+  it("katılım tekrarı bahanesiyle puan yazılamaz", async () => {
+    const payload = playerJoinPayload({ roomId: ROOM_ID, uid: PLAYER_UID, nickname: "YENI", teamName: null });
+    await assertSucceeds(setDoc(doc(asPlayer(), "players", "player-retry2"), payload));
+    await assertFails(
+      setDoc(doc(asPlayer(), "players", "player-retry2"), { ...payload, total_score: 500 })
+    );
+  });
+
+  it("TV'yi taşıracak uzunlukta takma ad reddedilir", async () => {
+    await assertFails(
+      addDoc(collection(asPlayer(), "players"), joinPayload({ nickname: "X".repeat(21) }))
     );
   });
 });
@@ -518,34 +961,74 @@ describe("rewards koleksiyonu", () => {
     await assertFails(getDoc(doc(asRandomSignup(), "rewards", REWARD_ID)));
   });
 
-  it("host, kazanan oyuncu adına 'available' bir ödül oluşturabilir", async () => {
-    await assertSucceeds(
-      setDoc(doc(asHost(), "rewards", "reward-new"), {
-        uid: PLAYER_UID,
-        nickname: "OYUNCU",
-        type: "drink",
-        title: "Ücretsiz Espresso",
-        description: "",
-        status: "available",
-        code: "X9Y8Z7",
-        earned_at: Date.now(),
-      })
+  /** lib/rewards.ts'in host ekranından yazdığı ödül dokümanı. */
+  const grantPayload = (overrides: Record<string, unknown> = {}) => ({
+    ...rewardPayload({
+      roomId: ROOM_ID,
+      venueId: "default",
+      uid: PLAYER_UID,
+      nickname: "OYUNCU",
+      code: "X9Y8Z7",
+      venue: {
+        reward_type: "drink",
+        reward_title: "Ücretsiz Espresso",
+        reward_description: "",
+        reward_validity_days: 7,
+      },
+    }),
+    ...overrides,
+  });
+
+  it("personel hesabıyla açılmış odanın host'u kazanan adına 'available' ödül oluşturabilir", async () => {
+    await seed();
+    await seedStaff(HOST_UID);
+    await assertSucceeds(setDoc(doc(asHost(), "rewards", "reward-new"), grantPayload()));
+  });
+
+  // Asıl açık: create kuralı yalnızca status'a bakıyordu. Herhangi bir
+  // anonim oturum konsoldan kendine kupon yazıp barda kodla kullanabiliyordu.
+  it("oyuncu kendine kupon yazamaz — bedava içecek açığı", async () => {
+    await seed();
+    await assertFails(setDoc(doc(asPlayer(), "rewards", "reward-forged"), grantPayload()));
+  });
+
+  it("personel olmayan host ödül yazamaz", async () => {
+    await seed();
+    await assertFails(setDoc(doc(asHost(), "rewards", "reward-anon-host"), grantPayload()));
+  });
+
+  it("personel bile host'u olmadığı oda adına ödül yazamaz", async () => {
+    await seed();
+    await seedStaff();
+    await assertFails(
+      setDoc(doc(asVenueOwner(), "rewards", "reward-other-room"), grantPayload())
+    );
+  });
+
+  it("oda bağı (room_id) olmadan ödül yazılamaz", async () => {
+    await seed();
+    await seedStaff(HOST_UID);
+    const withoutRoom: Record<string, unknown> = grantPayload();
+    delete withoutRoom.room_id;
+    await assertFails(setDoc(doc(asHost(), "rewards", "reward-no-room"), withoutRoom));
+  });
+
+  it("ödül dokümanına şema dışı alan sokulamaz", async () => {
+    await seed();
+    await seedStaff(HOST_UID);
+    await assertFails(
+      setDoc(doc(asHost(), "rewards", "reward-extra"), grantPayload({ value_try: 5000 }))
     );
   });
 
   it("doğrudan 'claimed' durumunda bir ödül oluşturulamaz", async () => {
+    await seed();
+    await seedStaff(HOST_UID);
     await assertFails(
-      setDoc(doc(asHost(), "rewards", "reward-fake-claimed"), {
-        uid: PLAYER_UID,
-        nickname: "OYUNCU",
-        type: "drink",
-        title: "Sahte",
-        description: "",
-        status: "claimed",
-        claimed_at: Date.now(),
-        code: "FAKE01",
-        earned_at: Date.now(),
-      })
+      setDoc(
+        doc(asHost(), "rewards", "reward-fake-claimed"),
+        grantPayload({ status: "claimed", claimed_at: Date.now(), code: "FAKE01" })
+      )
     );
   });
 
@@ -602,6 +1085,7 @@ describe("TTL alanı (expires_at) yazımı", () => {
   // Firestore TTL politikası bu alana bakıyor; alan yazılamazsa temizlik
   // hiç çalışmaz ve odalar/cevaplar yine sonsuza kadar birikir.
   it("host oda açarken expires_at yazabiliyor", async () => {
+    await seedStaff(HOST_UID);
     await assertSucceeds(
       setDoc(doc(asHost(), "rooms", "room-ttl"), {
         code: "WXYZ",
@@ -731,31 +1215,100 @@ describe("seasons koleksiyonu", () => {
 });
 
 describe("users koleksiyonu (ALAZ League)", () => {
-  it("herkes kullanıcı profilini okuyabilir (liderlik tablosu için)", async () => {
-    await testEnv.withSecurityRulesDisabled(async (ctx) => {
-      await setDoc(doc(ctx.firestore(), "users", PLAYER_UID), {
-        nickname: "ALAZ_CHAMPION",
-        total_xp: 450,
-      });
-    });
-    await assertSucceeds(getDoc(doc(asGuest(), "users", PLAYER_UID)));
+  /** useUserProfile'ın ilk girişte oluşturduğu profil. */
+  const profilePayload = (overrides: Record<string, unknown> = {}) => ({
+    ...profileCreatePayload({ phoneNumber: "+905551112233", nickname: "PLAYER_abcd" }),
+    ...overrides,
   });
 
-  it("kullanıcı kendi profilini oluşturabilir veya güncelleyebilir", async () => {
+  async function seedProfile(uid: string = PLAYER_UID) {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users", uid), profilePayload({ total_lifetime_score: 450 }));
+    });
+  }
+
+  // Profil telefon numarasını taşıyor; herkese açık okuma kayıtlı bütün
+  // numaraların listelenebilmesi demekti (KVKK). Uygulamada başkasının
+  // profilini okuyan bir ekran yok.
+  it("kimse başkasının profilini okuyamaz — telefon numarası sızıntısı", async () => {
+    await seedProfile();
+    await assertFails(getDoc(doc(asGuest(), "users", PLAYER_UID)));
+    await assertFails(getDoc(doc(asHost(), "users", PLAYER_UID)));
+  });
+
+  it("kullanıcı kendi profilini okuyabilir", async () => {
+    await seedProfile();
+    await assertSucceeds(getDoc(doc(asPlayer(), "users", PLAYER_UID)));
+  });
+
+  it("kullanıcı kendi profilini başlangıç değerleriyle oluşturabilir", async () => {
+    await assertSucceeds(setDoc(doc(asPlayer(), "users", PLAYER_UID), profilePayload()));
+  });
+
+  it("profil yalnızca takma adla da oluşabilir (PlayerJoin'in merge yazımı)", async () => {
     await assertSucceeds(
-      setDoc(doc(asPlayer(), "users", PLAYER_UID), {
-        nickname: "ALAZ_CHAMPION",
-        total_xp: 500,
-      })
+      setDoc(doc(asPlayer(), "users", PLAYER_UID), { nickname: "YENI" }, { merge: true })
+    );
+  });
+
+  it("profil puanla ya da üst ligle oluşturulamaz", async () => {
+    await assertFails(
+      setDoc(doc(asPlayer(), "users", PLAYER_UID), profilePayload({ total_lifetime_score: 99999 }))
+    );
+    await assertFails(
+      setDoc(doc(asPlayer(), "users", PLAYER_UID), profilePayload({ current_league: "LEGEND" }))
+    );
+  });
+
+  it("kullanıcı takma adını güncelleyebilir", async () => {
+    await seedProfile();
+    await assertSucceeds(
+      setDoc(doc(asPlayer(), "users", PLAYER_UID), nicknamePayload("YENI_AD"), { merge: true })
+    );
+  });
+
+  // Eskiden puanı oyuncunun kendi cihazı increment() ile yazıyordu ve kural
+  // alan kısıtı koymuyordu: konsoldan tek satırla lig tablosunun tepesi.
+  it("kullanıcı kendi kalıcı puanını artıramaz", async () => {
+    await seedProfile();
+    await assertFails(
+      updateDoc(doc(asPlayer(), "users", PLAYER_UID), lifetimeCreditPayload(100000))
+    );
+  });
+
+  it("kullanıcı kendi ligini değiştiremez", async () => {
+    await seedProfile();
+    await assertFails(
+      updateDoc(doc(asPlayer(), "users", PLAYER_UID), { current_league: "LEGEND" })
+    );
+  });
+
+  it("personel host oyun sonunda kalıcı puan ekleyebilir", async () => {
+    await seedProfile();
+    await seedStaff(HOST_UID);
+    await assertSucceeds(
+      updateDoc(doc(asHost(), "users", PLAYER_UID), lifetimeCreditPayload(120))
+    );
+  });
+
+  it("personel olmayan host kalıcı puan yazamaz", async () => {
+    await seedProfile();
+    await assertFails(
+      updateDoc(doc(asHost(), "users", PLAYER_UID), lifetimeCreditPayload(120))
+    );
+  });
+
+  it("personel bile puan dışındaki profil alanlarını değiştiremez", async () => {
+    await seedProfile();
+    await seedStaff(HOST_UID);
+    await assertFails(
+      updateDoc(doc(asHost(), "users", PLAYER_UID), { nickname: "DEGISTI" })
     );
   });
 
   it("kullanıcı başka birinin profilini değiştiremez", async () => {
     await assertFails(
-      setDoc(doc(asPlayer(), "users", STRANGER_UID), {
-        nickname: "HACKED",
-        total_xp: 0,
-      })
+      setDoc(doc(asPlayer(), "users", STRANGER_UID), profilePayload({ nickname: "HACKED" }))
     );
   });
 
@@ -774,11 +1327,12 @@ describe("ayna_survey — anonim salon anketi", () => {
   const SURVEY_ID = `${ROOM_ID}_${PLAYER_UID}`;
   const asStranger = () => testEnv.authenticatedContext(STRANGER_UID).firestore();
   const survey = (overrides: Record<string, unknown> = {}) => ({
-    room_id: ROOM_ID,
-    host_uid: HOST_UID,
-    player_id: PLAYER_ID,
-    answers: { "salon-bilingual": true, "salon-morning": false },
-    created_at: Date.now(),
+    ...aynaSurveyPayload({
+      roomId: ROOM_ID,
+      hostUid: HOST_UID,
+      playerId: PLAYER_ID,
+      answers: { "salon-bilingual": true, "salon-morning": false },
+    }),
     ...overrides,
   });
 
@@ -850,5 +1404,534 @@ describe("ayna_survey — anonim salon anketi", () => {
 
   it("misafir odanın tüm anketini sorgulayamaz", async () => {
     await assertFails(getDocs(query(collection(asPlayer(), "ayna_survey"), where("room_id", "==", ROOM_ID))));
+  });
+});
+
+/**
+ * İstemci yazma sözleşmesi: src/lib/clientWrites.ts'teki her yazma, uygulamanın
+ * gerçekte yazdığı veriyle, gerçek bağlamında kurallardan geçmeli. Buradaki
+ * olumlu testler "testte geçiyor, canlıda reddediliyor" kalıbını kapatıyor;
+ * src/lib/__tests__/writeContract.test.ts her fonksiyonun burada kullanıldığını
+ * denetliyor.
+ */
+describe("istemci yazma sözleşmesi (clientWrites)", () => {
+  const answerRef = (db: ReturnType<typeof asPlayer>) => collection(db, "answers");
+
+  // Her cevap, istemcinin gerçekte yazdığı oda durumunda deneniyor.
+  describe("cevaplar", () => {
+    it("klasik tur cevabı", async () => {
+      await seed({ status: "playing" });
+      await assertSucceeds(
+        addDoc(
+          answerRef(asPlayer()),
+          letterAnswerPayload({ roomId: ROOM_ID, playerId: PLAYER_ID, letter: "A", roundIndex: 1, data: { Şehir: "Ankara" } })
+        )
+      );
+    });
+
+    it("quiz cevabı", async () => {
+      await seed({ status: "question_active" });
+      await assertSucceeds(
+        addDoc(answerRef(asPlayer()), quizAnswerPayload({ roomId: ROOM_ID, playerId: PLAYER_ID, questionIndex: 2, option: "B" }))
+      );
+    });
+
+    it("kasa tahmini", async () => {
+      await seed({ status: "vault_active" });
+      await assertSucceeds(
+        addDoc(answerRef(asPlayer()), vaultGuessPayload({ roomId: ROOM_ID, playerId: PLAYER_ID, guess: "1234" }))
+      );
+    });
+
+    it("ayna tahmini", async () => {
+      await seed({ status: "ayna_active" });
+      await assertSucceeds(
+        addDoc(
+          answerRef(asPlayer()),
+          aynaGuessPayload({ roomId: ROOM_ID, playerId: PLAYER_ID, roundKey: "ayna_0", roundIndex: 0, value: 42 })
+        )
+      );
+    });
+  });
+
+  describe("canlılık sinyali", () => {
+    beforeEach(() => seed());
+
+    it("oyuncu kendi sinyalini yazabilir", async () => {
+      await assertSucceeds(updateDoc(doc(asPlayer(), "players", PLAYER_ID), heartbeatPayload("last_active")));
+    });
+
+    it("host oda sinyalini yazabilir", async () => {
+      await assertSucceeds(updateDoc(doc(asHost(), "rooms", ROOM_ID), heartbeatPayload("host_last_active")));
+    });
+  });
+
+  describe("oda hamleleri", () => {
+    it("bomba paslama", async () => {
+      await seed({ status: "bomb_active", bomb_target_player: PLAYER_ID, used_words: [] });
+      await assertSucceeds(
+        updateDoc(doc(asPlayer(), "rooms", ROOM_ID), bombPassPayload(PLAYER_ID, OTHER_PLAYER_ID, "elma"))
+      );
+    });
+
+    it("buzzer ve cevap", async () => {
+      await seed({ status: "sensor_active", sensor_buzzer_player_id: null });
+      await assertSucceeds(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), sensorBuzzPayload(PLAYER_ID)));
+      await assertSucceeds(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), sensorAnswerPayload("  Kahve  ")));
+    });
+
+    it("overload savuşturma", async () => {
+      await seed({ status: "playing", overload_target_id: PLAYER_ID });
+      await assertSucceeds(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), overloadDeflectPayload(PLAYER_ID)));
+    });
+
+    it("emoji tepkisi", async () => {
+      await seed({ status: "playing" });
+      await assertSucceeds(
+        setDoc(doc(asPlayer(), "rooms", ROOM_ID, "transient", "emojiPulse"), emojiPulsePayload("🔥", PLAYER_ID))
+      );
+    });
+  });
+
+  // Çark için hiç kural yoktu: sırası gelen oyuncunun "çevir" düğmesi her
+  // seferinde reddediliyordu.
+  describe("çark", () => {
+    beforeEach(() => seed({ status: "wheel_active", wheel_spinner_id: PLAYER_ID, wheel_result_index: null }));
+
+    it("sırası gelen oyuncu çarkı çevirebilir", async () => {
+      await assertSucceeds(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), wheelSpinPayload(3)));
+    });
+
+    it("sırası gelmeyen oyuncu çeviremez", async () => {
+      await assertFails(updateDoc(doc(asStranger(), "rooms", ROOM_ID), wheelSpinPayload(3)));
+    });
+
+    it("çark ikinci kez çevrilemez", async () => {
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), { wheel_result_index: 1 });
+      });
+      await assertFails(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), wheelSpinPayload(3)));
+    });
+
+    it("geçersiz dilim ya da ek alan yazılamaz", async () => {
+      await assertFails(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), wheelSpinPayload(-1)));
+      await assertFails(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), wheelSpinPayload(1.5)));
+      await assertFails(
+        updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { ...wheelSpinPayload(2), status: "finished" })
+      );
+    });
+  });
+
+  describe("giriş kayıtları", () => {
+    const ROUND = 11;
+    const myInput = (db: ReturnType<typeof asPlayer>) => doc(db, "rooms", ROOM_ID, "inputs", PLAYER_ID);
+
+    it("echo oyu", async () => {
+      await seed({ status: "echo_active", input_round: ROUND });
+      await assertSucceeds(setDoc(myInput(asPlayer()), echoInputPayload(ROUND, OTHER_PLAYER_ID)));
+    });
+
+    it("pulse dokunuşu", async () => {
+      await seed({ status: "pulse_active", input_round: ROUND });
+      await assertSucceeds(setDoc(myInput(asPlayer()), pulseInputPayload(ROUND, Date.now())));
+    });
+
+    // Unity dokunuşları oda dokümanına yazılıyordu ve kural yoktu: her
+    // dokunuş reddediliyordu.
+    describe("unity", () => {
+      beforeEach(() => seed({ status: "unity_active", input_round: ROUND }));
+
+      it("oyuncu bu turdaki toplamını artırarak yazabilir", async () => {
+        await assertSucceeds(setDoc(myInput(asPlayer()), unityInputPayload(ROUND, 12)));
+        await assertSucceeds(setDoc(myInput(asPlayer()), unityInputPayload(ROUND, 12 + UNITY_MAX_STEP)));
+      });
+
+      it("bir yazmada sınırdan fazla artış reddedilir", async () => {
+        await assertFails(setDoc(myInput(asPlayer()), unityInputPayload(ROUND, UNITY_MAX_STEP + 1)));
+      });
+
+      it("toplam geriye gidemez", async () => {
+        await assertSucceeds(setDoc(myInput(asPlayer()), unityInputPayload(ROUND, 20)));
+        await assertFails(setDoc(myInput(asPlayer()), unityInputPayload(ROUND, 5)));
+      });
+
+      it("başka oyuncunun kaydına ya da oyun bitince yazılamaz", async () => {
+        await assertFails(
+          setDoc(doc(asPlayer(), "rooms", ROOM_ID, "inputs", OTHER_PLAYER_ID), unityInputPayload(ROUND, 5))
+        );
+        await testEnv.withSecurityRulesDisabled(async (ctx) => {
+          await updateDoc(doc(ctx.firestore(), "rooms", ROOM_ID), { status: "unity_reveal" });
+        });
+        await assertFails(setDoc(myInput(asPlayer()), unityInputPayload(ROUND, 5)));
+      });
+    });
+  });
+
+  // Renk ve spektrum sayaçları sınırı aşınca reddediliyor, geri eklenip bir
+  // dahaki sefere daha büyük olarak deneniyordu: sayaç bir daha yazılamıyordu.
+  describe("oyuncu sayaçları", () => {
+    beforeEach(() => seed({ status: "playing" }));
+
+    for (const field of Object.keys(COUNTER_MAX_STEP) as PlayerCounter[]) {
+      it(`${field}: tek yazmada sınıra kadar artabilir, fazlası reddedilir`, async () => {
+        const max = COUNTER_MAX_STEP[field];
+        await assertSucceeds(
+          updateDoc(doc(asPlayer(), "players", PLAYER_ID), counterIncrementPayload(field, max))
+        );
+        await assertFails(
+          updateDoc(doc(asPlayer(), "players", PLAYER_ID), counterIncrementPayload(field, max + 1))
+        );
+      });
+    }
+  });
+
+  describe("host ve personel", () => {
+    it("personel hesabı oda açar", async () => {
+      await seedStaff(HOST_UID);
+      await assertSucceeds(
+        setDoc(
+          doc(asHost(), "rooms", "room-contract"),
+          roomCreatePayload({
+            code: "ZXCV",
+            hostUid: HOST_UID,
+            venueId: "default",
+            locale: "tr",
+            venue: { name: "Mekan", logo_url: undefined, primary_color: undefined },
+          })
+        )
+      );
+    });
+
+    it("personel ödülü kullanıldı işaretler", async () => {
+      await seedStaff();
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), "rewards", "r-contract"), {
+          uid: PLAYER_UID,
+          nickname: "OYUNCU",
+          type: "drink",
+          title: "Espresso",
+          description: "",
+          status: "available",
+          code: "QWERTY",
+          earned_at: Date.now(),
+        });
+      });
+      await assertSucceeds(updateDoc(doc(asVenueOwner(), "rewards", "r-contract"), rewardClaimPayload()));
+    });
+
+    it("host oyuncunun aktarım işaretçisini yazar, oyuncu kendisininkini yazamaz", async () => {
+      await seed();
+      await assertSucceeds(updateDoc(doc(asHost(), "players", PLAYER_ID), lifetimeMarkerPayload(120)));
+      await assertFails(updateDoc(doc(asPlayer(), "players", PLAYER_ID), lifetimeMarkerPayload(0)));
+    });
+  });
+});
+
+describe("quiz_packs — mekan/kurum soru paketleri (3.4)", () => {
+  const pack = (count = 5): QuizPack => ({
+    title: "Yılbaşı Partisi",
+    locale: "tr",
+    questions: Array.from({ length: count }, (_, i) => ({
+      id: `firma_${i}`,
+      text: `Şirketimiz hangi yılda kuruldu? (${i})`,
+      options: { A: "1990", B: "2001", C: "2010", D: "2020" },
+      correctOption: "B" as const,
+      difficulty: 2 as const,
+    })),
+  });
+
+  it("personel paket yükler, okur ve siler", async () => {
+    await seedStaff();
+    const ref = await assertSucceeds(addDoc(collection(asVenueOwner(), "venues", "default", "quiz_packs"), quizPackPayload(pack(), OWNER_UID)));
+    await assertSucceeds(getDocs(collection(asVenueOwner(), "venues", "default", "quiz_packs")));
+    await assertSucceeds(deleteDoc(doc(asVenueOwner(), "venues", "default", "quiz_packs", ref.id)));
+  });
+
+  it("misafir ve personel olmayan hesap paket yükleyemez ve okuyamaz (doğru cevaplar içinde)", async () => {
+    await seedStaff();
+    await assertFails(addDoc(collection(asPlayer(), "venues", "default", "quiz_packs"), quizPackPayload(pack(), PLAYER_UID)));
+    await assertFails(addDoc(collection(asRandomSignup(), "venues", "default", "quiz_packs"), quizPackPayload(pack(), RANDOM_SIGNUP_UID)));
+    await addDoc(collection(asVenueOwner(), "venues", "default", "quiz_packs"), quizPackPayload(pack(), OWNER_UID));
+    await assertFails(getDocs(collection(asPlayer(), "venues", "default", "quiz_packs")));
+    await assertFails(getDocs(collection(asGuest(), "venues", "default", "quiz_packs")));
+  });
+
+  it("paket başkası adına yüklenemez, boyut ve dil sınırları uygulanır", async () => {
+    await seedStaff();
+    const packs = collection(asVenueOwner(), "venues", "default", "quiz_packs");
+    await assertFails(addDoc(packs, quizPackPayload(pack(), "baska-uid")));
+    await assertFails(addDoc(packs, quizPackPayload(pack(4), OWNER_UID)));
+    await assertFails(addDoc(packs, quizPackPayload(pack(201), OWNER_UID)));
+    await assertFails(addDoc(packs, quizPackPayload({ ...pack(), locale: "fr" as QuizPack["locale"] }, OWNER_UID)));
+    await assertFails(addDoc(packs, { ...quizPackPayload(pack(), OWNER_UID), venue_id: "x" }));
+  });
+
+  it("paket değiştirilemez: silinip yeniden yüklenir", async () => {
+    await seedStaff();
+    const ref = await addDoc(collection(asVenueOwner(), "venues", "default", "quiz_packs"), quizPackPayload(pack(), OWNER_UID));
+    await assertFails(updateDoc(doc(asVenueOwner(), "venues", "default", "quiz_packs", ref.id), { title: "Yeni ad" }));
+  });
+});
+
+describe("events — oyun telemetrisi (3.2)", () => {
+  const STARTED = 1_760_000_000_000;
+  const event = (type: "game_started" | "game_ended", hostUid = HOST_UID) =>
+    gameEventPayload({
+      type,
+      roomId: ROOM_ID,
+      venueId: "default",
+      hostUid,
+      game: "quiz",
+      playerCount: 12,
+      startedAt: STARTED,
+      endedAt: type === "game_ended" ? STARTED + 600_000 : undefined,
+    });
+  const eventDoc = (db: ReturnType<typeof asHost>, type: "game_started" | "game_ended") =>
+    doc(db, "events", gameEventId(ROOM_ID, STARTED, type));
+
+  beforeEach(() => seed({ status: "lobby" }));
+
+  it("odanın host'u (personel) başlangıç ve bitiş olayını yazar, personel okur", async () => {
+    await seedStaff(HOST_UID);
+    await assertSucceeds(setDoc(eventDoc(asHost(), "game_started"), event("game_started")));
+    await assertSucceeds(setDoc(eventDoc(asHost(), "game_ended"), event("game_ended")));
+    // Okuma mekana süzülmüş sorguyla (çok mekan, 3.1).
+    await assertSucceeds(getDocs(query(collection(asHost(), "events"), where("venue_id", "==", "default"))));
+  });
+
+  it("başka odanın personeli ve oyuncu olay yazamaz; oyuncu okuyamaz", async () => {
+    await seedStaff(HOST_UID);
+    await seedStaff(OWNER_UID);
+    await assertFails(setDoc(eventDoc(asVenueOwner(), "game_started"), event("game_started", OWNER_UID)));
+    await assertFails(setDoc(eventDoc(asPlayer(), "game_started"), event("game_started", PLAYER_UID)));
+    await setDoc(eventDoc(asHost(), "game_started"), event("game_started"));
+    await assertFails(getDocs(collection(asPlayer(), "events")));
+  });
+
+  it("olay değiştirilemez, silinemez; biçim ve sınırlar uygulanır", async () => {
+    await seedStaff(HOST_UID);
+    await setDoc(eventDoc(asHost(), "game_started"), event("game_started"));
+    await assertFails(setDoc(eventDoc(asHost(), "game_started"), event("game_started")));
+    await assertFails(deleteDoc(eventDoc(asHost(), "game_started")));
+    await assertFails(setDoc(eventDoc(asHost(), "game_ended"), { ...event("game_ended"), player_count: 501 }));
+    await assertFails(setDoc(eventDoc(asHost(), "game_ended"), { ...event("game_ended"), type: "score_changed" }));
+    await assertFails(setDoc(eventDoc(asHost(), "game_ended"), { ...event("game_ended"), nickname: "x" }));
+  });
+});
+
+describe("rooms/{id}/secrets — doğru cevaplar ve kasa kodu yalnızca host'ta", () => {
+  beforeEach(() => seed({ status: "question_active" }));
+  const secret = (db: ReturnType<typeof asHost>, name: string) => doc(db, "rooms", ROOM_ID, "secrets", name);
+
+  it("host gizli bilgiyi yazar ve okur", async () => {
+    await assertSucceeds(setDoc(secret(asHost(), "quiz"), quizSecretPayload({ answers: { q1: { correctOption: "B" } } })));
+    await assertSucceeds(setDoc(secret(asHost(), "vault"), vaultSecretPayload("4821")));
+    await assertSucceeds(getDoc(secret(asHost(), "quiz")));
+  });
+
+  it("oyuncu ve yabancı okuyamaz, yazamaz (önceden cevap oda belgesindeydi)", async () => {
+    await setDoc(secret(asHost(), "vault"), vaultSecretPayload("4821"));
+    await assertFails(getDoc(secret(asPlayer(), "vault")));
+    await assertFails(getDoc(secret(asGuest(), "vault")));
+    await assertFails(setDoc(secret(asPlayer(), "vault"), vaultSecretPayload("0000")));
+    await assertFails(setDoc(secret(testEnv.authenticatedContext(STRANGER_UID).firestore(), "quiz"), quizSecretPayload({ answers: {} })));
+  });
+});
+
+describe("answers — Şifre ipucunu yalnızca host yazar", () => {
+  beforeEach(() => seed({ status: "vault_active" }));
+  const guess = () => vaultGuessPayload({ roomId: ROOM_ID, playerId: PLAYER_ID, guess: "1234" });
+  const FEEDBACK = ["correct", "absent", "present", "absent"] as const;
+
+  it("host tahminin ipucunu yazar, sahibi okur", async () => {
+    const ref = await addDoc(collection(asPlayer(), "answers"), guess());
+    await assertSucceeds(updateDoc(doc(asHost(), "answers", ref.id), vaultFeedbackPayload([...FEEDBACK])));
+    await assertSucceeds(getDoc(doc(asPlayer(), "answers", ref.id)));
+  });
+
+  it("oyuncu kendi ipucunu yazamaz; host tahmini değiştiremez", async () => {
+    const ref = await addDoc(collection(asPlayer(), "answers"), guess());
+    await assertFails(updateDoc(doc(asPlayer(), "answers", ref.id), vaultFeedbackPayload(["correct", "correct", "correct", "correct"])));
+    await assertFails(updateDoc(doc(asHost(), "answers", ref.id), { feedback: [...FEEDBACK], data: { guess: "9999" } }));
+    await assertFails(updateDoc(doc(asHost(), "answers", ref.id), vaultFeedbackPayload(["correct"] as never)));
+  });
+});
+
+describe("ad_impressions — sponsor gösterim kaydı (3.3)", () => {
+  beforeEach(() => seed({ status: "ad_break" }));
+  const impression = (hostUid = HOST_UID, over: Partial<Parameters<typeof adImpressionPayload>[0]> = {}) =>
+    adImpressionPayload({
+      ad: { id: "ad1", sponsor_name: "Neon Cola", type: "image" },
+      roomId: ROOM_ID,
+      venueId: "default",
+      hostUid,
+      startedAt: 1_760_000_000_000,
+      shownMs: 10_000,
+      plannedMs: 10_000,
+      completed: true,
+      audience: 12,
+      ...over,
+    });
+
+  it("odanın host'u (personel) gösterimi yazar, personel okur", async () => {
+    await seedStaff(HOST_UID);
+    await assertSucceeds(addDoc(collection(asHost(), "ad_impressions"), impression()));
+    await assertSucceeds(getDocs(query(collection(asHost(), "ad_impressions"), where("venue_id", "==", "default"))));
+  });
+
+  it("oyuncu ve başka odanın personeli yazamaz; oyuncu okuyamaz", async () => {
+    await seedStaff(HOST_UID);
+    await seedStaff(OWNER_UID);
+    await assertFails(addDoc(collection(asPlayer(), "ad_impressions"), impression(PLAYER_UID)));
+    await assertFails(addDoc(collection(asVenueOwner(), "ad_impressions"), impression(OWNER_UID)));
+    await assertFails(getDocs(collection(asPlayer(), "ad_impressions")));
+  });
+
+  it("kayıt değiştirilemez, silinemez; biçim sınırları uygulanır", async () => {
+    await seedStaff(HOST_UID);
+    const ref = await addDoc(collection(asHost(), "ad_impressions"), impression());
+    await assertFails(updateDoc(doc(asHost(), "ad_impressions", ref.id), { completed: false }));
+    await assertFails(deleteDoc(doc(asHost(), "ad_impressions", ref.id)));
+    await assertFails(addDoc(collection(asHost(), "ad_impressions"), { ...impression(), audience: 501 }));
+    await assertFails(addDoc(collection(asHost(), "ad_impressions"), { ...impression(), ad_type: "popup" }));
+    await assertFails(addDoc(collection(asHost(), "ad_impressions"), { ...impression(), clicks: 3 }));
+  });
+});
+
+describe("çok mekan — mekan başına personel ve çapraz erişim (3.1)", () => {
+  const A = "kadikoy-neon";
+  const B = "berlin-mitte";
+  const OWNER_A = "uid-owner-a";
+  const STAFF_A = "uid-staff-a";
+  const STAFF_B = "uid-staff-b";
+  const ADMIN = "uid-platform";
+  const as = (uid: string) => testEnv.authenticatedContext(uid, { firebase: { sign_in_provider: "password" } }).firestore();
+
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, "platform_admins", ADMIN), { added_at: 1 });
+      await setDoc(doc(db, "venues", A), { name: "Kadıköy Neon", rewards_enabled: false });
+      await setDoc(doc(db, "venues", B), { name: "Berlin Mitte", rewards_enabled: false });
+      await setDoc(doc(db, "venues", A, "staff", OWNER_A), venueStaffPayload({ uid: OWNER_A, role: "owner", addedBy: ADMIN, now: 1 }));
+      await setDoc(doc(db, "venues", A, "staff", STAFF_A), venueStaffPayload({ uid: STAFF_A, role: "staff", addedBy: OWNER_A, now: 1 }));
+      await setDoc(doc(db, "venues", B, "staff", STAFF_B), venueStaffPayload({ uid: STAFF_B, role: "staff", addedBy: ADMIN, now: 1 }));
+      await setDoc(doc(db, "rooms", "room-a"), { code: "AAAA", status: "night_lobby", host_uid: STAFF_A, venue_id: A });
+    });
+  });
+
+  const room = (venueId: string | undefined, hostUid: string) =>
+    roomCreatePayload({ code: "QWER", hostUid, venueId: venueId as string, locale: "tr", venue: { name: "X" } });
+
+  describe("mekanlar ve personel listesi", () => {
+    it("mekanı yalnızca HENGAME ekibi açar; markayı mekanın personeli düzenler", async () => {
+      await assertSucceeds(setDoc(doc(as(ADMIN), "venues", "yeni-mekan"), { name: "Yeni" }));
+      await assertFails(setDoc(doc(as(OWNER_A), "venues", "baska-mekan"), { name: "Korsan" }));
+      await assertSucceeds(updateDoc(doc(as(STAFF_A), "venues", A), { name: "Kadıköy Neon Bar" }));
+      await assertFails(updateDoc(doc(as(STAFF_B), "venues", A), { name: "Ele geçirildi" }));
+      await assertSucceeds(getDoc(doc(asGuest(), "venues", A)));
+    });
+
+    it("sözleşme alanlarını (plan, limitler) yalnızca HENGAME ekibi değiştirir", async () => {
+      await assertFails(updateDoc(doc(as(OWNER_A), "venues", A), { plan: "pro" }));
+      await assertFails(updateDoc(doc(as(STAFF_A), "venues", A), { limits: { rooms: 99 } }));
+      await assertSucceeds(updateDoc(doc(as(ADMIN), "venues", A), { plan: "pro" }));
+    });
+
+    it("sahip personel ekler ve çıkarır; sahip atayamaz, kendini ekleyemez", async () => {
+      const newcomer = "uid-yeni-garson";
+      await assertSucceeds(setDoc(doc(as(OWNER_A), "venues", A, "staff", newcomer), venueStaffPayload({ uid: newcomer, role: "staff", addedBy: OWNER_A })));
+      await assertFails(setDoc(doc(as(OWNER_A), "venues", A, "staff", "uid-ikinci-sahip"), venueStaffPayload({ uid: "uid-ikinci-sahip", role: "owner", addedBy: OWNER_A })));
+      await assertSucceeds(deleteDoc(doc(as(OWNER_A), "venues", A, "staff", newcomer)));
+      await assertFails(deleteDoc(doc(as(OWNER_A), "venues", A, "staff", OWNER_A)));
+    });
+
+    it("sahip başka bir sahibi çıkaramaz; onu yalnızca HENGAME ekibi çıkarır", async () => {
+      const coOwner = "uid-ortak-sahip";
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), "venues", A, "staff", coOwner), venueStaffPayload({ uid: coOwner, role: "owner", addedBy: ADMIN, now: 1 }));
+      });
+      await assertFails(deleteDoc(doc(as(OWNER_A), "venues", A, "staff", coOwner)));
+      await assertSucceeds(deleteDoc(doc(as(ADMIN), "venues", A, "staff", coOwner)));
+    });
+
+    it("personel (sahip olmayan) ve başka mekanın personeli personel ekleyemez; kimse kendini ekleyemez", async () => {
+      await assertFails(setDoc(doc(as(STAFF_A), "venues", A, "staff", "uid-arkadas"), venueStaffPayload({ uid: "uid-arkadas", role: "staff", addedBy: STAFF_A })));
+      await assertFails(setDoc(doc(as(STAFF_B), "venues", A, "staff", "uid-arkadas"), venueStaffPayload({ uid: "uid-arkadas", role: "staff", addedBy: STAFF_B })));
+      await assertFails(setDoc(doc(as("uid-izinsiz"), "venues", A, "staff", "uid-izinsiz"), venueStaffPayload({ uid: "uid-izinsiz", role: "staff", addedBy: "uid-izinsiz" })));
+    });
+
+    it("HENGAME ekibi sahip atar", async () => {
+      await assertSucceeds(setDoc(doc(as(ADMIN), "venues", B, "staff", "uid-owner-b"), venueStaffPayload({ uid: "uid-owner-b", role: "owner", addedBy: ADMIN })));
+    });
+
+    it("personel üye olduğu mekanları listeler, başkasınınkini değil", async () => {
+      await assertSucceeds(getDocs(query(collectionGroup(as(STAFF_A), "staff"), where("uid", "==", STAFF_A))));
+      await assertFails(getDocs(query(collectionGroup(as(STAFF_A), "staff"), where("uid", "==", STAFF_B))));
+    });
+  });
+
+  describe("odalar", () => {
+    it("personel yalnızca kendi mekanında oda açar; mekansız oda yalnızca eski global personele", async () => {
+      await assertSucceeds(setDoc(doc(as(STAFF_A), "rooms", "r1"), room(A, STAFF_A)));
+      await assertFails(setDoc(doc(as(STAFF_A), "rooms", "r2"), room(B, STAFF_A)));
+      const legacy: Record<string, unknown> = { ...room(A, STAFF_A) };
+      delete legacy.venue_id;
+      await assertFails(setDoc(doc(as(STAFF_A), "rooms", "r3"), legacy));
+    });
+
+    it("odanın mekanı ve host'u sonradan değiştirilemez", async () => {
+      await assertFails(updateDoc(doc(as(STAFF_A), "rooms", "room-a"), { venue_id: B }));
+      await assertFails(updateDoc(doc(as(STAFF_A), "rooms", "room-a"), { host_uid: STAFF_B }));
+      await assertSucceeds(updateDoc(doc(as(STAFF_A), "rooms", "room-a"), { status: "lobby" }));
+    });
+  });
+
+  describe("mekana bağlı kayıtlar", () => {
+    const event = (venueId: string) =>
+      gameEventPayload({ type: "game_started", roomId: "room-a", venueId, hostUid: STAFF_A, game: "quiz", playerCount: 3, startedAt: 1 });
+    const impression = (venueId: string) =>
+      adImpressionPayload({ ad: { id: "ad", sponsor_name: "S", type: "image" }, roomId: "room-a", venueId, hostUid: STAFF_A, startedAt: 1, shownMs: 1000, plannedMs: 1000, completed: true, audience: 3 });
+    const reward = (venueId: string) =>
+      rewardPayload({ roomId: "room-a", venueId, uid: PLAYER_UID, nickname: "O", code: "ABC123", venue: { reward_title: "Çay" } });
+
+    it("kayıt odanın mekanıyla yazılır; başka mekan etiketi reddedilir", async () => {
+      await assertSucceeds(setDoc(doc(as(STAFF_A), "events", "e1"), event(A)));
+      await assertFails(setDoc(doc(as(STAFF_A), "events", "e2"), event(B)));
+      await assertSucceeds(addDoc(collection(as(STAFF_A), "ad_impressions"), impression(A)));
+      await assertFails(addDoc(collection(as(STAFF_A), "ad_impressions"), impression(B)));
+      await assertSucceeds(addDoc(collection(as(STAFF_A), "rewards"), reward(A)));
+      await assertFails(addDoc(collection(as(STAFF_A), "rewards"), reward(B)));
+    });
+
+    it("rapor sorgusu yalnızca kendi mekanı için; başka mekanınki reddedilir", async () => {
+      await setDoc(doc(as(STAFF_A), "events", "e1"), event(A));
+      await assertSucceeds(getDocs(query(collection(as(STAFF_A), "events"), where("venue_id", "==", A))));
+      await assertFails(getDocs(query(collection(as(STAFF_B), "events"), where("venue_id", "==", A))));
+      await assertFails(getDocs(query(collection(as(STAFF_B), "ad_impressions"), where("venue_id", "==", A))));
+      await assertFails(getDocs(query(collection(as(STAFF_B), "rewards"), where("venue_id", "==", A))));
+    });
+
+    it("ödül doğrulama kodu mekana süzülerek arar; başka mekanın kodu sorgulanamaz", async () => {
+      await setDoc(doc(as(STAFF_A), "rewards", "rw-a"), reward(A));
+      const byCode = (uid: string, venueId: string) =>
+        getDocs(query(collection(as(uid), "rewards"), where("code", "==", "ABC123"), where("venue_id", "==", venueId)));
+      await assertSucceeds(byCode(STAFF_A, A));
+      await assertFails(byCode(STAFF_B, A));
+      await assertFails(getDocs(query(collection(as(STAFF_B), "rewards"), where("code", "==", "ABC123"))));
+    });
+
+    it("soru paketi mekanın: başka mekanın personeli okuyamaz, yükleyemez", async () => {
+      const pack = {
+        title: "A Paketi",
+        locale: "tr" as const,
+        questions: Array.from({ length: 5 }, (_, i) => ({
+          id: `q${i}`, text: `Soru numara ${i} burada?`, options: { A: "a", B: "b", C: "c", D: "d" }, correctOption: "A" as const, difficulty: 1 as const,
+        })),
+      };
+      await assertSucceeds(addDoc(collection(as(STAFF_A), "venues", A, "quiz_packs"), quizPackPayload(pack, STAFF_A)));
+      await assertFails(getDocs(collection(as(STAFF_B), "venues", A, "quiz_packs")));
+      await assertFails(addDoc(collection(as(STAFF_B), "venues", A, "quiz_packs"), quizPackPayload(pack, STAFF_B)));
+    });
   });
 });

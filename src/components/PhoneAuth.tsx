@@ -5,6 +5,9 @@ import type { ConfirmationResult } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocale } from "../hooks/useLocale";
 import type { Locale } from "../lib/i18n";
+import { createLogger } from "../lib/logger";
+
+const log = createLogger("PhoneAuth");
 
 // grecaptcha isn't part of the DOM lib types — it's injected by the reCAPTCHA
 // script Firebase Auth loads. Only the bits used here are declared.
@@ -126,7 +129,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
       const confirmation = await signInWithPhoneNumber(auth, formattedNumber, appVerifier);
       setConfirmationResult(confirmation);
     } catch (err: unknown) {
-      console.error(err);
+      log.error(err);
       setError(t("phoneAuth.errSendFailed"));
       if (window.recaptchaVerifier) {
         window.recaptchaVerifier.render().then((widgetId) => {
@@ -150,7 +153,7 @@ export function PhoneAuth({ onSuccess, onCancel }: PhoneAuthProps) {
       const user = result.user;
       onSuccess(user.uid, user.phoneNumber || phoneNumber);
     } catch (err: unknown) {
-      console.error(err);
+      log.error(err);
       setError(t("phoneAuth.errInvalidCode"));
     } finally {
       setLoading(false);

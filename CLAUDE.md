@@ -14,12 +14,17 @@ npm run dev         # vite --host (telefondan test için --host şart)
 npm run typecheck   # tsc -b + test tsconfig
 npm run lint        # eslint
 npm run test:run    # vitest tek sefer
+npm run test:coverage  # vitest + src/lib kapsama eşiği (CI bunu koşar)
+npm run check:bundle   # build sonrası paket bütçesi (gzip)
+npm run check:audit    # üretim bağımlılıklarında high+ açık
 npm run build       # tsc --noEmit + vite build
 npm run test:rules  # Firestore kural testleri (Java 21 + emulator gerekir)
+npm run test:e2e    # Uçtan uca: TV + telefonlar, Firestore/Auth emulator (Java 21 + Chromium)
 ```
 
 Değişiklikten sonra en az `npm run typecheck && npm run lint && npm run test:run`
-çalıştır. CI bunlara ek olarak `build` ve kural testlerini koşar, ayrıca
+çalıştır. CI bunlara ek olarak kapsama eşiğini, `build`, paket bütçesini,
+audit kapısını, kural testlerini ve uçtan uca testleri koşar, ayrıca
 `src/`–`test/` ağacına derleme çıktısı (`*.js`, `*.d.ts`) sızmadığını denetler.
 
 ## Mimari — tek cümlelik kural
@@ -30,20 +35,28 @@ alanları dinler ve `answers` koleksiyonuna yazar. Player asla oda state'ini
 değiştirmez (buzz gibi yarışlı işlemler `runTransaction` ile).
 
 Firestore koleksiyonları: `rooms` (durum makinesi), `players` (skorlar),
-`answers` (cevaplar), ayrıca mekan/ödül/rapor koleksiyonları.
+`answers` (cevaplar), `events` (oyun telemetrisi; yalnızca host yazar),
+`ad_impressions` (sponsor gösterim kaydı; yalnızca host yazar), `venues`
+(mekan; altında `staff` ve `quiz_packs`), `platform_admins`, `rewards`.
+Çok mekan: `rooms`/`rewards`/`events`/`ad_impressions` `venue_id` taşır
+(`docs/design/3.1-cok-mekan.md`).
 
 ## Dosya haritası
 
 | Yol | İçerik |
 |---|---|
 | `src/App.tsx` | Rotalar; Landing hariç hepsi `lazy` |
-| `src/pages/host/HostDisplay.tsx` | TV durum makinesi yönlendiricisi |
+| `src/pages/host/HostDisplay.tsx` | TV yönlendiricisi (oda durumu → pano / oyun ekranı) |
+| `src/pages/host/classic/` | Klasik harf oyunu: `useClassicGame` (akış) + `HostDisplayGame` (çizim) |
 | `src/pages/player/PlayerGame.tsx` | Telefon durum makinesi yönlendiricisi |
 | `src/pages/{host,player}/<oyun>/` | Oyun başına ekran çiftleri (quiz, bomb, sensor, wheel, overload, echo, pulse, colors, vault, unity, bar, kablo, ayna) |
 | `src/pages/{host,player}/views/` | Oyun bağımsız ekranlar (lobby, playing, review, podium) |
 | `src/hooks/` | `useHostRoom`, `useRoom`, `usePlayer`, `useAuth`, `useLocale`, `useSound` … |
-| `src/lib/` | Saf mantık: `scoring`, `fuzzyMatch`, `wordValidation`, `league`, `retention`, `rewards`, `roomCodes`, `liveness`, `gameRouting` |
+| `src/lib/` | Saf mantık: `scoring`, `fuzzyMatch`, `wordValidation`, `league`, `retention`, `rewards`, `roomCodes`, `liveness`, `gameRouting`, `venues` |
+| `src/contexts/VenueContext.tsx` | Etkin mekan: seçili mekan ya da odaya bağlı ekranda odanın mekanı (`useFollowRoomVenue`) |
+| `scripts/venue-admin.mjs` | Mekan açma, sahip atama, göç (Admin SDK, kuru çalışma varsayılan) |
 | `src/types/database.ts` | `RoomStatus`, `GameType`, tüm Firestore modelleri |
+| `src/content/quiz/*.json` | Quiz soru havuzları; şema `lib/quizPack.ts` (mekan/kurum paketleri de aynı şemayla, `/admin/content`) |
 | `firestore.rules` + `test/firestore.rules.test.ts` | Güvenlik kuralları ve testleri |
 
 ## Büyük dosyalar — komple okuma
@@ -51,13 +64,21 @@ Firestore koleksiyonları: `rooms` (durum makinesi), `players` (skorlar),
 Bunları baştan sona okuma, hedefli `grep` ile gir:
 
 - `src/lib/quizQuestions.ts` (~2100 satır) — quiz havuzu
-- `src/lib/i18n.ts` (~1700 satır) — tr/de/en çeviri sözlüğü
-- `src/pages/host/HostDisplay.tsx`, `src/pages/host/quiz/HostQuizDisplay.tsx` (~840'ar satır)
+- `src/lib/i18n/{de,tr,en}.ts` (~1050'şer satır) — dil başına çeviri sözlüğü
+  (`de` tür kaynağı; üçü de tembel iner, giriş paketinde sözlük yok — ilk
+  çizim `localeReady`'yi bekler, bkz. `lib/i18n.ts`)
 
 ## Konvansiyonlar
 
 - Kullanıcıya görünen her metin `useLocale().t("anahtar")` üzerinden; tr/de/en
-  üçü birden doldurulur. `i18nKeys.test.ts` eksik anahtarı yakalar.
+  üçü birden doldurulur: anahtar önce `i18n/de.ts`'e, sonra aynı türle
+  `tr.ts`/`en.ts`'e. Eksik ya da fazla anahtar derleme hatasıdır
+  (`satisfies Dictionary`); `i18nKeys.test.ts` tanımsız `t()` çağrısını,
+  `hardcodedText.test.ts` misafir/TV ekranlarındaki sabit JSX metnini yakalar.
+- Günlük için `console.*` değil `createLogger("Kapsam")` (`lib/logger.ts`;
+  ESLint `no-console`). `log.error` geçici ağ hataları dışında Sentry'ye gider.
+  `@sentry/react`'i doğrudan içe aktarma; `lib/monitoring.ts` kullan — SDK
+  giriş paketinde değil, boşta iner.
 - Yeni bir `RoomStatus` eklediğinde hem `HostDisplay` hem `PlayerGame`
   tarafında ele al — karşılıksız status **siyah ekran** demektir.
 - Yeni oyun modu: `GameType` + `gameCatalog.ts` kartı + `host/gameDisplays.ts`
@@ -65,11 +86,24 @@ Bunları baştan sona okuma, hedefli `grep` ile gir:
   `lib/gameRouting.ts` çözer; eksik kayıt derleme hatası verir.
 - Oyun mantığını `src/lib/` içinde saf fonksiyon olarak yaz ve birim testle;
   bileşenlerin içine gömme.
+- Ayar penceresine eklenen her ayar `lib/gameSettings.ts`'teki
+  `buildRoomSettings` ile odaya yazılır ve oyun ekranı onu okur (alan yoksa
+  `RULE_DEFAULTS`). Yalnızca ekranda görünen ayar hatadır;
+  `e2e/game-settings.spec.ts` her ayarın odaya ulaştığını doğrular.
+- Mekana ait veriyi okuyan sorgu `where("venue_id", "==", …)` taşır
+  (`hooks/venueDocs.ts`); kurallar sorguyu süzmez, süzgeçsiz sorgu başka
+  mekanın personeli için toptan reddedilir. Mekana bağlı yeni yazma
+  `venue_id`'yi odadan alır (`venueIdOf(room)`), kural eşitliği denetler.
 - Firebase v9+ modüler SDK; `firebase/compat` yasak. Çok dokümanlı güncellemede
   `writeBatch` / `runTransaction`.
 - Framer Motion geçişlerinde `<AnimatePresence mode="wait">` + benzersiz `key`.
 - Skor yazan her yol için `firestore.rules` tarafını da güncelle; istemci
   kurcalanabilir kabul edilir.
+- Oda belgesi herkese açık okunur: doğru cevap, kod gibi **gizli bilgi
+  odaya yazılmaz**. Host'a özel `rooms/{id}/secrets/{ad}` belgesine
+  (`lib/gameSecrets.ts`, `useRoomSecret`) yazılır, açıklama anında host
+  odaya kopyalar. Telefonun yüklediği koda da cevap konmaz (ör. Ayna
+  gerçekleri `lib/aynaFacts.ts`, yalnızca TV yükler).
 - Commit mesajları Türkçe ve `tip(kapsam): özet` biçiminde (`feat(quiz): …`).
 
 Ayrıntılı kodlama standartları: `docs/coding-standards.md`.

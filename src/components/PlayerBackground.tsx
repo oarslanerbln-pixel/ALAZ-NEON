@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { BackdropImage, type BackdropSource } from "./BackdropImage";
 
-const BACKGROUND_IMAGES = [
-  "/player-bg-1.png",
-  "/player-bg-2.png",
-  "/player-bg-3.png",
+const BACKGROUND_IMAGES: readonly BackdropSource[] = [
+  { avif: "/player-bg-1.avif", webp: "/player-bg-1.webp" },
+  { avif: "/player-bg-2.avif", webp: "/player-bg-2.webp" },
+  { avif: "/player-bg-3.avif", webp: "/player-bg-3.webp" },
 ];
 
 export function PlayerBackground() {
@@ -28,12 +29,11 @@ export function PlayerBackground() {
           transition={{ duration: 2, ease: "easeInOut" }}
           className="absolute inset-0 w-full h-full"
         >
-          <motion.img
+          <BackdropImage
             initial={{ scale: 1.0 }}
             animate={{ scale: 1.15 }}
             transition={{ duration: 12, ease: "linear" }}
-            src={BACKGROUND_IMAGES[bgIndex]}
-            alt="Cyberpunk Background"
+            source={BACKGROUND_IMAGES[bgIndex]}
             className="w-full h-full object-cover opacity-60"
           />
           {/* Subtle gradient overlays for text readability */}

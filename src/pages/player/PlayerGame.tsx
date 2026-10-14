@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams, useNavigate, Navigate } from "react-router-dom";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
-import { retentionExpiry } from "../../lib/retention";
+import { letterAnswerPayload } from "../../lib/clientWrites";
 import { NeonIcon } from "../../components/NeonIcon";
 import { HostOfflineBanner } from "../../components/HostOfflineBanner";
 import { DatabaseStatus } from "../../components/DatabaseStatus";
@@ -15,9 +15,12 @@ import { useLocale } from "../../hooks/useLocale";
 
 // Hooks
 import { useRoom } from "../../hooks/useRoom";
+import { useFollowRoomVenue } from "../../hooks/useFollowRoomVenue";
 import { usePlayer } from "../../hooks/usePlayer";
 import { useEmojiPulse } from "../../hooks/useEmojiPulse";
 import { useHeartbeat } from "../../hooks/useHeartbeat";
+import { useWakeLock } from "../../hooks/useWakeLock";
+import { useMonitoringTags } from "../../hooks/useMonitoringTags";
 import { PLAYER_HEARTBEAT_MS } from "../../lib/liveness";
 
 // Extracted Components
@@ -33,6 +36,9 @@ import { PlayerTutorial } from "./components/PlayerTutorial";
 import { Suspense } from "react";
 import { PLAYER_GAME_CONTROLLERS } from "./gameControllers";
 import { PlayerGameShell } from "./components/PlayerGameShell";
+import { createLogger } from "../../lib/logger";
+
+const log = createLogger("PlayerGame");
 
 export function PlayerGame() {
   const [searchParams] = useSearchParams();
@@ -43,8 +49,9 @@ export function PlayerGame() {
 
   // Centralized State Management via Hooks
   const { room, loading: roomLoading, error: roomError } = useRoom(roomId);
+  useFollowRoomVenue(room);
   const { player, loading: playerLoading, error: playerError } = usePlayer(playerId);
-  const { sendReaction } = useEmojiPulse(roomId);
+  const { sendReaction } = useEmojiPulse(roomId, undefined, playerId);
   const { t } = useLocale();
   const isScattegories = !room?.active_game || room?.active_game === "scattegories" || room?.active_game === "none";
 
@@ -79,6 +86,10 @@ export function PlayerGame() {
 
   // Canlılık sinyali — hayalet oyuncuya bomba/voltaj geçmesini önlüyor.
   useHeartbeat("players", "last_active", playerId, PLAYER_HEARTBEAT_MS);
+  // Dokunulmadan TV izlenen telefon kararıp kilitlenmesin: kilitli telefon
+  // soruyu kaçırıyor ve canlılık sinyali kesildiği için "kopmuş" sayılıyordu.
+  useWakeLock(!!room && !!player && room.status !== "closed");
+  useMonitoringTags({ role: "player", room_id: roomId, game: room?.active_game, status: room?.status });
 
   // Derived States
   const gameState = room?.status || "lobby";
@@ -156,21 +167,22 @@ export function PlayerGame() {
 
       let submitError = null;
       try {
-        await addDoc(collection(db, "answers"), {
-          room_id: roomId,
-          player_id: playerId,
-          round_letter: activeLetter,
-          round_index: currentRound,
-          data: finalData,
-          created_at: new Date().toISOString(),
-          expires_at: retentionExpiry(),
-        });
+        await addDoc(
+          collection(db, "answers"),
+          letterAnswerPayload({
+            roomId,
+            playerId,
+            letter: activeLetter,
+            roundIndex: currentRound,
+            data: finalData,
+          }),
+        );
       } catch (err) {
         submitError = err;
       }
 
       if (submitError) {
-        console.error("Error submitting answers:", submitError);
+        log.error("Error submitting answers:", submitError);
         showToast(t("game.submitError"), "error");
         setSubmitStatus("idle");
         setIsLocked(false);
