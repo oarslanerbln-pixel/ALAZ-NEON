@@ -73,8 +73,11 @@ dashboard'daki gecenin liderleri listesi sıra değişince ▲/▼ gösteriyor
 ve puanı ("2. / 8 · 61 gece puanı"); lobinin mevcut oyuncu dinleyicisinden,
 ek okuma yok. TV ve telefon aynı sırayı kullanır (`nightStandings`).
 
-**P2 — Saat farkı** (aşağıda) ve **gece finali**: son oyundan sonra TV'de
-"Gecenin şampiyonu" sahnesi (`nightStandings` ilk 3).
+**Gece finali ✅** — dashboard'daki "🏆 Gecenin finali" düğmesi tam ekran
+"Gecenin Şampiyonu" sahnesini açar (3. → 2. → şampiyon, konfeti, ilk 10);
+oradan "Geceyi bitir" odayı kapatır. Yalnızca TV'de, oda durumu değişmez.
+
+**P2 — Saat farkı** (aşağıda).
 
 **P2 — Saat farkı.** Oyuncu `last_active` kendi saatiyle yazılıyor; bomba ve
 echo hedef seçimi diğer telefonların saatini kıyaslıyor. Kalıcı çözüm:

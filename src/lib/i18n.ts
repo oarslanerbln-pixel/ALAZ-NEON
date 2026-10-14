@@ -327,6 +327,16 @@ const translations = {
   // ═══════════════════════════════════════════
   // PODIUM
   // ═══════════════════════════════════════════
+  "finale.title": { tr: "Gecenin Şampiyonu", de: "Champion des Abends", en: "Champion of the Night" },
+  "finale.open": { tr: "Gecenin finali", de: "Finale des Abends", en: "Night finale" },
+  "finale.points": {
+    tr: (n: number) => `${n} gece puanı`,
+    de: (n: number) => `${n} Nachtpunkte`,
+    en: (n: number) => `${n} night points`,
+  },
+  "finale.empty": { tr: "Bu gece henüz puan dağıtılmadı.", de: "Heute Abend wurden noch keine Punkte vergeben.", en: "No points awarded tonight yet." },
+  "finale.back": { tr: "Geri dön", de: "Zurück", en: "Back" },
+  "finale.endNight": { tr: "Geceyi bitir", de: "Abend beenden", en: "End the night" },
   "podium.nightPoints": {
     tr: (n: number) => `+${n} gece puanı`,
     de: (n: number) => `+${n} Nachtpunkte`,
