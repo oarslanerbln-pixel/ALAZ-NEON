@@ -16,6 +16,7 @@ import { getRandomSensorImage } from "../../../data/sensorImages";
 import { GameSettingsModal } from "../components/GameSettingsModal";
 import { GAME_CARDS as GAMES } from "../../../lib/gameCatalog";
 import { activePlayers as activePlayersOf } from "../../../lib/liveness";
+import { assignColorsTeams, colorsTargetClicks } from "../../../lib/colorsTeams";
 import { useLocale } from "../../../hooks/useLocale";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -177,11 +178,31 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
         overload_eliminated_ids: []
       };
     }
+    // Neon Savaşları: takımlar ve hedef burada kurulmazsa takım oyuncu
+    // kimliğinin son karakterinden çıkıyordu (iki oyuncu aynı takıma
+    // düşebiliyordu) ve hedef kalabalığa göre ayarlanmıyordu.
     if (game === "colors") {
+      const contenders = players.filter((p) => (p.lives === undefined ? 3 : p.lives) > 0);
       initialStatus = "colors_intro";
       extraUpdates = {
         active_game: game,
+        colors_team_assignments: assignColorsTeams(contenders.map((p) => p.id)),
+        colors_target_clicks: colorsTargetClicks(contenders.length),
       };
+    }
+
+    // Şifre ve Birlik ekranları yalnızca *_intro durumundan ilerliyor;
+    // "lobby" ile açılınca anlatım ekranında donup kalıyorlardı. Önceki
+    // oyunun kodu ve hedefi de temizleniyor: yoksa ikinci Şifre oyunu aynı
+    // kodla, ikinci Birlik oyunu eski kalabalığın hedefiyle açılırdı.
+    if (game === "vault") {
+      initialStatus = "vault_intro";
+      extraUpdates = { ...extraUpdates, vault_code: "", vault_winner_id: null };
+    }
+
+    if (game === "unity") {
+      initialStatus = "unity_intro";
+      extraUpdates = { ...extraUpdates, unity_current: 0, unity_target: 0 };
     }
 
     // Echo / Spectrum / Pulse ekranlari kurulumlarini kendileri yapiyor, ama
@@ -271,11 +292,12 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       };
     }
 
-    // Bar ve Kablo skorlari oyuncu dokumaninda birikiyor ve hicbir yerde
-    // sifirlanmiyordu: ikinci Kablo turu, onceki turun toplami zaten hedefin
-    // ustunde oldugu icin aninca "kazanildi" ekranina duserdi.
-    if (game === "bar" || game === "kablo") {
-      const resetField = game === "bar" ? "bar_score" : "kablo_score";
+    // Bar, Kablo ve Neon Savaşları sayaçları oyuncu dokümanında birikiyor ve
+    // hiçbir yerde sıfırlanmıyordu: ikinci Kablo turu, önceki turun toplamı
+    // zaten hedefin üstünde olduğu için anında "kazanıldı" ekranına düşerdi.
+    const counterField = { bar: "bar_score", kablo: "kablo_score", colors: "colors_clicks" } as const;
+    if (game === "bar" || game === "kablo" || game === "colors") {
+      const resetField = counterField[game];
       const batch = writeBatch(db);
       players.forEach((p) => {
         batch.update(doc(db, "players", p.id), { [resetField]: 0 });

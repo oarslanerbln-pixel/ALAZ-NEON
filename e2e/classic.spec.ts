@@ -3,11 +3,11 @@ import { expect, test, type Page } from "@playwright/test";
 import { cleanAnswerData } from "../src/lib/answerText";
 import { calculateRoundScores } from "../src/lib/scoring";
 import type { Answer, Player, Room } from "../src/types/database";
-import { queryDocs, readDoc, resetEmulators } from "./support/emulator";
+import { queryDocs, readDoc } from "./support/emulator";
 import { t } from "./support/i18n";
-import { joinAsPlayer, openNight } from "./support/night";
+import { freshStart, joinAsPlayer, openNight } from "./support/night";
 
-test.beforeEach(resetEmulators);
+test.beforeEach(freshStart);
 
 const CATEGORIES = ["Şehir", "Hayvan"];
 

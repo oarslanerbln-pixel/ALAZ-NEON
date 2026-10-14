@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { collection, query, where, onSnapshot, doc, updateDoc, increment } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
@@ -9,6 +9,7 @@ import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { NeonIcon } from "../../../components/NeonIcon";
 import { createLogger } from "../../../lib/logger";
+import { newestFirst, vaultWinner } from "../../../lib/vault";
 
 const log = createLogger("HostVaultDisplay");
 
@@ -23,6 +24,7 @@ export function HostVaultDisplay({ room, players, updateRoomStatus }: Props) {
   const [gameState, setGameState] = useState<"intro" | "active" | "reveal">("intro");
   const [guesses, setGuesses] = useState<(Answer & { nickname: string })[]>([]);
   const [isExploding, setIsExploding] = useState(false);
+  const awardedCodeRef = useRef<string | null>(null);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
@@ -58,40 +60,28 @@ export function HostVaultDisplay({ room, players, updateRoomStatus }: Props) {
       where("round_letter", "==", "VAULT")
     );
 
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const newGuesses: (Answer & { nickname: string })[] = [];
-      let winnerId: string | null = null;
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const known = snapshot.docs
+        .map((docSnap) => docSnap.data() as Answer)
+        .filter((data) => players.some((p) => p.id === data.player_id));
+      setGuesses(
+        newestFirst(known).map((data) => ({
+          ...data,
+          nickname: players.find((p) => p.id === data.player_id)?.nickname ?? "",
+        })),
+      );
 
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data() as Answer;
-        const player = players.find(p => p.id === data.player_id);
-        if (player) {
-          newGuesses.push({ ...data, nickname: player.nickname });
-          
-          if (data.data.guess === room.vault_code && !winnerId) {
-            winnerId = player.id;
-          }
-        }
-      });
-
-      // Sort by creation time so newest is top
-      newGuesses.sort((a, b) => {
-        const timeA = a.created_at ? new Date(a.created_at as string).getTime() : 0;
-        const timeB = b.created_at ? new Date(b.created_at as string).getTime() : 0;
-        return timeB - timeA;
-      });
-
-      setGuesses(newGuesses);
-
-      // We have a winner!
-      if (winnerId && room.status === "vault_active") {
+      // Kazanan kod başına bir kez ödüllendirilir: dinleyici her anlık
+      // görüntüde (ve bağımlılık değişince yeniden kurulunca) tetikleniyor,
+      // açıklamaya kadar geçen 3 sn'de puan defalarca ekleniyordu.
+      const winnerId = vaultWinner(known, room.vault_code);
+      if (winnerId && room.status === "vault_active" && awardedCodeRef.current !== room.vault_code) {
+        awardedCodeRef.current = room.vault_code ?? null;
         setIsExploding(true);
         SoundManager.getInstance().playSFX(sounds.SUCCESS);
         SoundManager.getInstance().stopSound(sounds.GAME_PULSE);
-        
-        // Add score to winner
-        const pRef = doc(db, "players", winnerId);
-        updateDoc(pRef, { total_score: increment(500) }).catch(log.error);
+
+        updateDoc(doc(db, "players", winnerId), { total_score: increment(500) }).catch(log.error);
 
         setTimeout(() => {
           updateRoomStatus("vault_reveal", { vault_winner_id: winnerId });

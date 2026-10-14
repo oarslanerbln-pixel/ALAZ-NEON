@@ -1,11 +1,10 @@
 import { expect, test } from "@playwright/test";
 
-import { resetEmulators } from "./support/emulator";
 import { t } from "./support/i18n";
-import { newDevice } from "./support/night";
+import { freshStart, newDevice } from "./support/night";
 import { cspViolations } from "./support/csp";
 
-test.beforeEach(resetEmulators);
+test.beforeEach(freshStart);
 
 // Karar D1: oda yalnızca personel hesabıyla açılır. Anonim ziyaretçi kurulum
 // ekranı yerine giriş bağlantısını görür.

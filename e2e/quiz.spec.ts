@@ -1,10 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { readDoc, resetEmulators } from "./support/emulator";
+import { readDoc } from "./support/emulator";
 import { t } from "./support/i18n";
-import { joinAsPlayer, openNight } from "./support/night";
+import { freshStart, joinAsPlayer, openNight } from "./support/night";
 
-test.beforeEach(resetEmulators);
+test.beforeEach(freshStart);
 
 type Option = "A" | "B" | "C" | "D";
 

@@ -7,6 +7,7 @@ import { HostLobby } from "../views/HostLobby";
 import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { grantRewardToPlayers } from "../../../lib/rewards";
+import { assignColorsTeams, colorsTargetClicks } from "../../../lib/colorsTeams";
 import { useVenue } from "../../../contexts/VenueContextCore";
 import { doc, writeBatch } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
@@ -31,12 +32,7 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
   const handleStartGame = async () => {
     if (activePlayers.length === 0) return;
 
-    const shuffled = [...activePlayers].sort(() => Math.random() - 0.5);
-    const assignments: Record<string, "red" | "blue"> = {};
-    
-    shuffled.forEach((p, index) => {
-      assignments[p.id] = index % 2 === 0 ? "red" : "blue";
-    });
+    const assignments = assignColorsTeams(activePlayers.map((p) => p.id));
 
     try {
       SoundManager.getInstance().playSFX(sounds.START);
@@ -49,7 +45,7 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
       await batch.commit();
 
       await updateRoomStatus("colors_intro", {
-        colors_target_clicks: Math.max(80, activePlayers.length * 35),
+        colors_target_clicks: colorsTargetClicks(activePlayers.length),
         colors_team_assignments: assignments,
       });
     } catch (err) {
