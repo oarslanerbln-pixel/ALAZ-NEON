@@ -49,7 +49,7 @@ test("quiz: doğru/yanlış, hız bonusu ve seri çarpanı puana yansır", async
   const [alfaId, betaId] = [await playerId(alfa), await playerId(beta)];
 
   await host.getByRole("button", { name: "HENGAME QUIZ", exact: true }).click();
-  await host.getByRole("button", { name: /^HENGAME QUIZ .+/ }).click();
+  await host.getByRole("button", { name: /HENGAME QUIZ .+/ }).click();
   await host.getByRole("button", { name: t("gameSettings.startSession") }).click();
 
   // İlk oyunda anlatım ekranı geliyor: soru ekranı gelene kadar ilerle.

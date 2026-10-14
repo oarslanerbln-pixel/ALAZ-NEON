@@ -12,7 +12,7 @@ test.beforeEach(freshStart);
  */
 async function openSettings(host: Page, title: string): Promise<void> {
   await host.getByRole("button", { name: title, exact: true }).click();
-  await host.getByRole("button", { name: new RegExp(`^${title} .+`) }).click();
+  await host.getByRole("button", { name: new RegExp(`${title} .+`) }).click();
   await expect(host.getByRole("button", { name: t("gameSettings.startSession") })).toBeVisible();
 }
 

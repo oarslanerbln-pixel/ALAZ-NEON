@@ -45,7 +45,7 @@ test("klasik oyun: tur akışı, puanların tek ve doğru yazılması, sonraki t
   const beta = await joinAsPlayer(browser, code, "BETA");
 
   await host.getByRole("button", { name: "HENGAME ARENA", exact: true }).click();
-  await host.getByRole("button", { name: /^HENGAME ARENA .+/ }).click();
+  await host.getByRole("button", { name: /HENGAME ARENA .+/ }).click();
   await host.locator("textarea").fill(CATEGORIES.join(", "));
   await host.getByRole("button", { name: t("gameSettings.startSession") }).click();
 

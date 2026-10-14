@@ -65,9 +65,10 @@ export async function waitForStatus(roomId: string, status: string | string[], t
 
 /** TV panosunda oyun kartını seçer ve ayar penceresinden oturumu başlatır. */
 export async function startGame(host: Page, title: string) {
-  // Karusel göstergesinin adı tam olarak oyun adı; kartın adı açıklamayı da içerir.
+  // Karusel göstergesinin adı tam olarak oyun adı; kartın adı tür rozetiyle
+  // başlar ve açıklamayı da içerir ("Bilgi HENGAME ARENA Klasik …").
   await host.getByRole("button", { name: title, exact: true }).click();
-  await host.getByRole("button", { name: new RegExp(`^${title} .+`) }).click();
+  await host.getByRole("button", { name: new RegExp(`${title} .+`) }).click();
   await host.getByRole("button", { name: t("gameSettings.startSession") }).click();
 }
 

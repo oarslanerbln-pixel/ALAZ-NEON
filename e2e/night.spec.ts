@@ -54,7 +54,7 @@ test("TV odayı açar, üç oyuncu katılır ve echo oylaması tamamlanır", asy
   await test.step("TV echo oyununu başlatır", async () => {
     // Karusel göstergesinin adı tam olarak oyun adı; kartın adı açıklamayı da içerir.
     await host.getByRole("button", { name: "HENGAME ECHO", exact: true }).click();
-    await host.getByRole("button", { name: /^HENGAME ECHO .+/ }).click();
+    await host.getByRole("button", { name: /HENGAME ECHO .+/ }).click();
     await host.getByRole("button", { name: t("gameSettings.startSession") }).click();
   });
 

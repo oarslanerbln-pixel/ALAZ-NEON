@@ -58,7 +58,7 @@ test("personel paket yükler; TV quiz ayarında seçilen paketten soru gelir", a
 
   await test.step("TV ayar penceresi paketi listeler ve seçtirir", async () => {
     await host.getByRole("button", { name: "HENGAME QUIZ", exact: true }).click();
-    await host.getByRole("button", { name: /^HENGAME QUIZ .+/ }).click();
+    await host.getByRole("button", { name: /HENGAME QUIZ .+/ }).click();
     await host.getByRole("button", { name: t("gameSettings.quizPackLabel", "Firma Gecesi", 5) }).click();
     await expect(host.getByText(t("gameSettings.quizPackHint"))).toBeVisible();
     await host.getByRole("button", { name: `5 ${t("gameSettings.quizQuestionsSuffix")}`, exact: true }).click();
