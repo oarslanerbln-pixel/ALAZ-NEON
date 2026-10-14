@@ -15,6 +15,8 @@ import { HOST_GAME_DISPLAYS, preloadHostGameDisplays } from "./gameDisplays";
 import { HostDisplayGame } from "./classic/HostDisplayGame";
 import { resolveRoutedGame } from "../../lib/gameRouting";
 import { RoomStatusScreen } from "../../components/RoomStatusScreen";
+import { HostAdBreak } from "./views/HostAdBreak";
+import { activePlayers as activePlayersOf } from "../../lib/liveness";
 
 
 export function HostDisplay() {
@@ -59,6 +61,18 @@ export function HostDisplay() {
           updatePlayerScore={hostRoom.updatePlayerScore}
         />
       </Suspense>
+    );
+  }
+
+  // Oyunlar arası sponsor reklam arası (panodan başlatılır, docs/roadmap.md
+  // 3.3). Klasik oyun kendi turları arasındaki reklam arasını kendisi çiziyor.
+  if (room.status === "ad_break" && room.active_game === "none") {
+    return (
+      <HostAdBreak
+        room={room}
+        audience={activePlayersOf(hostRoom.players).length}
+        onComplete={() => hostRoom.updateRoomStatus(room.ad_break_next_state || "night_lobby")}
+      />
     );
   }
 

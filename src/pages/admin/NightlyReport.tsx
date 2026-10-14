@@ -11,10 +11,13 @@ import { createLogger } from "../../lib/logger";
 import type { VenueKpis } from "../../lib/venueKpis";
 import { loadVenueKpis } from "./report/venueKpiData";
 import { VenueKpiPanel } from "./report/VenueKpiPanel";
+import { rangeFor, type RangePreset } from "./report/reportRange";
+import { SponsorPanel } from "./report/SponsorPanel";
+import { loadAdImpressions } from "./report/sponsorData";
+import type { AdImpressionRecord } from "../../lib/sponsorReport";
 
 const log = createLogger("NightlyReport");
 
-type RangePreset = "today" | "week" | "month";
 
 const GAME_LABEL: Record<GameType, string> = {
   scattegories: "Hengame Klasik",
@@ -34,21 +37,6 @@ const GAME_LABEL: Record<GameType, string> = {
   ayna: "Ayna"
 };
 
-function rangeFor(preset: RangePreset): { start: number; end: number } {
-  const now = new Date();
-  const end = now.getTime();
-  const start = new Date(now);
-  start.setHours(0, 0, 0, 0);
-  if (preset === "week") {
-    // Pazartesi başlangıçlı hafta — getDay() Pazar=0 döndürüyor, ona göre kaydırıyoruz.
-    const day = start.getDay();
-    const diffToMonday = day === 0 ? 6 : day - 1;
-    start.setDate(start.getDate() - diffToMonday);
-  } else if (preset === "month") {
-    start.setDate(1);
-  }
-  return { start: start.getTime(), end };
-}
 
 interface HourlyBucket {
   hourLabel: string;
@@ -66,6 +54,8 @@ interface ReportData {
   rewardsClaimed: number;
   /** Oyun olaylarından (3.2); yüklenemezse null, eski rapor yine görünür. */
   kpis: VenueKpis | null;
+  /** Sponsor gösterimleri (3.3); yüklenemezse null. */
+  impressions: AdImpressionRecord[] | null;
 }
 
 export function NightlyReport() {
@@ -141,10 +131,16 @@ export function NightlyReport() {
       const avgPlayersPerRoom = rooms.length > 0 ? Math.round((playerCount / rooms.length) * 10) / 10 : 0;
 
       const guestUids = playersSnap.docs.map((d) => String(d.data().uid ?? ""));
-      const kpis = await loadVenueKpis({ start, end, nightCount: rooms.length, guestUids }).catch((err) => {
-        log.error("KPI verisi yüklenemedi:", err);
-        return null;
-      });
+      const [kpis, impressions] = await Promise.all([
+        loadVenueKpis({ start, end, nightCount: rooms.length, guestUids }).catch((err) => {
+          log.error("KPI verisi yüklenemedi:", err);
+          return null;
+        }),
+        loadAdImpressions(start, end).catch((err) => {
+          log.error("Sponsor gösterimleri yüklenemedi:", err);
+          return null;
+        }),
+      ]);
 
       setData({
         roomCount: rooms.length,
@@ -156,6 +152,7 @@ export function NightlyReport() {
         rewardsGranted: rewards.length,
         rewardsClaimed: rewards.filter((r) => r.status === "claimed").length,
         kpis,
+        impressions,
       });
     } catch (err) {
       setErrorMsg(errorMessage(err));
@@ -320,6 +317,12 @@ export function NightlyReport() {
             {data.kpis && (
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-4">
                 <VenueKpiPanel kpis={data.kpis} />
+              </div>
+            )}
+
+            {data.impressions && (
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-4">
+                <SponsorPanel impressions={data.impressions} />
               </div>
             )}
 

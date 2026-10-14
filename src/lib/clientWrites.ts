@@ -399,3 +399,37 @@ export function vaultSecretPayload(code: string) {
 export function vaultFeedbackPayload(feedback: VaultFeedback[]) {
   return { feedback };
 }
+
+// ─── Sponsor gösterimi (proof-of-play) ──────────────────────────────
+
+/**
+ * Bir reklamın TV'de gösterim kaydı (docs/roadmap.md, 3.3). Süreler tam
+ * sayı ms; `completed` reklam sonuna kadar gösterildiyse true.
+ */
+export function adImpressionPayload(args: {
+  ad: { id: string; sponsor_name: string; type: "image" | "video" };
+  roomId: string;
+  hostUid: string;
+  startedAt: number;
+  shownMs: number;
+  plannedMs: number;
+  completed: boolean;
+  audience: number;
+  now?: number;
+}) {
+  const now = args.now ?? Date.now();
+  return {
+    ad_id: args.ad.id,
+    sponsor_name: args.ad.sponsor_name.slice(0, 80),
+    ad_type: args.ad.type,
+    room_id: args.roomId,
+    host_uid: args.hostUid,
+    started_at: Math.round(args.startedAt),
+    shown_ms: Math.max(0, Math.min(600_000, Math.round(args.shownMs))),
+    planned_ms: Math.max(0, Math.round(args.plannedMs)),
+    completed: args.completed,
+    audience: Math.max(0, Math.min(500, Math.round(args.audience))),
+    created_at: now,
+    expires_at: retentionExpiry(now),
+  };
+}

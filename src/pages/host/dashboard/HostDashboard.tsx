@@ -364,6 +364,12 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
           room={room}
           exitConfirmKey="common.confirmEndNight"
           onExitToHome={endNight}
+          // Oyunlar arası sponsor reklam arası; yalnızca mekanın reklamı varsa.
+          onTriggerAdBreak={
+            (venue.sponsor_ads?.length ?? 0) > 0
+              ? () => updateRoomStatus("ad_break", { active_game: "none", ad_break_next_state: "night_lobby" })
+              : undefined
+          }
         />
 
         <div className="flex-1 mt-4 w-full max-w-[1600px] mx-auto px-4 grid grid-cols-1 lg:grid-cols-4 gap-4">

@@ -531,6 +531,34 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Sponsor gösterim kaydı (proof-of-play, docs/roadmap.md 3.3): TV her
+    // reklamdan sonra bir kayıt yazar; sponsora sunulan rapor ve fatura
+    // dökümü bunlardan. Yalnızca odanın host'u (personel) yazar, personel
+    // okur; kayıt değiştirilemez ve silinemez (TTL hariç).
+    match /ad_impressions/{impressionId} {
+      allow read: if isStaff();
+      allow create: if isStaff() &&
+        request.resource.data.keys().hasOnly(['ad_id', 'sponsor_name', 'ad_type', 'room_id', 'host_uid', 'started_at', 'shown_ms', 'planned_ms', 'completed', 'audience', 'created_at', 'expires_at']) &&
+        request.resource.data.host_uid == request.auth.uid &&
+        request.resource.data.ad_type in ['image', 'video'] &&
+        request.resource.data.ad_id is string &&
+        request.resource.data.sponsor_name is string &&
+        request.resource.data.sponsor_name.size() <= 80 &&
+        request.resource.data.started_at is int &&
+        request.resource.data.shown_ms is int &&
+        request.resource.data.shown_ms >= 0 &&
+        request.resource.data.shown_ms <= 600000 &&
+        request.resource.data.planned_ms is int &&
+        request.resource.data.completed is bool &&
+        request.resource.data.audience is int &&
+        request.resource.data.audience >= 0 &&
+        request.resource.data.audience <= 500 &&
+        request.resource.data.created_at is int &&
+        request.resource.data.expires_at is timestamp &&
+        get(/databases/$(database)/documents/rooms/$(request.resource.data.room_id)).data.host_uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
     match /rewards/{rewardId} {
       // Önceden herhangi bir giriş yapmış oturum (anonim oyuncular DAHİL)
       // her ödülü okuyup "claimed" olarak işaretleyebiliyordu — bir oyuncu

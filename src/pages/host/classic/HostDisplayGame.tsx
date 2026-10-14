@@ -13,6 +13,7 @@ import { HostReview } from "../views/HostReview";
 import { HostStandings } from "../views/HostStandings";
 import { HostPodium } from "../views/HostPodium";
 import { HostAdBreak } from "../views/HostAdBreak";
+import { activePlayers as activePlayersOf } from "../../../lib/liveness";
 import { HostTutorial } from "../components/HostTutorial";
 import { DatabaseStatus } from "../../../components/DatabaseStatus";
 import { EmojiRain } from "../../../components/EmojiRain";
@@ -178,6 +179,8 @@ export function HostDisplayGame(props: { roomId: string | null } & ReturnType<ty
 
           {gameState === "ad_break" && (
             <HostAdBreak 
+              room={room ?? undefined}
+              audience={activePlayersOf(players).length}
               onComplete={() => {
                 const next = room?.ad_break_next_state || "lobby";
                 updateRoomStatus(next).then(() => setGameState(next as RoomStatus));
