@@ -16,6 +16,9 @@ import { KineticSpark } from "../../../components/KineticSpark";
 import { createLogger } from "../../../lib/logger";
 
 const log = createLogger("HostColorsDisplay");
+import { pointsFields } from "../../../lib/scoreWrites";
+import { finishNightRound } from "../../../lib/nightAwards";
+import { teamPoints } from "../../../lib/nightLeague";
 
 interface Props {
   room: Room;
@@ -114,6 +117,8 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
         const assignments = room.colors_team_assignments || {};
         // Beraberlikte ödül ve puan yok.
         const winners = outcome === "draw" ? [] : activePlayers.filter(p => assignments[p.id] === outcome);
+        // Gecelik lig: kazanan takımın her üyesi takım puanı, diğerleri (beraberlikte herkes) katılım.
+        finishNightRound(room.id, teamPoints(winners.map((p) => p.id), activePlayers.map((p) => p.id)));
         
         if (winners.length > 0) {
           const rewardRecipients = winners
@@ -129,7 +134,7 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
           const rewardBatch = writeBatch(db);
           winners.forEach(p => {
             const pRef = doc(db, "players", p.id);
-            rewardBatch.update(pRef, { total_score: (p.total_score || 0) + 150 });
+            rewardBatch.update(pRef, pointsFields(150));
           });
           rewardBatch.commit().catch(err =>
             log.error("Error updating winner scores:", err)

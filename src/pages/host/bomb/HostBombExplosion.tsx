@@ -26,9 +26,9 @@ export function HostBombExplosion({ room, players, onComplete }: Props) {
     return () => clearTimeout(t);
   }, []);
 
-  if (!targetPlayer) return null;
-
-  const currentLives = targetPlayer.lives !== undefined ? targetPlayer.lives : 3;
+  // Patlayan oyuncu bu arada odadan ayrıldıysa siyah ekran yerine isimsiz
+  // patlama gösterilir; 6 sn sonra oyun her durumda ilerler.
+  const currentLives = targetPlayer?.lives !== undefined ? targetPlayer.lives : 3;
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center min-h-screen bg-black relative overflow-hidden">
@@ -88,7 +88,7 @@ export function HostBombExplosion({ room, players, onComplete }: Props) {
 
             <p className="text-xl font-bold text-[#ff4d00] uppercase tracking-[0.4em] mb-4">{t("bomb.livesLost")}</p>
             <h1 className="text-6xl md:text-8xl font-black text-white uppercase tracking-tighter drop-shadow-[0_0_30px_rgba(255,0,60,0.8)]">
-              {targetPlayer.nickname}
+              {targetPlayer?.nickname ?? "—"}
             </h1>
 
             <div className="flex gap-6 justify-center mt-12">

@@ -8,6 +8,8 @@ import { reportWriteError } from "../../../lib/writeErrors";
 import { haptics } from "../../../lib/haptics";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useLocale } from "../../../hooks/useLocale";
+import { gameTitle } from "../../../lib/gameCatalog";
+import { PlayerStageScreen } from "../components/PlayerStageScreen";
 
 interface PlayerOverloadGameProps {
   room: Room;
@@ -45,28 +47,20 @@ export function PlayerOverloadGame({ room, player }: PlayerOverloadGameProps) {
 
   if (room.status === "lobby") {
     return (
-      <div className="w-full h-[100dvh] flex flex-col items-center justify-center bg-[#05000a] text-white p-6 text-center font-sans">
-        <div className="text-7xl mb-4 animate-bounce">⚡</div>
-        <h2 className="text-2xl font-black text-cyan-400 mb-2 uppercase tracking-[0.3em]">
-          {t("overload.title")}
-        </h2>
-        <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">{t("common.followMainScreen")}</p>
-      </div>
+      <PlayerStageScreen icon="⚡" tone="cyan" eyebrow={gameTitle("overload")} title={t("lobby.readyTitle")} waiting />
     );
   }
 
   if (room.status === "finished") {
     const isWinner = !isEliminated;
     return (
-      <div className={`w-full h-[100dvh] flex flex-col items-center justify-center font-sans text-center px-6 transition-colors duration-500 ${isWinner ? 'bg-emerald-950' : 'bg-red-950'} text-white`}>
-        <span className="text-8xl mb-4">{isWinner ? "👑" : "💀"}</span>
-        <h2 className={`text-4xl font-black mb-3 uppercase tracking-wider ${isWinner ? 'text-emerald-400' : 'text-red-400'}`}>
-          {isWinner ? t("overload.champion") : t("overload.gameOver")}
-        </h2>
-        <p className="text-gray-300 font-mono text-xs uppercase tracking-widest">
-          {t("overload.resultsOnScreen")}
-        </p>
-      </div>
+      <PlayerStageScreen
+        icon={isWinner ? "👑" : "💀"}
+        tone={isWinner ? "emerald" : "red"}
+        eyebrow={gameTitle("overload")}
+        title={isWinner ? t("overload.champion") : t("overload.gameOver")}
+        hint={t("overload.resultsOnScreen")}
+      />
     );
   }
 

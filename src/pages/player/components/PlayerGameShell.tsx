@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
  *
  * Kumandaların çoğu kök elemanında `flex-1` / `h-full` kullanıyor, yani
  * yüksekliği ebeveynden bekliyor. Eskiden PlayerGame onları kapsız render
- * ediyordu; içeriği `absolute` olan Spectrum'un yüksekliği sıfıra iniyor ve
+ * ediyordu; içeriği `absolute` olan bir kumandanın yüksekliği sıfıra iniyor ve
  * misafir oyunun ortasında simsiyah bir ekran görüyordu. Doğrudan çocuk
  * her zaman kalan alanı kaplar (`[&>*]:flex-1`).
  */

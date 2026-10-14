@@ -8,6 +8,8 @@ import { useToast } from "../../../contexts/ToastContextCore";
 import { useLocale } from "../../../hooks/useLocale";
 import { haptics } from "../../../lib/haptics";
 import { SoundManager, sounds } from "../../../lib/audio";
+import { gameTitle } from "../../../lib/gameCatalog";
+import { PlayerStageScreen } from "../components/PlayerStageScreen";
 import { createLogger } from "../../../lib/logger";
 
 const log = createLogger("PlayerSensorController");
@@ -94,29 +96,13 @@ export function PlayerSensorController({ room, player }: Props) {
   const renderContent = () => {
     if (room.status === "lobby") {
       return (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center z-10">
-          <div className="text-7xl mb-4 animate-bounce">👁️</div>
-          <h2 className="text-3xl font-black text-purple-400 mb-2 uppercase tracking-widest">
-            {t("sensor.title")}
-          </h2>
-          <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">
-            {t("common.followMainScreen")}
-          </p>
-        </div>
+        <PlayerStageScreen icon="👁️" tone="purple" eyebrow={gameTitle("sensor")} title={t("lobby.readyTitle")} waiting />
       );
     }
 
     if (room.status === "sensor_intro") {
       return (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center z-10">
-          <div className="text-7xl mb-4 animate-pulse">⚡</div>
-          <h2 className="text-4xl font-black text-white mb-2 uppercase tracking-wider">
-            {t("sensor.getReady")}
-          </h2>
-          <p className="text-purple-300 font-mono text-sm uppercase tracking-widest">
-            {t("sensor.beFirst")}
-          </p>
-        </div>
+        <PlayerStageScreen icon="⚡" tone="purple" eyebrow={gameTitle("sensor")} title={t("sensor.getReady")} body={t("sensor.beFirst")} waiting />
       );
     }
 
@@ -236,23 +222,12 @@ export function PlayerSensorController({ room, player }: Props) {
 
     if (room.status === "finished") {
       return (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 z-10 text-center">
-          <span className="text-7xl mb-4 block">🏆</span>
-          <h2 className="text-3xl font-black text-purple-400 mb-2 uppercase tracking-wider">
-            {t("sensor.gameOver")}
-          </h2>
-          <p className="text-gray-400 font-mono text-xs">
-            {t("sensor.resultsOnScreen", "Sonuçlar Ekranda!")}
-          </p>
-        </div>
+        <PlayerStageScreen icon="🏆" tone="amber" eyebrow={gameTitle("sensor")} title={t("sensor.gameOver")} hint={t("sensor.resultsOnScreen")} />
       );
     }
 
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 z-10 text-center">
-        <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">{t("common.loading")}</p>
-      </div>
+      <PlayerStageScreen icon="👁️" tone="purple" eyebrow={gameTitle("sensor")} title={t("common.loadingDots")} waiting hint={null} />
     );
   };
 

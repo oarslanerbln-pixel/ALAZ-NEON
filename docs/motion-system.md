@@ -68,3 +68,55 @@ kalp atışı, giriş flaşı · 0s tek sarsıntı + şok dalgası + "SÜRE BİT
 - [ ] Canvas varsa: DPR, `normalizeFrameDelta`, `visibilitychange`, `prefersReducedMotion`.
 - [ ] Kısa süreli animasyonlu elemanlarda `will-change-transform`; kalıcı olanlarda **değil** (bellek).
 - [ ] Mobil input'ta `whileFocus` ölçeği yok (iOS bulanık metin).
+- [ ] Saniyede 3'ten fazla parlama/yanıp sönme yok (WCAG 2.3.1 — kalabalık mekânda ışığa duyarlı epilepsi riski).
+- [ ] Siren, "sistem çöktü / hacklendi" gibi alarm dili yok: misafir bunu gerçek bir arıza sanıyor.
+- [ ] Telefonda bekleme/hazırlan/bitti ekranı için `PlayerStageScreen`; TV açılışı için `GameIntroCinematic` kullandım.
+
+## 6. Görsel dil v2 — fx katmanı ve ortak ekranlar
+
+Hedef: **sade ama etkili premium.** Tek bir ürün gibi görünen, her oyunda
+aynı iskelete oturan ekranlar; oyunun kimliği yalnızca renk tonu ve simgeden
+gelir. Desenler GitHub'daki Tailwind + Motion kütüphanelerinden seçilip bu
+dosyanın 1. bölümündeki kurallara (yalnızca transform/opacity) uyarlandı.
+
+### Araştırılan kaynaklar
+
+| Kütüphane | Lisans | Aldığımız desen |
+|---|---|---|
+| [Magic UI](https://github.com/magicuidesign/magicui) | MIT | Border Beam, Grid Pattern, Aurora, Blur Fade |
+| [Motion Primitives](https://github.com/ibelick/motion-primitives) | MIT | Border Trail, Glow Effect, Text Effect |
+| [Animate UI](https://github.com/imskyleen/animate-ui) | MIT | Yay tabanlı giriş koreografisi |
+| HeroUI v3 notu | — | Sonsuz ortam döngüleri JS yerine **CSS keyframe** ile (daha hafif) |
+
+Kod kopyalanmadı: desenler buradaki tokenlarla yeniden yazıldı, böylece
+ek bağımlılık yok ve hepsi `prefers-reduced-motion`'a uyuyor.
+
+### fx katmanı (`src/components/fx/`)
+
+| Bileşen | Ne yapar | Teknik |
+|---|---|---|
+| `BeamBorder` | Kenarda yavaşça dolaşan ince ışık | Arkada dönen konik kare + opak iç panel; yalnızca `rotate` |
+| `AuroraBackdrop` | Süzülen renk bulutları | `radial-gradient(closest-side)` — `filter: blur` yok |
+| `GridPattern` | Merkezden sönen ızgara dokusu | Statik, maskeli |
+| `RevealText` | Kelime kelime açılan başlık | opacity + translateY, ekran okuyucuya tek metin |
+
+CSS: `.fx-beam`, `.fx-aurora-blob` (index.css); ikisi de reduced-motion'da durur.
+
+### Ortak ekranlar
+
+- **Telefon — `PlayerStageScreen`:** bekle / hazırlan / bitti. İnce dönen
+  ışık halkası, camsı simge, "— OYUN ADI —" satırı, CSS ile büyütülmüş tek
+  başlık (`<html lang>` sayesinde Türkçe i/İ doğru), en fazla bir cümle ve
+  "ana ekranı takip et" hapı. Tonlar: orange, red, blue, cyan, amber,
+  purple, emerald, yellow, pink.
+- **TV — `GameIntroCinematic`:** başlık (+ oyuncu yoklaması) → nasıl oynanır
+  (3 kart, `BeamBorder`) → 3-2-1. ~10.5 sn. Yeni oyun eklerken kendi açılışını
+  yazma; bu bileşene başlık, 3 adım ve iki renk ver.
+- **Süre gösterimi:** telefonda kalan süre `lib/countdown` ile hesaplanır
+  (telefonun soruyu gördüğü an; TV ile saat farkından etkilenmez).
+
+### Tipografi
+
+Başlıklar `Outfit` (font-black, büyük harf, hafif `tracking`), gövde `Inter`.
+Büyük başlıklarda beyazdan %70 beyaza dikey gradyan metin; gövde metni
+`text-white/65–70`, `text-balance`.

@@ -11,6 +11,7 @@ import type { JulesAward } from "../../../lib/intelligence";
 import { createLogger } from "../../../lib/logger";
 
 const log = createLogger("HostPodium");
+import { PARTICIPATION_POINTS, TEAM_WIN_POINTS, placementPointsByScore } from "../../../lib/nightLeague";
 
 interface HostPodiumProps {
   room: {
@@ -37,12 +38,16 @@ interface PillarProps {
   place: Place;
   name: string;
   score: number;
+  /** Bu oyundan kazanılan gecelik lig puanı (lib/nightLeague ile aynı hesap). */
+  night?: number;
 }
 
 const PLACE_STYLE: Record<Place, { width: string; height: string; pillar: string; name: string; score: string; number: string; edge: string }> = {
   1: {
     width: "w-72",
-    height: "70%",
+    // Sahne 330 px: %70 olunca şampiyonun adına üstte yer kalmıyor, sütun
+    // kabının kırpması adı kesiyordu.
+    height: "62%",
     pillar: "bg-white/[0.08] backdrop-blur-3xl border-t border-x border-white/20 shadow-[0_-20px_60px_rgba(255,230,0,0.08)]",
     name: "text-3xl md:text-4xl font-medium text-white tracking-[0.1em] drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]",
     score: "text-2xl font-light text-white mt-2",
@@ -74,7 +79,8 @@ const PLACE_STYLE: Record<Place, { width: string; height: string; pillar: string
  * yükseklikte durur ve `translateY` ile aşağıdan yükselir; kapsayıcı sahne
  * çizgisinin altını kırpar. Şampiyon sütunu oturunca kısa bir ölçek nabzı atar.
  */
-function Pillar({ place, name, score }: PillarProps) {
+function Pillar({ place, name, score, night }: PillarProps) {
+  const { t } = useLocale();
   const s = PLACE_STYLE[place];
   const delay = REVEAL_DELAY[place];
   const isWinner = place === 1;
@@ -99,13 +105,24 @@ function Pillar({ place, name, score }: PillarProps) {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...TWEEN.enter, delay: delay + 0.35 }}
-          className={`absolute ${isWinner ? "-top-32" : "-top-20"} text-center w-full`}
+          className={`absolute ${isWinner ? "-top-28" : "-top-20"} text-center w-full`}
         >
           <div className={`truncate max-w-[280px] px-2 mx-auto ${s.name}`}>{name}</div>
           <div className={`tracking-widest ${s.score}`}>
             <AnimatedNumber from={0} value={score} delay={delay + 0.4} duration={1} />
           </div>
         </motion.div>
+
+        {night !== undefined && night > 0 && (
+          <motion.span
+            initial={{ opacity: 0, scale: 0.6 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ ...SPRING.bouncy, delay: delay + 1.1 }}
+            className="relative rounded-full border border-amber-300/40 bg-amber-300/10 px-4 py-1.5 text-sm font-black uppercase tracking-[0.2em] text-amber-200 tabular-nums"
+          >
+            {t("podium.nightPoints", night)}
+          </motion.span>
+        )}
 
         <div className={s.number}>{place}</div>
       </motion.div>
@@ -153,7 +170,9 @@ export function HostPodium({
   const earlyW = getWinner("earlyCount");
   const blankW = getWinner("blankCount");
 
-  type RankingItem = { name: string; score: number };
+  // `night`: oyun bitince gecelik lige yazılan puan — misafir sıranın
+  // gecenin geneline ne kattığını podyumda görsün.
+  type RankingItem = { name: string; score: number; night?: number };
   let ranking: RankingItem[] = [];
 
   if (room?.game_mode === "team") {
@@ -164,11 +183,13 @@ export function HostPodium({
     });
     ranking = Object.entries(teams)
       .map(([name, score]) => ({ name, score }))
-      .sort((a, b) => b.score - a.score);
+      .sort((a, b) => b.score - a.score)
+      .map((item, i) => ({ ...item, night: i === 0 && item.score > 0 ? TEAM_WIN_POINTS : PARTICIPATION_POINTS }));
   } else {
+    const night = placementPointsByScore(players.map((p) => ({ id: p.id, score: p.total_score || 0 })));
     ranking = [...players]
       .sort((a, b) => b.total_score - a.total_score)
-      .map((p) => ({ name: p.nickname, score: p.total_score }));
+      .map((p) => ({ name: p.nickname, score: p.total_score, night: night[p.id] }));
   }
 
   const first = ranking[0];
@@ -273,9 +294,9 @@ export function HostPodium({
           />
         )}
 
-        {second && <Pillar place={2} name={second.name} score={second.score} />}
-        {first && <Pillar place={1} name={first.name} score={first.score} />}
-        {third && <Pillar place={3} name={third.name} score={third.score} />}
+        {second && <Pillar place={2} name={second.name} score={second.score} night={second.night} />}
+        {first && <Pillar place={1} name={first.name} score={first.score} night={first.night} />}
+        {third && <Pillar place={3} name={third.name} score={third.score} night={third.night} />}
       </div>
 
       {/* RECAP CARD (varsa) */}

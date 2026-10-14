@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, query, where, onSnapshot, doc, updateDoc, increment } from "firebase/firestore";
+import { collection, query, where, onSnapshot, doc, updateDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useLocale } from "../../../hooks/useLocale";
@@ -15,6 +15,9 @@ import { vaultFeedbackPayload, vaultSecretPayload } from "../../../lib/clientWri
 import { useRoomSecret, writeRoomSecret } from "../../../hooks/useRoomSecret";
 
 const log = createLogger("HostVaultDisplay");
+import { pointsFields } from "../../../lib/scoreWrites";
+import { finishNightRound } from "../../../lib/nightAwards";
+import { placementPointsByOrder } from "../../../lib/nightLeague";
 
 interface Props {
   room: Room;
@@ -104,7 +107,9 @@ export function HostVaultDisplay({ room, players, updateRoomStatus }: Props) {
         SoundManager.getInstance().playSFX(sounds.SUCCESS);
         SoundManager.getInstance().stopSound(sounds.GAME_PULSE);
 
-        updateDoc(doc(db, "players", winnerId), { total_score: increment(500) }).catch(log.error);
+        updateDoc(doc(db, "players", winnerId), pointsFields(500)).catch(log.error);
+        // Gecelik lig: şifreyi çözen birinci, diğerleri katılım.
+        finishNightRound(room.id, placementPointsByOrder([winnerId], players.map((p) => p.id)));
 
         setTimeout(() => {
           // Oyun bitti: kod artık açıklanabilir.

@@ -5,7 +5,7 @@ import {
   assertSucceeds,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, setDoc, updateDoc, addDoc, collection, collectionGroup, getDoc, getDocs, deleteDoc, query, where } from "firebase/firestore";
+import { doc, setDoc, updateDoc, addDoc, collection, collectionGroup, getDoc, getDocs, deleteDoc, query, where, increment } from "firebase/firestore";
 import { beforeAll, afterAll, beforeEach, describe, it } from "vitest";
 import type { QuizPack } from "../src/lib/quizPack";
 
@@ -756,6 +756,18 @@ describe("players — skor bütünlüğü", () => {
   it("host oyuncu skorunu güncelleyebilir", async () => {
     await assertSucceeds(
       updateDoc(doc(asHost(), "players", PLAYER_ID), { total_score: 120 })
+    );
+  });
+
+  it("oyuncu kendi gecelik skorunu yazamaz", async () => {
+    await assertFails(
+      updateDoc(doc(asPlayer(), "players", PLAYER_ID), { night_score: 50000 })
+    );
+  });
+
+  it("host oyun ve gecelik skoru birlikte artırabilir", async () => {
+    await assertSucceeds(
+      updateDoc(doc(asHost(), "players", PLAYER_ID), { total_score: increment(500), night_score: increment(500) })
     );
   });
 

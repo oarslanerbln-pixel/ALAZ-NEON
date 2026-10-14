@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { resolveActiveGame, resolvePlayerGameRoute, resolveRoutedGame } from "../gameRouting";
+import { isRetiredGame, resolveActiveGame, resolvePlayerGameRoute, resolveRoutedGame } from "../gameRouting";
 
 describe("resolveActiveGame", () => {
   it("active_game yazılmışsa onu döner", () => {
@@ -44,5 +44,20 @@ describe("resolvePlayerGameRoute", () => {
 
   it("oyun durumlarında kumandaya yönlenir", () => {
     expect(resolvePlayerGameRoute({ active_game: "quiz", status: "question_active" })).toBe("quiz");
+  });
+});
+
+describe("kaldırılmış modlar", () => {
+  it("katalogda olmayan mod oyun seçilmemiş sayılır (host ana ekrana, misafir lobiye)", () => {
+    const room = { active_game: "spectrum" } as unknown as Parameters<typeof resolveActiveGame>[0];
+    expect(isRetiredGame("spectrum")).toBe(true);
+    expect(resolveActiveGame(room)).toBeNull();
+    expect(resolveRoutedGame(room)).toBeNull();
+  });
+
+  it("bilinen modlar ve 'none' kaldırılmış sayılmaz", () => {
+    expect(isRetiredGame("quiz")).toBe(false);
+    expect(isRetiredGame("none")).toBe(false);
+    expect(isRetiredGame(undefined)).toBe(false);
   });
 });

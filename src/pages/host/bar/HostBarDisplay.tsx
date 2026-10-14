@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useLocale } from "../../../hooks/useLocale";
@@ -7,6 +7,8 @@ import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { HostHeader } from "../components/HostHeader";
 import { KineticSpark } from "../../../components/KineticSpark";
 import { RULE_DEFAULTS } from "../../../lib/gameSettings";
+import { finishNightRound } from "../../../lib/nightAwards";
+import { placementPointsByScore } from "../../../lib/nightLeague";
 
 interface Props {
   room: Room;
@@ -32,6 +34,18 @@ const INGREDIENT_KEYS: Record<string, string> = {
 export function HostBarDisplay({ room, players, updateRoomStatus }: Props) {
   const { t } = useLocale();
   const [gameState, setGameState] = useState<"intro" | "active" | "reveal">("intro");
+
+  // Gecelik lig (Bar: tamamlanan kokteyl sayısına göre sıra). Oyuncu listesi her
+  // snapshot'ta değiştiği için ref'ten okunuyor: efekt yalnızca sonuç
+  // ekranına geçişte çalışsın; tekrarı nightAwards transaction'ı yutar.
+  const latestPlayers = useRef(players);
+  useEffect(() => {
+    latestPlayers.current = players;
+  });
+  useEffect(() => {
+    if (room.status !== "bar_reveal") return;
+    finishNightRound(room.id, placementPointsByScore(latestPlayers.current.map((p) => ({ id: p.id, score: p.bar_score || 0 }))));
+  }, [room.status, room.id]);
   const [timeLeft, setTimeLeft] = useState(60);
 
   useEffect(() => {

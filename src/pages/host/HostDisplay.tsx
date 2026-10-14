@@ -14,11 +14,10 @@ import { useMonitoringTags } from "../../hooks/useMonitoringTags";
 import { HostDashboard } from "./dashboard/HostDashboard";
 import { HOST_GAME_DISPLAYS, preloadHostGameDisplays } from "./gameDisplays";
 import { HostDisplayGame } from "./classic/HostDisplayGame";
-import { resolveRoutedGame } from "../../lib/gameRouting";
+import { isRetiredGame, resolveRoutedGame } from "../../lib/gameRouting";
 import { RoomStatusScreen } from "../../components/RoomStatusScreen";
 import { HostAdBreak } from "./views/HostAdBreak";
 import { activePlayers as activePlayersOf } from "../../lib/liveness";
-
 
 export function HostDisplay() {
   const [searchParams] = useSearchParams();
@@ -79,7 +78,7 @@ export function HostDisplay() {
     );
   }
 
-  if (room.status === "night_lobby" || room.active_game === "none") {
+  if (room.status === "night_lobby" || room.active_game === "none" || isRetiredGame(room.active_game)) {
     return (
       <HostDashboard
         room={room}

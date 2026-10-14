@@ -8,6 +8,8 @@ import { reportWriteError } from "../../../lib/writeErrors";
 import { haptics } from "../../../lib/haptics";
 import { useLocale } from "../../../hooks/useLocale";
 import { Check } from "lucide-react";
+import { gameTitle } from "../../../lib/gameCatalog";
+import { PlayerStageScreen } from "../components/PlayerStageScreen";
 
 interface Props {
   room: Room;
@@ -141,14 +143,7 @@ export function PlayerKabloController({ room, player }: Props) {
 
   if (room.status !== "kablo_active") {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-        <h1 className="text-3xl font-black text-yellow-400 font-mono tracking-widest uppercase mb-4 drop-shadow-[0_0_15px_rgba(255,200,0,0.5)]">
-          {t("player.kabloTitle")}
-        </h1>
-        <p className="text-white/60">
-          {t("kablo.lookAtTV")}
-        </p>
-      </div>
+      <PlayerStageScreen icon="🔌" tone="yellow" eyebrow={gameTitle("kablo")} title={t("player.kabloTitle")} hint={t("kablo.lookAtTV")} waiting />
     );
   }
 

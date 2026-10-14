@@ -5,6 +5,8 @@ import { sounds, SoundManager } from "../../../lib/audio";
 import { calculateRoundScores } from "../../../lib/scoring";
 import { cleanAnswerData } from "../../../lib/answerText";
 import { grantGameRewards } from "../../../lib/rewards";
+import { finishNightRound, NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
+import { nightPointsForPlayers } from "../../../lib/nightLeague";
 import { useVenue } from "../../../contexts/VenueContextCore";
 import type { useHostRoom } from "../../../hooks/useHostRoom";
 import { useLocale } from "../../../hooks/useLocale";
@@ -93,7 +95,7 @@ export function useClassicGame({
     setIsAnalyzing(true);
 
     await updateRoomStatus("review");
-    SoundManager.getInstance().playSFX(sounds.SIREN);
+    SoundManager.getInstance().playSFX(sounds.CINEMATIC_BOOM, 0.6);
 
     // Give players 2.5 seconds to auto-submit their final answers
     await new Promise((resolve) => setTimeout(resolve, 2500));
@@ -283,6 +285,7 @@ export function useClassicGame({
       grantGameRewards(room.id, room.game_mode, players, venue).catch((err) =>
         log.error("Ödül dağıtımı başarısız:", err),
       );
+      finishNightRound(room.id, nightPointsForPlayers(room.game_mode, players));
 
       await updateRoomStatus("finished");
       setGameState("finished");
@@ -303,7 +306,7 @@ export function useClassicGame({
     setRoundResults([]);
     setGameHistory([]);
     setAwards(undefined);
-    await updateRoomStatus("lobby", { current_round: 0, active_letter: "?", used_letters: [] });
+    await updateRoomStatus("lobby", { current_round: 0, active_letter: "?", used_letters: [], ...NIGHT_ROUND_OPEN });
     setGameState("lobby");
   };
 
@@ -316,6 +319,7 @@ export function useClassicGame({
       grantGameRewards(room.id, room.game_mode, players, venue).catch((err) =>
         log.error("Ödül dağıtımı başarısız:", err),
       );
+      finishNightRound(room.id, nightPointsForPlayers(room.game_mode, players));
       await updateRoomStatus("finished");
       setGameState("finished");
     }

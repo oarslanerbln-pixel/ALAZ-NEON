@@ -10,7 +10,10 @@ import { containsProfanity } from "../../../lib/profanity";
 import { looksLikeGibberish } from "../../../lib/wordValidation";
 import { useLocale } from "../../../hooks/useLocale";
 import { haptics } from "../../../lib/haptics";
-import { isPlayerActive } from "../../../lib/liveness";
+import { activePlayers } from "../../../lib/liveness";
+import { bombLives } from "../../../lib/bomb";
+import { gameTitle } from "../../../lib/gameCatalog";
+import { PlayerStageScreen } from "../components/PlayerStageScreen";
 import { createLogger } from "../../../lib/logger";
 
 const log = createLogger("PlayerBombController");
@@ -83,17 +86,15 @@ export function PlayerBombController({ room, player }: Props) {
         allPlayers.push({ id: doc.id, ...doc.data() } as Player);
       });
 
-      const now = Date.now();
-      const activePlayers = allPlayers.filter(p => 
-        p.id !== player.id && 
-        (p.lives === undefined || p.lives > 0) &&
-        isPlayerActive(p, now)
-      );
-      
+      // Önce canı olan DİĞER oyuncular, sonra canlılık süzgeci. Eskiden
+      // süzgeç kimseyi bırakmazsa (telefon saati ileri, herkes "pasif"
+      // görünüyor) bomba atanın KENDİSİNE geri dönüyordu. activePlayers
+      // hiç canlı yoksa listenin tamamını döndürüyor; bomba kendine dönmez.
+      const candidates = activePlayers(allPlayers.filter((p) => p.id !== player.id && bombLives(p) > 0));
+
       let nextPlayerId = player.id;
-      if (activePlayers.length > 0) {
-        const randomTarget = activePlayers[Math.floor(Math.random() * activePlayers.length)];
-        nextPlayerId = randomTarget.id;
+      if (candidates.length > 0) {
+        nextPlayerId = candidates[Math.floor(Math.random() * candidates.length)].id;
       }
 
       SoundManager.getInstance().playSFX(sounds.SUCCESS);
@@ -114,24 +115,13 @@ export function PlayerBombController({ room, player }: Props) {
 
   if (currentLives <= 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-black text-white p-6 text-center">
-        <span className="text-7xl mb-4 grayscale">💀</span>
-        <h1 className="text-3xl font-black text-red-500 tracking-widest uppercase mb-2">
-          {t("bomb.eliminatedYou")}
-        </h1>
-        <p className="text-gray-400 text-sm max-w-xs">{t("bomb.watchOthers")}</p>
-      </div>
+      <PlayerStageScreen icon={<span className="grayscale">💀</span>} tone="red" title={t("bomb.eliminatedYou")} body={t("bomb.watchOthers")} />
     );
   }
 
   if (room.status === "bomb_intro") {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-black text-white p-6">
-        <div className="w-16 h-16 border-4 border-red-500 border-t-transparent rounded-full animate-spin mb-6" />
-        <h1 className="text-2xl font-black text-red-500 tracking-widest uppercase animate-pulse">
-          {t("bomb.preparing")}
-        </h1>
-      </div>
+      <PlayerStageScreen icon="💣" tone="red" eyebrow={gameTitle("bomb")} title={t("bomb.preparing")} waiting />
     );
   }
 
@@ -152,13 +142,7 @@ export function PlayerBombController({ room, player }: Props) {
 
   if (room.status === "finished") {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-black text-white p-6 text-center">
-        <span className="text-7xl mb-4">🏆</span>
-        <h1 className="text-3xl font-black text-amber-400 tracking-widest uppercase mb-2">
-          {t("bomb.gameOver")}
-        </h1>
-        <p className="text-gray-400">{t("bomb.resultsOnScreen")}</p>
-      </div>
+      <PlayerStageScreen icon="🏆" tone="amber" eyebrow={gameTitle("bomb")} title={t("bomb.gameOver")} hint={t("bomb.resultsOnScreen")} />
     );
   }
 

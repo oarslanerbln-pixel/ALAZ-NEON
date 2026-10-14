@@ -22,6 +22,8 @@ import { HostSensorReveal } from "./HostSensorReveal";
 import { createLogger } from "../../../lib/logger";
 
 const log = createLogger("HostSensorDisplay");
+import { finishNightRound, NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
+import { nightPointsForPlayers } from "../../../lib/nightLeague";
 
 export function HostSensorDisplay({
   room,
@@ -35,10 +37,12 @@ export function HostSensorDisplay({
   updatePlayerScore: (playerId: string, score: number) => Promise<void>;
 }) {
   const { venue } = useVenue();
-  const grantSensorRewards = () =>
+  const grantSensorRewards = () => {
     grantGameRewards(room.id, "individual", players, venue).catch((err) =>
       log.error("Ödül dağıtımı başarısız:", err),
     );
+    finishNightRound(room.id, nightPointsForPlayers("individual", players));
+  };
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get("roomId");
   
@@ -56,12 +60,12 @@ export function HostSensorDisplay({
     gameState === "sensor_buzzed" ||
     gameState === "sensor_reveal";
     
-  const currentImage: SensorImage | null =
-    (isSensorScreen && room.sensor_current_media
-      ? SENSOR_IMAGES.find(i => i.url === room.sensor_current_media) || SENSOR_IMAGES[0]
-      : null) || null;
-      
   const currentImageIndex = room.current_round || 0;
+  // Görsel alanı eksik ya da havuzdan kaldırılmış bir görseli gösteriyorsa
+  // TV kararmasın: tur sırasına göre havuzdan bir görsele düş.
+  const currentImage: SensorImage | null = isSensorScreen
+    ? SENSOR_IMAGES.find((i) => i.url === room.sensor_current_media) ?? SENSOR_IMAGES[currentImageIndex % SENSOR_IMAGES.length] ?? null
+    : null;
   const buzzerPlayerName = room.sensor_buzzer_player_id
     ? players.find(pl => pl.id === room.sensor_buzzer_player_id)?.nickname || null
     : null;
@@ -163,7 +167,7 @@ export function HostSensorDisplay({
       snapshot.forEach(docSnap => batch.delete(docSnap.ref));
 
       await batch.commit();
-      await updateRoomStatus("lobby", { active_game: "none", current_round: 0 });
+      await updateRoomStatus("lobby", { active_game: "none", current_round: 0, ...NIGHT_ROUND_OPEN });
     } catch (err) {
       log.error("Error resetting sensor game:", err);
     }

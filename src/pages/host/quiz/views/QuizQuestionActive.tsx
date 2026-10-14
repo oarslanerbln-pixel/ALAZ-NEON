@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 
 import { useLocale } from "../../../../hooks/useLocale";
+import { TimerRing } from "../../../../components/TimerRing";
+import { BeamBorder } from "../../../../components/fx/BeamBorder";
 import type { QuizQuestion, Player } from "../../../../types/database";
 import type { OptionStyles } from "./quizStyles";
 
@@ -10,13 +12,15 @@ interface Props {
   totalRounds: number;
   players: Player[];
   timeLeft: number;
+  /** Soru süresi (ayardan); süre halkası buna göre boşalır. */
+  maxTime: number;
   answeredCount: number;
   optionStyles: OptionStyles;
   onEndQuestion: () => void;
 }
 
 /** Soru açıkken: geri sayım, şıklar ve cevaplayan sayısı. HostQuizDisplay'den ayrıştırıldı (docs/roadmap.md, 2.7). */
-export function QuizQuestionActive({ currentQuestion, currentRoundNum, totalRounds, players, timeLeft, answeredCount, optionStyles, onEndQuestion }: Props) {
+export function QuizQuestionActive({ currentQuestion, currentRoundNum, totalRounds, players, timeLeft, maxTime, answeredCount, optionStyles, onEndQuestion }: Props) {
   const { t } = useLocale();
   return (
     <motion.div
@@ -52,18 +56,31 @@ export function QuizQuestionActive({ currentQuestion, currentRoundNum, totalRoun
             </div>
           </div>
 
-          {/* Question Card */}
-          <div className="bg-black/85 border border-blue-500/50 p-10 w-full text-center mb-8 rounded-2xl shadow-[0_0_50px_rgba(59,130,246,0.35)] backdrop-blur-md">
-            <h1 className="text-3xl md:text-5xl font-black text-white leading-snug">{currentQuestion.text}</h1>
-          </div>
-
-          {/* Circular / Big Timer */}
-          <div className="flex items-center justify-center mb-8">
-            <div className={`text-8xl font-black tabular-nums tracking-tighter ${
-              timeLeft <= 5 ? "text-red-500 animate-bounce scale-110 drop-shadow-[0_0_30px_rgba(239,68,68,1)]" : "text-cyan-400 drop-shadow-[0_0_20px_rgba(6,182,212,0.8)]"
-            }`}>
-              {timeLeft}
+          {/* Soru kartı: kenarında süzülen ışık, süre azaldıkça kırmızıya döner. */}
+          <BeamBorder
+            rgb={timeLeft <= 5 ? "239,68,68" : "56,189,248"}
+            duration={timeLeft <= 5 ? 2 : 6}
+            radius="1.75rem"
+            className="w-full mb-8 shadow-[0_0_60px_rgba(59,130,246,0.25)]"
+            innerClassName="bg-[#05070d]/95"
+          >
+            <div className="p-10 text-center">
+              <h1 className="text-3xl md:text-5xl font-black text-white leading-snug text-balance">{currentQuestion.text}</h1>
             </div>
+          </BeamBorder>
+
+          {/* Boşalan süre halkası (HostPlaying ile aynı dil). */}
+          <div className="flex items-center justify-center mb-8">
+            <TimerRing
+              timeLeft={timeLeft}
+              maxTime={maxTime}
+              tone={timeLeft <= 5 ? "critical" : timeLeft <= 10 ? "warning" : "calm"}
+              size={150}
+            >
+              <span className={`text-6xl font-black tabular-nums tracking-tighter ${timeLeft <= 5 ? "text-red-500" : "text-white"}`}>
+                {timeLeft}
+              </span>
+            </TimerRing>
           </div>
 
           {/* 4 Options Grid */}

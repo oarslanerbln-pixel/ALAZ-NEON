@@ -84,7 +84,7 @@ export function PlayerColorsController({ room, player }: Props) {
               transition={{ type: "spring", bounce: 0.5 }}
             >
               <div className="text-5xl md:text-6xl font-black uppercase tracking-widest text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.9)] mb-4">
-                {team === "red" ? t("spectrum.redTeam") : t("spectrum.blueTeam")}
+                {team === "red" ? t("team.red") : t("team.blue")}
               </div>
               <p className="text-white/90 font-mono text-xs uppercase tracking-widest bg-black/30 px-6 py-2 rounded-full border border-white/20 inline-block">
                 {t("colors.tapFast")}

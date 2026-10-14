@@ -6,10 +6,12 @@ import { doc, setDoc, collection, query, where, getDocs } from "firebase/firesto
 import { useToast } from "../../../contexts/ToastContextCore";
 import { useLocale } from "../../../hooks/useLocale";
 import { echoQuestionText } from "../../../lib/echoQuestions";
-import { isPlayerActive } from "../../../lib/liveness";
+import { activePlayers } from "../../../lib/liveness";
 import { isInputForRound } from "../../../lib/roomInputs";
 import { echoInputPayload } from "../../../lib/clientWrites";
 import { useOwnRoomInput } from "../../../hooks/useRoomInputs";
+import { gameTitle } from "../../../lib/gameCatalog";
+import { PlayerStageScreen } from "../components/PlayerStageScreen";
 import { createLogger } from "../../../lib/logger";
 
 const log = createLogger("PlayerEchoController");
@@ -52,11 +54,9 @@ export function PlayerEchoController({ room, player }: Props) {
         // çalışıp Firestore'dan reddediliyordu — oylama hiç çalışmıyordu.
         const pList = snap.docs.map(d => ({ ...d.data(), id: d.id }) as Player);
         
-        const now = Date.now();
-        setPlayers(pList.filter(p => 
-          p.id !== player.id &&
-          isPlayerActive(p, now)
-        )); // Exclude self and ghosts
+        // Kendisi hariç, canlılık süzgecinden geçenler (süzgeç kimseyi
+        // bırakmazsa herkes — oylama boş listede kilitlenmesin).
+        setPlayers(activePlayers(pList.filter((p) => p.id !== player.id)));
       } catch (err) {
         log.error("Error fetching players:", err);
       } finally {
@@ -90,14 +90,7 @@ export function PlayerEchoController({ room, player }: Props) {
 
   if (room.status === "echo_intro") {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center relative z-10">
-        <h2 className="text-3xl font-black text-white mb-4 uppercase tracking-widest">
-          {t("echo.questionComing")}
-        </h2>
-        <p className="text-gray-400 uppercase tracking-widest font-bold animate-pulse">
-          {t("common.followMainScreen")}
-        </p>
-      </div>
+      <PlayerStageScreen icon="💬" tone="pink" eyebrow={gameTitle("echo")} title={t("echo.questionComing")} waiting />
     );
   }
 

@@ -1,4 +1,5 @@
 import type { GameType, Room } from "../types/database";
+import { GAME_CARDS } from "./gameCatalog";
 
 /**
  * Oda hangi oyunu oynatıyor — HostDisplay ve PlayerGame'in ortak cevabı.
@@ -18,16 +19,28 @@ import type { GameType, Room } from "../types/database";
 /** Kendi host ekranı ve oyuncu kumandası olan modlar; Arena klasik akışta. */
 export type RoutedGame = Exclude<GameType, "scattegories">;
 
+const KNOWN_GAMES: ReadonlySet<string> = new Set(GAME_CARDS.map((c) => c.id));
+
 /**
- * Seçili oyun. `null` = henüz oyun seçilmedi (gece lobisi / dashboard).
+ * Kataloğdan kaldırılmış bir mod (ör. Spectrum) hâlâ odada yazılı mı.
+ * Güncelleme anında o modu oynayan bir oda, ekranı/kumandası artık olmayan
+ * bir oyuna yönlenip çökmesin: host ana ekrana, misafir lobiye düşer.
+ */
+export function isRetiredGame(game: string | null | undefined): boolean {
+  return typeof game === "string" && game !== "none" && !KNOWN_GAMES.has(game);
+}
+
+/**
+ * Seçili oyun. `null` = henüz oyun seçilmedi (gece lobisi / dashboard) ya da
+ * seçili mod kaldırılmış.
  */
 export function resolveActiveGame(
   room: Pick<Room, "active_game" | "game_type">,
 ): GameType | null {
   if (room.active_game !== undefined) {
-    return room.active_game === "none" ? null : room.active_game;
+    return room.active_game === "none" || isRetiredGame(room.active_game) ? null : room.active_game;
   }
-  return room.game_type ?? null;
+  return room.game_type && !isRetiredGame(room.game_type) ? room.game_type : null;
 }
 
 /** Kendi ekran çifti olan bir mod seçiliyse onu, değilse `null` döner. */

@@ -8,6 +8,7 @@ import { useLocale } from "../../../hooks/useLocale";
 import { createLogger } from "../../../lib/logger";
 
 const log = createLogger("HostBombActive");
+import { pickBombHolder } from "../../../lib/bomb";
 
 interface Props {
   room: Room;
@@ -98,6 +99,23 @@ export function HostBombActive({ room, players, onExplode }: Props) {
     }
   }, [room.bomb_target_player, bombControls, room.id, room.bomb_speed_multiplier]);
 
+  // Bombayı tutan oyuncu oyundan ayrıldıysa (sekmesini kapattı, odadan
+  // çıkarıldı) sayaç onun üzerinden işlediği için TV kararıyor ve oyun
+  // kilitleniyordu. Host tek yazar: bombayı kalan oyunculardan birine devret;
+  // yeni süreyi yukarıdaki "sahip değişti" efekti kuruyor.
+  const reassignedFor = useRef<string | null>(null);
+  useEffect(() => {
+    const missing = room.bomb_target_player;
+    if (targetPlayer || !missing || players.length === 0 || reassignedFor.current === missing) return;
+    const next = pickBombHolder(players, missing);
+    if (!next) return;
+    reassignedFor.current = missing;
+    updateDoc(doc(db, "rooms", room.id), { bomb_target_player: next, previous_bomb_target_player: null }).catch((err) => {
+      reassignedFor.current = null;
+      log.error("Bomba devredilemedi:", err);
+    });
+  }, [targetPlayer, room.bomb_target_player, room.id, players]);
+
   // Handle Reject Action
   const handleReject = async () => {
     if (!room.previous_bomb_target_player) return;
@@ -114,7 +132,14 @@ export function HostBombActive({ room, players, onExplode }: Props) {
     }
   };
 
-  if (!targetPlayer) return null;
+  if (!targetPlayer) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center min-h-screen bg-[#050002] gap-6">
+        <span className="text-8xl motion-safe:animate-pulse" aria-hidden="true">💣</span>
+        <p className="text-3xl font-black uppercase tracking-[0.2em] text-white/70">{t("bomb.changingHands")}</p>
+      </div>
+    );
+  }
 
   const currentLives = targetPlayer.lives !== undefined ? targetPlayer.lives : 3;
   const usedWords = room.used_words || [];

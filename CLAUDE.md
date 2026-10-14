@@ -49,7 +49,7 @@ Firestore koleksiyonları: `rooms` (durum makinesi), `players` (skorlar),
 | `src/pages/host/HostDisplay.tsx` | TV yönlendiricisi (oda durumu → pano / oyun ekranı) |
 | `src/pages/host/classic/` | Klasik harf oyunu: `useClassicGame` (akış) + `HostDisplayGame` (çizim) |
 | `src/pages/player/PlayerGame.tsx` | Telefon durum makinesi yönlendiricisi |
-| `src/pages/{host,player}/<oyun>/` | Oyun başına ekran çiftleri (quiz, bomb, sensor, wheel, overload, echo, pulse, spectrum, colors, vault, unity, bar, kablo, ayna) |
+| `src/pages/{host,player}/<oyun>/` | Oyun başına ekran çiftleri (quiz, bomb, sensor, wheel, overload, echo, pulse, colors, vault, unity, bar, kablo, ayna) |
 | `src/pages/{host,player}/views/` | Oyun bağımsız ekranlar (lobby, playing, review, podium) |
 | `src/hooks/` | `useHostRoom`, `useRoom`, `usePlayer`, `useAuth`, `useLocale`, `useSound` … |
 | `src/lib/` | Saf mantık: `scoring`, `fuzzyMatch`, `wordValidation`, `league`, `retention`, `rewards`, `roomCodes`, `liveness`, `gameRouting`, `venues` |
@@ -107,5 +107,9 @@ Bunları baştan sona okuma, hedefli `grep` ile gir:
 - Commit mesajları Türkçe ve `tip(kapsam): özet` biçiminde (`feat(quiz): …`).
 
 Ayrıntılı kodlama standartları: `docs/coding-standards.md`.
+Görsel dil (ortak ekranlar, fx katmanı, yasaklar): `docs/motion-system.md` §6.
+Oyun kataloğu, gecelik skor ekonomisi ve yol haritası: `docs/game-design-review.md`.
+Oyun skorunu `lib/scoreWrites` ile yaz; gecelik lig (F1 sıra puanı) oyun bitişinde
+`lib/nightAwards.finishNightRound` ile, yeni oyun başlarken `NIGHT_ROUND_OPEN`.
 Mimari ve hata ayıklama derinliği için `.claude/skills/` altındaki iki yetenek
 paketi gerektiğinde otomatik yüklenir.

@@ -123,23 +123,6 @@ test("pulse: telefonların dokunuşları sonuçta toplanır", async ({ browser }
   await expectBackInLobby(table);
 });
 
-test("spektrum: dokunuşlar takım gücüne yazılır ve sonuç ilan edilir", async ({ browser }) => {
-  const table = await openTable(browser);
-  const [alfa] = table.phones;
-  await startGame(table.host, "NEON SPEKTRUM");
-  await waitForStatus(table.roomId, "spectrum_active", 30_000);
-
-  await tapRepeatedly(alfa.getByRole("button", { name: new RegExp(t("spectrum.tap")) }), 10);
-  await expect.poll(async () => (await player(table.playerIds[0])).spectrum_clicks).toBe(10);
-
-  await waitForStatus(table.roomId, "spectrum_reveal", 45_000);
-  const outcome = new RegExp(`${t("spectrum.youWon")}|${t("spectrum.youLostCaps")}|${t("spectrum.tie")}`);
-  await expect(alfa.getByText(outcome).first()).toBeVisible();
-
-  await table.host.getByRole("button", { name: t("common.back") }).click();
-  await expectBackInLobby(table);
-});
-
 test("renk savaşları: bir takım hedefe ulaşınca oyun biter", async ({ browser }) => {
   const table = await openTable(browser);
   const [alfa] = table.phones;

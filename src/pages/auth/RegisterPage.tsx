@@ -145,11 +145,12 @@ export function RegisterPage() {
           </AnimatePresence>
           <div className="space-y-8 relative z-20" style={{ transform: "translateZ(30px)" }}>
             <div className="space-y-3 relative group">
-              <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest ml-2 group-focus-within:text-alaz-orange transition-colors">
+              <label htmlFor="register-nickname" className="text-[10px] text-gray-400 font-black uppercase tracking-widest ml-2 group-focus-within:text-alaz-orange transition-colors">
                 {t("join.nickname")}
               </label>
               <div className="relative">
                 <input
+                  id="register-nickname"
                   aria-label={t("join.nickname")}
                   type="text"
                   required
@@ -163,12 +164,13 @@ export function RegisterPage() {
             </div>
 
             <div className="space-y-3 relative group">
-              <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest ml-2 group-focus-within:text-alaz-orange transition-colors">
+              <label htmlFor="register-email" className="text-[10px] text-gray-400 font-black uppercase tracking-widest ml-2 group-focus-within:text-alaz-orange transition-colors">
                 {t("auth.email")}
               </label>
               <div className="relative">
                 <input
                   aria-label={t("auth.email")}
+                  id="register-email"
                   type="email"
                   required
                   value={email}
@@ -181,12 +183,13 @@ export function RegisterPage() {
             </div>
 
             <div className="space-y-3 relative group">
-              <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest ml-2 group-focus-within:text-neon-blue transition-colors">
+              <label htmlFor="register-password" className="text-[10px] text-gray-400 font-black uppercase tracking-widest ml-2 group-focus-within:text-neon-blue transition-colors">
                 {t("auth.password")}
               </label>
               <div className="relative">
                 <input
                   aria-label={t("auth.password")}
+                  id="register-password"
                   type="password"
                   required
                   value={password}

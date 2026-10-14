@@ -225,7 +225,6 @@ export const COUNTER_MAX_STEP = {
   kablo_score: 1,
   bar_score: 1,
   colors_clicks: 30,
-  spectrum_clicks: 30,
 } as const;
 
 export type PlayerCounter = keyof typeof COUNTER_MAX_STEP;

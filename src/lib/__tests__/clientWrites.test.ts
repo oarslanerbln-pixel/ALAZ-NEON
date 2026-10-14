@@ -36,8 +36,8 @@ describe("counterStep", () => {
     expect(counterStep("colors_clicks", 12)).toBe(12);
     expect(counterStep("colors_clicks", 95)).toBe(COUNTER_MAX_STEP.colors_clicks);
     expect(counterStep("kablo_score", 3)).toBe(1);
-    expect(counterStep("spectrum_clicks", 0)).toBe(0);
-    expect(counterStep("spectrum_clicks", -4)).toBe(0);
+    expect(counterStep("colors_clicks", 0)).toBe(0);
+    expect(counterStep("colors_clicks", -4)).toBe(0);
   });
 });
 

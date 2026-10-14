@@ -34,6 +34,14 @@ Projenin estetiği, nargile kafeler ve gece kulüpleri gibi loş ve hareketli me
   * Kullanıcı dostu, büyük dokunmatik butonlar (iOS/Android uyumlu).
   * Titreşim geri bildirimi (`window.navigator.vibrate`) ve Emoji tepkileri gibi etkileşimi artıran mikro-etkileşimler.
 
+### Görsel dil v2 (Ekim 2026) — önce bunu oku
+
+Yeni ekran yazmadan önce `docs/motion-system.md` §6'ya bak. Kısaca:
+* Telefonda bekleme/hazırlan/bitti → `PlayerStageScreen` (kendi bekleme ekranını yazma).
+* TV oyun açılışı → `GameIntroCinematic` (başlık, 3 adım, iki renk ver).
+* Işık/doku efektleri → `src/components/fx/` (BeamBorder, AuroraBackdrop, GridPattern, RevealText).
+* Yasak: saniyede 3'ten fazla yanıp sönme, siren, "sistem hacklendi" türü alarm dili.
+
 ## 2.1. Görsel Geri Bildirim ve Tension (Gerilim) Sistemi
 
 Oyuncu etkileşimlerini güçlendirmek ve atmosferik gerilimi yönetmek için özel bir Tension sistemi ve animasyon standartları kullanılmalıdır:

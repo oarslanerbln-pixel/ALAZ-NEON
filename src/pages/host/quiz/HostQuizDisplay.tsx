@@ -33,6 +33,8 @@ import { quizSecretPayload } from "../../../lib/clientWrites";
 import { useRoomSecret, writeRoomSecret } from "../../../hooks/useRoomSecret";
 import { loadQuizPack } from "../../../hooks/useQuizPacks";
 import { venueIdOf } from "../../../lib/venues";
+import { finishNightRound, NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
+import { nightPointsForPlayers } from "../../../lib/nightLeague";
 
 const log = createLogger("HostQuizDisplay");
 
@@ -50,10 +52,12 @@ export function HostQuizDisplay({
   const { t } = useLocale();
   const { venue } = useVenue();
 
-  const grantQuizRewards = () =>
+  const grantQuizRewards = () => {
     grantGameRewards(room.id, "individual", players, venue).catch((err) =>
       log.error("Ödül dağıtımı başarısız:", err),
     );
+    finishNightRound(room.id, nightPointsForPlayers("individual", players));
+  };
 
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get("roomId");
@@ -176,7 +180,8 @@ export function HostQuizDisplay({
     endingQuestionRef.current = true;
 
     SoundManager.getInstance().stopSound(sounds.GAME_PULSE);
-    SoundManager.getInstance().playSFX(sounds.SIREN);
+    // Siren her 30 sn'de bir kafede alarm gibi çalıyordu; açıklama vuruşu yeter.
+    SoundManager.getInstance().playSFX(sounds.CINEMATIC_BOOM, 0.6);
 
     // Doğru cevap açıklama anında odaya yazılıyor: telefon doğru/yanlışı
     // ancak şimdi görüyor. Bu durumdan sonra cevap kabul edilmiyor (kurallar).
@@ -322,7 +327,7 @@ export function HostQuizDisplay({
     await batch.commit();
     streaksRef.current = {};
     setPlayerStreaks({});
-    await updateRoomStatus("quiz_lobby", { current_round: 0, current_question_index: 0 });
+    await updateRoomStatus("quiz_lobby", { current_round: 0, current_question_index: 0, ...NIGHT_ROUND_OPEN });
   };
 
 
@@ -393,7 +398,7 @@ export function HostQuizDisplay({
 
             {/* ACTIVE QUESTION */}
             {gameState === "question_active" && (
-              <QuizQuestionActive key="active" currentQuestion={currentQuestion} currentRoundNum={currentRoundNum} totalRounds={totalRounds} players={players} timeLeft={timeLeft} answeredCount={answeredCount} optionStyles={OPTION_STYLES} onEndQuestion={endQuestion} />
+              <QuizQuestionActive key="active" currentQuestion={currentQuestion} currentRoundNum={currentRoundNum} totalRounds={totalRounds} players={players} timeLeft={timeLeft} maxTime={room.timer_setting || 30} answeredCount={answeredCount} optionStyles={OPTION_STYLES} onEndQuestion={endQuestion} />
             )}
 
             {/* QUESTION REVEAL (Vote breakdown + Correct Option + Speed Demon + Fun Fact) */}

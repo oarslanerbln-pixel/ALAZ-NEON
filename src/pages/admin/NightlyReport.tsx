@@ -31,7 +31,6 @@ const GAME_LABEL: Record<GameType, string> = {
   overload: "Neon Overload",
   echo: "Hengame Yankı",
   pulse: "Neon Nabız",
-  spectrum: "Spectrum (Neon Savaşları)",
   colors: "Colors (Neon Savaşları)",
   vault: "Neon Şifre",
   unity: "Neon Birlik",

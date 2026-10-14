@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useLocale } from "../../../hooks/useLocale";
@@ -6,6 +6,8 @@ import type { Room, Player } from "../../../types/database";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { HostHeader } from "../components/HostHeader";
 import { KineticSpark } from "../../../components/KineticSpark";
+import { finishNightRound } from "../../../lib/nightAwards";
+import { placementPointsByScore } from "../../../lib/nightLeague";
 
 interface Props {
   room: Room;
@@ -18,6 +20,18 @@ const TARGET_SCORE = 40;
 export function HostKabloDisplay({ room, players, updateRoomStatus }: Props) {
   const { t } = useLocale();
   const [gameState, setGameState] = useState<"intro" | "active" | "reveal">("intro");
+
+  // Gecelik lig (Kablo: bağlanan devre sayısına göre sıra). Oyuncu listesi her
+  // snapshot'ta değiştiği için ref'ten okunuyor: efekt yalnızca sonuç
+  // ekranına geçişte çalışsın; tekrarı nightAwards transaction'ı yutar.
+  const latestPlayers = useRef(players);
+  useEffect(() => {
+    latestPlayers.current = players;
+  });
+  useEffect(() => {
+    if (room.status !== "kablo_reveal") return;
+    finishNightRound(room.id, placementPointsByScore(latestPlayers.current.map((p) => ({ id: p.id, score: p.kablo_score || 0 }))));
+  }, [room.status, room.id]);
   
   const totalScore = players.reduce((sum, p) => sum + (p.kablo_score || 0), 0);
   const progressPercent = Math.min(100, Math.floor((totalScore / TARGET_SCORE) * 100));

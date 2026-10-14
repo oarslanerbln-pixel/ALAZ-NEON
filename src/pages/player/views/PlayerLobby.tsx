@@ -4,10 +4,15 @@ import { Check } from "lucide-react";
 import { useLocale } from "../../../hooks/useLocale";
 import { PlayerBackground } from "../../../components/PlayerBackground";
 import { LanguageSwitcher } from "../../../components/LanguageSwitcher";
+import { PlayerStageScreen } from "../components/PlayerStageScreen";
 import type { Room } from "../../../types/database";
+import { useNightStanding } from "../../../hooks/useNightStanding";
 
 interface PlayerLobbyProps {
   room: Room | null;
+  roomId: string | null;
+  /** Gecelik sıradaki yerini göstermek için (verilmezse kart gizli). */
+  playerId?: string | null;
 }
 
 /**
@@ -31,7 +36,7 @@ const TIPS = [
  * ETA: --:--" ve "RND/TMR" gibi süsler hiçbir şey anlatmıyordu; üstelik
  * dil seçici `absolute` olduğu için başlığın üstüne biniyordu.
  */
-export function PlayerLobby({ room }: PlayerLobbyProps) {
+export function PlayerLobby({ room, roomId, playerId }: PlayerLobbyProps) {
   const { t } = useLocale();
   const [tipIdx, setTipIdx] = useState(0);
 
@@ -41,6 +46,9 @@ export function PlayerLobby({ room }: PlayerLobbyProps) {
   // (bkz. lib/playerCount.ts). Sayaç yoksa (alan eklenmeden önce açılmış
   // oda) yanlış bir "0 oyuncu" yerine rozet hiç gösterilmiyor.
   const playerCount = room?.player_count;
+  // Oyunlar arası en çok görülen ekran: misafir gecenin neresinde olduğunu
+  // burada görsün. Puan yalnızca oyun bitişinde değiştiği için tek okuma.
+  const standing = useNightStanding(roomId, playerId, room?.night_awarded);
 
   // İpucu her 4 sn'de bir değişir
   useEffect(() => {
@@ -68,16 +76,15 @@ export function PlayerLobby({ room }: PlayerLobbyProps) {
         <LanguageSwitcher />
       </div>
 
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center gap-5 py-8">
-        <div className="relative w-28 h-28 flex items-center justify-center" aria-hidden="true">
-          <span className="absolute inset-0 rounded-full border border-alaz-orange/40 motion-safe:animate-ping [animation-duration:2.4s]" />
-          <span className="absolute inset-2 rounded-full bg-alaz-orange/10 border border-alaz-orange/50 shadow-[0_0_40px_rgba(255,85,0,0.35)]" />
-          <Check className="relative w-12 h-12 text-alaz-orange" strokeWidth={2.5} />
-        </div>
-
-        <h1 className="text-4xl font-black text-white tracking-wide">{t("lobby.readyTitle")}</h1>
-        <p className="text-base text-white/70 max-w-xs leading-relaxed">{t("lobby.readyBody")}</p>
-
+      <div className="relative z-10 flex-1 flex flex-col">
+        <PlayerStageScreen
+          icon={<Check className="w-12 h-12 text-alaz-orange" strokeWidth={2.5} />}
+          tone="orange"
+          title={t("lobby.readyTitle")}
+          body={t("lobby.readyBody")}
+          waiting
+          hint={null}
+        >
         {typeof playerCount === "number" && (
           <span
             className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm font-bold text-emerald-300"
@@ -88,6 +95,17 @@ export function PlayerLobby({ room }: PlayerLobbyProps) {
             {t("waitingRoom.playersConnected", playerCount)}
           </span>
         )}
+
+          {standing && (
+            <div className="w-full max-w-xs rounded-2xl border border-amber-300/25 bg-amber-300/[0.06] px-5 py-4 backdrop-blur-md">
+              <p className="text-[11px] font-black uppercase tracking-[0.25em] text-amber-200/70">{t("lobby.nightTitle")}</p>
+              <div className="mt-2 flex items-baseline justify-between gap-3">
+                <span className="text-2xl font-black text-white tabular-nums">{t("lobby.nightRank", standing.rank, standing.total)}</span>
+                <span className="text-sm font-bold text-amber-200 tabular-nums">{t("lobby.nightPoints", standing.points)}</span>
+              </div>
+            </div>
+          )}
+        </PlayerStageScreen>
       </div>
 
       <div className="relative z-10 flex flex-col gap-3 pb-2">

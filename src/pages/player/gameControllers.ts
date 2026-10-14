@@ -21,7 +21,6 @@ export const PLAYER_GAME_CONTROLLERS: Record<RoutedGame, ComponentType<PlayerGam
   overload: lazy(() => import("./overload/PlayerOverloadGame").then((m) => ({ default: m.PlayerOverloadGame }))),
   echo: lazy(() => import("./echo/PlayerEchoController").then((m) => ({ default: m.PlayerEchoController }))),
   pulse: lazy(() => import("./pulse/PlayerPulseController").then((m) => ({ default: m.PlayerPulseController }))),
-  spectrum: lazy(() => import("./spectrum/PlayerSpectrumController").then((m) => ({ default: m.PlayerSpectrumController }))),
   colors: lazy(() => import("./colors/PlayerColorsController").then((m) => ({ default: m.PlayerColorsController }))),
   vault: lazy(() => import("./vault/PlayerVaultController").then((m) => ({ default: m.PlayerVaultController }))),
   unity: lazy(() => import("./unity/PlayerUnityController").then((m) => ({ default: m.PlayerUnityController }))),
