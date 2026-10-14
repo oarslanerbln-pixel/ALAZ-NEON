@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { assignColorsTeams, colorsTargetClicks } from "../colorsTeams";
+import { assignColorsTeams, colorsOutcome, colorsTargetClicks } from "../colorsTeams";
 
 const count = (teams: Record<string, string>, team: string) => Object.values(teams).filter((t) => t === team).length;
 
@@ -32,5 +32,23 @@ describe("colorsTargetClicks", () => {
     expect(colorsTargetClicks(2)).toBe(80);
     expect(colorsTargetClicks(3)).toBe(105);
     expect(colorsTargetClicks(10)).toBe(350);
+  });
+});
+
+describe("colorsOutcome", () => {
+  it("çubuk bir uca dayanınca her iki koşulda da biter", () => {
+    expect(colorsOutcome(100, "domination", false)).toBe("red");
+    expect(colorsOutcome(0, "timed", false)).toBe("blue");
+  });
+
+  it("dominasyonda süre önemsiz: uca dayanmadıkça sürer", () => {
+    expect(colorsOutcome(70, "domination", true)).toBeNull();
+  });
+
+  it("süreli oyunda süre dolunca önde olan kazanır, eşitlik berabere", () => {
+    expect(colorsOutcome(70, "timed", false)).toBeNull();
+    expect(colorsOutcome(50.5, "timed", true)).toBe("red");
+    expect(colorsOutcome(42, "timed", true)).toBe("blue");
+    expect(colorsOutcome(50, "timed", true)).toBe("draw");
   });
 });

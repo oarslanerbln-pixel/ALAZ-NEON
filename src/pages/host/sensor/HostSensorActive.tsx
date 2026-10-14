@@ -5,6 +5,7 @@ import type { Room } from "../../../types/database";
 import type { SensorImage } from "../../../data/sensorImages";
 import { safeForDisplay } from "../../../lib/profanity";
 import { SoundManager, sounds } from "../../../lib/audio";
+import { sensorPoints } from "../../../lib/gameSettings";
 
 interface Props {
   room: Room;
@@ -151,7 +152,7 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
                     onClick={() => onEvaluate(true)}
                     className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 border border-emerald-400 text-white rounded-2xl font-black uppercase tracking-wider text-lg transition-all shadow-[0_0_30px_rgba(16,185,129,0.5)] transform active:scale-95 flex items-center justify-center gap-2"
                   >
-                    <span>✅</span> {t("sensor.correct")} (+1000)
+                    <span>✅</span> {t("sensor.correct")} (+{sensorPoints(room)})
                   </button>
                   <button 
                     onClick={() => onEvaluate(false)}

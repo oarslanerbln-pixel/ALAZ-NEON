@@ -15,6 +15,7 @@ import { useVenue } from "../../../contexts/VenueContextCore";
 import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { createLogger } from "../../../lib/logger";
+import { RULE_DEFAULTS } from "../../../lib/gameSettings";
 
 const log = createLogger("HostBombDisplay");
 
@@ -203,7 +204,7 @@ export function HostBombDisplay({
         const batch = writeBatch(db);
         players.forEach(p => {
           const pRef = doc(db, "players", p.id);
-          batch.update(pRef, { total_score: 0, lives: 3, lifetime_credited: 0 });
+          batch.update(pRef, { total_score: 0, lives: room.bomb_lives ?? RULE_DEFAULTS.bombLives, lifetime_credited: 0 });
         });
         await batch.commit();
 
@@ -215,7 +216,7 @@ export function HostBombDisplay({
     } catch (err) {
       log.error("Error resetting bomb game:", err);
     }
-  }, [room.id, players]);
+  }, [room.id, room.bomb_lives, players]);
 
   return (
     <TVScaleFrame>

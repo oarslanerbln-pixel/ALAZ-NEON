@@ -23,3 +23,23 @@ export function assignColorsTeams(
 export function colorsTargetClicks(playerCount: number): number {
   return Math.max(80, playerCount * 35);
 }
+
+export type ColorsOutcome = ColorsTeam | "draw";
+
+/**
+ * Oyun bitti mi, bittiyse sonucu. `redPercentage` çubuğun kırmızı payı (0–100).
+ * Her iki koşulda da çubuk bir uca dayanınca oyun biter. Süreli oyunda süre
+ * dolunca önde olan kazanır; tam ortadaysa berabere. Bitmediyse null.
+ */
+export function colorsOutcome(
+  redPercentage: number,
+  condition: "domination" | "timed",
+  timeUp: boolean,
+): ColorsOutcome | null {
+  if (redPercentage >= 100) return "red";
+  if (redPercentage <= 0) return "blue";
+  if (condition !== "timed" || !timeUp) return null;
+  if (redPercentage > 50) return "red";
+  if (redPercentage < 50) return "blue";
+  return "draw";
+}

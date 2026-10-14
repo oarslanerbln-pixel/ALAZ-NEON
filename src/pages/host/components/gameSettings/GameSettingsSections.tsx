@@ -114,7 +114,7 @@ export function QuizSettings({ form, set }: SectionProps) {
                     : "bg-white/5 border-white/15 text-gray-400 hover:bg-white/10 hover:text-white"
                 }`}
               >
-                <span className="text-xs sm:text-sm font-bold tracking-wide">{cat.label}</span>
+                <span className="text-xs sm:text-sm font-bold tracking-wide">{t(cat.labelKey)}</span>
                 {isSelected && <Check className="w-4 h-4 text-cyan-300 stroke-[3]" />}
               </button>
             );

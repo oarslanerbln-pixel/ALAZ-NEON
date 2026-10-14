@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Room, Player, RoomStatus } from "../../../types/database";
 import { SoundManager, sounds } from "../../../lib/audio";
@@ -7,7 +7,8 @@ import { HostLobby } from "../views/HostLobby";
 import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { grantRewardToPlayers } from "../../../lib/rewards";
-import { assignColorsTeams, colorsTargetClicks } from "../../../lib/colorsTeams";
+import { assignColorsTeams, colorsOutcome, colorsTargetClicks } from "../../../lib/colorsTeams";
+import { RULE_DEFAULTS } from "../../../lib/gameSettings";
 import { useVenue } from "../../../contexts/VenueContextCore";
 import { doc, writeBatch } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
@@ -27,7 +28,9 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
   const { venue } = useVenue();
   const hasGrantedReward = useRef(false);
 
-  const activePlayers = useMemo(() => players.filter(p => (p.lives === undefined ? 3 : p.lives) > 0), [players]);
+  // Herkes oynar: can bomba oyununun alanı; orada elenen oyuncu önceden
+  // burada takımsız kalıyordu.
+  const activePlayers = players;
 
   const handleStartGame = async () => {
     if (activePlayers.length === 0) return;
@@ -55,8 +58,11 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
 
   const handleIntroComplete = async () => {
     SoundManager.getInstance().playMusic(sounds.GAME_PULSE, 0.6);
+    // Süreli oyunda bitiş anı odaya yazılır; dominasyonda süre yok.
+    const timed = room.colors_win_condition === "timed";
     await updateRoomStatus("colors_active", {
-      colors_end_time: 0,
+      colors_end_time: timed ? Date.now() + RULE_DEFAULTS.colorsTimedSeconds * 1000 : 0,
+      colors_winner: null,
     });
   };
 
@@ -86,16 +92,28 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
   let redPercentage = 50 + (scoreDiff / targetScore) * 50;
   redPercentage = Math.max(0, Math.min(100, redPercentage));
 
+  // Süreli oyunun saati (ayar penceresindeki "45 sn süre düellosu").
+  const endTime = room.colors_end_time ?? 0;
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (room.status !== "colors_active" || endTime <= 0) return;
+    const interval = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(interval);
+  }, [room.status, endTime]);
+  const timeUp = endTime > 0 && now >= endTime;
+  const secondsLeft = endTime > 0 ? Math.max(0, Math.ceil((endTime - now) / 1000)) : null;
+
   // Check for winner
   useEffect(() => {
     if (room.status === "colors_active" && !hasGrantedReward.current) {
-      if (redPercentage >= 100 || redPercentage <= 0) {
+      const outcome = colorsOutcome(redPercentage, room.colors_win_condition ?? "domination", timeUp);
+      if (outcome) {
         hasGrantedReward.current = true;
-        const winningTeam = redPercentage >= 100 ? "red" : "blue";
         SoundManager.getInstance().playSFX(sounds.FANFARE);
         
         const assignments = room.colors_team_assignments || {};
-        const winners = activePlayers.filter(p => assignments[p.id] === winningTeam);
+        // Beraberlikte ödül ve puan yok.
+        const winners = outcome === "draw" ? [] : activePlayers.filter(p => assignments[p.id] === outcome);
         
         if (winners.length > 0) {
           const rewardRecipients = winners
@@ -118,10 +136,13 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
           );
         }
 
-        updateRoomStatus("colors_reveal");
+        updateRoomStatus("colors_reveal", { colors_winner: outcome });
       }
     }
-  }, [redPercentage, room.status, room.id, room.colors_team_assignments, activePlayers, venue, updateRoomStatus]);
+  }, [redPercentage, timeUp, room.status, room.id, room.colors_win_condition, room.colors_team_assignments, activePlayers, venue, updateRoomStatus]);
+
+  // Eski odalarda sonuç alanı yok: çubuğun ucundan çıkarılır.
+  const winner = room.colors_winner ?? (redPercentage >= 100 ? "red" : "blue");
 
   const handleEndGameEarly = () => {
     updateRoomStatus("lobby", { active_game: "none" });
@@ -220,6 +241,11 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                 exit={{ opacity: 0 }}
                 className="absolute inset-0 w-full h-full flex overflow-hidden"
               >
+                {secondsLeft !== null && (
+                  <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20 px-6 py-2 rounded-full bg-black/70 border border-white/30 font-mono font-black text-3xl text-white tabular-nums">
+                    ⏱ {t("colors.timeLeft", secondsLeft)}
+                  </div>
+                )}
                 {/* Red Half */}
                 <motion.div 
                   className="h-full bg-gradient-to-r from-[#990022] to-[#ff003c] flex flex-col items-center justify-between p-8 relative overflow-hidden"
@@ -249,7 +275,7 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                   </motion.div>
 
                   <span className="text-xl font-black text-white/70 uppercase tracking-widest z-10">
-                    %{Math.round(redPercentage)} HAKİMİYET
+                    %{Math.round(redPercentage)} {t("colors.dominance")}
                   </span>
                 </motion.div>
 
@@ -287,7 +313,7 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                   </motion.div>
 
                   <span className="text-xl font-black text-white/70 uppercase tracking-widest z-10">
-                    %{Math.round(100 - redPercentage)} HAKİMİYET
+                    %{Math.round(100 - redPercentage)} {t("colors.dominance")}
                   </span>
                 </motion.div>
               </motion.div>
@@ -299,7 +325,11 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                 initial={{ opacity: 0, scale: 0.85 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className={`absolute inset-0 w-full h-full flex flex-col items-center justify-center text-center p-8 ${
-                  redPercentage >= 100 ? 'bg-gradient-to-b from-[#80001a] to-[#ff003c]' : 'bg-gradient-to-b from-[#002f66] to-[#00aaff]'
+                  winner === "red"
+                    ? 'bg-gradient-to-b from-[#80001a] to-[#ff003c]'
+                    : winner === "blue"
+                      ? 'bg-gradient-to-b from-[#002f66] to-[#00aaff]'
+                      : 'bg-gradient-to-b from-[#3b0066] to-[#8a2be2]'
                 }`}
               >
                 <KineticSpark playAudio={false} />
@@ -308,10 +338,10 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                 <motion.h1 
                   className="text-7xl md:text-8xl font-black text-white uppercase tracking-wider drop-shadow-[0_0_50px_rgba(255,255,255,0.9)] mb-4"
                 >
-                  {redPercentage >= 100 ? t("colors.red") : t("colors.blue")} KAZANDI!
+                  {winner === "draw" ? t("colors.draw") : t("colors.teamWins", winner === "red" ? t("colors.red") : t("colors.blue"))}
                 </motion.h1>
                 <p className="text-3xl text-white/90 font-bold uppercase tracking-widest mb-12">
-                  {t("colors.championTeam")}
+                  {winner === "draw" ? "" : t("colors.championTeam")}
                 </p>
 
                 <button

@@ -80,7 +80,8 @@ export function HostQuizDisplay({
   const currentQuestion = room?.quiz_questions?.[currentQIndex] ?? null;
   const totalRounds = room?.total_rounds || 5;
   const currentRoundNum = room?.current_round || currentQIndex + 1;
-  const isFinalRound = currentRoundNum >= totalRounds;
+  // "2X final" ayarı kapalıysa son soru da normal puanlanır (alan yoksa açık).
+  const isFinalRound = currentRoundNum >= totalRounds && room.quiz_double_final !== false;
 
   const startGame = async () => {
     if (!roomId || !room) return;

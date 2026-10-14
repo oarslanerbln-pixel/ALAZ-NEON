@@ -530,6 +530,28 @@ Uygulama notları:
 >     oyuncu aynı takıma düşebiliyordu). Hedef kalabalığa göre ayarlanmıyor,
 >     önceki oyunun dokunuşları sıfırlanmıyordu. Artık `lib/colorsTeams.ts`
 >     ile dengeli dağıtılıyor.
+>
+> **Ayar penceresi ↔ oyun bağı tamamlandı (2.7 yan bulgusu).** Pencerede
+> görünüp oyuna hiç geçmeyen ayarlar bağlandı: her biri odaya yazılıyor ve
+> oyun okuyor (`buildRoomSettings`; alan yoksa `RULE_DEFAULTS`).
+> - **Bomba:**
+>   - Seçilen can (1/2/3) oyun başında her oyuncuya veriliyor. Canlar
+>     önceden yalnızca "sıfırla"da geri geliyordu: gecenin ikinci bomba
+>     oyununda önceki oyunda elenenler oynayamıyordu.
+>   - Hız çarpanı başlangıçta 1.0'a eziliyordu.
+> - **Quiz:** "2X final" kapatılabiliyor.
+> - **Sensör:**
+>   - Tur sayısı ve bulanıklık süresi başlangıçta atılıyordu; önceki oyunun
+>     tur sayısı kullanılıyordu.
+>   - Doğru cevap ayardaki puanı (1000) veriyor. TV düğmesi "+1000" derken
+>     100 ekleniyordu.
+> - **Bar:** tarif hızı (Normal 4,5 sn / Turbo 3 sn).
+> - **Neon Savaşları:**
+>   - "45 sn süre düellosu" hiç yoktu. Artık TV geri sayıyor, süre sonunda
+>     önde olan kazanıyor, eşitlik berabere (`colorsOutcome`).
+>   - Bombada elenen oyuncu takımsız kalmıyor.
+> - **Dil:** penceredeki Almanca sabit metinler (tarif hızı, kazanma koşulu,
+>   quiz konuları) üç dile taşındı.
 
 | İş | Kapsar | Efor | Kabul kriteri |
 |---|---|---|---|

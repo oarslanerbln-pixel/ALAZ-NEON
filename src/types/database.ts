@@ -129,6 +129,8 @@ export interface Room {
    * hicbir sey olmuyordu.
    */
   quiz_topics?: string[];
+  /** Son soru çift puan (ayar penceresindeki "2X final"). Alan yoksa açık. */
+  quiz_double_final?: boolean;
   current_question_index?: number;
   next_letter?: string;
   // Bomb Game Fields
@@ -136,11 +138,15 @@ export interface Room {
   previous_bomb_target_player?: string | null;
   used_words?: string[];
   bomb_speed_multiplier?: number;
+  /** Oyun başında her oyuncuya verilen can (ayar; yoksa 3). */
+  bomb_lives?: number;
   // Tutorial Fields
   tutorial_step?: number;
   // Sensor Game Fields
   sensor_current_media?: string;
   sensor_media_answer?: string;
+  /** Doğru cevabın puanı (ayar; yoksa 1000). */
+  sensor_point_reward?: number;
   sensor_buzzer_player_id?: string | null;
   sensor_buzzer_timestamp?: number | null;
   sensor_player_answer?: string | null;
@@ -192,6 +198,10 @@ export interface Room {
   colors_blue_score?: number;
   colors_team_assignments?: Record<string, "red" | "blue">;
   colors_end_time?: number;
+  /** "domination": çubuk bir uca dayanınca biter; "timed": süre sonunda önde olan kazanır. */
+  colors_win_condition?: "domination" | "timed";
+  /** Biten oyunun sonucu; TV açıklaması bunu gösterir. */
+  colors_winner?: "red" | "blue" | "draw" | null;
   // Vault Game Fields
   vault_code?: string;
   vault_winner_id?: string | null;
@@ -202,6 +212,8 @@ export interface Room {
   // Bar Game Fields
   bar_active_recipe?: string[];
   bar_end_time?: number;
+  /** Tarifin değişme aralığı, saniye (ayar; yoksa 4,5). */
+  bar_recipe_seconds?: number;
   // Kablo Game Fields
   kablo_winner_id?: string | null;
   // AYNA Game Fields (bkz. lib/ayna.ts). Soru METNİ değil kimliği saklanıyor:
