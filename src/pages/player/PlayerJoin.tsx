@@ -8,6 +8,8 @@ import { db, auth } from "../../lib/firebase";
 import { playerJoinPayload } from "../../lib/clientWrites";
 import { findJoinableRoomByCode } from "../../lib/roomQueries";
 import { useLocale } from "../../hooks/useLocale";
+import { useFollowRoomVenue } from "../../hooks/useFollowRoomVenue";
+import type { Room } from "../../types/database";
 import { errorMessage } from "../../lib/errors";
 import { PhoneAuth } from "../../components/PhoneAuth";
 import { LanguageSwitcher } from "../../components/LanguageSwitcher";
@@ -28,6 +30,9 @@ export function PlayerJoin() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [teamName, setTeamName] = useState("");
+  // Kodu girilen odanın mekanı: giriş ekranı o mekanın markasıyla görünür (3.1).
+  const [codeRoom, setCodeRoom] = useState<Pick<Room, "venue_id"> | null>(null);
+  useFollowRoomVenue(codeRoom);
   const [gameMode, setGameMode] = useState<"individual" | "team">("individual");
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authChecking, setAuthChecking] = useState(true);
@@ -59,7 +64,10 @@ export function PlayerJoin() {
         // Katilim akisiyla AYNI secim: kod cakismasinda burada baska bir
         // odanin modunu gosterip katilimda baskasina girmek olmasin.
         const room = await findJoinableRoomByCode(roomCode);
-        if (room) setGameMode(room.game_mode || "individual");
+        if (room) {
+          setGameMode(room.game_mode || "individual");
+          setCodeRoom({ venue_id: room.venue_id });
+        }
       };
       checkMode();
     }

@@ -4,7 +4,10 @@ import { signOut } from "firebase/auth";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../../lib/firebase";
 import { useIsStaff } from "../../hooks/useIsStaff";
+import { useVenue } from "../../contexts/VenueContextCore";
+import { loadVenueDocs } from "../../hooks/venueDocs";
 import { StaffAccessNotice } from "../../components/StaffAccessNotice";
+import { VenueSwitcher } from "../../components/VenueSwitcher";
 import type { Room, Reward, GameType } from "../../types/database";
 import { errorMessage } from "../../lib/errors";
 import { createLogger } from "../../lib/logger";
@@ -60,7 +63,8 @@ interface ReportData {
 
 export function NightlyReport() {
   const navigate = useNavigate();
-  const { user: authUser, isStaff } = useIsStaff();
+  const { user: authUser, isStaff, venues } = useIsStaff();
+  const { venueId } = useVenue();
   const [preset, setPreset] = useState<RangePreset>("today");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -77,30 +81,23 @@ export function NightlyReport() {
     try {
       const { start, end } = rangeFor(preset);
 
-      const roomsQ = query(
-        collection(db, "rooms"),
-        where("created_at", ">=", start),
-        where("created_at", "<=", end),
-      );
+      // Rapor seçili mekanın (3.1): oda ve ödül mekana süzülür, oyuncular
+      // mekanın odalarından seçilir (oyuncu kaydı mekan taşımıyor).
       const playersQ = query(
         collection(db, "players"),
         where("created_at", ">=", start),
         where("created_at", "<=", end),
       );
-      const rewardsQ = query(
-        collection(db, "rewards"),
-        where("earned_at", ">=", start),
-        where("earned_at", "<=", end),
-      );
-
-      const [roomsSnap, playersSnap, rewardsSnap] = await Promise.all([
-        getDocs(roomsQ),
+      const [roomDocs, playersSnap, rewardDocs] = await Promise.all([
+        loadVenueDocs("rooms", venueId, where("created_at", ">=", start), where("created_at", "<=", end)),
         getDocs(playersQ),
-        getDocs(rewardsQ),
+        loadVenueDocs("rewards", venueId, where("earned_at", ">=", start), where("earned_at", "<=", end)),
       ]);
 
-      const rooms = roomsSnap.docs.map((d) => d.data() as Room & { created_at?: number });
-      const rewards = rewardsSnap.docs.map((d) => d.data() as Reward);
+      const rooms = roomDocs.map((d) => d.data() as Room & { created_at?: number });
+      const rewards = rewardDocs.map((d) => d.data() as Reward);
+      const roomIds = new Set(roomDocs.map((d) => d.id));
+      const players = playersSnap.docs.filter((d) => roomIds.has(String(d.data().room_id ?? "")));
 
       const modeBreakdown: Record<string, number> = {};
       const hourlyMap: Record<number, number> = {};
@@ -127,16 +124,16 @@ export function NightlyReport() {
           count: hourlyMap[hour],
         }));
 
-      const playerCount = playersSnap.size;
+      const playerCount = players.length;
       const avgPlayersPerRoom = rooms.length > 0 ? Math.round((playerCount / rooms.length) * 10) / 10 : 0;
 
-      const guestUids = playersSnap.docs.map((d) => String(d.data().uid ?? ""));
+      const guestUids = players.map((d) => String(d.data().uid ?? ""));
       const [kpis, impressions] = await Promise.all([
-        loadVenueKpis({ start, end, nightCount: rooms.length, guestUids }).catch((err) => {
+        loadVenueKpis({ venueId, start, end, nightCount: rooms.length, guestUids }).catch((err) => {
           log.error("KPI verisi yüklenemedi:", err);
           return null;
         }),
-        loadAdImpressions(start, end).catch((err) => {
+        loadAdImpressions(venueId, start, end).catch((err) => {
           log.error("Sponsor gösterimleri yüklenemedi:", err);
           return null;
         }),
@@ -159,7 +156,7 @@ export function NightlyReport() {
     } finally {
       setLoading(false);
     }
-  }, [preset]);
+  }, [preset, venueId]);
 
   useEffect(() => {
     if (isStaff) loadReport();
@@ -194,7 +191,7 @@ export function NightlyReport() {
   }
 
   if (!authUser || !isStaff) {
-    return <StaffAccessNotice title="Gecelik Rapor" user={authUser} />;
+    return <StaffAccessNotice title="Gecelik Rapor" user={authUser} venues={venues} />;
   }
 
   const redemptionRate =
@@ -214,6 +211,9 @@ export function NightlyReport() {
               İşletme Analytics
             </h1>
             <p className="text-white/40 text-xs mt-1">{authUser.email}</p>
+            <div className="mt-3">
+              <VenueSwitcher venues={venues} />
+            </div>
           </div>
           <button
             onClick={() => signOut(auth).then(() => navigate("/"))}

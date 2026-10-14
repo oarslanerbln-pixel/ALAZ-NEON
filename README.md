@@ -59,24 +59,43 @@ points are written by the room's host: the rules only accept them from a staff
 account that hosts the room. Sign the TV/tablet in once with a staff account; the
 session persists. Players keep joining anonymously via the QR code.
 
-Authority comes from a document in the `staff` collection:
+Staff belong to a **venue** (one project serves several venues; design:
+`docs/design/3.1-cok-mekan.md`):
 
 ```
-staff/<uid>        # the document's existence grants access; contents are free-form
+venues/<venueId>                 # branding, rewards, sponsor ads, wheel (public read)
+venues/<venueId>/staff/<uid>     # { uid, role: "owner" | "staff", added_by, added_at }
+platform_admins/<uid>            # HENGAME team: opens venues, assigns owners
+staff/<uid>                      # legacy: counts as staff of venue "default" during migration
 ```
 
-No client can write this collection (`allow write: if false` in `firestore.rules`),
-so an account cannot grant itself access. To add a staff member:
+Nobody can add themselves. The HENGAME team opens a venue and assigns its
+owner with the admin script; the owner then manages staff in the app:
 
-1. Have the person register at `/register` (or create the account in
-   Firebase Console → Authentication).
-2. Copy their **User UID** from Firebase Console → Authentication → Users.
-   (An account that signs in and opens an admin screen is also shown its own
-   `staff/<uid>` path on the access-denied screen.)
-3. Firebase Console → Firestore → create collection `staff`, document ID `<uid>`,
-   with any field (e.g. `added_at`).
+1. The new staff member registers at `/register` and opens any admin screen;
+   the access-denied screen shows their **account ID**.
+2. The owner opens **/admin/staff** (Venue settings → Staff), pastes the ID
+   and adds them. Removing works from the same list.
 
-To revoke access, delete that document.
+An account can be staff at several venues; admin screens and the TV setup
+then show a venue picker, and the choice is remembered on the device.
+
+Venue administration (`scripts/venue-admin.mjs`, Admin SDK, **dry run by
+default**, `--apply` writes):
+
+```bash
+# Emulator first:
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node scripts/venue-admin.mjs migrate --project demo-hengame
+# Production reads the service account from FIREBASE_SERVICE_ACCOUNT_JSON
+# (environment setting; never commit it or paste it anywhere):
+node scripts/venue-admin.mjs create-venue kadikoy-neon --name "Kadıköy Neon"
+node scripts/venue-admin.mjs add-owner kadikoy-neon <uid>
+node scripts/venue-admin.mjs migrate --owner <uid>   # stage A: venues/default + copy legacy staff
+node scripts/venue-admin.mjs backfill                # stage B: venue_id on older records
+```
+
+Venue-scoped report queries need the composite indexes in
+`firestore.indexes.json`: `firebase deploy --only firestore:rules,firestore:indexes`.
 
 > When the project moves to the Blaze plan, a `staff: true` **custom claim** set via
 > the Admin SDK is also accepted, with no rule changes needed — it avoids the
@@ -182,8 +201,8 @@ staff open **/admin/content**, download the sample file, edit it and upload
 it. The file is validated before saving and every problem is listed with
 its question id. On the TV, the pack is then chosen under *question source*
 in the quiz settings; questions then come only from that pack. Packs are
-stored in the `quiz_packs` collection, readable and writable by staff only
-(the correct answers are inside), so deploy the rules after updating:
+stored per venue in `venues/<venueId>/quiz_packs`, readable and writable
+by that venue's staff only (the correct answers are inside), so deploy the rules after updating:
 `firebase deploy --only firestore:rules`.
 
 ## 🗑 Data retention (one-time console setup)

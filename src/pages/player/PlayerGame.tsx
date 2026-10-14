@@ -15,6 +15,7 @@ import { useLocale } from "../../hooks/useLocale";
 
 // Hooks
 import { useRoom } from "../../hooks/useRoom";
+import { useFollowRoomVenue } from "../../hooks/useFollowRoomVenue";
 import { usePlayer } from "../../hooks/usePlayer";
 import { useEmojiPulse } from "../../hooks/useEmojiPulse";
 import { useHeartbeat } from "../../hooks/useHeartbeat";
@@ -48,6 +49,7 @@ export function PlayerGame() {
 
   // Centralized State Management via Hooks
   const { room, loading: roomLoading, error: roomError } = useRoom(roomId);
+  useFollowRoomVenue(room);
   const { player, loading: playerLoading, error: playerError } = usePlayer(playerId);
   const { sendReaction } = useEmojiPulse(roomId, undefined, playerId);
   const { t } = useLocale();

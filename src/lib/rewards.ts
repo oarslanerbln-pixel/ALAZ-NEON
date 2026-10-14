@@ -1,4 +1,5 @@
 import { collection, doc, writeBatch } from "firebase/firestore";
+import { DEFAULT_VENUE_ID } from "./venues";
 import { db } from "./firebase";
 import { generateCode } from "./codes";
 import { resolveWinners, type Winner } from "./rewardWinners";
@@ -38,7 +39,7 @@ export async function grantRewardToPlayers(
     const rewardRef = doc(collection(db, "rewards"));
     batch.set(
       rewardRef,
-      rewardPayload({ roomId, uid, nickname, venue, code: generateCode(6), now }),
+      rewardPayload({ roomId, venueId: venue.id || DEFAULT_VENUE_ID, uid, nickname, venue, code: generateCode(6), now }),
     );
   }
   await batch.commit();

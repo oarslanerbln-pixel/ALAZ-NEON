@@ -36,9 +36,10 @@ değiştirmez (buzz gibi yarışlı işlemler `runTransaction` ile).
 
 Firestore koleksiyonları: `rooms` (durum makinesi), `players` (skorlar),
 `answers` (cevaplar), `events` (oyun telemetrisi; yalnızca host yazar),
-`quiz_packs` (soru paketleri; yalnızca personel), `ad_impressions`
-(sponsor gösterim kaydı; yalnızca host yazar), ayrıca mekan/ödül/rapor
-koleksiyonları.
+`ad_impressions` (sponsor gösterim kaydı; yalnızca host yazar), `venues`
+(mekan; altında `staff` ve `quiz_packs`), `platform_admins`, `rewards`.
+Çok mekan: `rooms`/`rewards`/`events`/`ad_impressions` `venue_id` taşır
+(`docs/design/3.1-cok-mekan.md`).
 
 ## Dosya haritası
 
@@ -51,7 +52,9 @@ koleksiyonları.
 | `src/pages/{host,player}/<oyun>/` | Oyun başına ekran çiftleri (quiz, bomb, sensor, wheel, overload, echo, pulse, spectrum, colors, vault, unity, bar, kablo, ayna) |
 | `src/pages/{host,player}/views/` | Oyun bağımsız ekranlar (lobby, playing, review, podium) |
 | `src/hooks/` | `useHostRoom`, `useRoom`, `usePlayer`, `useAuth`, `useLocale`, `useSound` … |
-| `src/lib/` | Saf mantık: `scoring`, `fuzzyMatch`, `wordValidation`, `league`, `retention`, `rewards`, `roomCodes`, `liveness`, `gameRouting` |
+| `src/lib/` | Saf mantık: `scoring`, `fuzzyMatch`, `wordValidation`, `league`, `retention`, `rewards`, `roomCodes`, `liveness`, `gameRouting`, `venues` |
+| `src/contexts/VenueContext.tsx` | Etkin mekan: seçili mekan ya da odaya bağlı ekranda odanın mekanı (`useFollowRoomVenue`) |
+| `scripts/venue-admin.mjs` | Mekan açma, sahip atama, göç (Admin SDK, kuru çalışma varsayılan) |
 | `src/types/database.ts` | `RoomStatus`, `GameType`, tüm Firestore modelleri |
 | `src/content/quiz/*.json` | Quiz soru havuzları; şema `lib/quizPack.ts` (mekan/kurum paketleri de aynı şemayla, `/admin/content`) |
 | `firestore.rules` + `test/firestore.rules.test.ts` | Güvenlik kuralları ve testleri |
@@ -87,6 +90,10 @@ Bunları baştan sona okuma, hedefli `grep` ile gir:
   `buildRoomSettings` ile odaya yazılır ve oyun ekranı onu okur (alan yoksa
   `RULE_DEFAULTS`). Yalnızca ekranda görünen ayar hatadır;
   `e2e/game-settings.spec.ts` her ayarın odaya ulaştığını doğrular.
+- Mekana ait veriyi okuyan sorgu `where("venue_id", "==", …)` taşır
+  (`hooks/venueDocs.ts`); kurallar sorguyu süzmez, süzgeçsiz sorgu başka
+  mekanın personeli için toptan reddedilir. Mekana bağlı yeni yazma
+  `venue_id`'yi odadan alır (`venueIdOf(room)`), kural eşitliği denetler.
 - Firebase v9+ modüler SDK; `firebase/compat` yasak. Çok dokümanlı güncellemede
   `writeBatch` / `runTransaction`.
 - Framer Motion geçişlerinde `<AnimatePresence mode="wait">` + benzersiz `key`.

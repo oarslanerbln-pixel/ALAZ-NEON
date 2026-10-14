@@ -77,8 +77,8 @@ describe("yazma yükleri undefined alan taşımaz", () => {
     pulseInput: pulseInputPayload(1, 500),
     unityInput: unityInputPayload(1, 10),
     counterIncrement: counterIncrementPayload("colors_clicks", 5),
-    roomCreate: roomCreatePayload({ code: "ABCD", hostUid: "h", locale: "tr", venue: { name: "Mekan" }, now }),
-    reward: rewardPayload({ roomId: "r", uid: "u", nickname: "N", venue: {}, code: "C", now }),
+    roomCreate: roomCreatePayload({ code: "ABCD", hostUid: "h", venueId: "default", locale: "tr", venue: { name: "Mekan" }, now }),
+    reward: rewardPayload({ roomId: "r", venueId: "default", uid: "u", nickname: "N", venue: {}, code: "C", now }),
     rewardClaim: rewardClaimPayload(now),
     lifetimeCredit: lifetimeCreditPayload(10),
     lifetimeMarker: lifetimeMarkerPayload(10),
@@ -97,7 +97,7 @@ describe("yazma yükleri undefined alan taşımaz", () => {
   });
 
   it("ödül süresi tanımlıysa son kullanma tarihi eklenir, değilse anahtar hiç yoktur", () => {
-    const base = { roomId: "r", uid: "u", nickname: "N", code: "C", now };
+    const base = { roomId: "r", venueId: "default", uid: "u", nickname: "N", code: "C", now };
     expect(rewardPayload({ ...base, venue: { reward_validity_days: 2 } })).toMatchObject({
       expires_at: now + 2 * 24 * 60 * 60 * 1000,
     });

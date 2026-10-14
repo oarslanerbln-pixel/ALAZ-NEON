@@ -14,13 +14,19 @@ const MAX_GUESTS_SCANNED = 300;
  * "geri dönen" son 90 gün içinde önceden oynamış demek.
  */
 export async function loadVenueKpis(args: {
+  venueId: string;
   start: number;
   end: number;
   nightCount: number;
   guestUids: string[];
 }): Promise<VenueKpis> {
   const eventsSnap = await getDocs(
-    query(collection(db, "events"), where("created_at", ">=", args.start), where("created_at", "<=", args.end)),
+    query(
+      collection(db, "events"),
+      where("venue_id", "==", args.venueId),
+      where("created_at", ">=", args.start),
+      where("created_at", "<=", args.end),
+    ),
   );
   const events = eventsSnap.docs.map((d) => d.data() as GameEventRecord);
 

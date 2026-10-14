@@ -30,8 +30,8 @@ export async function resetEmulators(): Promise<void> {
   );
 }
 
-/** E-posta/şifre hesabı açar ve staff/{uid} kaydını (Console'daki adımın karşılığı) yazar. */
-export async function createStaffAccount(email: string, password: string): Promise<string> {
+/** E-posta/şifre hesabı açar (/register'ın karşılığı); personel kaydı yazmaz. */
+export async function createAccount(email: string, password: string): Promise<string> {
   const res = await ok(
     await fetch(`${AUTH}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=${API_KEY}`, {
       method: "POST",
@@ -41,6 +41,12 @@ export async function createStaffAccount(email: string, password: string): Promi
     "Personel hesabı açılamadı",
   );
   const { localId } = (await res.json()) as { localId: string };
+  return localId;
+}
+
+/** E-posta/şifre hesabı açar ve staff/{uid} kaydını (Console'daki adımın karşılığı) yazar. */
+export async function createStaffAccount(email: string, password: string): Promise<string> {
+  const localId = await createAccount(email, password);
   await ok(
     await fetch(`${DOCS}/staff?documentId=${localId}`, {
       method: "POST",

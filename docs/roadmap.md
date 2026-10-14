@@ -571,7 +571,7 @@ Uygulama notları:
 
 | İş | Kapsar | Efor |
 |---|---|---|
-| 3.1 Çok mekan: `venues/{venueId}`, mekan başına personel, oda ↔ mekan bağı, `isStaffOf(venueId)` + veri göçü | A5, B1 | L |
+| 3.1 Çok mekan: `venues/{venueId}`, mekan başına personel, oda ↔ mekan bağı, `isStaffOf(venueId)` + veri göçü ✅ (aşama A) | A5, B1 | L |
 | 3.2 Telemetri (`events`, host yazar) + mekan KPI paneli / haftalık rapor ✅ | O2, B3 | M |
 | 3.3 Sponsor ekranı + proof-of-play kaydı ve sponsor raporu ✅ | B2 | M |
 | 3.4 İçerik hattı: JSON + şema doğrulama + mekan/kurum özel soru paketi ✅ | B4 | M |
@@ -597,8 +597,7 @@ Uygulama notları:
 >     odaya paketten soru yazılması, erişilebilirlik.
 > - **Yayında gereken:** `firebase deploy --only firestore:rules`; yeni
 >   koleksiyonun kuralı olmadan yükleme reddedilir.
-> - **Sonraki adım:** paketler şimdilik tüm personele ortak. 3.1 (çok mekan)
->   ile `venue_id`'ye bağlanacak.
+> - **3.1 ile:** paketler artık mekanın (`venues/{v}/quiz_packs`, karar D7).
 >
 > **3.2 tamamlandı (telemetri + mekan KPI'ları).**
 > - **Olaylar:** TV her oyunun başında ve sonunda `events`'e bir olay
@@ -680,7 +679,39 @@ Uygulama notları:
 > - **Yayında gereken:** kural dağıtımı ve `ad_impressions` için TTL
 >   (README).
 >
-> **3.1 tasarımı:** `docs/design/3.1-cok-mekan.md` (onay bekliyor).
+> **3.1 tamamlandı (çok mekan, göç aşaması A).** Tasarım ve kararlar (D4–D7):
+> `docs/design/3.1-cok-mekan.md`.
+> - **Model:** `venues/{v}` (marka, ödül, sponsor, çark), `venues/{v}/staff/{uid}`
+>   (`owner` | `staff`), `venues/{v}/quiz_packs`, `platform_admins/{uid}`.
+>   `rooms`, `rewards`, `events`, `ad_impressions` `venue_id` taşıyor; değer
+>   kuralla odanınkine eşitleniyor, oda açıldıktan sonra değişmiyor.
+> - **Kurallar:** `isStaffOf(venueId)` (üyelik belgesi; Blaze sonrası custom
+>   claim de geçerli). Geçişte global `staff/{uid}` `default` mekanın
+>   personeli sayılıyor, mekansız eski kayıt `default`'un.
+> - **İstemci:**
+>   - Personel girişte üye olduğu mekanları görüyor; tek mekan kendiliğinden
+>     seçiliyor, birden çoksa seçim kutusu (seçim cihazda saklanıyor).
+>   - TV ve telefon markayı odanın mekanından alıyor.
+>   - Rapor, ödül doğrulama, soru paketleri, KPI ve sponsor dökümü seçili
+>     mekana süzülüyor (`hooks/venueDocs.ts`).
+>   - Sahip `/admin/staff`'ta hesap kimliğiyle personel ekleyip çıkarıyor.
+> - **Yönetim:** `scripts/venue-admin.mjs` (Admin SDK, varsayılan kuru
+>   çalışma): mekan açma, sahip atama, göç (A) ve geri doldurma (B).
+>   Bileşik indeksler `firestore.indexes.json`'da.
+> - **Kalkan:**
+>   - 3.1 kural matrisi (A mekanının personeli B'nin verisine dokunamaz,
+>     sahip yalnızca personel ekler/çıkarır, sözleşme alanları ekibin).
+>   - `e2e/venues.spec.ts`: sahip personel ekler → yeni personel o mekanın
+>     gecesini açar; iki mekanlı hesap mekan seçer, rapor seçili mekanın.
+> - **Yayında gereken** (sırayla, mekan saatleri dışında):
+>   1. Kurallar ve indeksler:
+>      `firebase deploy --only firestore:rules,firestore:indexes`.
+>   2. `node scripts/venue-admin.mjs migrate --owner <uid>` önce kuru, sonra
+>      `--apply`; ardından `backfill` (servis hesabıyla, onaylı).
+> - **Sonraki adım (aşama C):** global `staff` geri dönüşü kurallardan
+>   kalkar. Geçişte global personel tüm mekanların ödüllerini kural
+>   düzeyinde okuyabiliyor (istemci süzüyor); bu yüzden ikinci mekan,
+>   geri doldurma ve C aşamasından sonra açılmalı.
 
 ## 6. Başarı metrikleri
 

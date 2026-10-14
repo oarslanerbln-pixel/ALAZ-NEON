@@ -5,7 +5,7 @@ import {
   assertSucceeds,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, setDoc, updateDoc, addDoc, collection, getDoc, getDocs, deleteDoc, query, where } from "firebase/firestore";
+import { doc, setDoc, updateDoc, addDoc, collection, collectionGroup, getDoc, getDocs, deleteDoc, query, where } from "firebase/firestore";
 import { beforeAll, afterAll, beforeEach, describe, it } from "vitest";
 import type { QuizPack } from "../src/lib/quizPack";
 
@@ -38,6 +38,7 @@ import {
   quizSecretPayload,
   rewardClaimPayload,
   rewardPayload,
+  venueStaffPayload,
   roomCreatePayload,
   roomStatusPayload,
   sensorAnswerPayload,
@@ -952,6 +953,7 @@ describe("rewards koleksiyonu", () => {
   const grantPayload = (overrides: Record<string, unknown> = {}) => ({
     ...rewardPayload({
       roomId: ROOM_ID,
+      venueId: "default",
       uid: PLAYER_UID,
       nickname: "OYUNCU",
       code: "X9Y8Z7",
@@ -1580,6 +1582,7 @@ describe("istemci yazma sözleşmesi (clientWrites)", () => {
           roomCreatePayload({
             code: "ZXCV",
             hostUid: HOST_UID,
+            venueId: "default",
             locale: "tr",
             venue: { name: "Mekan", logo_url: undefined, primary_color: undefined },
           })
@@ -1627,23 +1630,23 @@ describe("quiz_packs — mekan/kurum soru paketleri (3.4)", () => {
 
   it("personel paket yükler, okur ve siler", async () => {
     await seedStaff();
-    const ref = await assertSucceeds(addDoc(collection(asVenueOwner(), "quiz_packs"), quizPackPayload(pack(), OWNER_UID)));
-    await assertSucceeds(getDocs(collection(asVenueOwner(), "quiz_packs")));
-    await assertSucceeds(deleteDoc(doc(asVenueOwner(), "quiz_packs", ref.id)));
+    const ref = await assertSucceeds(addDoc(collection(asVenueOwner(), "venues", "default", "quiz_packs"), quizPackPayload(pack(), OWNER_UID)));
+    await assertSucceeds(getDocs(collection(asVenueOwner(), "venues", "default", "quiz_packs")));
+    await assertSucceeds(deleteDoc(doc(asVenueOwner(), "venues", "default", "quiz_packs", ref.id)));
   });
 
   it("misafir ve personel olmayan hesap paket yükleyemez ve okuyamaz (doğru cevaplar içinde)", async () => {
     await seedStaff();
-    await assertFails(addDoc(collection(asPlayer(), "quiz_packs"), quizPackPayload(pack(), PLAYER_UID)));
-    await assertFails(addDoc(collection(asRandomSignup(), "quiz_packs"), quizPackPayload(pack(), RANDOM_SIGNUP_UID)));
-    await addDoc(collection(asVenueOwner(), "quiz_packs"), quizPackPayload(pack(), OWNER_UID));
-    await assertFails(getDocs(collection(asPlayer(), "quiz_packs")));
-    await assertFails(getDocs(collection(asGuest(), "quiz_packs")));
+    await assertFails(addDoc(collection(asPlayer(), "venues", "default", "quiz_packs"), quizPackPayload(pack(), PLAYER_UID)));
+    await assertFails(addDoc(collection(asRandomSignup(), "venues", "default", "quiz_packs"), quizPackPayload(pack(), RANDOM_SIGNUP_UID)));
+    await addDoc(collection(asVenueOwner(), "venues", "default", "quiz_packs"), quizPackPayload(pack(), OWNER_UID));
+    await assertFails(getDocs(collection(asPlayer(), "venues", "default", "quiz_packs")));
+    await assertFails(getDocs(collection(asGuest(), "venues", "default", "quiz_packs")));
   });
 
   it("paket başkası adına yüklenemez, boyut ve dil sınırları uygulanır", async () => {
     await seedStaff();
-    const packs = collection(asVenueOwner(), "quiz_packs");
+    const packs = collection(asVenueOwner(), "venues", "default", "quiz_packs");
     await assertFails(addDoc(packs, quizPackPayload(pack(), "baska-uid")));
     await assertFails(addDoc(packs, quizPackPayload(pack(4), OWNER_UID)));
     await assertFails(addDoc(packs, quizPackPayload(pack(201), OWNER_UID)));
@@ -1653,8 +1656,8 @@ describe("quiz_packs — mekan/kurum soru paketleri (3.4)", () => {
 
   it("paket değiştirilemez: silinip yeniden yüklenir", async () => {
     await seedStaff();
-    const ref = await addDoc(collection(asVenueOwner(), "quiz_packs"), quizPackPayload(pack(), OWNER_UID));
-    await assertFails(updateDoc(doc(asVenueOwner(), "quiz_packs", ref.id), { title: "Yeni ad" }));
+    const ref = await addDoc(collection(asVenueOwner(), "venues", "default", "quiz_packs"), quizPackPayload(pack(), OWNER_UID));
+    await assertFails(updateDoc(doc(asVenueOwner(), "venues", "default", "quiz_packs", ref.id), { title: "Yeni ad" }));
   });
 });
 
@@ -1664,6 +1667,7 @@ describe("events — oyun telemetrisi (3.2)", () => {
     gameEventPayload({
       type,
       roomId: ROOM_ID,
+      venueId: "default",
       hostUid,
       game: "quiz",
       playerCount: 12,
@@ -1679,7 +1683,8 @@ describe("events — oyun telemetrisi (3.2)", () => {
     await seedStaff(HOST_UID);
     await assertSucceeds(setDoc(eventDoc(asHost(), "game_started"), event("game_started")));
     await assertSucceeds(setDoc(eventDoc(asHost(), "game_ended"), event("game_ended")));
-    await assertSucceeds(getDocs(collection(asHost(), "events")));
+    // Okuma mekana süzülmüş sorguyla (çok mekan, 3.1).
+    await assertSucceeds(getDocs(query(collection(asHost(), "events"), where("venue_id", "==", "default"))));
   });
 
   it("başka odanın personeli ve oyuncu olay yazamaz; oyuncu okuyamaz", async () => {
@@ -1746,6 +1751,7 @@ describe("ad_impressions — sponsor gösterim kaydı (3.3)", () => {
     adImpressionPayload({
       ad: { id: "ad1", sponsor_name: "Neon Cola", type: "image" },
       roomId: ROOM_ID,
+      venueId: "default",
       hostUid,
       startedAt: 1_760_000_000_000,
       shownMs: 10_000,
@@ -1758,7 +1764,7 @@ describe("ad_impressions — sponsor gösterim kaydı (3.3)", () => {
   it("odanın host'u (personel) gösterimi yazar, personel okur", async () => {
     await seedStaff(HOST_UID);
     await assertSucceeds(addDoc(collection(asHost(), "ad_impressions"), impression()));
-    await assertSucceeds(getDocs(collection(asHost(), "ad_impressions")));
+    await assertSucceeds(getDocs(query(collection(asHost(), "ad_impressions"), where("venue_id", "==", "default"))));
   });
 
   it("oyuncu ve başka odanın personeli yazamaz; oyuncu okuyamaz", async () => {
@@ -1777,5 +1783,143 @@ describe("ad_impressions — sponsor gösterim kaydı (3.3)", () => {
     await assertFails(addDoc(collection(asHost(), "ad_impressions"), { ...impression(), audience: 501 }));
     await assertFails(addDoc(collection(asHost(), "ad_impressions"), { ...impression(), ad_type: "popup" }));
     await assertFails(addDoc(collection(asHost(), "ad_impressions"), { ...impression(), clicks: 3 }));
+  });
+});
+
+describe("çok mekan — mekan başına personel ve çapraz erişim (3.1)", () => {
+  const A = "kadikoy-neon";
+  const B = "berlin-mitte";
+  const OWNER_A = "uid-owner-a";
+  const STAFF_A = "uid-staff-a";
+  const STAFF_B = "uid-staff-b";
+  const ADMIN = "uid-platform";
+  const as = (uid: string) => testEnv.authenticatedContext(uid, { firebase: { sign_in_provider: "password" } }).firestore();
+
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, "platform_admins", ADMIN), { added_at: 1 });
+      await setDoc(doc(db, "venues", A), { name: "Kadıköy Neon", rewards_enabled: false });
+      await setDoc(doc(db, "venues", B), { name: "Berlin Mitte", rewards_enabled: false });
+      await setDoc(doc(db, "venues", A, "staff", OWNER_A), venueStaffPayload({ uid: OWNER_A, role: "owner", addedBy: ADMIN, now: 1 }));
+      await setDoc(doc(db, "venues", A, "staff", STAFF_A), venueStaffPayload({ uid: STAFF_A, role: "staff", addedBy: OWNER_A, now: 1 }));
+      await setDoc(doc(db, "venues", B, "staff", STAFF_B), venueStaffPayload({ uid: STAFF_B, role: "staff", addedBy: ADMIN, now: 1 }));
+      await setDoc(doc(db, "rooms", "room-a"), { code: "AAAA", status: "night_lobby", host_uid: STAFF_A, venue_id: A });
+    });
+  });
+
+  const room = (venueId: string | undefined, hostUid: string) =>
+    roomCreatePayload({ code: "QWER", hostUid, venueId: venueId as string, locale: "tr", venue: { name: "X" } });
+
+  describe("mekanlar ve personel listesi", () => {
+    it("mekanı yalnızca HENGAME ekibi açar; markayı mekanın personeli düzenler", async () => {
+      await assertSucceeds(setDoc(doc(as(ADMIN), "venues", "yeni-mekan"), { name: "Yeni" }));
+      await assertFails(setDoc(doc(as(OWNER_A), "venues", "baska-mekan"), { name: "Korsan" }));
+      await assertSucceeds(updateDoc(doc(as(STAFF_A), "venues", A), { name: "Kadıköy Neon Bar" }));
+      await assertFails(updateDoc(doc(as(STAFF_B), "venues", A), { name: "Ele geçirildi" }));
+      await assertSucceeds(getDoc(doc(asGuest(), "venues", A)));
+    });
+
+    it("sözleşme alanlarını (plan, limitler) yalnızca HENGAME ekibi değiştirir", async () => {
+      await assertFails(updateDoc(doc(as(OWNER_A), "venues", A), { plan: "pro" }));
+      await assertFails(updateDoc(doc(as(STAFF_A), "venues", A), { limits: { rooms: 99 } }));
+      await assertSucceeds(updateDoc(doc(as(ADMIN), "venues", A), { plan: "pro" }));
+    });
+
+    it("sahip personel ekler ve çıkarır; sahip atayamaz, kendini ekleyemez", async () => {
+      const newcomer = "uid-yeni-garson";
+      await assertSucceeds(setDoc(doc(as(OWNER_A), "venues", A, "staff", newcomer), venueStaffPayload({ uid: newcomer, role: "staff", addedBy: OWNER_A })));
+      await assertFails(setDoc(doc(as(OWNER_A), "venues", A, "staff", "uid-ikinci-sahip"), venueStaffPayload({ uid: "uid-ikinci-sahip", role: "owner", addedBy: OWNER_A })));
+      await assertSucceeds(deleteDoc(doc(as(OWNER_A), "venues", A, "staff", newcomer)));
+      await assertFails(deleteDoc(doc(as(OWNER_A), "venues", A, "staff", OWNER_A)));
+    });
+
+    it("sahip başka bir sahibi çıkaramaz; onu yalnızca HENGAME ekibi çıkarır", async () => {
+      const coOwner = "uid-ortak-sahip";
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), "venues", A, "staff", coOwner), venueStaffPayload({ uid: coOwner, role: "owner", addedBy: ADMIN, now: 1 }));
+      });
+      await assertFails(deleteDoc(doc(as(OWNER_A), "venues", A, "staff", coOwner)));
+      await assertSucceeds(deleteDoc(doc(as(ADMIN), "venues", A, "staff", coOwner)));
+    });
+
+    it("personel (sahip olmayan) ve başka mekanın personeli personel ekleyemez; kimse kendini ekleyemez", async () => {
+      await assertFails(setDoc(doc(as(STAFF_A), "venues", A, "staff", "uid-arkadas"), venueStaffPayload({ uid: "uid-arkadas", role: "staff", addedBy: STAFF_A })));
+      await assertFails(setDoc(doc(as(STAFF_B), "venues", A, "staff", "uid-arkadas"), venueStaffPayload({ uid: "uid-arkadas", role: "staff", addedBy: STAFF_B })));
+      await assertFails(setDoc(doc(as("uid-izinsiz"), "venues", A, "staff", "uid-izinsiz"), venueStaffPayload({ uid: "uid-izinsiz", role: "staff", addedBy: "uid-izinsiz" })));
+    });
+
+    it("HENGAME ekibi sahip atar", async () => {
+      await assertSucceeds(setDoc(doc(as(ADMIN), "venues", B, "staff", "uid-owner-b"), venueStaffPayload({ uid: "uid-owner-b", role: "owner", addedBy: ADMIN })));
+    });
+
+    it("personel üye olduğu mekanları listeler, başkasınınkini değil", async () => {
+      await assertSucceeds(getDocs(query(collectionGroup(as(STAFF_A), "staff"), where("uid", "==", STAFF_A))));
+      await assertFails(getDocs(query(collectionGroup(as(STAFF_A), "staff"), where("uid", "==", STAFF_B))));
+    });
+  });
+
+  describe("odalar", () => {
+    it("personel yalnızca kendi mekanında oda açar; mekansız oda yalnızca eski global personele", async () => {
+      await assertSucceeds(setDoc(doc(as(STAFF_A), "rooms", "r1"), room(A, STAFF_A)));
+      await assertFails(setDoc(doc(as(STAFF_A), "rooms", "r2"), room(B, STAFF_A)));
+      const legacy: Record<string, unknown> = { ...room(A, STAFF_A) };
+      delete legacy.venue_id;
+      await assertFails(setDoc(doc(as(STAFF_A), "rooms", "r3"), legacy));
+    });
+
+    it("odanın mekanı ve host'u sonradan değiştirilemez", async () => {
+      await assertFails(updateDoc(doc(as(STAFF_A), "rooms", "room-a"), { venue_id: B }));
+      await assertFails(updateDoc(doc(as(STAFF_A), "rooms", "room-a"), { host_uid: STAFF_B }));
+      await assertSucceeds(updateDoc(doc(as(STAFF_A), "rooms", "room-a"), { status: "lobby" }));
+    });
+  });
+
+  describe("mekana bağlı kayıtlar", () => {
+    const event = (venueId: string) =>
+      gameEventPayload({ type: "game_started", roomId: "room-a", venueId, hostUid: STAFF_A, game: "quiz", playerCount: 3, startedAt: 1 });
+    const impression = (venueId: string) =>
+      adImpressionPayload({ ad: { id: "ad", sponsor_name: "S", type: "image" }, roomId: "room-a", venueId, hostUid: STAFF_A, startedAt: 1, shownMs: 1000, plannedMs: 1000, completed: true, audience: 3 });
+    const reward = (venueId: string) =>
+      rewardPayload({ roomId: "room-a", venueId, uid: PLAYER_UID, nickname: "O", code: "ABC123", venue: { reward_title: "Çay" } });
+
+    it("kayıt odanın mekanıyla yazılır; başka mekan etiketi reddedilir", async () => {
+      await assertSucceeds(setDoc(doc(as(STAFF_A), "events", "e1"), event(A)));
+      await assertFails(setDoc(doc(as(STAFF_A), "events", "e2"), event(B)));
+      await assertSucceeds(addDoc(collection(as(STAFF_A), "ad_impressions"), impression(A)));
+      await assertFails(addDoc(collection(as(STAFF_A), "ad_impressions"), impression(B)));
+      await assertSucceeds(addDoc(collection(as(STAFF_A), "rewards"), reward(A)));
+      await assertFails(addDoc(collection(as(STAFF_A), "rewards"), reward(B)));
+    });
+
+    it("rapor sorgusu yalnızca kendi mekanı için; başka mekanınki reddedilir", async () => {
+      await setDoc(doc(as(STAFF_A), "events", "e1"), event(A));
+      await assertSucceeds(getDocs(query(collection(as(STAFF_A), "events"), where("venue_id", "==", A))));
+      await assertFails(getDocs(query(collection(as(STAFF_B), "events"), where("venue_id", "==", A))));
+      await assertFails(getDocs(query(collection(as(STAFF_B), "ad_impressions"), where("venue_id", "==", A))));
+      await assertFails(getDocs(query(collection(as(STAFF_B), "rewards"), where("venue_id", "==", A))));
+    });
+
+    it("ödül doğrulama kodu mekana süzülerek arar; başka mekanın kodu sorgulanamaz", async () => {
+      await setDoc(doc(as(STAFF_A), "rewards", "rw-a"), reward(A));
+      const byCode = (uid: string, venueId: string) =>
+        getDocs(query(collection(as(uid), "rewards"), where("code", "==", "ABC123"), where("venue_id", "==", venueId)));
+      await assertSucceeds(byCode(STAFF_A, A));
+      await assertFails(byCode(STAFF_B, A));
+      await assertFails(getDocs(query(collection(as(STAFF_B), "rewards"), where("code", "==", "ABC123"))));
+    });
+
+    it("soru paketi mekanın: başka mekanın personeli okuyamaz, yükleyemez", async () => {
+      const pack = {
+        title: "A Paketi",
+        locale: "tr" as const,
+        questions: Array.from({ length: 5 }, (_, i) => ({
+          id: `q${i}`, text: `Soru numara ${i} burada?`, options: { A: "a", B: "b", C: "c", D: "d" }, correctOption: "A" as const, difficulty: 1 as const,
+        })),
+      };
+      await assertSucceeds(addDoc(collection(as(STAFF_A), "venues", A, "quiz_packs"), quizPackPayload(pack, STAFF_A)));
+      await assertFails(getDocs(collection(as(STAFF_B), "venues", A, "quiz_packs")));
+      await assertFails(addDoc(collection(as(STAFF_B), "venues", A, "quiz_packs"), quizPackPayload(pack, STAFF_B)));
+    });
   });
 });

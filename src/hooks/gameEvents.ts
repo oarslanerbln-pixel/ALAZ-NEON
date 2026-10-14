@@ -3,6 +3,7 @@ import { doc, setDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { gameEventId, gameEventPayload, type GameEventType } from "../lib/clientWrites";
 import { createLogger } from "../lib/logger";
+import { venueIdOf } from "../lib/venues";
 import type { GameType, Room } from "../types/database";
 
 const log = createLogger("GameEvents");
@@ -15,7 +16,7 @@ const log = createLogger("GameEvents");
  */
 export function recordGameEvent(args: {
   type: GameEventType;
-  room: Pick<Room, "id" | "host_uid">;
+  room: Pick<Room, "id" | "host_uid" | "venue_id">;
   game: GameType;
   playerCount: number;
   startedAt: number;
@@ -25,6 +26,7 @@ export function recordGameEvent(args: {
   const payload = gameEventPayload({
     type: args.type,
     roomId: args.room.id,
+    venueId: venueIdOf(args.room),
     hostUid: args.room.host_uid,
     game: args.game,
     playerCount: args.playerCount,

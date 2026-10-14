@@ -3,12 +3,15 @@ import { signOut, type User } from "firebase/auth";
 
 import { auth } from "../lib/firebase";
 import { useLocale } from "../hooks/useLocale";
+import { VenueSwitcher } from "./VenueSwitcher";
 
 interface Props {
   /** Ekran başlığı — yetki yokken de gösteriliyor ki kullanıcı nerede olduğunu bilsin. */
   title: string;
   /** Oturum sahibi; null ise hiç giriş yapılmamış. */
   user: User | null;
+  /** Hesabın personeli olduğu mekanlar (useIsStaff); başka mekandaysa seçim gösterilir. */
+  venues?: string[];
 }
 
 /**
@@ -25,7 +28,7 @@ interface Props {
  * firestore.rules'taki isStaff(). Buradaki kontrol atlansa bile yazma
  * işlemleri sunucu tarafında reddedilir.
  */
-export function StaffAccessNotice({ title, user }: Props) {
+export function StaffAccessNotice({ title, user, venues }: Props) {
   const { t } = useLocale();
   const location = useLocation();
   // useAuth her ziyaretçiyi anonim oturumla açıyor: anonim hesap "giriş
@@ -48,6 +51,12 @@ export function StaffAccessNotice({ title, user }: Props) {
             {t("staff.login")}
           </Link>
         </>
+      ) : venues && venues.length > 0 ? (
+        // Personel, ama seçili mekanın değil (3.1): mekanını seçsin.
+        <>
+          <p className="text-white/50 max-w-sm">{t("staff.otherVenue")}</p>
+          <VenueSwitcher venues={venues} />
+        </>
       ) : (
         <>
           {/* Giriş yapılmış ama hesap personel listesinde değil. Sıradan bir
@@ -58,7 +67,7 @@ export function StaffAccessNotice({ title, user }: Props) {
           </p>
           <p className="text-white/30 text-xs max-w-sm">{t("staff.ownerHint")}</p>
           <code className="text-[10px] text-white/40 bg-white/5 border border-white/10 px-3 py-2 rounded-lg break-all max-w-sm">
-            staff/{user.uid}
+            {user.uid}
           </code>
           <button
             onClick={() => signOut(auth)}
