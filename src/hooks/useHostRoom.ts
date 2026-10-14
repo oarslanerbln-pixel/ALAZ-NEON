@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { doc, collection, query, where, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
+import { roomStatusPayload } from "../lib/clientWrites";
 import { HOST_HEARTBEAT_MS } from "../lib/liveness";
 import { playerCountUpdate } from "../lib/playerCount";
 import { useHeartbeat } from "./useHeartbeat";
@@ -144,7 +145,7 @@ export function useHostRoom(roomId: string | null) {
     // Yazma hatası çağıranı patlatmasın: eskiden reject olunca
     // startGame/handleSpinnerComplete yarıda kalıp oyun donuyordu.
     try {
-      await updateDoc(doc(db, "rooms", roomId), { status, ...extra });
+      await updateDoc(doc(db, "rooms", roomId), roomStatusPayload(status, extra));
     } catch (err) {
       log.error("Oda güncellenemedi:", status, err);
       setError(err as Error);

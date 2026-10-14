@@ -458,6 +458,51 @@ Uygulama notları:
 > - **Kontrast:** axe, neon arka plan görselleri ve gradyanlar yüzünden
 >   ~13–26 öğe/ekran için karar veremiyor ("incomplete"). Bunlar testte not
 >   olarak raporlanıyor; elle gözden geçirme gerekiyor.
+>
+> **2.7 başladı — `GameSettingsModal` ayrıştırıldı** (868 → 187 satır).
+> - **Önce kalkan:** `e2e/game-settings.spec.ts` klasik oyun ve quiz
+>   ayarlarını seçip odaya yazılanları doğruluyor. Kalkan eski kodda yeşil
+>   olduğu görüldükten sonra ayrıştırmaya geçildi.
+> - **Durum:** 17 `useState` → tek form nesnesi. Oyun varsayılanları ve odaya
+>   yazılan ayarlar `lib/gameSettings.ts`'te (saf, 9 birim testi).
+> - **Görünüm:** 14 kez kopyalanmış seçenek ızgarası → `OptionGrid`. Oyun
+>   başına bölümler iki dosyada, meta veriler ayrı modülde; hepsi < 400
+>   satır.
+> - **Bulgu (davranış korunarak bırakıldı):** "can sayısı" (bomba sabit 3
+>   kullanıyor), "2X final", "tarif hızı" ve "zafer koşulu" seçimleri hiçbir
+>   yere yazılmıyor; ekranda seçilebiliyor ama etkisi yok. Ya bağlanmalı ya
+>   kaldırılmalı (ürün kararı).
+>
+> **`HostQuizDisplay` ayrıştırıldı** (843 → 395 satır).
+> - **Önce kalkan:** `e2e/quiz.spec.ts`, iki telefonla iki soru oynatıp
+>   puanları doğruluyor: doğru 1000, en hızlıya +500, üst üste doğruya ×1.2
+>   (ALFA 1500 → 3300, BETA 0). Eski kodda art arda yeşil görüldü.
+> - **Puanlama** `lib/quizScoring.ts`'e taşındı (saf, 8 birim testi): hız
+>   sırası, seri çarpanı, final ×2, ilk cevap kuralı, en hızlı doğru.
+> - **Görünümler:** durum başına beş bileşen (`views/Quiz*.tsx`) mekanik
+>   olarak çıkarıldı; JSX ve çeviri anahtarları aynı (anahtar kümesi
+>   karşılaştırılarak doğrulandı).
+>
+> **2.7 tamamlandı — `HostDisplay` ayrıştırıldı** (700 → 76 satır yönlendirici).
+> - **Önce kalkan:** `e2e/classic.spec.ts`, iki telefonla bir tur oynatıyor.
+>   Host'un yazdığı puan, odadaki gerçek cevaplardan saf puanlama
+>   fonksiyonuyla hesaplananla birebir aynı ve tek seferlik; ardından
+>   inceleme → sıralama → ikinci tur.
+> - **Kalkanın bulduğu canlı hata:** ikinci tura geçerken `tutorial_step:
+>   undefined` yazılıyor, TV "bağlantı hatası"na düşüyordu; klasik oyun
+>   1. turdan öteye geçemiyordu. Yığında düzeltildi ve `roomStatusPayload`
+>   ile genelleştirildi. Ayrıca main'e minimal hotfix:
+>   oarslanerbln-pixel/alaz-neon#338.
+> - **Yapı:** `classic/useClassicGame.ts` (durum + akış, 375),
+>   `classic/HostDisplayGame.tsx` (çizim, 198), `useClassicMusic` ve
+>   genel `useRoundTimer` (3 birim testi). Harf seçimi, cevap geçerliliği
+>   değiştirme ve podyum istatistikleri `lib/classicRound.ts`'te (6 test).
+> - **Yan bulgu:** anlatım düğmesinde Framer ölçeklemesi ile CSS
+>   `transition-all` aynı `transform`'u canlandırıp düğmeyi fare üzerindeyken
+>   titretiyordu; geçiş renklere sınırlandı.
+> - **Sonuç:** üç büyük bileşen 868 / 843 / 700 → 187 / 394 / 76 satır. Yeni
+>   dosyaların hepsi < 400 satır. E2E 7 senaryo; tam takım ve klasik test
+>   art arda yeşil.
 
 | İş | Kapsar | Efor | Kabul kriteri |
 |---|---|---|---|

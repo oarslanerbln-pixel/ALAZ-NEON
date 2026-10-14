@@ -33,6 +33,7 @@ import {
   rewardClaimPayload,
   rewardPayload,
   roomCreatePayload,
+  roomStatusPayload,
   sensorAnswerPayload,
   sensorBuzzPayload,
   unityInputPayload,
@@ -623,6 +624,14 @@ describe("rooms — host yetkisi", () => {
   it("lobi sayacını (player_count) yalnızca host yazabilir", async () => {
     await assertSucceeds(updateDoc(doc(asHost(), "rooms", ROOM_ID), { player_count: 3 }));
     await assertFails(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { player_count: 99 }));
+  });
+
+  // Klasik oyunda ikinci tura geçiş: alan yoksa hiç yazılmamalı (undefined
+  // Firestore'da hata). Oda durumunu yalnızca host ilerletir.
+  it("oda durumunu (roomStatusPayload) yalnızca host ilerletir", async () => {
+    const payload = roomStatusPayload("countdown", { tutorial_step: undefined, used_letters: ["A", "K"] });
+    await assertSucceeds(updateDoc(doc(asHost(), "rooms", ROOM_ID), payload));
+    await assertFails(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), payload));
   });
 
   it("oda herkes tarafından okunabilir (telefonlar PIN ile bağlanıyor)", async () => {

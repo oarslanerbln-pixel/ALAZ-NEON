@@ -108,7 +108,9 @@ export function HostTutorial({ room, onComplete }: Props) {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleNext}
-          className={`px-12 py-5 font-black text-xl uppercase tracking-widest transition-all rounded-full ${
+          // transition-all değil: ölçeklemeyi Framer yapıyor; CSS de transform'u
+          // canlandırınca ikisi çatışıp düğme fare üzerindeyken titriyordu.
+          className={`px-12 py-5 font-black text-xl uppercase tracking-widest transition-colors rounded-full ${
             step === content.length - 1
               ? 'bg-white text-black shadow-[0_0_30px_rgba(255,255,255,0.6)]'
               : 'bg-white/10 text-white border border-white/20 hover:bg-white/20'

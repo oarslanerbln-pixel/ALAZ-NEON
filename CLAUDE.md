@@ -42,7 +42,8 @@ Firestore koleksiyonları: `rooms` (durum makinesi), `players` (skorlar),
 | Yol | İçerik |
 |---|---|
 | `src/App.tsx` | Rotalar; Landing hariç hepsi `lazy` |
-| `src/pages/host/HostDisplay.tsx` | TV durum makinesi yönlendiricisi |
+| `src/pages/host/HostDisplay.tsx` | TV yönlendiricisi (oda durumu → pano / oyun ekranı) |
+| `src/pages/host/classic/` | Klasik harf oyunu: `useClassicGame` (akış) + `HostDisplayGame` (çizim) |
 | `src/pages/player/PlayerGame.tsx` | Telefon durum makinesi yönlendiricisi |
 | `src/pages/{host,player}/<oyun>/` | Oyun başına ekran çiftleri (quiz, bomb, sensor, wheel, overload, echo, pulse, spectrum, colors, vault, unity, bar, kablo, ayna) |
 | `src/pages/{host,player}/views/` | Oyun bağımsız ekranlar (lobby, playing, review, podium) |
@@ -58,7 +59,6 @@ Bunları baştan sona okuma, hedefli `grep` ile gir:
 - `src/lib/quizQuestions.ts` (~2100 satır) — quiz havuzu
 - `src/lib/i18n/{de,tr,en}.ts` (~940'ar satır) — dil başına çeviri sözlüğü
   (`de` kaynak ve girişte; `tr`/`en` seçilince tembel iner, bkz. `lib/i18n.ts`)
-- `src/pages/host/HostDisplay.tsx`, `src/pages/host/quiz/HostQuizDisplay.tsx` (~840'ar satır)
 
 ## Konvansiyonlar
 

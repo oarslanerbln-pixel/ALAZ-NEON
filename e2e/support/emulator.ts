@@ -85,3 +85,31 @@ export async function readDoc(path: string): Promise<Record<string, unknown> | n
     Object.entries(body.fields ?? {}).map(([k, v]) => [k, decode(v)]),
   );
 }
+
+/** `collection` içinde `field == value` olan dokümanlar (kimlik `id` alanında). */
+export async function queryDocs(
+  collection: string,
+  field: string,
+  value: string,
+): Promise<Record<string, unknown>[]> {
+  const res = await ok(
+    await fetch(`${DOCS}:runQuery`, {
+      method: "POST",
+      headers: { ...OWNER, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        structuredQuery: {
+          from: [{ collectionId: collection }],
+          where: { fieldFilter: { field: { fieldPath: field }, op: "EQUAL", value: { stringValue: value } } },
+        },
+      }),
+    }),
+    `${collection} sorgulanamadı`,
+  );
+  const rows = (await res.json()) as { document?: { name: string; fields?: Record<string, FirestoreValue> } }[];
+  return rows
+    .filter((row) => row.document)
+    .map(({ document }) => ({
+      id: document!.name.split("/").pop(),
+      ...Object.fromEntries(Object.entries(document!.fields ?? {}).map(([k, v]) => [k, decode(v)])),
+    }));
+}
