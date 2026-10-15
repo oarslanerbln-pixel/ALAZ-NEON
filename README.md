@@ -103,6 +103,7 @@ per collection:
 | `players`  | `expires_at` |
 | `answers`  | `expires_at` |
 | `ayna_survey` | `expires_at` |
+| `secret` (quiz answer key, `rooms/{id}/secret`) | `expires_at` |
 
 Or with the gcloud CLI:
 

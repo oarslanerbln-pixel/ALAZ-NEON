@@ -117,6 +117,18 @@ service cloud.firestore {
 
       // Only the host can delete the room.
       allow delete: if isAuth() && resource.data.host_uid == request.auth.uid;
+
+      /**
+       * Quiz cevap anahtarı (bkz. src/lib/quizAnswerKey.ts). Oda dokümanı
+       * herkese açık: sorular doğru şıklarıyla oraya yazıldığında oyun
+       * başlamadan bütün cevaplar okunabiliyordu. Anahtar artık yalnızca
+       * odanın host'unun okuyup yazabildiği bu dokümanda; doğru şık
+       * oyunculara her soru kilitlendikten sonra `quiz_reveal` ile açıklanıyor.
+       */
+      match /secret/{docId} {
+        allow read, write: if isAuth() &&
+          get(/databases/$(database)/documents/rooms/$(roomId)).data.host_uid == request.auth.uid;
+      }
     }
 
     match /players/{playerId} {

@@ -434,6 +434,29 @@ describe("rooms — host yetkisi", () => {
   });
 });
 
+describe("rooms/secret — quiz cevap anahtarı", () => {
+  beforeEach(() => seed({ status: "question_active", active_game: "quiz" }));
+
+  const keyDoc = (db: ReturnType<typeof asHost>) => doc(db, "rooms", ROOM_ID, "secret", "quiz");
+
+  it("host anahtarı yazıp okuyabilir", async () => {
+    await assertSucceeds(setDoc(keyDoc(asHost()), { answers: ["B", "D", "A"] }));
+    await assertSucceeds(getDoc(keyDoc(asHost())));
+  });
+
+  it("oyuncu anahtarı okuyamaz — sorular odaya doğru şıklarıyla yazılıyordu", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "rooms", ROOM_ID, "secret", "quiz"), { answers: ["B"] });
+    });
+    await assertFails(getDoc(keyDoc(asPlayer())));
+    await assertFails(getDoc(keyDoc(asGuest())));
+  });
+
+  it("oyuncu anahtarı değiştiremez", async () => {
+    await assertFails(setDoc(keyDoc(asPlayer()), { answers: ["A"] }));
+  });
+});
+
 describe("players — skor bütünlüğü", () => {
   beforeEach(() => seed());
 

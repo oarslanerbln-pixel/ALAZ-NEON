@@ -23,7 +23,9 @@ import { useLocale } from "../../../hooks/useLocale";
 import { grantGameRewards } from "../../../lib/rewards";
 import { useVenue } from "../../../contexts/VenueContextCore";
 
-import type { Room, Player } from "../../../types/database";
+import type { Room, Player, QuizOption } from "../../../types/database";
+import { revealedOption, splitAnswerKey } from "../../../lib/quizReveal";
+import { saveQuizAnswerKey, subscribeQuizAnswerKey } from "../../../lib/quizAnswerKey";
 import { finishNightRound, NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
 import { nightPointsForPlayers } from "../../../lib/nightLeague";
 
@@ -79,6 +81,16 @@ export function HostQuizDisplay({
   // Reentrancy guard for ending question
   const endingQuestionRef = useRef(false);
 
+  // Cevap anahtarı odada değil, host'a özel dokümanda (lib/quizReveal).
+  // Canlı dinleniyor: TV oyunun ortasında yenilense de puanlama sürüyor.
+  const answerKeyRef = useRef<QuizOption[]>([]);
+  useEffect(() => {
+    if (!roomId) return;
+    return subscribeQuizAnswerKey(roomId, (key) => {
+      answerKeyRef.current = key;
+    });
+  }, [roomId]);
+
   // Derive game state directly from room.status — single source of truth
   const rawStatus = room?.status || "quiz_lobby";
   const gameState =
@@ -123,16 +135,28 @@ export function HostQuizDisplay({
     });
     rememberQuestions(questions.map((q) => q.id));
 
+    // Anahtar soru odaya düşmeden önce yazılıyor. Yazma başarısız olsa da
+    // yerel kopya bu oturumda puanlamayı taşır; yalnızca TV yenilenirse kaybolur.
+    const { questions: publicQuestions, answerKey } = splitAnswerKey(questions);
+    answerKeyRef.current = answerKey;
+    try {
+      await saveQuizAnswerKey(roomId, answerKey);
+    } catch (err) {
+      console.error("[HostQuizDisplay] Cevap anahtarı kaydedilemedi:", err);
+    }
+
     if (room.current_round === 0) {
       await updateRoomStatus("tutorial", {
         tutorial_step: 0,
         current_question_index: 0,
-        quiz_questions: questions,
+        quiz_questions: publicQuestions,
+        quiz_reveal: null,
       });
     } else {
       await updateRoomStatus("quiz_intro", {
         current_question_index: 0,
-        quiz_questions: questions,
+        quiz_questions: publicQuestions,
+        quiz_reveal: null,
       });
     }
   };
@@ -161,6 +185,7 @@ export function HostQuizDisplay({
     await updateRoomStatus("question_active", {
       time_left: timeToAnswer,
       round_end_time: endTime,
+      quiz_reveal: null,
     });
   };
 
@@ -193,10 +218,17 @@ export function HostQuizDisplay({
       answers.push({ id: docSnap.id, ...docSnap.data() } as Answer);
     });
     
-    const currentQ = room.quiz_questions?.[room.current_question_index || 0];
-    if (!currentQ) return;
-    
-    const correctOption = currentQ.correctOption;
+    // Cevaplar okundu, küme kilitli: bundan sonra gelen cevap sayılmıyor.
+    // Doğru şık ancak şimdi odaya (telefonlara ve TV'ye) açıklanıyor.
+    const questionIndex = room.current_question_index ?? 0;
+    const correctOption = answerKeyRef.current[questionIndex];
+    if (!correctOption) {
+      console.error("[HostQuizDisplay] Cevap anahtarı yok, soru puanlanamadı:", questionIndex);
+      return;
+    }
+    await updateRoomStatus("question_reveal", {
+      quiz_reveal: { index: questionIndex, option: correctOption },
+    });
 
     // Calculate vote distribution
     const stats: VoteStats = { A: 0, B: 0, C: 0, D: 0, total: 0 };
@@ -618,7 +650,10 @@ export function HostQuizDisplay({
                     {/* Options with Vote Breakdown Bars */}
                     <div className="grid grid-cols-2 gap-6 w-full mb-8">
                       {(["A", "B", "C", "D"] as const).map(opt => {
-                        const isCorrect = currentQuestion.correctOption === opt;
+                        // Cevaplar kilitlenene kadar şıklar nötr; sonra doğru öne çıkar.
+                        const revealed = revealedOption(room, currentQIndex);
+                        const isCorrect = revealed === opt;
+                        const isDimmed = revealed !== null && !isCorrect;
                         const count = voteStats[opt] || 0;
                         const percentage = voteStats.total > 0 ? Math.round((count / voteStats.total) * 100) : 0;
 
@@ -628,7 +663,7 @@ export function HostQuizDisplay({
                             className={`p-6 rounded-xl border-2 relative overflow-hidden flex flex-col justify-between transition-all duration-700 ${
                               isCorrect 
                                 ? "bg-green-500/25 border-green-500 shadow-[0_0_50px_rgba(34,197,94,0.7)] scale-[1.02]" 
-                                : "bg-black/50 border-white/10 opacity-40"
+                                : `bg-black/50 border-white/10 ${isDimmed ? "opacity-40" : ""}`
                             }`}
                           >
                             {/* Vote Percentage Fill Bar */}

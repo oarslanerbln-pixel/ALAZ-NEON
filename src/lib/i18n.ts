@@ -1478,6 +1478,7 @@ const translations = {
   "quiz.startTimer": { tr: "SÜREYİ BAŞLAT", de: "TIMER STARTEN", en: "START TIMER" },
   "quiz.endTimer": { tr: "SÜREYİ BİTİR", de: "TIMER BEENDEN", en: "END TIMER" },
   "quiz.correctAnswer": { tr: "DOĞRU CEVAP", de: "RICHTIGE ANTWORT", en: "CORRECT ANSWER" },
+  "quiz.revealPending": { tr: "Cevaplar kilitlendi…", de: "Antworten gesperrt…", en: "Answers locked…" },
   "quiz.seeRanking": { tr: "SIRALAMAYI GÖR", de: "RANGLISTE ANZEIGEN", en: "SEE RANKING" },
   "quiz.currentRanking": { tr: "LİDER TABLOSU", de: "AKTUELLE RANGLISTE", en: "CURRENT LEADERBOARD" },
   "quiz.pts": { tr: "PUAN", de: "PKT", en: "PTS" },

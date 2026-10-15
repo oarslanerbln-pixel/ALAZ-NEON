@@ -62,15 +62,24 @@ export type RoomStatus =
 export type GameMode = "individual" | "team";
 export type GameType = "scattegories" | "quiz" | "bomb" | "sensor" | "wheel" | "overload" | "echo" | "pulse" | "colors" | "vault" | "unity" | "bar" | "kablo" | "ayna";
 
+export type QuizOption = "A" | "B" | "C" | "D";
+
 export interface QuizQuestion {
   id: string;
   text: string;
   category?: string;
   options: { A: string; B: string; C: string; D: string };
-  correctOption: "A" | "B" | "C" | "D";
+  correctOption: QuizOption;
   difficulty: 1 | 2 | 3;
   funFact?: string;
 }
+
+/**
+ * Odaya yazılan soru: doğru şık YOK. Oda dokümanı herkese açık; anahtar
+ * yalnızca host'un okuyabildiği rooms/{id}/secret/quiz'de (bkz.
+ * lib/quizReveal ve lib/quizAnswerKey).
+ */
+export type PublicQuizQuestion = Omit<QuizQuestion, "correctOption">;
 
 export interface Room {
   id: string;
@@ -114,7 +123,14 @@ export interface Room {
   used_sensor_images?: string[];
   used_bomb_categories?: string[];
   locale?: Locale;
-  quiz_questions?: QuizQuestion[];
+  quiz_questions?: PublicQuizQuestion[];
+  /**
+   * Kilitlenen sorunun doğru şıkkı. Host cevapları topladıktan sonra yazar;
+   * telefonlar ve TV doğru/yanlışı buradan gösterir. Her soru başlarken
+   * null'a döner — `index` eşleşmesi eski bir açıklamanın yeni soruda
+   * görünmesini de engelliyor.
+   */
+  quiz_reveal?: { index: number; option: QuizOption } | null;
   /**
    * Host'un kurulum modalinde sectigi quiz konulari. Onceden bu secim
    * toplaniyordu ama hicbir yere yazilmiyordu — host kategori seciyor,

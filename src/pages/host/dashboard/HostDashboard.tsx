@@ -113,17 +113,26 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       Promise.all([
         import("../../../lib/quizQuestions"),
         import("../../../lib/questionHistory"),
-      ]).then(([{ getQuizQuestions }, { recentQuestionIds, rememberQuestions }]) => {
+        import("../../../lib/quizReveal"),
+        import("../../../lib/quizAnswerKey"),
+      ]).then(async ([{ getQuizQuestions }, { recentQuestionIds, rememberQuestions }, { splitAnswerKey }, { saveQuizAnswerKey }]) => {
         const questions = getQuizQuestions(room.locale || "tr", settings?.total_rounds || 3, {
           topics: settings?.quiz_topics,
           recentIds: recentQuestionIds(),
         });
         rememberQuestions(questions.map((q) => q.id));
+        // Doğru şıklar herkese açık odaya değil, host'a özel anahtara gider
+        // (bkz. lib/quizReveal); anahtar sorulardan önce yazılıyor.
+        const { questions: publicQuestions, answerKey } = splitAnswerKey(questions);
+        await saveQuizAnswerKey(room.id, answerKey).catch((err) =>
+          console.error("[HostDashboard] Cevap anahtarı kaydedilemedi:", err),
+        );
         const startState = (settings?.current_round === 0 || room.current_round === 0) ? "tutorial" : "quiz_intro";
         updateRoomStatus(startState, {
           ...extraUpdates,
           current_question_index: 0,
-          quiz_questions: questions,
+          quiz_questions: publicQuestions,
+          quiz_reveal: null,
           ...(startState === "tutorial" ? { tutorial_step: 0 } : {})
         });
       });

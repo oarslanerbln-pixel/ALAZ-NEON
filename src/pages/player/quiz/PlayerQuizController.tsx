@@ -7,6 +7,7 @@ import { ParticleBackground } from "../../../components/ParticleBackground";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { haptics } from "../../../lib/haptics";
 import type { Room, Player } from "../../../types/database";
+import { revealedOption } from "../../../lib/quizReveal";
 import { useLocale } from "../../../hooks/useLocale";
 import { gameTitle } from "../../../lib/gameCatalog";
 import { PlayerStageScreen } from "../components/PlayerStageScreen";
@@ -274,7 +275,24 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
 
           {/* QUESTION REVEAL SCREEN */}
           {gameState === "question_reveal" && currentQ && (() => {
-            const isCorrect = selectedOption === currentQ.correctOption;
+            // Doğru şık odada yok; host cevapları kilitleyince quiz_reveal ile açıklıyor.
+            const revealed = revealedOption(room, room.current_question_index ?? 0);
+            if (!revealed) {
+              return (
+                <motion.div
+                  key="reveal-pending"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-center w-full py-10"
+                >
+                  <p className="text-white/70 font-black text-lg uppercase tracking-widest animate-pulse">
+                    {t("quiz.revealPending")}
+                  </p>
+                </motion.div>
+              );
+            }
+            const isCorrect = selectedOption === revealed;
             return (
               <motion.div
                 key="reveal"
@@ -297,7 +315,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
                     {isCorrect ? t("quiz.playerCorrect") : t("quiz.playerWrong")}
                   </h2>
                   <p className="text-sm text-gray-300 font-medium">
-                    {t("quiz.correctAnswer")}: <strong className="text-white font-bold">{currentQ.correctOption} — {currentQ.options[currentQ.correctOption]}</strong>
+                    {t("quiz.correctAnswer")}: <strong className="text-white font-bold">{revealed} — {currentQ.options[revealed]}</strong>
                   </p>
                 </div>
 
