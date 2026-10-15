@@ -17,6 +17,7 @@ import { GameSettingsModal } from "../components/GameSettingsModal";
 import { GAME_CARDS as GAMES, GAME_CATEGORY_KEY } from "../../../lib/gameCatalog";
 import { activePlayers as activePlayersOf } from "../../../lib/liveness";
 import { useLocale } from "../../../hooks/useLocale";
+import { useIsStaff } from "../../../hooks/useIsStaff";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useVenue } from "../../../contexts/VenueContextCore";
 import { AuroraBackdrop } from "../../../components/fx/AuroraBackdrop";
@@ -39,6 +40,11 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
   const navigate = useNavigate();
   const { t } = useLocale();
   const { venue } = useVenue();
+  // Ödülü yalnızca personel hesabı yazabiliyor (bkz. lib/rewards.ts): TV
+  // anonim açıldıysa oyun oynanır ama kazanana ödül düşmez — mekan bunu
+  // oyun bittikten sonra değil, burada görsün.
+  const { isStaff } = useIsStaff();
+  const rewardsBlocked = venue.rewards_enabled && Boolean(venue.reward_title?.trim()) && isStaff === false;
   const [isKioskMode, setIsKioskMode] = useState(false);
   const [kioskImageIndex, setKioskImageIndex] = useState(0);
 
@@ -344,6 +350,12 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                     <p className="text-alaz-orange font-mono font-black text-3xl tracking-widest drop-shadow-[0_0_15px_rgba(255,85,0,0.5)]">{room.code}</p>
                   </div>
                 </div>
+
+                {rewardsBlocked && (
+                  <p className="mt-4 text-amber-300/80 text-[11px] font-bold uppercase tracking-[0.15em] text-center text-balance">
+                    {t("dashboard.rewardsNeedStaff")}
+                  </p>
+                )}
 
                 {venue.promo_images && venue.promo_images.length > 0 && (
                   <button

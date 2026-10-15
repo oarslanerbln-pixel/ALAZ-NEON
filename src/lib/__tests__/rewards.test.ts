@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { resolveWinners } from "../rewardWinners";
-import type { Player } from "../../types/database";
+import { buildRewardDocs, resolveWinners } from "../rewardWinners";
+import { DEFAULT_VENUE_CONFIG, type Player, type VenueConfig } from "../../types/database";
 
 function makePlayer(overrides: Partial<Player> = {}): Player {
   return {
@@ -93,5 +93,64 @@ describe("resolveWinners — takım modu", () => {
     expect(resolveWinners("team", players)).toEqual([
       { uid: "u1", nickname: "Yalnız" },
     ]);
+  });
+});
+
+describe("buildRewardDocs — yazılacak ödül dokümanları", () => {
+  const NOW = 1_700_000_000_000;
+  const venue = (overrides: Partial<VenueConfig> = {}): VenueConfig => ({
+    ...DEFAULT_VENUE_CONFIG,
+    rewards_enabled: true,
+    reward_title: "  Ücretsiz Espresso  ",
+    reward_description: " Barda göster ",
+    reward_type: "drink",
+    reward_validity_days: 30,
+    ...overrides,
+  });
+  const winner = { uid: "u1", nickname: "ALAZ" };
+  const fixedCode = () => "K7M2Q9";
+
+  it("ödül sistemi kapalıysa ya da şablon boşsa hiçbir şey üretmez", () => {
+    expect(buildRewardDocs([winner], venue({ rewards_enabled: false }), NOW, fixedCode)).toEqual([]);
+    expect(buildRewardDocs([winner], venue({ reward_title: "   " }), NOW, fixedCode)).toEqual([]);
+  });
+
+  it("oturumsuz kazanana ödül yazılmaz", () => {
+    const docs = buildRewardDocs(
+      [winner, { uid: "anonymous", nickname: "X" }, { uid: "", nickname: "Y" }],
+      venue(),
+      NOW,
+      fixedCode,
+    );
+    expect(docs.map((d) => d.uid)).toEqual(["u1"]);
+  });
+
+  it("şablondan kırpılmış başlık, kod ve geçerlilik süresiyle ödül üretir", () => {
+    expect(buildRewardDocs([winner], venue(), NOW, fixedCode)).toEqual([
+      {
+        uid: "u1",
+        nickname: "ALAZ",
+        type: "drink",
+        title: "Ücretsiz Espresso",
+        description: "Barda göster",
+        status: "available",
+        code: "K7M2Q9",
+        earned_at: NOW,
+        expires_at: NOW + 30 * 24 * 60 * 60 * 1000,
+      },
+    ]);
+  });
+
+  it("geçerlilik süresi yoksa expires_at alanı hiç yazılmaz (undefined Firestore'da hata)", () => {
+    const [reward] = buildRewardDocs([winner], venue({ reward_validity_days: 0 }), NOW, fixedCode);
+    expect("expires_at" in reward).toBe(false);
+  });
+
+  it("yalnızca kuralın kabul ettiği alanları yazar (firestore.rules → isValidNewReward)", () => {
+    const allowed = ["uid", "nickname", "type", "title", "description", "status", "code", "earned_at", "expires_at"];
+    for (const reward of buildRewardDocs([winner], venue(), NOW)) {
+      expect(Object.keys(reward).every((key) => allowed.includes(key))).toBe(true);
+      expect(reward.code).toMatch(/^[A-Z2-9]{6}$/);
+    }
   });
 });

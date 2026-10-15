@@ -1565,6 +1565,11 @@ const translations = {
     en: "Scan the QR code with your phone camera or enter the room code.",
   },
   "dashboard.kioskStart": { tr: "Kiosk modunu başlat", de: "Kiosk-Modus starten", en: "Start kiosk mode" },
+  "dashboard.rewardsNeedStaff": {
+    tr: "Ödüller kapalı: bu TV mekan hesabıyla giriş yapmadı",
+    de: "Prämien aus: Dieser TV ist nicht mit dem Betriebskonto angemeldet",
+    en: "Rewards off: this TV isn't signed in with the venue account",
+  },
   "dashboard.kioskExit": { tr: "Çıkmak için ekrana dokunun", de: "Zum Beenden auf den Bildschirm tippen", en: "Tap the screen to exit" },
   "host.step2": { tr: "ADIM 2: ", de: "SCHRITT 2: ", en: "STEP 2: " },
   "host.selectGame": { tr: "OYUN SEÇ", de: "SPIEL WÄHLEN", en: "SELECT GAME" },

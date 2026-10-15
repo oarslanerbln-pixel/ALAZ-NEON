@@ -1,4 +1,5 @@
-import type { GameMode, Player } from "../types/database";
+import { generateCode } from "./codes";
+import type { GameMode, Player, Reward, VenueConfig } from "../types/database";
 
 export interface Winner {
   uid: string;
@@ -49,4 +50,47 @@ export function resolveWinners(gameMode: GameMode, players: Player[]): Winner[] 
   return scored
     .filter((p) => p.total_score === maxScore)
     .map((p) => ({ uid: p.uid!, nickname: p.nickname }));
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Kazananlar için yazılacak ödül dokümanlarını üretir (saf — Firestore'a
+ * dokunmaz). Şekli firestore.rules'taki `isValidNewReward` ile birebir
+ * aynı olmalı; kural fazladan alanı reddediyor.
+ *
+ * Mekan ödül sistemi kapalıysa ya da satıcı henüz bir şablon tanımlamadıysa
+ * (reward_title boş) boş liste döner — `rewards_enabled` açık olsa bile
+ * boş/anlamsız bir ödül dağıtılmasın diye. Oturumsuz ("anonymous") kazanan
+ * ödül alamaz: ödülü görebileceği bir hesap yok.
+ */
+export function buildRewardDocs(
+  winners: Winner[],
+  venue: VenueConfig,
+  now: number,
+  makeCode: () => string = () => generateCode(6),
+): Omit<Reward, "id">[] {
+  const title = venue.reward_title?.trim();
+  if (!venue.rewards_enabled || !title) return [];
+
+  // Firestore `set()` undefined alan kabul etmiyor (hata fırlatıyor) — bu
+  // yüzden geçerlilik günü tanımlı değilse expires_at anahtarını objeye hiç
+  // eklemiyoruz, `undefined` olarak set etmiyoruz.
+  const validityDays = venue.reward_validity_days;
+  const expiresAt =
+    typeof validityDays === "number" && validityDays > 0 ? now + validityDays * DAY_MS : null;
+
+  return winners
+    .filter((w) => w.uid && w.uid !== "anonymous")
+    .map(({ uid, nickname }) => ({
+      uid,
+      nickname,
+      type: venue.reward_type || "drink",
+      title,
+      description: venue.reward_description?.trim() || "",
+      status: "available" as const,
+      code: makeCode(),
+      earned_at: now,
+      ...(expiresAt !== null ? { expires_at: expiresAt } : {}),
+    }));
 }
