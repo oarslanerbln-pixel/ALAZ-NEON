@@ -170,6 +170,71 @@ describe("answers koleksiyonu", () => {
   });
 });
 
+describe("answers — okuma (kopya açığı)", () => {
+  /** Aynı turda iki oyuncunun cevabı: biri PLAYER_UID'in, biri yabancınınki. */
+  beforeEach(async () => {
+    await seed({ status: "playing" });
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, "answers", "mine"), {
+        room_id: ROOM_ID,
+        player_id: PLAYER_ID,
+        round_letter: "A",
+        data: { Şehir: "Ankara" },
+      });
+      await setDoc(doc(db, "answers", "theirs"), {
+        room_id: ROOM_ID,
+        player_id: OTHER_PLAYER_ID,
+        round_letter: "A",
+        data: { Şehir: "Adana" },
+      });
+    });
+  });
+
+  it("oyuncu kendi cevabını okuyabilir", async () => {
+    await assertSucceeds(getDoc(doc(asPlayer(), "answers", "mine")));
+  });
+
+  it("oyuncu başka bir oyuncunun cevabını okuyamaz — tur bitmeden kopyalanabiliyordu", async () => {
+    await assertFails(getDoc(doc(asPlayer(), "answers", "theirs")));
+  });
+
+  it("oyuncunun 'zaten cevapladım mı' sorgusu çalışır (room_id + player_id)", async () => {
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(asPlayer(), "answers"),
+          where("room_id", "==", ROOM_ID),
+          where("player_id", "==", PLAYER_ID),
+          where("round_letter", "==", "A"),
+        ),
+      ),
+    );
+  });
+
+  it("oyuncu odanın bütün cevaplarını sorgulayamaz", async () => {
+    await assertFails(
+      getDocs(query(collection(asPlayer(), "answers"), where("room_id", "==", ROOM_ID))),
+    );
+  });
+
+  it("host odasının cevaplarını room_id sorgusuyla okuyabilir", async () => {
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(asHost(), "answers"),
+          where("room_id", "==", ROOM_ID),
+          where("round_letter", "==", "A"),
+        ),
+      ),
+    );
+  });
+
+  it("girişsiz kullanıcı cevap okuyamaz", async () => {
+    await assertFails(getDoc(doc(asGuest(), "answers", "mine")));
+  });
+});
+
 describe("rooms — bomba paslama", () => {
   beforeEach(() => seed({ status: "bomb_active", bomb_target_player: PLAYER_ID, used_words: [] }));
 
@@ -518,24 +583,60 @@ describe("rewards koleksiyonu", () => {
     await assertFails(getDoc(doc(asRandomSignup(), "rewards", REWARD_ID)));
   });
 
-  it("host, kazanan oyuncu adına 'available' bir ödül oluşturabilir", async () => {
+  /** lib/rewards.ts'in yazdığı şekilde, kazanan oyuncu adına yeni bir ödül. */
+  const newReward = (overrides: Record<string, unknown> = {}) => ({
+    uid: PLAYER_UID,
+    nickname: "OYUNCU",
+    type: "drink",
+    title: "Ücretsiz Espresso",
+    description: "",
+    status: "available",
+    code: "X9Y8Z7",
+    earned_at: Date.now(),
+    ...overrides,
+  });
+
+  it("personel hesabıyla açılan oyunda kazanan adına ödül oluşturulabilir", async () => {
+    await seedStaff();
+    await assertSucceeds(setDoc(doc(asVenueOwner(), "rewards", "reward-new"), newReward()));
+  });
+
+  it("geçerlilik süreli ödül de oluşturulabilir", async () => {
+    await seedStaff();
     await assertSucceeds(
-      setDoc(doc(asHost(), "rewards", "reward-new"), {
-        uid: PLAYER_UID,
-        nickname: "OYUNCU",
-        type: "drink",
-        title: "Ücretsiz Espresso",
-        description: "",
-        status: "available",
-        code: "X9Y8Z7",
-        earned_at: Date.now(),
-      })
+      setDoc(doc(asVenueOwner(), "rewards", "reward-new"), newReward({ expires_at: Date.now() + 86_400_000 })),
+    );
+  });
+
+  it("anonim host ödül oluşturamaz — herkes oda açabildiği için host olmak güvence değil", async () => {
+    await assertFails(setDoc(doc(asHost(), "rewards", "reward-new"), newReward()));
+  });
+
+  it("oyuncu kendine ödül basamaz — konsoldan bedava içki kodu açığı", async () => {
+    await assertFails(setDoc(doc(asPlayer(), "rewards", "reward-new"), newReward()));
+  });
+
+  it("KAYIT OLAN HERHANGİ BİRİ ödül oluşturamaz", async () => {
+    await assertFails(setDoc(doc(asRandomSignup(), "rewards", "reward-new"), newReward()));
+  });
+
+  it("personel bile şemaya uymayan ödül oluşturamaz", async () => {
+    await seedStaff();
+    await assertFails(
+      setDoc(doc(asVenueOwner(), "rewards", "reward-new"), newReward({ title: "" })),
+    );
+    await assertFails(
+      setDoc(doc(asVenueOwner(), "rewards", "reward-new"), newReward({ type: "champagne" })),
+    );
+    await assertFails(
+      setDoc(doc(asVenueOwner(), "rewards", "reward-new"), newReward({ room_secret: "x" })),
     );
   });
 
   it("doğrudan 'claimed' durumunda bir ödül oluşturulamaz", async () => {
+    await seedStaff();
     await assertFails(
-      setDoc(doc(asHost(), "rewards", "reward-fake-claimed"), {
+      setDoc(doc(asVenueOwner(), "rewards", "reward-fake-claimed"), {
         uid: PLAYER_UID,
         nickname: "OYUNCU",
         type: "drink",
@@ -731,31 +832,86 @@ describe("seasons koleksiyonu", () => {
 });
 
 describe("users koleksiyonu (ALAZ League)", () => {
-  it("herkes kullanıcı profilini okuyabilir (liderlik tablosu için)", async () => {
-    await testEnv.withSecurityRulesDisabled(async (ctx) => {
-      await setDoc(doc(ctx.firestore(), "users", PLAYER_UID), {
-        nickname: "ALAZ_CHAMPION",
-        total_xp: 450,
-      });
-    });
-    await assertSucceeds(getDoc(doc(asGuest(), "users", PLAYER_UID)));
+  /** useUserProfile'ın açtığı şekliyle bir profil (telefon numarası dahil). */
+  const profile = (overrides: Record<string, unknown> = {}) => ({
+    phone_number: "+905551112233",
+    nickname: "PLAYER_uid-",
+    total_lifetime_score: 0,
+    current_league: "BRONZE",
+    created_at: Date.now(),
+    last_active: Date.now(),
+    ...overrides,
   });
 
-  it("kullanıcı kendi profilini oluşturabilir veya güncelleyebilir", async () => {
+  async function seedProfile(data: Record<string, unknown> = profile()) {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users", PLAYER_UID), data);
+    });
+  }
+
+  it("profil yalnızca sahibine okunur — telefon numaraları herkese açıktı", async () => {
+    await seedProfile();
+    await assertSucceeds(getDoc(doc(asPlayer(), "users", PLAYER_UID)));
+    await assertFails(getDoc(doc(asGuest(), "users", PLAYER_UID)));
+    await assertFails(getDoc(doc(asHost(), "users", PLAYER_UID)));
+  });
+
+  it("kimse profil koleksiyonunu listeleyip numara toplayamaz", async () => {
+    await seedProfile();
+    await assertFails(getDocs(collection(asGuest(), "users")));
+    await assertFails(getDocs(collection(asHost(), "users")));
+  });
+
+  it("kullanıcı kendi profilini oluşturabilir", async () => {
+    await assertSucceeds(setDoc(doc(asPlayer(), "users", PLAYER_UID), profile()));
+  });
+
+  it("profil açılırken tanımsız alan yazılamaz", async () => {
+    await assertFails(
+      setDoc(doc(asPlayer(), "users", PLAYER_UID), profile({ is_admin: true })),
+    );
+  });
+
+  it("kullanıcı lig puanını artırabilir ve takma adını değiştirebilir", async () => {
+    await seedProfile();
     await assertSucceeds(
-      setDoc(doc(asPlayer(), "users", PLAYER_UID), {
-        nickname: "ALAZ_CHAMPION",
-        total_xp: 500,
-      })
+      updateDoc(doc(asPlayer(), "users", PLAYER_UID), { total_lifetime_score: increment(120) }),
+    );
+    await assertSucceeds(
+      setDoc(doc(asPlayer(), "users", PLAYER_UID), { nickname: "ALAZ" }, { merge: true }),
+    );
+  });
+
+  it("telefon numarası ve açılış zamanı sonradan değiştirilemez", async () => {
+    await seedProfile();
+    await assertFails(
+      updateDoc(doc(asPlayer(), "users", PLAYER_UID), { phone_number: "+900000000000" }),
+    );
+    await assertFails(updateDoc(doc(asPlayer(), "users", PLAYER_UID), { created_at: 0 }));
+  });
+
+  it("lig puanı sayı, lig bilinen bir kademe olmalı", async () => {
+    await seedProfile();
+    await assertFails(
+      updateDoc(doc(asPlayer(), "users", PLAYER_UID), { total_lifetime_score: "9999" }),
+    );
+    await assertFails(
+      updateDoc(doc(asPlayer(), "users", PLAYER_UID), { current_league: "GOD_MODE" }),
+    );
+  });
+
+  it("eski şemayla açılmış profil yine puan senkronu yapabilir", async () => {
+    // Güncellemede yalnızca değişen alanlar denetleniyor; fazladan alanı
+    // olan eski bir profil bu yüzden kilitlenmiyor.
+    await seedProfile({ nickname: "ESKI", total_xp: 450, total_lifetime_score: 10 });
+    await assertSucceeds(
+      updateDoc(doc(asPlayer(), "users", PLAYER_UID), { total_lifetime_score: increment(5) }),
     );
   });
 
   it("kullanıcı başka birinin profilini değiştiremez", async () => {
     await assertFails(
-      setDoc(doc(asPlayer(), "users", STRANGER_UID), {
-        nickname: "HACKED",
-        total_xp: 0,
-      })
+      setDoc(doc(asPlayer(), "users", STRANGER_UID), profile({ nickname: "HACKED" }))
     );
   });
 
