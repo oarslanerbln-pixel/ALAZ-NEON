@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect } from "vitest";
+import "@testing-library/jest-dom/vitest";
 
 import { RoomStatusScreen } from "../RoomStatusScreen";
 import { setLocale } from "../../lib/i18n";

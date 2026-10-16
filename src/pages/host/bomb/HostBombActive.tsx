@@ -6,6 +6,7 @@ import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { useLocale } from "../../../hooks/useLocale";
 import { pickBombHolder } from "../../../lib/bomb";
+import { CardSpotlight, ShimmerButton } from "../../../components/fx";
 
 interface Props {
   room: Room;
@@ -163,7 +164,7 @@ export function HostBombActive({ room, players, onExplode }: Props) {
 
       {/* TOP: Category Header */}
       <div className="w-full flex flex-col items-center justify-center z-20 pt-4">
-        <span className="px-6 py-1.5 rounded-full border border-red-500/40 bg-red-500/10 text-red-400 font-mono tracking-widest text-sm uppercase font-bold mb-2">
+        <span className="px-6 py-1.5 rounded-full border border-red-500/40 bg-red-500/10 text-red-400 font-mono tracking-widest text-sm uppercase font-bold mb-2 shadow-[0_0_15px_rgba(255,0,60,0.3)]">
           💣 {t("bomb.category")} 💣
         </span>
         <h1 className="text-5xl md:text-6xl font-black text-white uppercase tracking-wider drop-shadow-[0_0_25px_rgba(255,0,60,0.9)]">
@@ -175,7 +176,11 @@ export function HostBombActive({ room, players, onExplode }: Props) {
       <div className="w-full max-w-7xl flex items-center justify-between z-10 px-6 gap-8">
         
         {/* Left Side: Players Roster & Lives */}
-        <div className="w-72 bg-black/60 border border-white/10 p-5 rounded-2xl backdrop-blur-md hidden lg:flex flex-col gap-3 shadow-[0_0_30px_rgba(0,0,0,0.6)]">
+        <CardSpotlight 
+          tone="pink" 
+          ambient={true} 
+          className="w-72 bg-black/70 border border-white/10 p-5 rounded-2xl backdrop-blur-md hidden lg:flex flex-col gap-3 shadow-[0_0_30px_rgba(0,0,0,0.6)]"
+        >
           <h3 className="text-xs font-mono uppercase tracking-widest text-gray-400 font-bold mb-1">
             ⚡ OYUNCULAR ({players.length})
           </h3>
@@ -210,7 +215,7 @@ export function HostBombActive({ room, players, onExplode }: Props) {
               );
             })}
           </div>
-        </div>
+        </CardSpotlight>
 
         {/* Center: Glowing Bomb with Urgency Countdown */}
         <div className="flex-1 flex flex-col items-center justify-center">
@@ -263,7 +268,11 @@ export function HostBombActive({ room, players, onExplode }: Props) {
           </motion.div>
 
           {/* Current Target Player Card */}
-          <div className="mt-8 text-center bg-black/60 px-10 py-6 rounded-3xl backdrop-blur-md border-2 border-red-500/50 shadow-[0_0_50px_rgba(255,0,60,0.25)] relative w-full max-w-md">
+          <CardSpotlight 
+            tone="pink" 
+            ambient={true} 
+            className="mt-8 text-center bg-black/70 px-10 py-6 rounded-3xl backdrop-blur-xl border-2 border-red-500/50 shadow-[0_0_50px_rgba(255,0,60,0.3)] relative w-full max-w-md"
+          >
             <span className="text-xs font-mono font-bold text-[#ff4d00] uppercase tracking-[0.4em] block mb-2">
               {t("bomb.whoseTurn")}
             </span>
@@ -284,28 +293,33 @@ export function HostBombActive({ room, players, onExplode }: Props) {
                 </span>
               ))}
             </div>
-          </div>
+          </CardSpotlight>
         </div>
 
         {/* Right Side: Host Actions & Reject Tool */}
         <div className="w-72 hidden lg:flex flex-col items-center justify-center">
           <AnimatePresence>
             {room.previous_bomb_target_player && (
-              <motion.button
+              <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.8, opacity: 0 }}
-                onClick={handleReject}
-                className="w-full py-5 px-6 bg-red-950/90 hover:bg-red-900 border-2 border-red-500 rounded-2xl backdrop-blur-md flex flex-col items-center gap-2 shadow-[0_0_30px_rgba(239,68,68,0.5)] transition-all transform hover:scale-105 active:scale-95 group"
+                className="w-full"
               >
-                <span className="text-3xl animate-bounce">❌</span>
-                <span className="text-red-400 font-black tracking-widest text-sm uppercase text-center">
-                  {t("bomb.rejectWord")}
-                </span>
-                <span className="text-[10px] text-gray-400 font-mono">
-                  (Bombayı geri gönderir - 3.5s)
-                </span>
-              </motion.button>
+                <ShimmerButton
+                  tone="orange"
+                  onClick={handleReject}
+                  className="w-full py-5 px-6 !bg-red-950/90 hover:!bg-red-900 border-2 border-red-500 rounded-2xl backdrop-blur-md flex flex-col items-center gap-2 shadow-[0_0_30px_rgba(239,68,68,0.5)] transition-all transform hover:scale-105 active:scale-95 group"
+                >
+                  <span className="text-3xl animate-bounce">❌</span>
+                  <span className="text-red-300 font-black tracking-widest text-sm uppercase text-center">
+                    {t("bomb.rejectWord")}
+                  </span>
+                  <span className="text-[10px] text-gray-400 font-mono">
+                    (Bombayı geri gönderir - 3.5s)
+                  </span>
+                </ShimmerButton>
+              </motion.div>
             )}
           </AnimatePresence>
         </div>
@@ -313,7 +327,11 @@ export function HostBombActive({ room, players, onExplode }: Props) {
 
       {/* BOTTOM: Live Horizontal Word Chain */}
       <div className="w-full max-w-6xl z-20 mt-4">
-        <div className="bg-black/70 border border-white/15 p-4 rounded-2xl backdrop-blur-md">
+        <CardSpotlight 
+          tone="orange" 
+          ambient={true} 
+          className="bg-black/80 border border-white/15 p-4 rounded-2xl backdrop-blur-md shadow-[0_0_30px_rgba(255,100,0,0.15)]"
+        >
           <div className="flex items-center gap-3 mb-2">
             <span className="text-xs font-mono font-bold text-amber-400 uppercase tracking-widest">
               🔥 KELİME ZİNCİRİ ({usedWords.length})
@@ -335,7 +353,7 @@ export function HostBombActive({ room, players, onExplode }: Props) {
               ))
             )}
           </div>
-        </div>
+        </CardSpotlight>
       </div>
     </motion.div>
   );

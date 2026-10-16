@@ -99,8 +99,12 @@ ek bağımlılık yok ve hepsi `prefers-reduced-motion`'a uyuyor.
 | `AuroraBackdrop` | Süzülen renk bulutları | `radial-gradient(closest-side)` — `filter: blur` yok |
 | `GridPattern` | Merkezden sönen ızgara dokusu | Statik, maskeli |
 | `RevealText` | Kelime kelime açılan başlık | opacity + translateY, ekran okuyucuya tek metin |
+| `ShimmerButton` | Dönen neon huzmeli buton | `whileTap={{ scale: 0.94 }}` yaylanması + mobilde 12ms haptik titreşim (`navigator.vibrate`) |
+| `CardSpotlight` | Neon odak ışığı yansıtan kart | `radial-gradient` ile pointer takibi veya TV için `ambient` yavaş salınım |
+| `KineticText` | Dinamik kinetik tipografi | Harf (`characters`) veya kelime (`words`) yaylanması, ekran okuyucuya tek `aria-label` |
+| `NumberTicker` | Slot makinesi sayaç | `tabular-nums` ve Framer Motion value ile dikey kayan rakamlar, sıfır yatay titreme |
 
-CSS: `.fx-beam`, `.fx-aurora-blob` (index.css); ikisi de reduced-motion'da durur.
+CSS: `.fx-beam`, `.fx-aurora-blob` (index.css); hepsi reduced-motion'da durur.
 
 ### Ortak ekranlar
 

@@ -21,6 +21,12 @@ function autoRejectLabel(
     const languageKey = `lang.${ans.foreignLanguage ?? "tr"}` as Parameters<typeof t>[0];
     return t("review.autoRejectForeign", t(languageKey));
   }
+  // Kategori uyumsuzluğu: örn. Eşya/Gegenstand kategorisine Irrtum gibi soyut kavram yazılması
+  if (ans.isWrongCategory) {
+    const reasonKey = `review.categoryReject.${ans.wrongCategoryReason}` as Parameters<typeof t>[0];
+    const localized = t(reasonKey);
+    return localized !== reasonKey ? localized : t("review.autoRejectWrongCategory");
+  }
   if (!ans.isGibberish) return null;
   switch (ans.gibberishReason) {
     case "tooShort":

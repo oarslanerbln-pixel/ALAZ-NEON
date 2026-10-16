@@ -9,6 +9,7 @@ import { LanguageSwitcher } from "../../../components/LanguageSwitcher";
 import { PlayerStageScreen } from "../components/PlayerStageScreen";
 import type { Player, Room } from "../../../types/database";
 import { nightRankOf } from "../../../lib/nightLeague";
+import { CardSpotlight, NumberTicker } from "../../../components/fx";
 
 interface PlayerLobbyProps {
   room: Room | null;
@@ -102,13 +103,21 @@ export function PlayerLobby({ room, roomId, playerId }: PlayerLobbyProps) {
           </span>
 
           {standing && (
-            <div className="w-full max-w-xs rounded-2xl border border-amber-300/25 bg-amber-300/[0.06] px-5 py-4 backdrop-blur-md">
-              <p className="text-[11px] font-black uppercase tracking-[0.25em] text-amber-200/70">{t("lobby.nightTitle")}</p>
+            <CardSpotlight
+              color="orange"
+              ambient={true}
+              radius="1rem"
+              className="w-full max-w-xs border-amber-300/30"
+              innerClassName="px-5 py-4 backdrop-blur-md bg-amber-300/[0.08]"
+            >
+              <p className="text-[11px] font-black uppercase tracking-[0.25em] text-amber-200/80">{t("lobby.nightTitle")}</p>
               <div className="mt-2 flex items-baseline justify-between gap-3">
                 <span className="text-2xl font-black text-white tabular-nums">{t("lobby.nightRank", standing.rank, standing.total)}</span>
-                <span className="text-sm font-bold text-amber-200 tabular-nums">{t("lobby.nightPoints", standing.points)}</span>
+                <span className="text-sm font-bold text-amber-200 tabular-nums">
+                  <NumberTicker value={standing.points} suffix={` ${t("lobby.nightPoints", "").trim()}`} className="text-amber-200 font-bold" />
+                </span>
               </div>
-            </div>
+            </CardSpotlight>
           )}
         </PlayerStageScreen>
       </div>

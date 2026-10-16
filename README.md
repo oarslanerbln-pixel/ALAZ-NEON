@@ -72,6 +72,13 @@ so an account cannot grant itself access. To add a staff member:
 
 To revoke access, delete that document.
 
+**Rewards need a staff session on the TV.** Only staff accounts may create reward
+vouchers (`rewards` in `firestore.rules`) — anyone can open a room, so "being the
+host" proves nothing, and an open create rule let any guest mint free-drink codes
+from the browser console. Sign in on the host TV (`/login`) with a staff account
+before starting the night; a TV running an anonymous session still plays every
+game but grants no rewards, and its dashboard says so under the room code.
+
 > When the project moves to the Blaze plan, a `staff: true` **custom claim** set via
 > the Admin SDK is also accepted, with no rule changes needed — it avoids the
 > per-evaluation `get()` that the allowlist costs.
@@ -96,6 +103,7 @@ per collection:
 | `players`  | `expires_at` |
 | `answers`  | `expires_at` |
 | `ayna_survey` | `expires_at` |
+| `secret` (quiz answer key, `rooms/{id}/secret`) | `expires_at` |
 
 Or with the gcloud CLI:
 

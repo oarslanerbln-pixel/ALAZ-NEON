@@ -41,3 +41,20 @@ export const validateAnswer = (answer: string, letter: string, locale: string = 
   const val = normalizeTL(answer, locale);
   return !!val && val.startsWith(normalizeTL(letter, locale));
 };
+
+/**
+ * Sözlük araması ve kategori eşleştirme için harf katlama: küçük harfe indirir ve aksanları düşürür.
+ */
+export function foldForLookup(word: string): string {
+  return word
+    .trim()
+    .replace(/İ/g, "i")
+    .replace(/I/g, "i")
+    .replace(/ı/g, "i")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/ß/g, "ss")
+    .replace(/[^\p{L}\p{N}]/gu, "");
+}
+

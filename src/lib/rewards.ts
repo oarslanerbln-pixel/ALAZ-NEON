@@ -1,8 +1,21 @@
-import { collection, doc, writeBatch } from "firebase/firestore";
-import { db } from "./firebase";
-import { generateCode } from "./codes";
-import { resolveWinners, type Winner } from "./rewardWinners";
-import type { GameMode, Player, Reward, VenueConfig } from "../types/database";
+import { collection, doc, getDoc, writeBatch } from "firebase/firestore";
+import { auth, db } from "./firebase";
+import { buildRewardDocs, resolveWinners, type Winner } from "./rewardWinners";
+import type { GameMode, Player, VenueConfig } from "../types/database";
+
+/**
+ * Bu cihazdaki oturum ödül yazabilir mi? Kural ödül oluşturmayı yalnızca
+ * personele açıyor (bkz. firestore.rules → rewards): herkes oda açabildiği
+ * için "host olmak" güvence değil. Anonim TV oturumunda yazmayı hiç
+ * denemiyoruz — her oyun sonunda konsola izin hatası düşmesin.
+ */
+export async function canGrantRewards(): Promise<boolean> {
+  const user = auth.currentUser;
+  if (!user || user.isAnonymous) return false;
+  const token = await user.getIdTokenResult();
+  if (token.claims.staff === true) return true;
+  return (await getDoc(doc(db, "staff", user.uid))).exists();
+}
 
 /**
  * Belirtilen kazananlara mekan şablonundan bir Reward dokümanı yazar.
@@ -10,10 +23,6 @@ import type { GameMode, Player, Reward, VenueConfig } from "../types/database";
  * quiz, sensör) `grantGameRewards`'ı kullanır; bomba gibi "son ayakta
  * kalan" modeliyle çalışan oyunlar kazananı kendi mantığıyla bulup
  * doğrudan bu fonksiyonu çağırır.
- *
- * Mekan ödül sistemi kapalıysa ya da satıcı henüz bir şablon tanımlamadıysa
- * (reward_title boş) sessizce hiçbir şey yapmaz — `rewards_enabled` açık
- * olsa bile boş/anlamsız bir ödül dağıtılmasın diye.
  *
  * Firestore yazma hatası (izin, bağlantı vb.) oyunun bitişini ENGELLEMEMELİ
  * — bu yüzden çağıran taraf hatayı yutup sadece konsola loglamalı, ödül
@@ -23,35 +32,12 @@ export async function grantRewardToPlayers(
   winners: Winner[],
   venue: VenueConfig,
 ): Promise<void> {
-  if (!venue.rewards_enabled || !venue.reward_title?.trim()) return;
-  const validWinners = winners.filter((w) => w.uid && w.uid !== "anonymous");
-  if (validWinners.length === 0) return;
+  const rewards = buildRewardDocs(winners, venue, Date.now());
+  if (rewards.length === 0 || !(await canGrantRewards())) return;
 
   const batch = writeBatch(db);
-  const now = Date.now();
-  // Firestore `set()` undefined alan kabul etmiyor (hata fırlatıyor) — bu
-  // yüzden geçerlilik günü tanımlı değilse expires_at anahtarını objeye hiç
-  // eklemiyoruz, `undefined` olarak set etmiyoruz.
-  const validityDays = venue.reward_validity_days;
-  const expiresAt =
-    typeof validityDays === "number" && validityDays > 0
-      ? now + validityDays * 24 * 60 * 60 * 1000
-      : null;
-
-  for (const { uid, nickname } of validWinners) {
-    const rewardRef = doc(collection(db, "rewards"));
-    const reward: Omit<Reward, "id"> = {
-      uid,
-      nickname,
-      type: venue.reward_type || "drink",
-      title: venue.reward_title.trim(),
-      description: venue.reward_description?.trim() || "",
-      status: "available",
-      code: generateCode(6),
-      earned_at: now,
-      ...(expiresAt !== null ? { expires_at: expiresAt } : {}),
-    };
-    batch.set(rewardRef, reward);
+  for (const reward of rewards) {
+    batch.set(doc(collection(db, "rewards")), reward);
   }
   await batch.commit();
 }

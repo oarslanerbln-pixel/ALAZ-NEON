@@ -4,8 +4,8 @@ import { useLocale } from "../../../hooks/useLocale";
 import { ShareableRecapCard } from "../components/ShareableRecapCard";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { ConfettiCanvas, type ConfettiCanvasRef } from "../../../components/ConfettiCanvas";
-import { AnimatedNumber } from "../../../components/AnimatedNumber";
 import { DURATION, EASE, SPRING, STAGGER, TWEEN, listItem } from "../../../lib/motion";
+import { CardSpotlight, KineticText, NumberTicker, ShimmerButton } from "../../../components/fx";
 import type { Player } from "../../../types/database";
 import type { JulesAward } from "../../../lib/intelligence";
 import { PARTICIPATION_POINTS, TEAM_WIN_POINTS, placementPointsByScore } from "../../../lib/nightLeague";
@@ -106,7 +106,7 @@ function Pillar({ place, name, score, night }: PillarProps) {
         >
           <div className={`truncate max-w-[280px] px-2 mx-auto ${s.name}`}>{name}</div>
           <div className={`tracking-widest ${s.score}`}>
-            <AnimatedNumber from={0} value={score} delay={delay + 0.4} duration={1} />
+            <NumberTicker value={score} delay={delay + 0.4} duration={1} />
           </div>
         </motion.div>
 
@@ -267,14 +267,13 @@ export function HostPodium({
     >
       <ConfettiCanvas ref={confettiRef} autoCannon={false} />
 
-      <motion.h2
-        initial={{ y: -30, opacity: 0, scale: 0.95 }}
-        animate={{ y: 0, opacity: 1, scale: 1 }}
-        transition={{ ...SPRING.gentle, delay: 0.2 }}
-        className="text-3xl md:text-5xl font-black text-white mb-2 uppercase tracking-[0.3em] text-glow-gold flex-shrink-0"
-      >
-        {t("podium.title")}
-      </motion.h2>
+      <KineticText
+        text={t("podium.title")}
+        as="h2"
+        tone="gold"
+        animation="pop"
+        className="text-3xl md:text-5xl font-black mb-2 uppercase tracking-[0.3em] text-glow-gold flex-shrink-0"
+      />
 
       {/* Podyum Sahnesi */}
       <div className="flex items-end justify-center w-full max-w-4xl gap-4 h-[330px] border-b-2 border-white/10 relative flex-shrink-0">
@@ -325,25 +324,29 @@ export function HostPodium({
           className="grid grid-cols-1 md:grid-cols-3 gap-4"
         >
           {awardCards.map((card) => (
-            <motion.div
-              key={card.title}
-              variants={listItem}
-              className="bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-2xl p-3.5 flex flex-col items-center justify-center text-center transition-colors hover:bg-white/[0.06] shadow-lg"
-            >
-              <h4 className="text-white font-bold text-xs uppercase tracking-wider mb-0.5">{card.title}</h4>
-              <p className="text-white/40 text-[9px] font-medium uppercase tracking-widest mb-2">{card.desc}</p>
-              {card.winner ? (
-                <>
-                  <div className="text-lg font-black text-amber-300 truncate w-full px-2 mx-auto tracking-wider">
-                    {card.winner.name}
-                  </div>
-                  <div className="text-white/60 font-medium text-[10px] uppercase tracking-widest tabular-nums">
-                    {card.winner.count} {card.countLabel}
-                  </div>
-                </>
-              ) : (
-                <div className="text-white/30 italic text-xs">{card.none}</div>
-              )}
+            <motion.div key={card.title} variants={listItem}>
+              <CardSpotlight
+                color="purple"
+                ambient={true}
+                radius="1rem"
+                className="bg-white/[0.03] backdrop-blur-2xl shadow-lg hover:bg-white/[0.06] transition-colors"
+                innerClassName="p-3.5 flex flex-col items-center justify-center text-center"
+              >
+                <h4 className="text-white font-bold text-xs uppercase tracking-wider mb-0.5">{card.title}</h4>
+                <p className="text-white/40 text-[9px] font-medium uppercase tracking-widest mb-2">{card.desc}</p>
+                {card.winner ? (
+                  <>
+                    <div className="text-lg font-black text-amber-300 truncate w-full px-2 mx-auto tracking-wider">
+                      {card.winner.name}
+                    </div>
+                    <div className="text-white/60 font-medium text-[10px] uppercase tracking-widest tabular-nums">
+                      {card.winner.count} {card.countLabel}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-white/30 italic text-xs">{card.none}</div>
+                )}
+              </CardSpotlight>
             </motion.div>
           ))}
         </motion.div>
@@ -364,16 +367,16 @@ export function HostPodium({
         >
           {isGeneratingPDF ? "PDF HAZIRLANIYOR..." : "PDF İNDİR"}
         </button>
-        <motion.button
+        <ShimmerButton
           onClick={onResetGame}
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.96 }}
-          transition={SPRING.stiff}
-          className="px-10 py-3.5 bg-gradient-to-r from-white to-gray-200 hover:brightness-105 text-black font-black rounded-full transition-all uppercase tracking-[0.2em] text-sm shadow-[0_0_35px_rgba(255,255,255,0.3)] flex items-center gap-2"
+          color="yellow"
+          thickness={2}
+          radius="9999px"
+          innerClassName="px-10 py-3.5 bg-gradient-to-r from-amber-300 to-yellow-400 text-black font-black uppercase tracking-[0.2em] text-sm flex items-center gap-2"
         >
           <span>{t("podium.newGame")}</span>
           <span className="text-lg">➔</span>
-        </motion.button>
+        </ShimmerButton>
       </motion.div>
     </motion.div>
   );

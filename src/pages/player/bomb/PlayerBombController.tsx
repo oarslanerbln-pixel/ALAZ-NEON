@@ -13,6 +13,7 @@ import { activePlayers } from "../../../lib/liveness";
 import { bombLives } from "../../../lib/bomb";
 import { gameTitle } from "../../../lib/gameCatalog";
 import { PlayerStageScreen } from "../components/PlayerStageScreen";
+import { CardSpotlight, ShimmerButton } from "../../../components/fx";
 
 interface Props {
   room: Room;
@@ -152,10 +153,19 @@ export function PlayerBombController({ room, player }: Props) {
   return (
     <div className={`flex-1 flex flex-col min-h-[100dvh] p-4 transition-colors duration-300 ${
       isMyTurn ? 'bg-[#2a0008]' : 'bg-[#0a0003]'
-    } text-white justify-between`}>
+    } text-white justify-between relative overflow-hidden`}>
       
+      {/* Tension Heartbeat Edge Pulse on holder's device */}
+      {isMyTurn && (
+        <motion.div
+          animate={{ opacity: [0.35, 0.85, 0.35] }}
+          transition={{ duration: 0.9, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute inset-0 pointer-events-none border-4 border-red-500 shadow-[inset_0_0_50px_rgba(255,0,60,0.5)] z-30"
+        />
+      )}
+
       {/* Top Header: Lives & Category */}
-      <div className="flex justify-between items-center px-3 py-3 rounded-2xl bg-black/60 border border-white/10 backdrop-blur-md">
+      <div className="flex justify-between items-center px-4 py-3 rounded-2xl bg-black/60 border border-white/10 backdrop-blur-md z-20">
         <div className="flex gap-1.5 items-center">
           {Array.from({ length: 3 }).map((_, i) => (
             <span key={i} className="text-xl">
@@ -174,49 +184,64 @@ export function PlayerBombController({ room, player }: Props) {
       </div>
 
       {/* Main Action Center */}
-      <div className="flex-1 flex flex-col justify-center items-center max-w-sm mx-auto w-full my-4">
+      <div className="flex-1 flex flex-col justify-center items-center max-w-sm mx-auto w-full my-4 z-20">
         {isMyTurn ? (
           <motion.div
             initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-full bg-red-950/80 border-2 border-red-500 rounded-3xl p-6 shadow-[0_0_40px_rgba(239,68,68,0.5)] backdrop-blur-xl flex flex-col items-center text-center"
+            className="w-full"
           >
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-3xl animate-bounce">💣</span>
-              <h2 className="text-2xl font-black text-red-400 uppercase tracking-tight">
-                {t("bomb.yourTurn")}
-              </h2>
-            </div>
-            
-            <p className="text-xs text-gray-300 mb-5 font-medium">
-              {t("bomb.typeAndThrow")}
-            </p>
-
-            <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
-              <input
-                type="text"
-                value={word}
-                onChange={(e) => setWord(e.target.value)}
-                autoFocus
-                disabled={isSubmitting}
-                className="w-full bg-black/90 border-2 border-red-400 text-white rounded-2xl p-4 text-2xl font-black text-center uppercase tracking-wider focus:outline-none focus:ring-4 focus:ring-red-500/50 shadow-inner"
-                placeholder={t("bomb.wordPlaceholder")}
+            <CardSpotlight
+              tone="pink"
+              ambient={true}
+              className="w-full bg-red-950/85 border-2 border-red-500 rounded-3xl p-6 shadow-[0_0_50px_rgba(239,68,68,0.5)] backdrop-blur-xl flex flex-col items-center text-center relative overflow-hidden"
+            >
+              {/* Internal tension glow */}
+              <motion.div
+                animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.35, 0.15] }}
+                transition={{ duration: 0.9, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,0,60,0.4),transparent_70%)] pointer-events-none"
               />
-              <button
-                type="submit"
-                disabled={!word.trim() || isSubmitting}
-                className={`w-full py-5 rounded-2xl text-xl font-black uppercase tracking-wider transition-all transform active:scale-95 shadow-[0_0_25px_rgba(239,68,68,0.6)] ${
-                  !word.trim() || isSubmitting
-                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700'
-                    : 'bg-gradient-to-r from-red-600 to-amber-600 text-white hover:brightness-110'
-                }`}
-              >
-                {isSubmitting ? t("bomb.throwing") : `🔥 ${t("bomb.throwBomb")}`}
-              </button>
-            </form>
+
+              <div className="flex items-center gap-2 mb-3 relative z-10">
+                <span className="text-3xl animate-bounce">💣</span>
+                <h2 className="text-2xl font-black text-red-400 uppercase tracking-tight">
+                  {t("bomb.yourTurn")}
+                </h2>
+              </div>
+              
+              <p className="text-xs text-gray-300 mb-5 font-medium relative z-10">
+                {t("bomb.typeAndThrow")}
+              </p>
+
+              <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3 relative z-10">
+                <input
+                  type="text"
+                  value={word}
+                  onChange={(e) => setWord(e.target.value)}
+                  autoFocus
+                  disabled={isSubmitting}
+                  className="w-full bg-black/90 border-2 border-red-400 text-white rounded-2xl p-4 text-2xl font-black text-center uppercase tracking-wider focus:outline-none focus:ring-4 focus:ring-red-500/50 shadow-inner"
+                  placeholder={t("bomb.wordPlaceholder")}
+                />
+                <ShimmerButton
+                  type="submit"
+                  color="orange"
+                  disabled={!word.trim() || isSubmitting}
+                  innerClassName="!bg-gradient-to-r !from-red-600 !to-amber-600 text-white font-black text-lg uppercase tracking-wider py-4 shadow-[0_0_25px_rgba(239,68,68,0.6)]"
+                  className="w-full"
+                >
+                  {isSubmitting ? t("bomb.throwing") : `🔥 ${t("bomb.throwBomb")}`}
+                </ShimmerButton>
+              </form>
+            </CardSpotlight>
           </motion.div>
         ) : (
-          <div className="text-center p-6 bg-black/50 border border-white/10 rounded-3xl backdrop-blur-md w-full">
+          <CardSpotlight
+            tone="orange"
+            ambient={true}
+            className="text-center p-6 bg-black/60 border border-white/10 rounded-3xl backdrop-blur-md w-full shadow-[0_0_30px_rgba(0,0,0,0.6)]"
+          >
             <div className="text-6xl mb-4 animate-pulse">💣</div>
             <h2 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest mb-1">
               {t("bomb.elsewhereLabel")}
@@ -231,12 +256,12 @@ export function PlayerBombController({ room, player }: Props) {
               </div>
             )}
             <p className="mt-4 text-xs text-gray-500">{t("bomb.waitYourTurn")}</p>
-          </div>
+          </CardSpotlight>
         )}
       </div>
 
       {/* Bottom Status */}
-      <div className="text-center py-2 text-[11px] font-mono text-gray-500">
+      <div className="text-center py-2 text-[11px] font-mono text-gray-500 z-20">
         ALAZ NEON PARTY • BOMB PARTY
       </div>
     </div>

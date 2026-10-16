@@ -6,6 +6,7 @@ import type { Player, RoundResultInfo, Room } from "../../../types/database";
 import { ConfettiCanvas, type ConfettiCanvasRef } from "../../../components/ConfettiCanvas";
 import { AnimatedNumber } from "../../../components/AnimatedNumber";
 import { SPRING, STAGGER, TWEEN, popBouncy } from "../../../lib/motion";
+import { ShimmerButton } from "../../../components/fx";
 import type { Variants } from "framer-motion";
 
 interface HostStandingsProps {
@@ -269,18 +270,19 @@ export function HostStandings({ room, players, roundResults, onNextStep }: HostS
       </motion.div>
 
       {/* Docked Next Button */}
-      <motion.button
-        onClick={onNextStep}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ...TWEEN.enter, delay: 1.5 }}
-        whileHover={{ scale: 1.03 }}
-        whileTap={{ scale: 0.97 }}
-        className="mt-3 w-full max-w-md py-4 bg-gradient-to-r from-white via-gray-100 to-gray-200 text-black hover:brightness-105 rounded-full font-black uppercase tracking-[0.25em] text-lg shadow-[0_0_35px_rgba(255,255,255,0.3)] transition-all flex-shrink-0 flex items-center justify-center gap-3"
-      >
-        <span>{room?.current_round === room?.total_rounds ? t("standings.finishGame") : t("standings.nextRound")}</span>
-        <span className="text-xl">➔</span>
-      </motion.button>
+      <div className="mt-3 w-full max-w-md flex justify-center flex-shrink-0">
+        <ShimmerButton
+          onClick={onNextStep}
+          color="orange"
+          thickness={2}
+          radius="9999px"
+          className="w-full"
+          innerClassName="w-full py-4 bg-gradient-to-r from-alaz-orange to-amber-400 text-black font-black uppercase tracking-[0.25em] text-lg flex items-center justify-center gap-3 shadow-[0_0_35px_rgba(255,85,0,0.4)]"
+        >
+          <span>{room?.current_round === room?.total_rounds ? t("standings.finishGame") : t("standings.nextRound")}</span>
+          <span className="text-xl">➔</span>
+        </ShimmerButton>
+      </div>
     </motion.div>
   );
 }

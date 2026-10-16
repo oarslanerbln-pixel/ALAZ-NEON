@@ -7,10 +7,13 @@ import { ParticleBackground } from "../../../components/ParticleBackground";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { haptics } from "../../../lib/haptics";
 import type { Room, Player } from "../../../types/database";
+import { revealedOption } from "../../../lib/quizReveal";
 import { useLocale } from "../../../hooks/useLocale";
 import { gameTitle } from "../../../lib/gameCatalog";
 import { PlayerStageScreen } from "../components/PlayerStageScreen";
 import { QuizTimerBar } from "./QuizTimerBar";
+import { CardSpotlight, NumberTicker } from "../../../components/fx";
+import { SPRING } from "../../../lib/motion";
 
 interface PlayerQuizControllerProps {
   room: Room;
@@ -214,8 +217,14 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
               exit={{ opacity: 0 }}
               className="w-full flex flex-col gap-3.5"
             >
-              {/* Question preview & Category on player device */}
-              <div className="bg-black/70 border border-white/15 p-4 rounded-xl text-center mb-1 backdrop-blur-sm">
+              {/* Question preview & Category on player device with CardSpotlight */}
+              <CardSpotlight
+                color="blue"
+                ambient={true}
+                radius="1rem"
+                className="bg-black/70 border-white/15 mb-1 backdrop-blur-sm shadow-lg"
+                innerClassName="p-4 text-center"
+              >
                 {currentQ.category && (
                   <span className="text-xs font-mono uppercase text-alaz-orange font-bold tracking-widest block mb-1">
                     {currentQ.category}
@@ -224,7 +233,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
                 <h3 className="text-base font-bold text-white leading-snug line-clamp-3">
                   {currentQ.text}
                 </h3>
-              </div>
+              </CardSpotlight>
 
               {(["A", "B", "C", "D"] as const).map(opt => {
                 const isSelected = selectedOption === opt;
@@ -233,12 +242,13 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
                 return (
                   <motion.button
                     key={opt}
-                    whileTap={{ scale: hasSubmitted ? 1 : 0.96 }}
+                    whileTap={{ scale: hasSubmitted ? 1 : 0.94 }}
+                    transition={SPRING.stiff}
                     onClick={() => !hasSubmitted && handleSubmit(opt)}
                     disabled={hasSubmitted}
-                    className={`w-full p-4 rounded-xl border-2 transition-all duration-200 flex items-center gap-4 text-left relative overflow-hidden ${
+                    className={`w-full p-4 rounded-xl border-2 transition-all duration-200 flex items-center gap-4 text-left relative overflow-hidden select-none active:scale-95 ${
                       isSelected 
-                        ? `${config.activeBg} border-white text-black ${config.glow} scale-[1.02]` 
+                        ? `${config.activeBg} border-white text-black ${config.glow} scale-[1.02] shadow-[0_0_25px_rgba(255,255,255,0.4)]` 
                         : `${config.bg} ${config.border} text-white hover:border-white/60 active:scale-95`
                     } ${hasSubmitted && !isSelected ? "opacity-35 grayscale" : ""}`}
                   >
@@ -274,20 +284,44 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
 
           {/* QUESTION REVEAL SCREEN */}
           {gameState === "question_reveal" && currentQ && (() => {
-            const isCorrect = selectedOption === currentQ.correctOption;
+            // Doğru şık odada yok; host cevapları kilitleyince quiz_reveal ile açıklıyor.
+            const revealed = revealedOption(room, room.current_question_index ?? 0);
+            if (!revealed) {
+              return (
+                <motion.div
+                  key="reveal-pending"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-center w-full py-10"
+                >
+                  <p className="text-white/70 font-black text-lg uppercase tracking-widest animate-pulse">
+                    {t("quiz.revealPending")}
+                  </p>
+                </motion.div>
+              );
+            }
+            const isCorrect = selectedOption === revealed;
             return (
               <motion.div
                 key="reveal"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={isCorrect ? { opacity: 0, scale: 0.85 } : { opacity: 0, x: -16 }}
+                animate={isCorrect ? { opacity: 1, scale: 1 } : { opacity: 1, x: [0, -10, 10, -8, 8, -4, 4, 0] }}
+                transition={isCorrect ? SPRING.bouncy : { duration: 0.5 }}
                 exit={{ opacity: 0 }}
                 className="text-center w-full"
               >
-                <div className={`p-8 rounded-2xl border-2 mb-6 backdrop-blur-md ${
-                  isCorrect 
-                    ? "bg-green-500/20 border-green-400 shadow-[0_0_50px_rgba(34,197,94,0.5)]" 
-                    : "bg-red-500/20 border-red-500 shadow-[0_0_40px_rgba(239,68,68,0.4)]"
-                }`}>
+                <CardSpotlight
+                  color={isCorrect ? "green" : "pink"}
+                  ambient={true}
+                  radius="1.25rem"
+                  className={`border-2 mb-6 backdrop-blur-md ${
+                    isCorrect 
+                      ? "border-green-400 shadow-[0_0_50px_rgba(34,197,94,0.5)]" 
+                      : "border-red-500 shadow-[0_0_40px_rgba(239,68,68,0.4)]"
+                  }`}
+                  innerClassName={`p-8 ${isCorrect ? "bg-green-500/20" : "bg-red-500/20"}`}
+                >
                   <div className="text-5xl mb-3">
                     {isCorrect ? "🎯" : "💀"}
                   </div>
@@ -297,9 +331,9 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
                     {isCorrect ? t("quiz.playerCorrect") : t("quiz.playerWrong")}
                   </h2>
                   <p className="text-sm text-gray-300 font-medium">
-                    {t("quiz.correctAnswer")}: <strong className="text-white font-bold">{currentQ.correctOption} — {currentQ.options[currentQ.correctOption]}</strong>
+                    {t("quiz.correctAnswer")}: <strong className="text-white font-bold">{revealed} — {currentQ.options[revealed]}</strong>
                   </p>
-                </div>
+                </CardSpotlight>
 
                 <p className="text-gray-400 text-sm animate-pulse">
                   {t("quiz.followRankingOnScreen")}
@@ -357,7 +391,7 @@ function ScoreTile({ label, score }: { label: string; score: number }) {
   return (
     <div className="w-full max-w-xs rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 flex items-center justify-between backdrop-blur-md">
       <span className="text-sm font-semibold text-white/60">{label}</span>
-      <span className="text-3xl font-black text-alaz-orange tabular-nums">{score}</span>
+      <NumberTicker value={score} className="text-3xl font-black text-alaz-orange tabular-nums" />
     </div>
   );
 }

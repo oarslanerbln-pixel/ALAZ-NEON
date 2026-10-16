@@ -847,6 +847,107 @@ const translations = {
   "lang.de": { tr: "Almanca", de: "Deutsch", en: "German" },
   "lang.en": { tr: "İngilizce", de: "Englisch", en: "English" },
   "review.jokerPenalty": { tr: "-10 PUAN CEZASI", de: "-10 PUNKTE STRAFE", en: "-10 POINT PENALTY" },
+  "review.autoRejectWrongCategory": { tr: "YANLIŞ KATEGORİ", de: "FALSCHE KATEGORIE", en: "WRONG CATEGORY" },
+  "review.categoryReject.abstractNotObject": {
+    tr: "SOYUT KAVRAM (EŞYA DEĞİL)",
+    de: "ABSTRAKT (KEIN GEGENSTAND)",
+    en: "ABSTRACT (NOT AN OBJECT)",
+  },
+  "review.categoryReject.animalNotObject": {
+    tr: "HAYVAN (EŞYA DEĞİL)",
+    de: "TIER (KEIN GEGENSTAND)",
+    en: "ANIMAL (NOT AN OBJECT)",
+  },
+  "review.categoryReject.placeNotObject": {
+    tr: "ŞEHİR/ÜLKE (EŞYA DEĞİL)",
+    de: "ORT / STADT (KEIN GEGENSTAND)",
+    en: "PLACE / CITY (NOT AN OBJECT)",
+  },
+  "review.categoryReject.objectNotAnimal": {
+    tr: "EŞYA (HAYVAN DEĞİL)",
+    de: "GEGENSTAND (KEIN TIER)",
+    en: "OBJECT (NOT AN ANIMAL)",
+  },
+  "review.categoryReject.abstractNotAnimal": {
+    tr: "SOYUT KAVRAM (HAYVAN DEĞİL)",
+    de: "ABSTRAKT (KEIN TIER)",
+    en: "ABSTRACT (NOT AN ANIMAL)",
+  },
+  "review.categoryReject.placeNotAnimal": {
+    tr: "ŞEHİR/ÜLKE (HAYVAN DEĞİL)",
+    de: "ORT / STADT (KEIN TIER)",
+    en: "PLACE / CITY (NOT AN ANIMAL)",
+  },
+  "review.categoryReject.countryNotCity": {
+    tr: "ÜLKE (ŞEHİR DEĞİL)",
+    de: "LAND (KEINE STADT)",
+    en: "COUNTRY (NOT A CITY)",
+  },
+  "review.categoryReject.animalNotCity": {
+    tr: "HAYVAN (ŞEHİR DEĞİL)",
+    de: "TIER (KEINE STADT)",
+    en: "ANIMAL (NOT A CITY)",
+  },
+  "review.categoryReject.objectNotCity": {
+    tr: "EŞYA (ŞEHİR DEĞİL)",
+    de: "GEGENSTAND (KEINE STADT)",
+    en: "OBJECT (NOT A CITY)",
+  },
+  "review.categoryReject.abstractNotCity": {
+    tr: "SOYUT KAVRAM (ŞEHİR DEĞİL)",
+    de: "ABSTRAKT (KEINE STADT)",
+    en: "ABSTRACT (NOT A CITY)",
+  },
+  "review.categoryReject.cityNotCountry": {
+    tr: "ŞEHİR (ÜLKE DEĞİL)",
+    de: "STADT (KEIN LAND)",
+    en: "CITY (NOT A COUNTRY)",
+  },
+  "review.categoryReject.animalNotCountry": {
+    tr: "HAYVAN (ÜLKE DEĞİL)",
+    de: "TIER (KEIN LAND)",
+    en: "ANIMAL (NOT A COUNTRY)",
+  },
+  "review.categoryReject.objectNotCountry": {
+    tr: "EŞYA (ÜLKE DEĞİL)",
+    de: "GEGENSTAND (KEIN LAND)",
+    en: "OBJECT (NOT A COUNTRY)",
+  },
+  "review.categoryReject.abstractNotCountry": {
+    tr: "SOYUT KAVRAM (ÜLKE DEĞİL)",
+    de: "ABSTRAKT (KEIN LAND)",
+    en: "ABSTRACT (NOT A COUNTRY)",
+  },
+  "review.categoryReject.animalNotPlant": {
+    tr: "HAYVAN (BİTKİ DEĞİL)",
+    de: "TIER (KEINE PFLANZE)",
+    en: "ANIMAL (NOT A PLANT)",
+  },
+  "review.categoryReject.objectNotPlant": {
+    tr: "EŞYA (BİTKİ DEĞİL)",
+    de: "GEGENSTAND (KEINE PFLANZE)",
+    en: "OBJECT (NOT A PLANT)",
+  },
+  "review.categoryReject.abstractNotPlant": {
+    tr: "SOYUT KAVRAM (BİTKİ DEĞİL)",
+    de: "ABSTRAKT (KEINE PFLANZE)",
+    en: "ABSTRACT (NOT A PLANT)",
+  },
+  "review.categoryReject.objectNotName": {
+    tr: "EŞYA (KİŞİ ADI DEĞİL)",
+    de: "GEGENSTAND (KEIN NAME)",
+    en: "OBJECT (NOT A PERSON NAME)",
+  },
+  "review.categoryReject.abstractNotName": {
+    tr: "SOYUT KAVRAM (KİŞİ ADI DEĞİL)",
+    de: "ABSTRAKT (KEIN NAME)",
+    en: "ABSTRACT (NOT A PERSON NAME)",
+  },
+  "review.categoryReject.genericWrongCategory": {
+    tr: "YANLIŞ KATEGORİ",
+    de: "FALSCHE KATEGORIE",
+    en: "WRONG CATEGORY",
+  },
 
   // ═══════════════════════════════════════════
   // HOST HEADER / LOBBY EXTRAS
@@ -1478,6 +1579,7 @@ const translations = {
   "quiz.startTimer": { tr: "SÜREYİ BAŞLAT", de: "TIMER STARTEN", en: "START TIMER" },
   "quiz.endTimer": { tr: "SÜREYİ BİTİR", de: "TIMER BEENDEN", en: "END TIMER" },
   "quiz.correctAnswer": { tr: "DOĞRU CEVAP", de: "RICHTIGE ANTWORT", en: "CORRECT ANSWER" },
+  "quiz.revealPending": { tr: "Cevaplar kilitlendi…", de: "Antworten gesperrt…", en: "Answers locked…" },
   "quiz.seeRanking": { tr: "SIRALAMAYI GÖR", de: "RANGLISTE ANZEIGEN", en: "SEE RANKING" },
   "quiz.currentRanking": { tr: "LİDER TABLOSU", de: "AKTUELLE RANGLISTE", en: "CURRENT LEADERBOARD" },
   "quiz.pts": { tr: "PUAN", de: "PKT", en: "PTS" },
@@ -1565,6 +1667,11 @@ const translations = {
     en: "Scan the QR code with your phone camera or enter the room code.",
   },
   "dashboard.kioskStart": { tr: "Kiosk modunu başlat", de: "Kiosk-Modus starten", en: "Start kiosk mode" },
+  "dashboard.rewardsNeedStaff": {
+    tr: "Ödüller kapalı: bu TV mekan hesabıyla giriş yapmadı",
+    de: "Prämien aus: Dieser TV ist nicht mit dem Betriebskonto angemeldet",
+    en: "Rewards off: this TV isn't signed in with the venue account",
+  },
   "dashboard.kioskExit": { tr: "Çıkmak için ekrana dokunun", de: "Zum Beenden auf den Bildschirm tippen", en: "Tap the screen to exit" },
   "host.step2": { tr: "ADIM 2: ", de: "SCHRITT 2: ", en: "STEP 2: " },
   "host.selectGame": { tr: "OYUN SEÇ", de: "SPIEL WÄHLEN", en: "SELECT GAME" },

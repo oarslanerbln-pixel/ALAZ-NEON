@@ -6,6 +6,7 @@ import { SoundManager, sounds } from "../../../lib/audio";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { BeamBorder } from "../../../components/fx";
 
 interface HostHeaderProps {
   room: {
@@ -178,14 +179,16 @@ export function HostHeader({
         )}
 
         {/* Room Code OLED Badge */}
-        <div className="flex items-center gap-2 bg-black/70 px-3.5 py-1.5 md:py-2 rounded-2xl border border-alaz-orange/50 shadow-[0_0_20px_rgba(255,85,0,0.25)]">
-          <span className="text-[9px] text-gray-400 uppercase tracking-[0.15em] font-mono font-bold">
-            {t("hostHeader.roomCode")}
-          </span>
-          <span className="text-lg md:text-xl font-mono font-black tracking-widest text-alaz-orange">
-            {room.code || "..."}
-          </span>
-        </div>
+        <BeamBorder color="orange" radius="1rem" className="shadow-[0_0_20px_rgba(255,85,0,0.25)]">
+          <div className="flex items-center gap-2 bg-[#090912] px-3.5 py-1.5 md:py-2 rounded-[calc(1rem-1.5px)]">
+            <span className="text-[9px] text-gray-400 uppercase tracking-[0.15em] font-mono font-bold">
+              {t("hostHeader.roomCode")}
+            </span>
+            <span className="text-lg md:text-xl font-mono font-black tracking-widest text-alaz-orange">
+              {room.code || "..."}
+            </span>
+          </div>
+        </BeamBorder>
       </div>
     </header>
   );

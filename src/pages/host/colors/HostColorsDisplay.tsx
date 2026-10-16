@@ -14,6 +14,7 @@ import { KineticSpark } from "../../../components/KineticSpark";
 import { pointsFields } from "../../../lib/scoreWrites";
 import { finishNightRound } from "../../../lib/nightAwards";
 import { teamPoints } from "../../../lib/nightLeague";
+import { CardSpotlight, KineticText, NumberTicker, ShimmerButton } from "../../../components/fx";
 
 interface Props {
   room: Room;
@@ -172,7 +173,7 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                 className="text-center z-10 w-full max-w-5xl flex flex-col items-center"
               >
                 <h1 className="text-6xl md:text-7xl font-black uppercase tracking-[0.2em] mb-4 text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-white to-blue-500 drop-shadow-[0_0_30px_rgba(255,255,255,0.6)]">
-                  {t("colors.title")}
+                  <KineticText text={t("colors.title")} by="character" stagger={0.03} />
                 </h1>
                 <p className="text-2xl text-gray-300 font-mono tracking-widest uppercase mb-10">
                   ⚡ {t("colors.hostHint")} ⚡
@@ -181,7 +182,11 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                 {/* Team Rosters Preview */}
                 <div className="grid grid-cols-2 gap-8 w-full max-w-4xl mb-12">
                   {/* Red Team Preview */}
-                  <div className="bg-red-950/60 border-2 border-red-500 p-6 rounded-3xl backdrop-blur-md shadow-[0_0_40px_rgba(239,68,68,0.4)]">
+                  <CardSpotlight
+                    tone="pink"
+                    ambient={true}
+                    className="bg-red-950/60 border-2 border-red-500 p-6 rounded-3xl backdrop-blur-md shadow-[0_0_40px_rgba(239,68,68,0.4)]"
+                  >
                     <h2 className="text-3xl font-black text-red-500 uppercase tracking-widest mb-4">
                       🔴 KIRMIZI TAKIM ({redMembers.length})
                     </h2>
@@ -192,10 +197,14 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                         </span>
                       ))}
                     </div>
-                  </div>
+                  </CardSpotlight>
 
                   {/* Blue Team Preview */}
-                  <div className="bg-blue-950/60 border-2 border-blue-500 p-6 rounded-3xl backdrop-blur-md shadow-[0_0_40px_rgba(59,130,246,0.4)]">
+                  <CardSpotlight
+                    tone="blue"
+                    ambient={true}
+                    className="bg-blue-950/60 border-2 border-blue-500 p-6 rounded-3xl backdrop-blur-md shadow-[0_0_40px_rgba(59,130,246,0.4)]"
+                  >
                     <h2 className="text-3xl font-black text-blue-400 uppercase tracking-widest mb-4">
                       🔵 MAVİ TAKIM ({blueMembers.length})
                     </h2>
@@ -206,15 +215,17 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                         </span>
                       ))}
                     </div>
-                  </div>
+                  </CardSpotlight>
                 </div>
                 
-                <button
+                <ShimmerButton
+                  color="orange"
                   onClick={handleIntroComplete}
-                  className="px-14 py-6 bg-gradient-to-r from-red-600 via-amber-500 to-blue-600 text-white font-black text-3xl uppercase tracking-widest rounded-2xl hover:scale-105 transition-all shadow-[0_0_50px_rgba(255,255,255,0.6)] transform active:scale-95"
+                  innerClassName="!bg-gradient-to-r !from-red-600 !via-amber-500 !to-blue-600 text-white font-black text-3xl uppercase tracking-widest px-14 py-6 shadow-[0_0_50px_rgba(255,255,255,0.6)]"
+                  className="rounded-2xl"
                 >
                   {t("colors.startGame")} 🚀
-                </button>
+                </ShimmerButton>
               </motion.div>
             )}
 
@@ -245,18 +256,14 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                     )}
                   </div>
 
-                  <motion.div 
-                    key={redScore}
-                    initial={{ scale: 1.3 }}
-                    animate={{ scale: 1 }}
-                    className="text-8xl md:text-9xl font-black text-white z-10 drop-shadow-[0_0_30px_rgba(255,255,255,0.9)]"
-                  >
-                    {redScore}
-                  </motion.div>
+                  <NumberTicker 
+                    value={redScore}
+                    className="text-8xl md:text-9xl font-black text-white z-10 drop-shadow-[0_0_30px_rgba(255,255,255,0.9)]" 
+                  />
 
-                  <span className="text-xl font-black text-white/70 uppercase tracking-widest z-10">
-                    %{Math.round(redPercentage)} HAKİMİYET
-                  </span>
+                  <div className="text-xl font-black text-white/80 uppercase tracking-widest z-10 flex items-center justify-center gap-1 font-mono">
+                    %<NumberTicker value={Math.round(redPercentage)} className="text-white font-black" /> HAKİMİYET
+                  </div>
                 </motion.div>
 
                 {/* Laser Collision Divider */}
@@ -283,18 +290,14 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                     )}
                   </div>
 
-                  <motion.div 
-                    key={blueScore}
-                    initial={{ scale: 1.3 }}
-                    animate={{ scale: 1 }}
-                    className="text-8xl md:text-9xl font-black text-white z-10 drop-shadow-[0_0_30px_rgba(255,255,255,0.9)]"
-                  >
-                    {blueScore}
-                  </motion.div>
+                  <NumberTicker 
+                    value={blueScore}
+                    className="text-8xl md:text-9xl font-black text-white z-10 drop-shadow-[0_0_30px_rgba(255,255,255,0.9)]" 
+                  />
 
-                  <span className="text-xl font-black text-white/70 uppercase tracking-widest z-10">
-                    %{Math.round(100 - redPercentage)} HAKİMİYET
-                  </span>
+                  <div className="text-xl font-black text-white/80 uppercase tracking-widest z-10 flex items-center justify-center gap-1 font-mono">
+                    %<NumberTicker value={Math.round(100 - redPercentage)} className="text-white font-black" /> HAKİMİYET
+                  </div>
                 </motion.div>
               </motion.div>
             )}
@@ -314,18 +317,20 @@ export function HostColorsDisplay({ room, players, updateRoomStatus }: Props) {
                 <motion.h1 
                   className="text-7xl md:text-8xl font-black text-white uppercase tracking-wider drop-shadow-[0_0_50px_rgba(255,255,255,0.9)] mb-4"
                 >
-                  {redPercentage >= 100 ? t("colors.red") : t("colors.blue")} KAZANDI!
+                  <KineticText text={`${redPercentage >= 100 ? t("colors.red") : t("colors.blue")} KAZANDI!`} />
                 </motion.h1>
                 <p className="text-3xl text-white/90 font-bold uppercase tracking-widest mb-12">
                   {t("colors.championTeam")}
                 </p>
 
-                <button
+                <ShimmerButton
+                  color={redPercentage >= 100 ? "pink" : "blue"}
                   onClick={handleEndGameEarly}
-                  className="px-12 py-5 bg-white text-black font-black uppercase tracking-widest text-xl rounded-2xl transition-all hover:scale-105 shadow-[0_0_40px_rgba(255,255,255,0.7)]"
+                  innerClassName="!bg-white !text-black font-black uppercase tracking-widest text-xl px-12 py-5 shadow-[0_0_40px_rgba(255,255,255,0.7)]"
+                  className="rounded-2xl"
                 >
                   {t("colors.endGame")}
-                </button>
+                </ShimmerButton>
               </motion.div>
             )}
           </AnimatePresence>

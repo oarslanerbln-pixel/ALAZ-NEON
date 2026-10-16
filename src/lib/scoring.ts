@@ -4,6 +4,7 @@ import { toMillis } from "./timestamps";
 import { containsProfanity } from "./profanity";
 import { analyzeGibberish } from "./wordValidation";
 import { foldForLookup, judgeAnswer, type AnswerJudgement } from "./answerLanguage";
+import { validateCategoryMatch, type CategoryValidationResult } from "./categoryValidation";
 import type {
   Room,
   RoundResultInfo,
@@ -69,6 +70,16 @@ export function calculateRoundScores(
     return verdict;
   };
 
+  const categoryResults = new Map<string, CategoryValidationResult>();
+  const categoryCheckFor = (answerId: string, cat: string, valRaw: string): CategoryValidationResult => {
+    const key = `${answerId}|${cat}`;
+    const cached = categoryResults.get(key);
+    if (cached) return cached;
+    const result = validateCategoryMatch(valRaw, cat, locale);
+    categoryResults.set(key, result);
+    return result;
+  };
+
   /**
    * Benzersizlik sayimi icin kanonik anahtar.
    *
@@ -86,13 +97,15 @@ export function calculateRoundScores(
       const val = normalizeTL(valRaw, locale);
       // Geçersiz cevaplar sayıma girmemeli: aksi hâlde küfür ya da anlamsız
       // bir giriş, aynı kategoriye gerçek cevap yazan oyuncunun benzersizlik
-      // bonusunu çalabiliyor. Yabancı dilde yazılmış cevap da aynı sebeple
-      // sayıma girmiyor.
+      // bonusunu çalabiliyor. Yabancı dilde veya yanlış kategoride yazılmış cevap
+      // da aynı sebeple sayıma girmiyor.
       const verdict = judgementFor(answer.id || answer.player_id, cat, valRaw);
+      const catCheck = categoryCheckFor(answer.id || answer.player_id, cat, valRaw);
       const isRejected =
         containsProfanity(valRaw) ||
         analyzeGibberish(valRaw).isGibberish ||
-        verdict.kind === "foreign";
+        verdict.kind === "foreign" ||
+        !catCheck.valid;
       if (val && val.startsWith(normalizedLetter) && !isRejected) {
         const key = canonicalKey(valRaw, verdict);
         // Fuzzy grouping: Check if a similar word already exists in counts
@@ -144,7 +157,9 @@ export function calculateRoundScores(
         const isProfane = containsProfanity(valRaw);
         const gibberish = analyzeGibberish(valRaw);
         const verdict = judgementFor(answer.id || answer.player_id, cat, valRaw);
+        const catCheck = categoryCheckFor(answer.id || answer.player_id, cat, valRaw);
         const isForeign = verdict.kind === "foreign";
+        const isWrongCategory = !catCheck.valid;
         const isTypo = verdict.kind === "typo";
 
         if (
@@ -152,7 +167,8 @@ export function calculateRoundScores(
           val.startsWith(normalizedLetter) &&
           !isProfane &&
           !gibberish.isGibberish &&
-          !isForeign
+          !isForeign &&
+          !isWrongCategory
         ) {
           isValid = true;
           validCount++;
@@ -204,10 +220,13 @@ export function calculateRoundScores(
           gibberishReason: gibberish.reason,
           isForeign,
           foreignLanguage: verdict.kind === "foreign" ? verdict.language : undefined,
+          isWrongCategory,
+          wrongCategoryReason: !catCheck.valid ? catCheck.reasonCode : undefined,
           isTypo,
           typoSuggestion: verdict.kind === "typo" ? verdict.suggestion : undefined,
         };
       });
+
 
       const gotEarlyBonus = answer.player_id === earliestPlayerId;
       if (gotEarlyBonus) roundScore += 15;

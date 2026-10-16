@@ -5,6 +5,7 @@ import { AuroraBackdrop } from "../../../components/fx/AuroraBackdrop";
 import { BeamBorder } from "../../../components/fx/BeamBorder";
 import { GridPattern } from "../../../components/fx/GridPattern";
 import { RevealText } from "../../../components/fx/RevealText";
+import { CardSpotlight, NumberTicker, ShimmerButton } from "../../../components/fx";
 import { ConfettiCanvas, type ConfettiCanvasRef } from "../../../components/ConfettiCanvas";
 import { useLocale } from "../../../hooks/useLocale";
 import { SoundManager, sounds } from "../../../lib/audio";
@@ -121,12 +122,15 @@ export function NightFinale({ players, onClose, onEndNight }: NightFinaleProps) 
         >
           {t("finale.back")}
         </button>
-        <button
+        <ShimmerButton
           onClick={onEndNight}
-          className="rounded-full bg-gradient-to-r from-amber-400 to-alaz-orange px-10 py-4 text-lg font-black uppercase tracking-[0.2em] text-black shadow-[0_0_40px_rgba(251,191,36,0.4)] transition-transform hover:scale-105 active:scale-95"
+          color="yellow"
+          thickness={2}
+          radius="9999px"
+          innerClassName="px-10 py-4 bg-gradient-to-r from-amber-400 to-alaz-orange text-black text-lg font-black uppercase tracking-[0.2em] shadow-[0_0_40px_rgba(251,191,36,0.4)]"
         >
           {t("finale.endNight")}
-        </button>
+        </ShimmerButton>
       </motion.div>
     </div>
   );
@@ -139,11 +143,21 @@ function RunnerUp({ place, name, points, delay }: { place: 2 | 3; name: string; 
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ ...SPRING.gentle, delay }}
-      className="w-[300px] rounded-[2rem] border border-white/10 bg-white/[0.04] px-8 py-10 text-center backdrop-blur-md"
+      className="w-[300px]"
     >
-      <span className="text-6xl leading-none" aria-hidden="true">{place === 2 ? "🥈" : "🥉"}</span>
-      <p className="mt-5 truncate text-4xl font-black uppercase text-white">{name}</p>
-      <p className="mt-3 text-xl font-bold text-white/60 tabular-nums">{t("finale.points", points)}</p>
+      <CardSpotlight
+        color={place === 2 ? "blue" : "orange"}
+        ambient={true}
+        radius="2rem"
+        className="w-full bg-white/[0.04] backdrop-blur-md"
+        innerClassName="px-8 py-10 text-center"
+      >
+        <span className="text-6xl leading-none" aria-hidden="true">{place === 2 ? "🥈" : "🥉"}</span>
+        <p className="mt-5 truncate text-4xl font-black uppercase text-white">{name}</p>
+        <p className="mt-3 text-xl font-bold text-white/60 tabular-nums">
+          <NumberTicker value={points} suffix={` ${t("finale.points", "").trim()}`} className="text-white/60 font-bold" />
+        </p>
+      </CardSpotlight>
     </motion.div>
   );
 }

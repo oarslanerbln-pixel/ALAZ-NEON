@@ -16,6 +16,7 @@ import type { Answer } from "../../../types/database";
 import { HostQuizIntro } from "./views/HostQuizIntro";
 import { TimerRing } from "../../../components/TimerRing";
 import { BeamBorder } from "../../../components/fx/BeamBorder";
+import { CardSpotlight, KineticText, NumberTicker, ShimmerButton } from "../../../components/fx";
 import { HostHeader } from "../components/HostHeader";
 import { HostLobby } from "../views/HostLobby";
 import { HostTutorial } from "../components/HostTutorial";
@@ -23,7 +24,9 @@ import { useLocale } from "../../../hooks/useLocale";
 import { grantGameRewards } from "../../../lib/rewards";
 import { useVenue } from "../../../contexts/VenueContextCore";
 
-import type { Room, Player } from "../../../types/database";
+import type { Room, Player, QuizOption } from "../../../types/database";
+import { revealedOption, splitAnswerKey } from "../../../lib/quizReveal";
+import { saveQuizAnswerKey, subscribeQuizAnswerKey } from "../../../lib/quizAnswerKey";
 import { finishNightRound, NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
 import { nightPointsForPlayers } from "../../../lib/nightLeague";
 
@@ -79,6 +82,16 @@ export function HostQuizDisplay({
   // Reentrancy guard for ending question
   const endingQuestionRef = useRef(false);
 
+  // Cevap anahtarı odada değil, host'a özel dokümanda (lib/quizReveal).
+  // Canlı dinleniyor: TV oyunun ortasında yenilense de puanlama sürüyor.
+  const answerKeyRef = useRef<QuizOption[]>([]);
+  useEffect(() => {
+    if (!roomId) return;
+    return subscribeQuizAnswerKey(roomId, (key) => {
+      answerKeyRef.current = key;
+    });
+  }, [roomId]);
+
   // Derive game state directly from room.status — single source of truth
   const rawStatus = room?.status || "quiz_lobby";
   const gameState =
@@ -123,16 +136,28 @@ export function HostQuizDisplay({
     });
     rememberQuestions(questions.map((q) => q.id));
 
+    // Anahtar soru odaya düşmeden önce yazılıyor. Yazma başarısız olsa da
+    // yerel kopya bu oturumda puanlamayı taşır; yalnızca TV yenilenirse kaybolur.
+    const { questions: publicQuestions, answerKey } = splitAnswerKey(questions);
+    answerKeyRef.current = answerKey;
+    try {
+      await saveQuizAnswerKey(roomId, answerKey);
+    } catch (err) {
+      console.error("[HostQuizDisplay] Cevap anahtarı kaydedilemedi:", err);
+    }
+
     if (room.current_round === 0) {
       await updateRoomStatus("tutorial", {
         tutorial_step: 0,
         current_question_index: 0,
-        quiz_questions: questions,
+        quiz_questions: publicQuestions,
+        quiz_reveal: null,
       });
     } else {
       await updateRoomStatus("quiz_intro", {
         current_question_index: 0,
-        quiz_questions: questions,
+        quiz_questions: publicQuestions,
+        quiz_reveal: null,
       });
     }
   };
@@ -161,6 +186,7 @@ export function HostQuizDisplay({
     await updateRoomStatus("question_active", {
       time_left: timeToAnswer,
       round_end_time: endTime,
+      quiz_reveal: null,
     });
   };
 
@@ -193,10 +219,17 @@ export function HostQuizDisplay({
       answers.push({ id: docSnap.id, ...docSnap.data() } as Answer);
     });
     
-    const currentQ = room.quiz_questions?.[room.current_question_index || 0];
-    if (!currentQ) return;
-    
-    const correctOption = currentQ.correctOption;
+    // Cevaplar okundu, küme kilitli: bundan sonra gelen cevap sayılmıyor.
+    // Doğru şık ancak şimdi odaya (telefonlara ve TV'ye) açıklanıyor.
+    const questionIndex = room.current_question_index ?? 0;
+    const correctOption = answerKeyRef.current[questionIndex];
+    if (!correctOption) {
+      console.error("[HostQuizDisplay] Cevap anahtarı yok, soru puanlanamadı:", questionIndex);
+      return;
+    }
+    await updateRoomStatus("question_reveal", {
+      quiz_reveal: { index: questionIndex, option: correctOption },
+    });
 
     // Calculate vote distribution
     const stats: VoteStats = { A: 0, B: 0, C: 0, D: 0, total: 0 };
@@ -529,7 +562,12 @@ export function HostQuizDisplay({
                       innerClassName="bg-[#05070d]/95"
                     >
                       <div className="p-10 text-center">
-                        <h1 className="text-3xl md:text-5xl font-black text-white leading-snug text-balance">{currentQuestion.text}</h1>
+                        <KineticText
+                          text={currentQuestion.text}
+                          as="h1"
+                          animation="pullUp"
+                          className="text-3xl md:text-5xl font-black text-white leading-snug text-balance"
+                        />
                       </div>
                     </BeamBorder>
 
@@ -547,22 +585,34 @@ export function HostQuizDisplay({
                       </TimerRing>
                     </div>
 
-                    {/* 4 Options Grid */}
+                    {/* 4 Options Grid with CardSpotlight */}
                     <div className="grid grid-cols-2 gap-6 w-full mb-6">
-                      {(["A", "B", "C", "D"] as const).map(opt => {
+                      {(["A", "B", "C", "D"] as const).map((opt, i) => {
                         const style = optionStyles[opt];
+                        const spotColor = opt === "A" ? "blue" : opt === "B" ? "purple" : opt === "C" ? "orange" : "pink";
                         return (
-                          <div 
-                            key={opt} 
-                            className={`bg-black/70 border-2 ${style.border} p-6 rounded-xl flex items-center gap-5 ${style.glow} backdrop-blur-sm`}
+                          <motion.div
+                            key={opt}
+                            initial={{ opacity: 0, y: 16 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 + i * 0.08 }}
+                            className="w-full"
                           >
-                            <div className={`w-14 h-14 ${style.bg} border-2 ${style.border} rounded-lg flex items-center justify-center text-3xl font-black ${style.text}`}>
-                              {opt}
-                            </div>
-                            <div className="text-2xl md:text-3xl font-bold text-white text-left flex-1 leading-tight">
-                              {currentQuestion.options[opt]}
-                            </div>
-                          </div>
+                            <CardSpotlight
+                              color={spotColor}
+                              ambient={true}
+                              radius="1rem"
+                              className={`bg-black/70 border-2 ${style.border} ${style.glow} backdrop-blur-sm`}
+                              innerClassName="p-6 flex items-center gap-5"
+                            >
+                              <div className={`w-14 h-14 ${style.bg} border-2 ${style.border} rounded-lg flex items-center justify-center text-3xl font-black ${style.text}`}>
+                                {opt}
+                              </div>
+                              <div className="text-2xl md:text-3xl font-bold text-white text-left flex-1 leading-tight">
+                                {currentQuestion.options[opt]}
+                              </div>
+                            </CardSpotlight>
+                          </motion.div>
                         );
                       })}
                     </div>
@@ -618,7 +668,10 @@ export function HostQuizDisplay({
                     {/* Options with Vote Breakdown Bars */}
                     <div className="grid grid-cols-2 gap-6 w-full mb-8">
                       {(["A", "B", "C", "D"] as const).map(opt => {
-                        const isCorrect = currentQuestion.correctOption === opt;
+                        // Cevaplar kilitlenene kadar şıklar nötr; sonra doğru öne çıkar.
+                        const revealed = revealedOption(room, currentQIndex);
+                        const isCorrect = revealed === opt;
+                        const isDimmed = revealed !== null && !isCorrect;
                         const count = voteStats[opt] || 0;
                         const percentage = voteStats.total > 0 ? Math.round((count / voteStats.total) * 100) : 0;
 
@@ -628,7 +681,7 @@ export function HostQuizDisplay({
                             className={`p-6 rounded-xl border-2 relative overflow-hidden flex flex-col justify-between transition-all duration-700 ${
                               isCorrect 
                                 ? "bg-green-500/25 border-green-500 shadow-[0_0_50px_rgba(34,197,94,0.7)] scale-[1.02]" 
-                                : "bg-black/50 border-white/10 opacity-40"
+                                : `bg-black/50 border-white/10 ${isDimmed ? "opacity-40" : ""}`
                             }`}
                           >
                             {/* Vote Percentage Fill Bar */}
@@ -683,12 +736,16 @@ export function HostQuizDisplay({
                       </motion.div>
                     )}
 
-                    <button
+                    <ShimmerButton
                       onClick={showLeaderboard}
-                      className="px-14 py-5 bg-white hover:bg-gray-100 text-black font-black text-2xl uppercase tracking-widest rounded-xl shadow-[0_0_40px_rgba(255,255,255,0.7)] transition-all transform hover:scale-105 active:scale-95 flex items-center gap-4"
+                      color="yellow"
+                      thickness={2}
+                      radius="1rem"
+                      innerClassName="px-14 py-5 bg-gradient-to-r from-amber-400 to-yellow-400 text-black font-black text-2xl uppercase tracking-widest flex items-center gap-4 shadow-[0_0_40px_rgba(251,191,36,0.5)]"
                     >
-                      {t("quiz.seeRanking")} <span>→</span>
-                    </button>
+                      <span>{t("quiz.seeRanking")}</span>
+                      <span className="text-2xl">➔</span>
+                    </ShimmerButton>
                   </>
                 )}
               </motion.div>
@@ -749,19 +806,23 @@ export function HostQuizDisplay({
                         </div>
 
                         <div className="text-3xl md:text-4xl font-black text-alaz-orange tabular-nums">
-                          {p.total_score} <span className="text-sm font-normal text-gray-400">{t("quiz.pts")}</span>
+                          <NumberTicker value={p.total_score} /> <span className="text-sm font-normal text-gray-400">{t("quiz.pts")}</span>
                         </div>
                       </motion.div>
                     );
                   })}
                 </div>
 
-                <button
+                <ShimmerButton
                   onClick={nextQuestion}
-                  className="px-14 py-5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-black text-2xl uppercase tracking-widest rounded-xl shadow-[0_0_40px_rgba(59,130,246,0.7)] transition-all transform hover:scale-105 active:scale-95"
+                  color="blue"
+                  thickness={2}
+                  radius="1rem"
+                  innerClassName="px-14 py-5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-black text-2xl uppercase tracking-widest flex items-center gap-4 shadow-[0_0_40px_rgba(59,130,246,0.6)]"
                 >
-                  {currentRoundNum >= totalRounds ? t("quiz.finishGame") : t("quiz.nextQuestion")}
-                </button>
+                  <span>{currentRoundNum >= totalRounds ? t("quiz.finishGame") : t("quiz.nextQuestion")}</span>
+                  <span className="text-2xl">➔</span>
+                </ShimmerButton>
               </motion.div>
             )}
 
