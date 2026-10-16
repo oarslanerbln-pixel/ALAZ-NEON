@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { useLocale } from "../../../hooks/useLocale";
+import { CardSpotlight, KineticText } from "../../../components/fx";
 
 interface Props {
   room: Room;
@@ -65,23 +66,20 @@ export function HostBombExplosion({ room, players, onComplete }: Props) {
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.2] mix-blend-overlay" />
 
         <motion.div
-          initial={{ scale: 0.5, opacity: 0, filter: "blur(20px)" }}
-          animate={{ scale: 1, opacity: 1, filter: "blur(0px)" }}
-          transition={{ delay: 0.5, duration: 1, type: "spring", bounce: 0.5 }}
-          className="text-center z-20 flex flex-col items-center relative"
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.4, duration: 0.8, type: "spring", bounce: 0.4 }}
+          className="text-center z-20 flex flex-col items-center relative w-full max-w-4xl px-4"
         >
-          <motion.h2 
-            animate={{ 
-              x: [0, -5, 5, -5, 5, 0],
-              opacity: [1, 0.8, 1, 0.8, 1] 
-            }}
-            transition={{ duration: 0.2, repeat: 10 }}
-            className="text-5xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-[#ff003c] uppercase tracking-tighter mb-4 drop-shadow-[0_0_30px_rgba(255,0,60,1)]"
-          >
-            {t("bomb.exploded")}
-          </motion.h2>
+          <div className="text-5xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-[#ff003c] uppercase tracking-tighter mb-4 drop-shadow-[0_0_30px_rgba(255,0,60,1)]">
+            <KineticText text={t("bomb.exploded")} by="character" stagger={0.03} />
+          </div>
           
-          <div className="bg-black/60 border border-[#ff003c]/40 backdrop-blur-2xl p-12 mt-8 rounded-[3rem] shadow-[0_0_100px_rgba(255,0,60,0.3)] relative">
+          <CardSpotlight 
+            tone="pink" 
+            ambient={true} 
+            className="w-full bg-black/70 border-2 border-[#ff003c]/40 backdrop-blur-2xl p-10 md:p-14 mt-6 rounded-[3rem] shadow-[0_0_100px_rgba(255,0,60,0.3)] relative"
+          >
             {/* Cyberpunk corner cuts */}
             <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-[#ff003c]" />
             <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-[#ff003c]" />
@@ -95,9 +93,9 @@ export function HostBombExplosion({ room, players, onComplete }: Props) {
               {Array.from({ length: 3 }).map((_, i) => (
                 <motion.div
                   key={i}
-                  initial={i === currentLives ? { scale: 1, opacity: 1, filter: "brightness(1)" } : false}
-                  animate={i === currentLives ? { scale: 1.5, opacity: 0, filter: "brightness(2) blur(10px)" } : false}
-                  transition={{ delay: 1.5, duration: 1, ease: "easeOut" }}
+                  initial={i === currentLives ? { scale: 1, opacity: 1 } : false}
+                  animate={i === currentLives ? { scale: [1, 1.6, 0], opacity: [1, 1, 0] } : false}
+                  transition={{ delay: 1.5, duration: 0.9, ease: "easeOut" }}
                 >
                   <svg 
                     xmlns="http://www.w3.org/2000/svg" 
@@ -129,7 +127,7 @@ export function HostBombExplosion({ room, players, onComplete }: Props) {
                 </p>
               </motion.div>
             )}
-          </div>
+          </CardSpotlight>
         </motion.div>
       </motion.div>
     </div>

@@ -7,6 +7,7 @@ import { NeonIcon } from "../../../components/NeonIcon";
 import type { GameType, Room } from "../../../types/database";
 import type { TranslationKey } from "../../../lib/i18n";
 import { X, Play, Check, Clock, RotateCcw, HelpCircle, Heart, Eye, Users } from "lucide-react";
+import { ShimmerButton } from "../../../components/fx";
 
 interface Props {
   isOpen: boolean;
@@ -840,17 +841,15 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
             >
               {t("gameSettings.cancel")}
             </button>
-            <button
+            <ShimmerButton
+              color={meta.color === "#ff5500" ? "orange" : meta.color === "#00e5ff" ? "blue" : meta.color === "#ff003c" ? "pink" : "purple"}
               onClick={handleStartGame}
-              className="flex-[2] py-4 sm:py-4.5 px-8 rounded-2xl font-black text-sm sm:text-base uppercase tracking-widest text-black transition-all shadow-2xl flex items-center justify-center gap-3 active:scale-95 cursor-pointer"
-              style={{
-                backgroundColor: meta.color,
-                boxShadow: `0 0 35px ${meta.glow}`
-              }}
+              className="flex-[2] rounded-2xl"
+              innerClassName="!bg-white !text-black font-black text-sm sm:text-base uppercase tracking-widest py-4 sm:py-4.5 px-8 flex items-center justify-center gap-3 shadow-2xl"
             >
               <Play className="w-5 h-5 fill-black text-black" />
               <span>{t("gameSettings.startSession")}</span>
-            </button>
+            </ShimmerButton>
           </div>
         </motion.div>
       </div>

@@ -25,6 +25,9 @@ import { EN_WORDS } from "../data/wordlists/en";
  * ekranında her cevap tek tıkla onaylanabiliyor.
  */
 
+import { foldForLookup } from "./stringUtils";
+export { foldForLookup };
+
 export type AnswerLocale = "tr" | "de" | "en";
 
 export type AnswerJudgement =
@@ -34,30 +37,7 @@ export type AnswerJudgement =
   /** Yazım hatası; kısmi puan alır. `suggestion` host'a gösterilir. */
   | { kind: "typo"; suggestion: string };
 
-/**
- * Sözlük araması için harf katlama: küçük harfe indirir ve aksanları
- * düşürür.
- *
- * Aksanları düşürmek bilinçli: telefon klavyesinde umlaut/şapka atlamak çok
- * yaygın ve bunu "yazım hatası" saymak misafiri haksız yere cezalandırırdı.
- * "Vogel" ile "Vögel" burada aynı anahtara düşüyor, ikisi de tam puan alıyor;
- * ama "Vgel" (eksik HARF) hâlâ farklı bir anahtar, yani yakalanıyor.
- *
- * Dikkat: dil tespitindeki karakter sinyali bu katlamadan ÖNCE, ham kelime
- * üzerinde çalışmak zorunda — aksi hâlde "ğ"yi düşürüp kanıtı yok ederdik.
- */
-export function foldForLookup(word: string): string {
-  return word
-    .trim()
-    .replace(/İ/g, "i")
-    .replace(/I/g, "i")
-    .replace(/ı/g, "i")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .replace(/ß/g, "ss")
-    .replace(/[^\p{L}\p{N}]/gu, "");
-}
+
 
 const DICTIONARIES: Record<AnswerLocale, ReadonlySet<string>> = {
   de: new Set(DE_WORDS.map(foldForLookup)),
@@ -125,7 +105,19 @@ function maxEdits(length: number): number {
 function nearestDictionaryWord(folded: string, locale: AnswerLocale): string | null {
   const limit = maxEdits(folded.length);
   if (limit === 0) return null;
+
+  // Eğer kelime sözlükteki bilinen bir kökten türemişse (çoğul veya çekim eki:
+  // "kedi" → "kediler", "Hund" → "Hunde", "Katze" → "Katzen", "dog" → "dogs"),
+  // bu bir yazım hatası değildir; başka bir kelimeye benzetilip puan kırpılmamalıdır.
+  for (let len = folded.length - 1; len >= 3; len--) {
+    const prefix = folded.slice(0, len);
+    if (DICTIONARIES[locale].has(prefix)) {
+      return null;
+    }
+  }
+
   let best: string | null = null;
+
   let bestDistance = limit + 1;
   for (const candidate of DICTIONARIES[locale]) {
     // Uzunluk farkı sınırı aşıyorsa mesafeyi hesaplamaya gerek yok.
@@ -232,3 +224,5 @@ export function judgeAnswer(
 
   return { kind: "ok" };
 }
+
+

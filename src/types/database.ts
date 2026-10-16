@@ -283,6 +283,10 @@ export interface AnswerBreakdown {
   isForeign?: boolean;
   /** Tespit edilen dil ("tr" | "de" | "en"), host'a gosterilmek uzere. */
   foreignLanguage?: string;
+  /** Yanlış kategori (ör. Eşya/Gegenstand'a Irrtum gibi soyut kavram yazılması) — puan almaz. */
+  isWrongCategory?: boolean;
+  /** Red gerekçesi kodu (örn. "abstractNotObject", "animalNotObject") */
+  wrongCategoryReason?: string;
   /** Yazim hatasi — tam degil KISMI puan alir. */
   isTypo?: boolean;
   /** Sozlukteki en yakin karsilik; host'a "bunu mu demek istedi" diye gosterilir. */

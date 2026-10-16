@@ -23,6 +23,7 @@ import { useVenue } from "../../../contexts/VenueContextCore";
 import { AuroraBackdrop } from "../../../components/fx/AuroraBackdrop";
 import { BeamBorder } from "../../../components/fx/BeamBorder";
 import { GridPattern } from "../../../components/fx/GridPattern";
+import { NumberTicker, ShimmerButton } from "../../../components/fx";
 import { NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
 import { NightFinale } from "../views/NightFinale";
 import { nightStandings, rankDeltas } from "../../../lib/nightLeague";
@@ -348,10 +349,16 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                   {t("dashboard.joinBody")}
                 </p>
 
-                {/* Odanın öbür ucundan okunabilsin: 140 px küçüktü. */}
-                <div className="bg-white p-4 rounded-2xl shadow-[0_0_40px_rgba(255,255,255,0.15)] relative">
-                  <QRCodeSVG value={joinUrl} size={210} bgColor="#ffffff" fgColor="#000000" level="H" marginSize={1} />
-                </div>
+                {/* Odanın öbür ucundan okunabilsin: BeamBorder ile vurgulu QR */}
+                <BeamBorder
+                  rgb="255,85,0"
+                  duration={6}
+                  thickness={2}
+                  radius="1.25rem"
+                  innerClassName="bg-white p-3.5 shadow-[0_0_40px_rgba(255,85,0,0.2)] flex items-center justify-center"
+                >
+                  <QRCodeSVG value={joinUrl} size={200} bgColor="#ffffff" fgColor="#000000" level="H" marginSize={1} />
+                </BeamBorder>
 
                 <div className="mt-5 flex flex-col items-center">
                   <span className="text-white/40 text-[11px] uppercase tracking-[0.3em] font-bold mb-2">{t("hostHeader.roomCode")}</span>
@@ -384,12 +391,15 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                 </h3>
                 {/* Gece puanı dağıtılmışsa finale geçilebilir (bkz. NightFinale). */}
                 {players.some((p) => (p.night_score ?? 0) > 0) && (
-                  <button
+                  <ShimmerButton
                     onClick={() => setShowFinale(true)}
-                    className="rounded-full border border-amber-300/40 bg-amber-300/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200 transition-colors hover:bg-amber-300/20"
+                    color="yellow"
+                    thickness={1.5}
+                    radius="9999px"
+                    innerClassName="px-3 py-1 bg-amber-300/15 text-amber-200 text-[11px] font-black uppercase tracking-[0.2em]"
                   >
                     🏆 {t("finale.open")}
-                  </button>
+                  </ShimmerButton>
                 )}
               </div>
               <div className="flex-1 overflow-y-auto pr-2 space-y-2">
@@ -419,7 +429,9 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                           {deltas[p.id] > 0 ? "▲" : "▼"}{Math.abs(deltas[p.id])}
                         </motion.span>
                       )}
-                      <span className="text-alaz-orange font-mono text-sm tabular-nums">{t("dashboard.pointsSuffix", p.night_score || 0)}</span>
+                      <span className="text-alaz-orange font-mono text-sm tabular-nums">
+                        <NumberTicker value={p.night_score || 0} suffix={` ${t("dashboard.pointsSuffix", "").trim()}`} className="text-alaz-orange font-mono text-sm" />
+                      </span>
                     </motion.div>
                   ))
                 )}

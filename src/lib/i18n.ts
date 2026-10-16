@@ -847,6 +847,107 @@ const translations = {
   "lang.de": { tr: "Almanca", de: "Deutsch", en: "German" },
   "lang.en": { tr: "İngilizce", de: "Englisch", en: "English" },
   "review.jokerPenalty": { tr: "-10 PUAN CEZASI", de: "-10 PUNKTE STRAFE", en: "-10 POINT PENALTY" },
+  "review.autoRejectWrongCategory": { tr: "YANLIŞ KATEGORİ", de: "FALSCHE KATEGORIE", en: "WRONG CATEGORY" },
+  "review.categoryReject.abstractNotObject": {
+    tr: "SOYUT KAVRAM (EŞYA DEĞİL)",
+    de: "ABSTRAKT (KEIN GEGENSTAND)",
+    en: "ABSTRACT (NOT AN OBJECT)",
+  },
+  "review.categoryReject.animalNotObject": {
+    tr: "HAYVAN (EŞYA DEĞİL)",
+    de: "TIER (KEIN GEGENSTAND)",
+    en: "ANIMAL (NOT AN OBJECT)",
+  },
+  "review.categoryReject.placeNotObject": {
+    tr: "ŞEHİR/ÜLKE (EŞYA DEĞİL)",
+    de: "ORT / STADT (KEIN GEGENSTAND)",
+    en: "PLACE / CITY (NOT AN OBJECT)",
+  },
+  "review.categoryReject.objectNotAnimal": {
+    tr: "EŞYA (HAYVAN DEĞİL)",
+    de: "GEGENSTAND (KEIN TIER)",
+    en: "OBJECT (NOT AN ANIMAL)",
+  },
+  "review.categoryReject.abstractNotAnimal": {
+    tr: "SOYUT KAVRAM (HAYVAN DEĞİL)",
+    de: "ABSTRAKT (KEIN TIER)",
+    en: "ABSTRACT (NOT AN ANIMAL)",
+  },
+  "review.categoryReject.placeNotAnimal": {
+    tr: "ŞEHİR/ÜLKE (HAYVAN DEĞİL)",
+    de: "ORT / STADT (KEIN TIER)",
+    en: "PLACE / CITY (NOT AN ANIMAL)",
+  },
+  "review.categoryReject.countryNotCity": {
+    tr: "ÜLKE (ŞEHİR DEĞİL)",
+    de: "LAND (KEINE STADT)",
+    en: "COUNTRY (NOT A CITY)",
+  },
+  "review.categoryReject.animalNotCity": {
+    tr: "HAYVAN (ŞEHİR DEĞİL)",
+    de: "TIER (KEINE STADT)",
+    en: "ANIMAL (NOT A CITY)",
+  },
+  "review.categoryReject.objectNotCity": {
+    tr: "EŞYA (ŞEHİR DEĞİL)",
+    de: "GEGENSTAND (KEINE STADT)",
+    en: "OBJECT (NOT A CITY)",
+  },
+  "review.categoryReject.abstractNotCity": {
+    tr: "SOYUT KAVRAM (ŞEHİR DEĞİL)",
+    de: "ABSTRAKT (KEINE STADT)",
+    en: "ABSTRACT (NOT A CITY)",
+  },
+  "review.categoryReject.cityNotCountry": {
+    tr: "ŞEHİR (ÜLKE DEĞİL)",
+    de: "STADT (KEIN LAND)",
+    en: "CITY (NOT A COUNTRY)",
+  },
+  "review.categoryReject.animalNotCountry": {
+    tr: "HAYVAN (ÜLKE DEĞİL)",
+    de: "TIER (KEIN LAND)",
+    en: "ANIMAL (NOT A COUNTRY)",
+  },
+  "review.categoryReject.objectNotCountry": {
+    tr: "EŞYA (ÜLKE DEĞİL)",
+    de: "GEGENSTAND (KEIN LAND)",
+    en: "OBJECT (NOT A COUNTRY)",
+  },
+  "review.categoryReject.abstractNotCountry": {
+    tr: "SOYUT KAVRAM (ÜLKE DEĞİL)",
+    de: "ABSTRAKT (KEIN LAND)",
+    en: "ABSTRACT (NOT A COUNTRY)",
+  },
+  "review.categoryReject.animalNotPlant": {
+    tr: "HAYVAN (BİTKİ DEĞİL)",
+    de: "TIER (KEINE PFLANZE)",
+    en: "ANIMAL (NOT A PLANT)",
+  },
+  "review.categoryReject.objectNotPlant": {
+    tr: "EŞYA (BİTKİ DEĞİL)",
+    de: "GEGENSTAND (KEINE PFLANZE)",
+    en: "OBJECT (NOT A PLANT)",
+  },
+  "review.categoryReject.abstractNotPlant": {
+    tr: "SOYUT KAVRAM (BİTKİ DEĞİL)",
+    de: "ABSTRAKT (KEINE PFLANZE)",
+    en: "ABSTRACT (NOT A PLANT)",
+  },
+  "review.categoryReject.objectNotName": {
+    tr: "EŞYA (KİŞİ ADI DEĞİL)",
+    de: "GEGENSTAND (KEIN NAME)",
+    en: "OBJECT (NOT A PERSON NAME)",
+  },
+  "review.categoryReject.abstractNotName": {
+    tr: "SOYUT KAVRAM (KİŞİ ADI DEĞİL)",
+    de: "ABSTRAKT (KEIN NAME)",
+    en: "ABSTRACT (NOT A PERSON NAME)",
+  },
+  "review.categoryReject.genericWrongCategory": {
+    tr: "YANLIŞ KATEGORİ",
+    de: "FALSCHE KATEGORIE",
+    en: "WRONG CATEGORY",
+  },
 
   // ═══════════════════════════════════════════
   // HOST HEADER / LOBBY EXTRAS

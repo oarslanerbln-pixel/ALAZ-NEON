@@ -7,6 +7,7 @@ import { getCategoryPresets } from "../../../lib/categoryPresets";
 import { upperTL } from "../../../lib/stringUtils";
 import { Users, QrCode, Play, Clock, X } from "lucide-react";
 import type { Player } from "../../../types/database";
+import { BeamBorder, CardSpotlight, KineticText, NumberTicker, ShimmerButton } from "../../../components/fx";
 
 const CAFE_IMAGES = [
   "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=1920",
@@ -227,17 +228,25 @@ export function HostLobby({
                   LOBİ BEKLEME SALONU
                 </span>
               </div>
-              <h2 className="text-white text-3xl md:text-5xl font-black tracking-tight uppercase font-sans">
-                {t("lobby.title")}
-              </h2>
+              <KineticText
+                text={t("lobby.title")}
+                as="h2"
+                animation="pullUp"
+                className="text-white text-3xl md:text-5xl font-black tracking-tight uppercase font-sans"
+              />
               <p className="text-gray-400 text-sm md:text-base max-w-lg leading-relaxed font-medium mt-2">
                 {t("lobby.subtitle", room?.total_rounds || 3)}
               </p>
             </div>
 
             {/* Room Code & QR Showcase Card */}
-            <div className="flex flex-wrap items-center gap-6 p-6 bg-black/60 rounded-3xl border border-white/15 shadow-2xl">
-              
+            <CardSpotlight
+              color="orange"
+              ambient={true}
+              radius="1.5rem"
+              className="bg-black/60 shadow-2xl"
+              innerClassName="p-6 flex flex-wrap items-center gap-6"
+            >
               {/* Room Code */}
               <div className="flex-1 min-w-[200px]">
                 <span className="text-gray-400 uppercase tracking-[0.25em] text-[10px] font-mono font-bold block mb-2">
@@ -252,26 +261,32 @@ export function HostLobby({
                 </div>
               </div>
 
-              {/* QR Code Container with Target Brackets */}
+              {/* QR Code Container with BeamBorder */}
               {room?.code && (
-                <div className="relative p-4 bg-white rounded-2xl shadow-[0_0_30px_rgba(255,255,255,0.2)] shrink-0">
+                <BeamBorder
+                  rgb="255,85,0"
+                  thickness={2}
+                  radius="1.25rem"
+                  duration={5}
+                  innerClassName="bg-white p-3.5 shadow-[0_0_30px_rgba(255,85,0,0.25)] flex items-center justify-center shrink-0"
+                >
                   <QRCodeSVG
                     value={`${window.location.protocol}//${(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && typeof __LOCAL_IP__ !== 'undefined' ? __LOCAL_IP__ + (window.location.port ? ':' + window.location.port : '') : window.location.host}/join?code=${room.code}`}
-                    size={160}
+                    size={155}
                     bgColor="#ffffff"
                     fgColor="#000000"
                     level="H"
                     marginSize={0}
                   />
-                </div>
+                </BeamBorder>
               )}
-            </div>
+            </CardSpotlight>
 
             {/* Connected Player Count summary */}
             <div className="flex items-center gap-4 text-sm text-gray-300 font-medium">
               <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-xl">
                 <Users className="w-4 h-4 text-emerald-400" />
-                <span className="font-mono font-bold text-white">{players.length}</span>
+                <NumberTicker value={players.length} className="font-mono font-bold text-white text-sm" />
                 <span className="text-xs text-gray-400">Oyuncu Bağlandı</span>
               </div>
             </div>
@@ -379,11 +394,14 @@ export function HostLobby({
             />
           </div>
 
-          <h3 className="text-6xl md:text-7xl font-black text-white tracking-tight font-mono mb-2 drop-shadow-md">
-            {room?.game_mode === "team"
-              ? Array.from(new Set(players.map((p) => p.team_name))).filter(Boolean).length
-              : players.length}
-          </h3>
+          <div className="text-6xl md:text-7xl font-black text-white tracking-tight font-mono mb-2 drop-shadow-md">
+            <NumberTicker
+              value={room?.game_mode === "team"
+                ? Array.from(new Set(players.map((p) => p.team_name))).filter(Boolean).length
+                : players.length}
+              className="text-6xl md:text-7xl font-black text-white font-mono"
+            />
+          </div>
           
           <p className="text-gray-400 text-xs font-mono font-bold uppercase tracking-[0.25em] bg-white/5 border border-white/10 px-4 py-1.5 rounded-full inline-block">
             {room?.game_mode === "team" ? t("lobby.teamReady") : t("lobby.playerReady")}
@@ -392,18 +410,22 @@ export function HostLobby({
 
         {/* Start Button & Timer Triggers */}
         <div className="mt-8 pt-6 border-t border-white/10 relative z-10 space-y-4">
-          <button
+          <ShimmerButton
             onClick={onStartGame}
             disabled={!canStart}
-            className={`w-full py-5 rounded-2xl font-black uppercase tracking-[0.25em] text-sm transition-all relative overflow-hidden flex items-center justify-center gap-3 active:scale-95 ${
+            color="orange"
+            thickness={2}
+            radius="1rem"
+            className="w-full"
+            innerClassName={`w-full py-5 rounded-2xl font-black uppercase tracking-[0.25em] text-sm flex items-center justify-center gap-3 ${
               !canStart
-                ? "bg-white/5 text-gray-500 border border-white/10 cursor-not-allowed"
-                : "bg-alaz-orange text-black border border-alaz-orange shadow-[0_0_35px_rgba(255,85,0,0.5)] hover:shadow-[0_0_55px_rgba(255,85,0,0.7)] hover:scale-[1.02]"
+                ? "bg-white/5 text-gray-500 cursor-not-allowed"
+                : "bg-alaz-orange text-black font-black"
             }`}
           >
             <Play className="w-4 h-4 fill-current" />
             <span>{t("lobby.startGame")}</span>
-          </button>
+          </ShimmerButton>
           
           {/* Quick Timers */}
           <div className="flex gap-2">

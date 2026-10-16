@@ -16,6 +16,7 @@ import type { Answer } from "../../../types/database";
 import { HostQuizIntro } from "./views/HostQuizIntro";
 import { TimerRing } from "../../../components/TimerRing";
 import { BeamBorder } from "../../../components/fx/BeamBorder";
+import { CardSpotlight, KineticText, NumberTicker, ShimmerButton } from "../../../components/fx";
 import { HostHeader } from "../components/HostHeader";
 import { HostLobby } from "../views/HostLobby";
 import { HostTutorial } from "../components/HostTutorial";
@@ -561,7 +562,12 @@ export function HostQuizDisplay({
                       innerClassName="bg-[#05070d]/95"
                     >
                       <div className="p-10 text-center">
-                        <h1 className="text-3xl md:text-5xl font-black text-white leading-snug text-balance">{currentQuestion.text}</h1>
+                        <KineticText
+                          text={currentQuestion.text}
+                          as="h1"
+                          animation="pullUp"
+                          className="text-3xl md:text-5xl font-black text-white leading-snug text-balance"
+                        />
                       </div>
                     </BeamBorder>
 
@@ -579,22 +585,34 @@ export function HostQuizDisplay({
                       </TimerRing>
                     </div>
 
-                    {/* 4 Options Grid */}
+                    {/* 4 Options Grid with CardSpotlight */}
                     <div className="grid grid-cols-2 gap-6 w-full mb-6">
-                      {(["A", "B", "C", "D"] as const).map(opt => {
+                      {(["A", "B", "C", "D"] as const).map((opt, i) => {
                         const style = optionStyles[opt];
+                        const spotColor = opt === "A" ? "blue" : opt === "B" ? "purple" : opt === "C" ? "orange" : "pink";
                         return (
-                          <div 
-                            key={opt} 
-                            className={`bg-black/70 border-2 ${style.border} p-6 rounded-xl flex items-center gap-5 ${style.glow} backdrop-blur-sm`}
+                          <motion.div
+                            key={opt}
+                            initial={{ opacity: 0, y: 16 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 + i * 0.08 }}
+                            className="w-full"
                           >
-                            <div className={`w-14 h-14 ${style.bg} border-2 ${style.border} rounded-lg flex items-center justify-center text-3xl font-black ${style.text}`}>
-                              {opt}
-                            </div>
-                            <div className="text-2xl md:text-3xl font-bold text-white text-left flex-1 leading-tight">
-                              {currentQuestion.options[opt]}
-                            </div>
-                          </div>
+                            <CardSpotlight
+                              color={spotColor}
+                              ambient={true}
+                              radius="1rem"
+                              className={`bg-black/70 border-2 ${style.border} ${style.glow} backdrop-blur-sm`}
+                              innerClassName="p-6 flex items-center gap-5"
+                            >
+                              <div className={`w-14 h-14 ${style.bg} border-2 ${style.border} rounded-lg flex items-center justify-center text-3xl font-black ${style.text}`}>
+                                {opt}
+                              </div>
+                              <div className="text-2xl md:text-3xl font-bold text-white text-left flex-1 leading-tight">
+                                {currentQuestion.options[opt]}
+                              </div>
+                            </CardSpotlight>
+                          </motion.div>
                         );
                       })}
                     </div>
@@ -718,12 +736,16 @@ export function HostQuizDisplay({
                       </motion.div>
                     )}
 
-                    <button
+                    <ShimmerButton
                       onClick={showLeaderboard}
-                      className="px-14 py-5 bg-white hover:bg-gray-100 text-black font-black text-2xl uppercase tracking-widest rounded-xl shadow-[0_0_40px_rgba(255,255,255,0.7)] transition-all transform hover:scale-105 active:scale-95 flex items-center gap-4"
+                      color="yellow"
+                      thickness={2}
+                      radius="1rem"
+                      innerClassName="px-14 py-5 bg-gradient-to-r from-amber-400 to-yellow-400 text-black font-black text-2xl uppercase tracking-widest flex items-center gap-4 shadow-[0_0_40px_rgba(251,191,36,0.5)]"
                     >
-                      {t("quiz.seeRanking")} <span>→</span>
-                    </button>
+                      <span>{t("quiz.seeRanking")}</span>
+                      <span className="text-2xl">➔</span>
+                    </ShimmerButton>
                   </>
                 )}
               </motion.div>
@@ -784,19 +806,23 @@ export function HostQuizDisplay({
                         </div>
 
                         <div className="text-3xl md:text-4xl font-black text-alaz-orange tabular-nums">
-                          {p.total_score} <span className="text-sm font-normal text-gray-400">{t("quiz.pts")}</span>
+                          <NumberTicker value={p.total_score} /> <span className="text-sm font-normal text-gray-400">{t("quiz.pts")}</span>
                         </div>
                       </motion.div>
                     );
                   })}
                 </div>
 
-                <button
+                <ShimmerButton
                   onClick={nextQuestion}
-                  className="px-14 py-5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-black text-2xl uppercase tracking-widest rounded-xl shadow-[0_0_40px_rgba(59,130,246,0.7)] transition-all transform hover:scale-105 active:scale-95"
+                  color="blue"
+                  thickness={2}
+                  radius="1rem"
+                  innerClassName="px-14 py-5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-black text-2xl uppercase tracking-widest flex items-center gap-4 shadow-[0_0_40px_rgba(59,130,246,0.6)]"
                 >
-                  {currentRoundNum >= totalRounds ? t("quiz.finishGame") : t("quiz.nextQuestion")}
-                </button>
+                  <span>{currentRoundNum >= totalRounds ? t("quiz.finishGame") : t("quiz.nextQuestion")}</span>
+                  <span className="text-2xl">➔</span>
+                </ShimmerButton>
               </motion.div>
             )}
 
