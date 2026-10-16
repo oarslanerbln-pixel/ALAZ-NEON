@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useLocale } from "../../../hooks/useLocale";
 import { ShareableRecapCard } from "../components/ShareableRecapCard";
 import { SoundManager, sounds } from "../../../lib/audio";
+import { playGermanVoiceover } from "../../../lib/germanVoiceover";
 import { ConfettiCanvas, type ConfettiCanvasRef } from "../../../components/ConfettiCanvas";
 import { DURATION, EASE, SPRING, STAGGER, TWEEN, listItem } from "../../../lib/motion";
 import { CardSpotlight, KineticText, NumberTicker, ShimmerButton } from "../../../components/fx";
@@ -138,12 +139,17 @@ export function HostPodium({
   const confettiRef = useRef<ConfettiCanvasRef>(null);
 
   useEffect(() => {
+    // Açılış Almanca anonsu
+    playGermanVoiceover("podium_reveal", 0.9);
+
     // Fanfar 1. sıranın yükselişiyle, konfeti oturduğu anda; ikinci dalga kutlamayı sürdürür
     const sfx = setTimeout(() => SoundManager.getInstance().playSFX(sounds.FANFARE, 0.7), T_FANFARE * 1000);
+    const champVo = setTimeout(() => playGermanVoiceover("champion_announce", 0.95), (T_FANFARE + 0.6) * 1000);
     const c1 = setTimeout(() => confettiRef.current?.celebrationCannon(), T_CONFETTI * 1000);
     const c2 = setTimeout(() => confettiRef.current?.celebrationCannon(), (T_CONFETTI + 0.9) * 1000);
     return () => {
       clearTimeout(sfx);
+      clearTimeout(champVo);
       clearTimeout(c1);
       clearTimeout(c2);
     };

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { motion, AnimatePresence } from "framer-motion";
 import { NeonIcon } from "../../../components/NeonIcon";
@@ -8,6 +8,7 @@ import { upperTL } from "../../../lib/stringUtils";
 import { Users, QrCode, Play, Clock, X } from "lucide-react";
 import type { Player } from "../../../types/database";
 import { BeamBorder, CardSpotlight, KineticText, NumberTicker, ShimmerButton } from "../../../components/fx";
+import { playGermanVoiceover } from "../../../lib/germanVoiceover";
 
 const CAFE_IMAGES = [
   "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=1920",
@@ -74,6 +75,21 @@ export function HostLobby({
   const [countdownEnd, setCountdownEnd] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [bgIndex, setBgIndex] = useState(0);
+  const prevPlayerCountRef = useRef(players.length);
+  const announcedLobby10Ref = useRef(false);
+
+  // 1. Lobi açılış anonsu
+  useEffect(() => {
+    playGermanVoiceover("welcome_arena", 0.8);
+  }, []);
+
+  // 2. Yeni oyuncu katıldığında anons
+  useEffect(() => {
+    if (players.length > prevPlayerCountRef.current && prevPlayerCountRef.current > 0) {
+      playGermanVoiceover("new_player_joined", 0.75);
+    }
+    prevPlayerCountRef.current = players.length;
+  }, [players.length]);
 
   // Background Slider for Countdown
   useEffect(() => {
@@ -86,15 +102,22 @@ export function HostLobby({
 
   useEffect(() => {
     if (!countdownEnd) return;
+    announcedLobby10Ref.current = false;
 
     const interval = setInterval(() => {
       const now = Date.now();
       const remaining = Math.max(0, Math.floor((countdownEnd - now) / 1000));
       setTimeLeft(remaining);
 
+      if (remaining === 10 && !announcedLobby10Ref.current) {
+        announcedLobby10Ref.current = true;
+        playGermanVoiceover("countdown_10s", 0.85);
+      }
+
       if (remaining === 0) {
         clearInterval(interval);
         setCountdownEnd(null);
+        playGermanVoiceover("game_starting", 0.9);
         onStartGame();
       }
     }, 100);

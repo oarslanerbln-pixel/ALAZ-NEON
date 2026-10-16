@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { useLocale } from "../../../hooks/useLocale";
 import { CardSpotlight, KineticText } from "../../../components/fx";
+import { playGermanVoiceover } from "../../../lib/germanVoiceover";
 
 interface Props {
   room: Room;
@@ -20,6 +21,9 @@ export function HostBombExplosion({ room, players, onComplete }: Props) {
   }, [onComplete]);
 
   useEffect(() => {
+    // Patlama Almanca seslendirmesi
+    playGermanVoiceover("bomb_exploded", 1.0);
+
     // 6 seconds explosion and result screen
     const t = setTimeout(() => {
       onCompleteRef.current();

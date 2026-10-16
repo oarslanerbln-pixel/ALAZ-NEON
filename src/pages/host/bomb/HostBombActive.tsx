@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { motion, useAnimation, AnimatePresence } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { SoundManager, sounds } from "../../../lib/audio";
+import { playGermanVoiceover } from "../../../lib/germanVoiceover";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { useLocale } from "../../../hooks/useLocale";
@@ -33,6 +34,16 @@ export function HostBombActive({ room, players, onExplode }: Props) {
   }, [onExplode]);
 
   const lastAppliedTargetIdRef = useRef<string | undefined>(targetPlayer?.id);
+  const introPlayedRef = useRef(false);
+  const announced10Ref = useRef(false);
+  const announced5Ref = useRef(false);
+
+  useEffect(() => {
+    if (!introPlayedRef.current) {
+      introPlayedRef.current = true;
+      playGermanVoiceover("bomb_intro", 0.9);
+    }
+  }, []);
 
   useEffect(() => {
     if (!room.round_end_time || !targetPlayer) return;
@@ -44,6 +55,15 @@ export function HostBombActive({ room, players, onExplode }: Props) {
       const now = Date.now();
       const remaining = Math.max(0, Math.ceil((room.round_end_time! - now) / 1000));
       setTimeLeft(remaining);
+
+      // Voiceovers at critical time thresholds
+      if (remaining === 10 && !announced10Ref.current) {
+        announced10Ref.current = true;
+        playGermanVoiceover("countdown_10s", 0.95);
+      } else if (remaining === 5 && !announced5Ref.current) {
+        announced5Ref.current = true;
+        playGermanVoiceover("hurry_up", 0.95);
+      }
 
       // Sound and intensity based on time left
       if (remaining <= 5 && remaining > 0) {
