@@ -4,7 +4,6 @@ import { QRCodeSVG } from "qrcode.react";
 import { useNavigate } from "react-router-dom";
 
 import { SoundManager, sounds } from "../../../lib/audio";
-import { NeonIcon } from "../../../components/NeonIcon";
 import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import type { Room, Player, GameType } from "../../../types/database";
@@ -23,7 +22,7 @@ import { useVenue } from "../../../contexts/VenueContextCore";
 import { AuroraBackdrop } from "../../../components/fx/AuroraBackdrop";
 import { BeamBorder } from "../../../components/fx/BeamBorder";
 import { GridPattern } from "../../../components/fx/GridPattern";
-import { NumberTicker, ShimmerButton } from "../../../components/fx";
+import { NumberTicker, ShimmerButton, GameAnimatedLogo } from "../../../components/fx";
 import { NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
 import { NightFinale } from "../views/NightFinale";
 import { nightStandings, rankDeltas } from "../../../lib/nightLeague";
@@ -479,38 +478,68 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                           >
                           <button
                             onClick={() => handleStartGame(game.id)}
-                            className="w-full h-full relative group overflow-hidden rounded-[calc(2rem-1.5px)] p-10 text-left transition-all duration-500"
+                            className="w-full h-full relative group overflow-hidden rounded-[calc(2rem-1.5px)] p-8 sm:p-10 text-left transition-all duration-500"
                           >
-                            {/* Devasa Filigran İkon */}
-                            <div className="absolute -right-10 -bottom-10 opacity-[0.03] group-hover:opacity-10 group-hover:scale-110 transition-all duration-1000 pointer-events-none rotate-12">
-                              <NeonIcon type={game.icon} color={game.iconColor} className="w-96 h-96" />
+                            {/* Devasa Filigran Animasyonlu Logo */}
+                            <div className="absolute -right-12 -bottom-12 opacity-[0.05] group-hover:opacity-15 transition-all duration-1000 pointer-events-none scale-150 rotate-12">
+                              <GameAnimatedLogo game={game.id} size="watermark" glow={false} />
                             </div>
 
                             {/* Arka Plan Glow */}
-                            <div className={`absolute -right-20 -top-20 w-64 h-64 ${game.bgAccent} rounded-full blur-[80px] ${game.hoverBgAccent} transition-colors duration-700 pointer-events-none`} />
-                            <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none" />
+                            <div className={`absolute -right-20 -top-20 w-72 h-72 ${game.bgAccent} rounded-full blur-[90px] ${game.hoverBgAccent} transition-colors duration-700 pointer-events-none`} />
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/[0.04] to-transparent pointer-events-none" />
                             
-                            <div className="relative z-10 flex flex-col h-full justify-between">
-                              <div>
-                                <div className="flex items-center gap-4 mb-6">
-                                  <div className={`w-16 h-16 ${game.iconAccent} border-[1.5px] rounded-2xl flex items-center justify-center group-hover:rotate-12 group-hover:scale-110 transition-all duration-500 shadow-xl`}>
-                                    <NeonIcon type={game.icon} color={game.iconColor} className="w-8 h-8" />
+                            <div className="relative z-10 flex items-center justify-between h-full gap-6">
+                              {/* Sol Taraf: Kategori, Başlık, Açıklama, Başlat Butonu */}
+                              <div className="flex-1 flex flex-col justify-between h-full pr-2">
+                                <div>
+                                  <div className="flex items-center gap-4 mb-5">
+                                    <div className={`w-16 h-16 sm:w-20 sm:h-20 ${game.iconAccent} border-2 rounded-2xl flex items-center justify-center group-hover:scale-105 transition-all duration-500 shadow-xl backdrop-blur-md relative overflow-hidden shrink-0`}>
+                                      <div className="absolute inset-0 bg-gradient-to-br from-white/15 to-transparent pointer-events-none" />
+                                      <GameAnimatedLogo game={game.id} size="md" glow={true} className="w-12 h-12" />
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                      <span className="self-start rounded-full border border-white/15 bg-white/[0.08] px-4 py-1 text-xs font-black uppercase tracking-[0.25em] text-white/80">
+                                        {t(GAME_CATEGORY_KEY[game.category])}
+                                      </span>
+                                      <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-white/40 font-bold">
+                                        MOD {carouselIndex + 1} / {GAMES.length}
+                                      </span>
+                                    </div>
                                   </div>
-                                  <span className="rounded-full border border-white/15 bg-white/[0.06] px-4 py-1.5 text-xs font-black uppercase tracking-[0.25em] text-white/70">
-                                    {t(GAME_CATEGORY_KEY[game.category])}
-                                  </span>
+
+                                  <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-2 tracking-widest transition-colors uppercase leading-tight font-sans">
+                                    {game.titlePrefix} <span className={`text-transparent bg-clip-text bg-gradient-to-r ${game.gradientText}`}>{game.titleHighlight}</span>
+                                  </h3>
+                                  <p className="text-gray-300 text-sm sm:text-base md:text-lg leading-relaxed mt-3 max-w-xl font-medium">
+                                    {t(game.descKey)}
+                                  </p>
                                 </div>
-                                <h3 className="text-4xl sm:text-5xl font-black text-white mb-2 tracking-widest transition-colors uppercase">
-                                  {game.titlePrefix} <span className={`text-transparent bg-clip-text bg-gradient-to-r ${game.gradientText}`}>{game.titleHighlight}</span>
-                                </h3>
-                                <p className="text-gray-300 text-lg leading-relaxed mt-4 max-w-xl font-medium">
-                                  {t(game.descKey)}
-                                </p>
+                                
+                                <div className="mt-6 flex items-center gap-4 text-white text-xs sm:text-sm font-black tracking-[0.25em] uppercase">
+                                  <div className="bg-white/10 px-6 sm:px-8 py-3 sm:py-3.5 rounded-2xl flex items-center gap-3 backdrop-blur-md border border-white/20 group-hover:bg-white/20 group-hover:border-white/40 transition-all shadow-lg group-hover:shadow-[0_0_25px_rgba(255,255,255,0.2)]">
+                                    <span>{t("dashboard.startSession", "SESSION STARTEN")}</span>
+                                    <span className="text-xl sm:text-2xl leading-none group-hover:translate-x-2 transition-transform">➔</span>
+                                  </div>
+                                </div>
                               </div>
-                              
-                              <div className="mt-8 flex items-center gap-4 text-white text-sm font-black tracking-[0.3em] uppercase opacity-70 group-hover:opacity-100 transition-all duration-300">
-                                <div className="bg-white/10 px-6 py-3 rounded-xl flex items-center gap-3 backdrop-blur-md border border-white/20 group-hover:bg-white/20 transition-colors">
-                                  {t("dashboard.startSession", "SESSION STARTEN")} <span className="text-xl leading-none group-hover:translate-x-3 transition-transform">→</span>
+
+                              {/* Sağ Taraf: Büyük Canlı Hareketli Logo Sahnesi (TV için WOW Etkisi) */}
+                              <div className="hidden sm:flex relative items-center justify-center w-48 h-48 md:w-60 md:h-60 shrink-0">
+                                <motion.div
+                                  className="absolute inset-0 rounded-full border border-white/10 opacity-50 pointer-events-none"
+                                  animate={{ rotate: 360, scale: [1, 1.06, 1] }}
+                                  transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+                                />
+                                <motion.div
+                                  className="absolute inset-4 rounded-full border border-dashed border-white/15 opacity-35 pointer-events-none"
+                                  animate={{ rotate: -360 }}
+                                  transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
+                                />
+                                <div className={`absolute inset-6 rounded-full ${game.bgAccent} blur-2xl opacity-60 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none`} />
+                                
+                                <div className="relative z-10 group-hover:scale-110 transition-transform duration-700">
+                                  <GameAnimatedLogo game={game.id} size="xl" glow={true} className="w-44 h-44 md:w-52 md:h-52 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]" />
                                 </div>
                               </div>
                             </div>

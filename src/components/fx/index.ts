@@ -6,3 +6,4 @@ export { KineticText, type KineticMode, type KineticAnimation } from "./KineticT
 export { NumberTicker } from "./NumberTicker";
 export { RevealText } from "./RevealText";
 export { ShimmerButton, type ShimmerColor } from "./ShimmerButton";
+export { GameAnimatedLogo } from "./GameAnimatedLogo";

@@ -5,6 +5,8 @@ import { ShimmerButton } from "../ShimmerButton";
 import { CardSpotlight } from "../CardSpotlight";
 import { KineticText } from "../KineticText";
 import { NumberTicker } from "../NumberTicker";
+import { GameAnimatedLogo } from "../GameAnimatedLogo";
+import type { GameType } from "../../../types/database";
 
 describe("FX Components", () => {
   describe("ShimmerButton", () => {
@@ -118,6 +120,40 @@ describe("FX Components", () => {
 
       expect(container.textContent).toContain("+");
       expect(container.textContent).toContain("Puan");
+    });
+  });
+
+  describe("GameAnimatedLogo", () => {
+    const ALL_GAMES: GameType[] = [
+      "scattegories",
+      "quiz",
+      "bomb",
+      "sensor",
+      "wheel",
+      "overload",
+      "echo",
+      "pulse",
+      "colors",
+      "vault",
+      "unity",
+      "bar",
+      "kablo",
+      "ayna",
+    ];
+
+    it.each(ALL_GAMES)("renders SVG emblem correctly for game '%s'", (game) => {
+      const { container } = render(
+        <GameAnimatedLogo game={game} size="md" glow={true} />
+      );
+      const svg = container.querySelector("svg");
+      expect(svg).toBeInTheDocument();
+    });
+
+    it("renders watermark mode without crashing", () => {
+      const { container } = render(
+        <GameAnimatedLogo game="quiz" size="watermark" glow={false} />
+      );
+      expect(container.querySelector("svg")).toBeInTheDocument();
     });
   });
 });

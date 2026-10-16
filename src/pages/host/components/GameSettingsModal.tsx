@@ -3,11 +3,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useLocale } from "../../../hooks/useLocale";
 import { getCategoryPresets } from "../../../lib/categoryPresets";
-import { NeonIcon } from "../../../components/NeonIcon";
 import type { GameType, Room } from "../../../types/database";
 import type { TranslationKey } from "../../../lib/i18n";
 import { X, Play, Check, Clock, RotateCcw, HelpCircle, Heart, Eye, Users } from "lucide-react";
-import { ShimmerButton } from "../../../components/fx";
+import { ShimmerButton, GameAnimatedLogo } from "../../../components/fx";
 
 interface Props {
   isOpen: boolean;
@@ -301,14 +300,14 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
           <div className="p-6 sm:p-8 pb-5 border-b border-white/15 flex items-center justify-between relative z-10 bg-black/40">
             <div className="flex items-center gap-4 min-w-0">
               <div 
-                className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center border-2 shrink-0 shadow-lg"
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center border-2 shrink-0 shadow-lg relative overflow-hidden backdrop-blur-md"
                 style={{ 
                   backgroundColor: `${meta.color}25`,
                   borderColor: meta.color,
                   boxShadow: `0 0 25px ${meta.color}50`
                 }}
               >
-                <NeonIcon type={meta.icon} color="white" className="w-8 h-8" />
+                {game && <GameAnimatedLogo game={game} size="md" glow={true} className="w-10 h-10 sm:w-12 sm:h-12" />}
               </div>
               <div className="min-w-0">
                 <span 
