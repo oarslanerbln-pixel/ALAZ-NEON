@@ -330,6 +330,7 @@ export function HostLobby({
                       <button
                         onClick={() => handleRemoveCategory(idx)}
                         className="text-gray-500 hover:text-red-400 transition-colors p-1"
+                        aria-label={t("hostLobby.removeCategory", { category: cat })}
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
