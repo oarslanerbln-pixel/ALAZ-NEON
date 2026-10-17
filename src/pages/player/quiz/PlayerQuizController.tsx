@@ -3,7 +3,6 @@ import { collection, addDoc, query, where, getDocs, limit, serverTimestamp } fro
 import { db } from "../../../lib/firebase";
 import { retentionExpiry } from "../../../lib/retention";
 import { AnimatePresence, motion } from "framer-motion";
-import { ParticleBackground } from "../../../components/ParticleBackground";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { haptics } from "../../../lib/haptics";
 import type { Room, Player } from "../../../types/database";
@@ -12,7 +11,7 @@ import { useLocale } from "../../../hooks/useLocale";
 import { gameTitle } from "../../../lib/gameCatalog";
 import { PlayerStageScreen } from "../components/PlayerStageScreen";
 import { QuizTimerBar } from "./QuizTimerBar";
-import { CardSpotlight, NumberTicker } from "../../../components/fx";
+import { NumberTicker } from "../../../components/fx";
 import { SPRING } from "../../../lib/motion";
 
 interface PlayerQuizControllerProps {
@@ -26,8 +25,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [gameState, setGameState] = useState(room.status);
   const [urgent, setUrgent] = useState(false);
-  // Sayfa bir sorunun ortasında açıldıysa o sorunun başlangıcını görmedik;
-  // süre çubuğu o soru için host'un bitiş anına güvenecek (bkz. lib/countdown).
+  void urgent;
   const [joinedMidQuestion] = useState(() => (room.status === "question_active" ? room.current_question_index ?? 0 : null));
 
   // Synchronous double-tap submission lock
@@ -115,41 +113,8 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
   const currentRound = room.current_round || (room.current_question_index ?? 0) + 1;
   const totalRounds = room.total_rounds || 5;
 
-  const optionColorConfig = {
-    A: {
-      border: "border-cyan-500",
-      bg: "bg-cyan-500/15",
-      activeBg: "bg-cyan-500",
-      glow: "shadow-[0_0_25px_rgba(6,182,212,0.6)]",
-      badge: "bg-cyan-500/20 text-cyan-400 border-cyan-500",
-    },
-    B: {
-      border: "border-pink-500",
-      bg: "bg-pink-500/15",
-      activeBg: "bg-pink-500",
-      glow: "shadow-[0_0_25px_rgba(236,72,153,0.6)]",
-      badge: "bg-pink-500/20 text-pink-400 border-pink-500",
-    },
-    C: {
-      border: "border-amber-400",
-      bg: "bg-amber-500/15",
-      activeBg: "bg-amber-400",
-      glow: "shadow-[0_0_25px_rgba(251,191,36,0.6)]",
-      badge: "bg-amber-500/20 text-amber-400 border-amber-400",
-    },
-    D: {
-      border: "border-emerald-500",
-      bg: "bg-emerald-500/15",
-      activeBg: "bg-emerald-500",
-      glow: "shadow-[0_0_25px_rgba(16,185,129,0.6)]",
-      badge: "bg-emerald-500/20 text-emerald-400 border-emerald-500",
-    },
-  };
-
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-4 min-h-screen bg-black text-white relative overflow-hidden select-none">
-      <ParticleBackground speedMultiplier={gameState === "question_active" && urgent ? 5 : 1} />
-
+    <div className="flex-1 flex flex-col items-center justify-between min-h-screen bg-[#07070d] text-white relative overflow-hidden select-none pb-6">
       {gameState === "question_active" && (
         <QuizTimerBar
           key={room.current_question_index ?? 0}
@@ -160,20 +125,21 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
         />
       )}
 
-      {/* Top Status Header */}
-      <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-20">
-        <div className="bg-black/70 border border-white/20 px-4 py-2 rounded-lg font-bold text-white flex items-center gap-2 backdrop-blur-md shadow-[0_0_15px_rgba(0,0,0,0.5)]">
-          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-          <span>{player.nickname}</span>
+      {/* Top Status Bar */}
+      <header className="w-full max-w-md mx-auto px-4 pt-4 pb-2 flex justify-between items-center z-20">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-xl">
+          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+          <span className="text-xs font-bold text-white/90 truncate max-w-[140px]">{player.nickname}</span>
         </div>
-        <div className="bg-black/70 border border-alaz-orange/50 px-4 py-2 rounded-lg font-black text-alaz-orange flex items-center gap-1.5 backdrop-blur-md shadow-[0_0_15px_rgba(255,77,0,0.3)]">
-          <span>⚡</span>
-          <span>{player.total_score}</span>
-          <span className="text-xs text-gray-400 font-normal">{t("quiz.pts")}</span>
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-alaz-orange/10 border border-alaz-orange/30 text-alaz-orange backdrop-blur-xl">
+          <span className="text-xs">⚡</span>
+          <span className="text-xs font-black font-mono">{player.total_score}</span>
+          <span className="text-[10px] text-white/40 uppercase">{t("quiz.pts", "PTS")}</span>
         </div>
-      </div>
+      </header>
 
-      <div className="relative z-10 w-full max-w-md pt-12 pb-6">
+      {/* Content Area */}
+      <div className="relative z-10 w-full max-w-md px-4 flex-1 flex flex-col justify-center">
         <AnimatePresence mode="wait">
           
           {/* LOBBY */}
@@ -208,74 +174,70 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
             </motion.div>
           )}
 
-          {/* ACTIVE QUESTION - 4 NEON TACTILE CARDS */}
+          {/* ACTIVE QUESTION - 4 ULTRA-CLEAN TACTILE GLASS CARDS */}
           {gameState === "question_active" && currentQ && (
             <motion.div
               key="active"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="w-full flex flex-col gap-3.5"
+              className="w-full flex flex-col gap-3"
             >
-              {/* Question preview & Category on player device with CardSpotlight */}
-              <CardSpotlight
-                color="blue"
-                ambient={true}
-                radius="1rem"
-                className="bg-black/70 border-white/15 mb-1 backdrop-blur-sm shadow-lg"
-                innerClassName="p-4 text-center"
-              >
+              {/* Question Preview Box */}
+              <div className="w-full bg-[#0d0d18]/95 border border-white/[0.09] rounded-2xl p-4 sm:p-5 shadow-2xl backdrop-blur-xl text-center mb-1">
                 {currentQ.category && (
-                  <span className="text-xs font-mono uppercase text-alaz-orange font-bold tracking-widest block mb-1">
+                  <span className="inline-block text-[10px] font-mono uppercase text-cyan-400 font-bold tracking-[0.2em] px-2.5 py-0.5 rounded-full bg-cyan-400/10 border border-cyan-400/20 mb-2">
                     {currentQ.category}
                   </span>
                 )}
-                <h3 className="text-base font-bold text-white leading-snug line-clamp-3">
+                <h3 className="text-base sm:text-lg font-bold text-white leading-relaxed line-clamp-3">
                   {currentQ.text}
                 </h3>
-              </CardSpotlight>
+              </div>
 
+              {/* 4 Obsidian Glass Options */}
               {(["A", "B", "C", "D"] as const).map(opt => {
                 const isSelected = selectedOption === opt;
-                const config = optionColorConfig[opt];
 
                 return (
                   <motion.button
                     key={opt}
-                    whileTap={{ scale: hasSubmitted ? 1 : 0.94 }}
+                    whileTap={{ scale: hasSubmitted ? 1 : 0.96 }}
                     transition={SPRING.stiff}
                     onClick={() => !hasSubmitted && handleSubmit(opt)}
                     disabled={hasSubmitted}
-                    className={`w-full p-4 rounded-xl border-2 transition-all duration-200 flex items-center gap-4 text-left relative overflow-hidden select-none active:scale-95 ${
-                      isSelected 
-                        ? `${config.activeBg} border-white text-black ${config.glow} scale-[1.02] shadow-[0_0_25px_rgba(255,255,255,0.4)]` 
-                        : `${config.bg} ${config.border} text-white hover:border-white/60 active:scale-95`
-                    } ${hasSubmitted && !isSelected ? "opacity-35 grayscale" : ""}`}
+                    className={`w-full p-4 rounded-2xl border transition-all duration-200 flex items-center gap-3.5 text-left relative overflow-hidden select-none ${
+                      isSelected
+                        ? "bg-white text-black border-white shadow-[0_0_35px_rgba(255,255,255,0.35)] scale-[1.02]"
+                        : "bg-[#0c0c16]/90 border-white/[0.08] text-white hover:border-white/20 active:scale-[0.98]"
+                    } ${hasSubmitted && !isSelected ? "opacity-25 grayscale-[50%]" : ""}`}
                   >
-                    <div className={`w-11 h-11 rounded-lg border flex items-center justify-center text-xl font-black shrink-0 ${
-                      isSelected ? "bg-black text-white border-black" : config.badge
+                    <div className={`w-10 h-10 rounded-xl border flex items-center justify-center text-sm font-black shrink-0 transition-colors ${
+                      isSelected
+                        ? "bg-black text-white border-black"
+                        : "bg-white/[0.05] border-white/10 text-white/80"
                     }`}>
                       {opt}
                     </div>
-                    <div className="text-lg font-bold flex-1 leading-snug">
+                    <div className="text-base sm:text-lg font-semibold flex-1 leading-snug">
                       {currentQ.options[opt]}
                     </div>
                     {isSelected && (
-                      <span className="text-xl font-black">🔒</span>
+                      <span className="text-base shrink-0">🔒</span>
                     )}
                   </motion.button>
                 );
               })}
 
               {hasSubmitted && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="text-center py-2 bg-blue-500/20 border border-blue-500/50 rounded-xl"
+                  className="text-center py-2.5 px-4 bg-white/[0.04] border border-white/10 rounded-xl mt-1"
                 >
-                  <p className="text-cyan-300 font-black text-sm tracking-wider uppercase flex items-center justify-center gap-2">
-                    <span className="animate-spin">⚡</span>
-                    {t("quiz.answerSaved")}
+                  <p className="text-white/70 font-mono text-xs tracking-wider uppercase flex items-center justify-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                    {t("quiz.answerSaved", "Cevabın Kaydedildi · Gözün Ekranda Olsun")}
                   </p>
                 </motion.div>
               )}
@@ -284,7 +246,6 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
 
           {/* QUESTION REVEAL SCREEN */}
           {gameState === "question_reveal" && currentQ && (() => {
-            // Doğru şık odada yok; host cevapları kilitleyince quiz_reveal ile açıklıyor.
             const revealed = revealedOption(room, room.current_question_index ?? 0);
             if (!revealed) {
               return (
@@ -295,7 +256,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
                   exit={{ opacity: 0 }}
                   className="text-center w-full py-10"
                 >
-                  <p className="text-white/70 font-black text-lg uppercase tracking-widest animate-pulse">
+                  <p className="text-white/70 font-black text-base uppercase tracking-widest animate-pulse">
                     {t("quiz.revealPending")}
                   </p>
                 </motion.div>
@@ -305,37 +266,31 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
             return (
               <motion.div
                 key="reveal"
-                initial={isCorrect ? { opacity: 0, scale: 0.85 } : { opacity: 0, x: -16 }}
-                animate={isCorrect ? { opacity: 1, scale: 1 } : { opacity: 1, x: [0, -10, 10, -8, 8, -4, 4, 0] }}
-                transition={isCorrect ? SPRING.bouncy : { duration: 0.5 }}
+                initial={isCorrect ? { opacity: 0, scale: 0.9 } : { opacity: 0, x: -12 }}
+                animate={isCorrect ? { opacity: 1, scale: 1 } : { opacity: 1, x: [0, -8, 8, -6, 6, 0] }}
+                transition={isCorrect ? SPRING.bouncy : { duration: 0.4 }}
                 exit={{ opacity: 0 }}
                 className="text-center w-full"
               >
-                <CardSpotlight
-                  color={isCorrect ? "green" : "pink"}
-                  ambient={true}
-                  radius="1.25rem"
-                  className={`border-2 mb-6 backdrop-blur-md ${
-                    isCorrect 
-                      ? "border-green-400 shadow-[0_0_50px_rgba(34,197,94,0.5)]" 
-                      : "border-red-500 shadow-[0_0_40px_rgba(239,68,68,0.4)]"
+                <div
+                  className={`rounded-2xl border p-6 backdrop-blur-xl transition-all shadow-2xl mb-4 ${
+                    isCorrect
+                      ? "bg-emerald-950/70 border-emerald-400/50 text-emerald-100 shadow-[0_0_40px_rgba(16,185,129,0.2)]"
+                      : "bg-rose-950/70 border-rose-500/50 text-rose-100 shadow-[0_0_40px_rgba(244,63,94,0.2)]"
                   }`}
-                  innerClassName={`p-8 ${isCorrect ? "bg-green-500/20" : "bg-red-500/20"}`}
                 >
-                  <div className="text-5xl mb-3">
-                    {isCorrect ? "🎯" : "💀"}
-                  </div>
-                  <h2 className={`text-2xl font-black uppercase tracking-wider mb-2 ${
-                    isCorrect ? "text-green-400" : "text-red-400"
+                  <div className="text-4xl mb-2">{isCorrect ? "🎯" : "💀"}</div>
+                  <h2 className={`text-xl font-black uppercase tracking-wider mb-2 ${
+                    isCorrect ? "text-emerald-300" : "text-rose-300"
                   }`}>
                     {isCorrect ? t("quiz.playerCorrect") : t("quiz.playerWrong")}
                   </h2>
-                  <p className="text-sm text-gray-300 font-medium">
+                  <p className="text-sm text-white/80 font-medium">
                     {t("quiz.correctAnswer")}: <strong className="text-white font-bold">{revealed} — {currentQ.options[revealed]}</strong>
                   </p>
-                </CardSpotlight>
+                </div>
 
-                <p className="text-gray-400 text-sm animate-pulse">
+                <p className="text-white/40 text-xs font-mono uppercase tracking-wider">
                   {t("quiz.followRankingOnScreen")}
                 </p>
               </motion.div>
@@ -382,6 +337,10 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
           )}
           
         </AnimatePresence>
+      </div>
+
+      <div className="w-full text-center py-2 text-[10px] font-mono text-white/20">
+        HENGAME QUIZ
       </div>
     </div>
   );

@@ -753,6 +753,8 @@ const translations = {
   "playerHeader.critical": { tr: "⚡ KRİTİK", de: "⚡ KRITISCH", en: "⚡ CRITICAL" },
   "playerHeader.active": { tr: "◉ AKTİF", de: "◉ AKTIV", en: "◉ ACTIVE" },
   "playerHeader.points": { tr: "PUAN", de: "PUNKTE", en: "POINTS" },
+  "playerHeader.round": { tr: "TUR", de: "RUNDE", en: "ROUND" },
+  "playerHeader.letter": { tr: "HARF", de: "BUCHSTABE", en: "LETTER" },
   // Ses düğmesi ikon-only: ekran okuyucu için erişilebilir ada ihtiyacı var.
   // Etiket eylemi anlatıyor ("sesi aç"), durumu değil — düğmeye basınca ne
   // olacağını söylemek, o anki durumu okumaktan daha yararlı.
