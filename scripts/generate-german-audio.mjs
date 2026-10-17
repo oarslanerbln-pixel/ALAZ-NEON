@@ -1,9 +1,11 @@
 /**
- * HENGAME (ALAZ-NEON) — Almanca Spiker & Anons Ses Paketi Üreticisi
+ * HENGAME (ALAZ-NEON) — Yüksek Enerjili Almanca Bar/Pub Spikeri Ses Paketi
  * 
- * Google Cloud Text-to-Speech (Neural2 / Studio) API kullanarak
- * TV Host ekranı için profesyonel Almanca anons ses dosyalarını
- * public/audio/de/ klasörüne .mp3 olarak kaydeder.
+ * Google Cloud Text-to-Speech (Studio / Neural2) API kullanarak
+ * TV Host ekranı için heyecan dolu, coşkulu ve akıcı Almanca anons
+ * ses dosyalarını public/audio/de/ klasörüne .mp3 olarak kaydeder.
+ * 
+ * "Hengame" kelimesi harf harf okunmaması için fonetik olarak biçimlendirilmiştir.
  */
 
 import fs from 'node:fs';
@@ -18,130 +20,130 @@ const __dirname = path.dirname(__filename);
 
 const OUTPUT_DIR = path.resolve(__dirname, '../public/audio/de');
 
-// Üretilecek Profesyonel Almanca Spiker Anonsları
+// Yüksek Enerjili Berlin Pub/Bar Sunucusu Anonsları (Heyecanlı, coşkulu, akıcı)
 export const GERMAN_ANNOUNCER_SCRIPTS = [
   // --- LOBI & GİRİŞ ---
   {
     id: "welcome_arena",
-    text: "Willkommen bei HENGAME! Scannt den QR-Code auf dem Bildschirm und tretet dem Spiel bei!",
-    voice: "de-DE-Neural2-B", // Güçlü, karizmatik erkek bar sunucusu
-    speakingRate: 1.05,
-    pitch: -0.5
+    ssml: "<speak>Willkommen bei <sub alias=\"Hengame\">Hengame</sub>! <break time=\"200ms\"/> Handy raus, QR-Code scannen und ab in die Arena!</speak>",
+    voice: "de-DE-Studio-B", // Karizmatik, canlı stüdyo erkek sunucu
+    speakingRate: 1.10,
+    pitch: 1.0
   },
   {
     id: "game_starting",
-    text: "Achtung alle zusammen! Das Spiel beginnt in Kürze. Macht euch bereit!",
-    voice: "de-DE-Neural2-B",
-    speakingRate: 1.05,
-    pitch: 0.0
+    ssml: "<speak>Achtung an alle! <break time=\"150ms\"/> Das Spiel startet jetzt! Macht euch bereit!</speak>",
+    voice: "de-DE-Studio-B",
+    speakingRate: 1.12,
+    pitch: 1.5
   },
   {
     id: "new_player_joined",
-    text: "Ein neuer Herausforderer betritt die Arena!",
-    voice: "de-DE-Neural2-F", // Dinamik, enerjik kadın sunucu
-    speakingRate: 1.1,
-    pitch: 0.5
+    ssml: "<speak>Ein neuer Herausforderer betritt die Arena! <break time=\"100ms\"/> Willkommen!</speak>",
+    voice: "de-DE-Studio-C", // Enerjik kadın sunucu
+    speakingRate: 1.15,
+    pitch: 1.5
   },
 
   // --- GERİ SAYIM & ACİLİYET ---
   {
     id: "countdown_10s",
-    text: "Noch zehn Sekunden! Beeilt euch!",
-    voice: "de-DE-Neural2-B",
-    speakingRate: 1.15,
-    pitch: 0.5
+    ssml: "<speak>Nur noch zehn Sekunden! <break time=\"150ms\"/> Jetzt noch mal Vollgas!</speak>",
+    voice: "de-DE-Studio-B",
+    speakingRate: 1.20,
+    pitch: 2.0
   },
   {
     id: "countdown_321",
-    text: "Drei, zwei, eins... Zeit ist um!",
-    voice: "de-DE-Neural2-B",
-    speakingRate: 1.1,
-    pitch: 0.0
+    ssml: "<speak>Drei! <break time=\"150ms\"/> Zwei! <break time=\"150ms\"/> Eins! <break time=\"150ms\"/> Vorbei!</speak>",
+    voice: "de-DE-Studio-B",
+    speakingRate: 1.18,
+    pitch: 2.0
   },
   {
     id: "hurry_up",
-    text: "Die Zeit läuft ab! Schnell antworten!",
-    voice: "de-DE-Neural2-F",
-    speakingRate: 1.2,
-    pitch: 0.5
+    ssml: "<speak>Schneller, schneller! <break time=\"100ms\"/> Die Zeit rennt davon!</speak>",
+    voice: "de-DE-Studio-C",
+    speakingRate: 1.22,
+    pitch: 2.0
   },
 
   // --- BOMBA MODU (BOMBE) ---
   {
     id: "bomb_intro",
-    text: "Achtung, Bombenalarm! Antwortet schnell und gebt die Bombe weiter!",
-    voice: "de-DE-Neural2-B",
-    speakingRate: 1.1,
-    pitch: -0.5
+    ssml: "<speak>Achtung, Bombenalarm! <break time=\"200ms\"/> Schnell antworten und das Ding sofort weitergeben!</speak>",
+    voice: "de-DE-Studio-B",
+    speakingRate: 1.15,
+    pitch: 1.5
   },
   {
     id: "bomb_tick_fast",
-    text: "Die Lunte brennt! Gleich knallt es!",
-    voice: "de-DE-Neural2-B",
-    speakingRate: 1.2,
-    pitch: 1.0
+    ssml: "<speak>Die Lunte brennt lichterloh! <break time=\"100ms\"/> Gleich knallt es!</speak>",
+    voice: "de-DE-Studio-B",
+    speakingRate: 1.22,
+    pitch: 2.5
   },
   {
     id: "bomb_exploded",
-    text: "Boom! Die Bombe ist explodiert! Du bist raus aus der Runde!",
-    voice: "de-DE-Neural2-B",
-    speakingRate: 1.1,
-    pitch: -1.0
+    ssml: "<speak>Booooom! <break time=\"200ms\"/> Die Bombe ist explodiert! Du bist leider raus!</speak>",
+    voice: "de-DE-Studio-B",
+    speakingRate: 1.15,
+    pitch: -0.5
   },
 
   // --- QUIZ & BİLGİ YARIŞMASI ---
   {
     id: "quiz_correct",
-    text: "Absolut richtig! Volle Punktzahl!",
-    voice: "de-DE-Neural2-F",
-    speakingRate: 1.1,
-    pitch: 1.0
+    ssml: "<speak>Bäääm! <break time=\"100ms\"/> Volltreffer! Perfekt beantwortet!</speak>",
+    voice: "de-DE-Studio-C",
+    speakingRate: 1.18,
+    pitch: 2.5
   },
   {
     id: "quiz_wrong",
-    text: "Leider falsch! Das war daneben!",
-    voice: "de-DE-Neural2-B",
-    speakingRate: 1.05,
+    ssml: "<speak>Oh nein, leider daneben! <break time=\"100ms\"/> Null Punkte!</speak>",
+    voice: "de-DE-Studio-B",
+    speakingRate: 1.10,
     pitch: -1.0
   },
   {
     id: "quiz_streak",
-    text: "Unglaubliche Serie! Nicht zu stoppen heute Abend!",
-    voice: "de-DE-Neural2-B",
-    speakingRate: 1.1,
-    pitch: 0.5
+    ssml: "<speak>Wahnsinn! <break time=\"150ms\"/> Was für eine Serie! Du bist heute Abend unschlagbar!</speak>",
+    voice: "de-DE-Studio-B",
+    speakingRate: 1.15,
+    pitch: 2.0
   },
 
   // --- NABIZ & SENSÖR MODU ---
   {
     id: "sensor_duel",
-    text: "Sensor-Duell! Wer hat die schnellsten Reflexe an der Bar?",
-    voice: "de-DE-Neural2-B",
-    speakingRate: 1.05,
-    pitch: 0.0
+    ssml: "<speak>Sensor-Duell! <break time=\"150ms\"/> Wer hat die schnellsten Reflexe an der ganzen Bar?</speak>",
+    voice: "de-DE-Studio-B",
+    speakingRate: 1.12,
+    pitch: 1.5
   },
 
   // --- PODYUM & KAZANANLAR ---
   {
     id: "podium_reveal",
-    text: "Und hier ist das offizielle Endergebnis des Abends!",
-    voice: "de-DE-Neural2-B",
-    speakingRate: 1.0,
-    pitch: 0.0
+    ssml: "<speak>Und hier kommt das große Finale! <break time=\"200ms\"/> Wer holt sich heute die Krone?</speak>",
+    voice: "de-DE-Studio-B",
+    speakingRate: 1.10,
+    pitch: 1.5
   },
   {
     id: "champion_announce",
-    text: "Applaus für den unangefochtenen Champion der Runde! Was für ein Spiel!",
-    voice: "de-DE-Neural2-B",
-    speakingRate: 1.05,
-    pitch: 0.5
+    ssml: "<speak>Riesenapplaus für den Champion der Runde! <break time=\"200ms\"/> Was für eine grandiose Show!</speak>",
+    voice: "de-DE-Studio-B",
+    speakingRate: 1.14,
+    pitch: 2.0
   },
   {
     id: "free_drink_reward",
-    text: "Herzlichen Glückwunsch! Hol dir deinen wohlverdienten Preis an der Bar ab!",
-    voice: "de-DE-Neural2-F",
-    speakingRate: 1.05,
-    pitch: 0.5
+    ssml: "<speak>Herzlichen Glückwunsch! <break time=\"150ms\"/> Hol dir deinen wohlverdienten Preis direkt an der Bar ab!</speak>",
+    voice: "de-DE-Studio-C",
+    speakingRate: 1.12,
+    pitch: 2.0
   }
 ];
 
@@ -153,18 +155,19 @@ async function getAuthToken() {
   return tok.access_token;
 }
 
-function synthesizeText(script, accessToken) {
+function synthesizeSpeech(script, accessToken) {
   return new Promise((resolve, reject) => {
+    const isSsml = Boolean(script.ssml);
     const postData = JSON.stringify({
-      input: { text: script.text },
+      input: isSsml ? { ssml: script.ssml } : { text: script.text },
       voice: {
         languageCode: "de-DE",
         name: script.voice
       },
       audioConfig: {
         audioEncoding: "MP3",
-        speakingRate: script.speakingRate,
-        pitch: script.pitch
+        speakingRate: script.speakingRate || 1.1,
+        pitch: script.pitch || 0.0
       }
     });
 
@@ -207,7 +210,7 @@ function synthesizeText(script, accessToken) {
 }
 
 async function main() {
-  console.log("🎙️ HENGAME Almanca Spiker Ses Paketi Üretimi Başlıyor...");
+  console.log("🎙️ HENGAME Yüksek Enerjili Almanca Spiker Ses Paketi Üretimi Başlıyor...");
   console.log(`📁 Hedef Klasör: ${OUTPUT_DIR}`);
 
   if (!fs.existsSync(OUTPUT_DIR)) {
@@ -216,13 +219,14 @@ async function main() {
 
   console.log("🔑 Google Cloud kimlik doğrulaması alınıyor...");
   const accessToken = await getAuthToken();
-  console.log("✅ Kimlik doğrulandı! Anonslar sentezleniyor...\n");
+  console.log("✅ Kimlik doğrulandı! Studio kalitesindeki anonslar sentezleniyor...\n");
 
   let successCount = 0;
   for (const script of GERMAN_ANNOUNCER_SCRIPTS) {
     try {
-      process.stdout.write(`⏳ Üretiliyor: [${script.id}] "${script.text.slice(0, 35)}..." `);
-      const res = await synthesizeText(script, accessToken);
+      const preview = (script.ssml || script.text).replace(/<[^>]+>/g, '').slice(0, 38);
+      process.stdout.write(`⏳ Üretiliyor: [${script.id}] "${preview}..." `);
+      const res = await synthesizeSpeech(script, accessToken);
       console.log(`✅ OK (${(res.size / 1024).toFixed(1)} KB)`);
       successCount++;
     } catch (err) {
@@ -231,7 +235,7 @@ async function main() {
     }
   }
 
-  console.log(`\n🎉 TAMAMLANDI! ${successCount}/${GERMAN_ANNOUNCER_SCRIPTS.length} Almanca anons başarıyla üretildi ve kaydedildi.`);
+  console.log(`\n🎉 TAMAMLANDI! ${successCount}/${GERMAN_ANNOUNCER_SCRIPTS.length} yüksek enerjili Almanca anons başarıyla üretildi ve kaydedildi.`);
 }
 
 main().catch(console.error);

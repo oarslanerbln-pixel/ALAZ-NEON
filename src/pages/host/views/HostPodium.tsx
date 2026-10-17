@@ -42,32 +42,30 @@ interface PillarProps {
 
 const PLACE_STYLE: Record<Place, { width: string; height: string; pillar: string; name: string; score: string; number: string; edge: string }> = {
   1: {
-    width: "w-72",
-    // Sahne 330 px: %70 olunca şampiyonun adına üstte yer kalmıyor, sütun
-    // kabının kırpması adı kesiyordu.
+    width: "w-60 md:w-64",
     height: "62%",
-    pillar: "bg-white/[0.08] backdrop-blur-3xl border-t border-x border-white/20 shadow-[0_-20px_60px_rgba(255,230,0,0.08)]",
-    name: "text-3xl md:text-4xl font-medium text-white tracking-[0.1em] drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]",
-    score: "text-2xl font-light text-white mt-2",
-    number: "text-5xl md:text-6xl lg:text-7xl font-thin text-white/40 mt-6",
+    pillar: "bg-gradient-to-t from-yellow-500/20 via-yellow-500/10 to-transparent backdrop-blur-3xl border-t border-x border-yellow-400/50 shadow-[0_0_50px_rgba(251,191,36,0.3)]",
+    name: "text-2xl md:text-3xl font-bold text-white tracking-[0.05em] drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]",
+    score: "text-xl font-semibold text-white mt-1",
+    number: "text-4xl md:text-5xl font-thin text-white/40 mt-3",
     edge: "from-yellow-200/70 via-yellow-400/40 to-transparent",
   },
   2: {
-    width: "w-64",
-    height: "50%",
+    width: "w-52 md:w-56",
+    height: "48%",
     pillar: "bg-white/[0.03] backdrop-blur-3xl border-t border-x border-white/10",
-    name: "text-3xl font-light text-white tracking-widest",
-    score: "text-xl font-light text-white/50 mt-1",
-    number: "text-4xl md:text-5xl font-thin text-white/20 mt-4",
+    name: "text-xl md:text-2xl font-medium text-white tracking-wider",
+    score: "text-lg font-normal text-white/60 mt-1",
+    number: "text-3xl md:text-4xl font-thin text-white/20 mt-2",
     edge: "from-slate-200/60 via-slate-300/30 to-transparent",
   },
   3: {
-    width: "w-64",
-    height: "35%",
+    width: "w-52 md:w-56",
+    height: "36%",
     pillar: "bg-white/[0.02] backdrop-blur-3xl border-t border-x border-white/5",
-    name: "text-2xl font-light text-white/80 tracking-widest",
-    score: "text-lg font-light text-white/40 mt-1",
-    number: "text-3xl md:text-4xl font-thin text-white/10 mt-4",
+    name: "text-lg md:text-xl font-normal text-white/80 tracking-wider",
+    score: "text-base font-normal text-white/50 mt-1",
+    number: "text-2xl md:text-3xl font-thin text-white/10 mt-2",
     edge: "from-orange-300/50 via-orange-400/25 to-transparent",
   },
 };
@@ -84,7 +82,7 @@ function Pillar({ place, name, score, night }: PillarProps) {
   const isWinner = place === 1;
 
   return (
-    <div className={`relative h-full flex flex-col justify-end overflow-hidden px-6 -mx-6 z-10 ${s.width}`}>
+    <div className={`relative h-full flex flex-col justify-end overflow-hidden px-4 -mx-4 z-10 ${s.width}`}>
       <motion.div
         initial={{ y: "115%", opacity: 0 }}
         animate={{ y: 0, opacity: 1, scale: isWinner ? [1, 1, 1.03, 1] : 1 }}
@@ -94,18 +92,18 @@ function Pillar({ place, name, score, night }: PillarProps) {
           scale: { duration: 0.7, delay: delay + 0.55, ease: EASE.inOut, times: [0, 0.2, 0.6, 1] },
         }}
         style={{ height: s.height, originY: 1 }}
-        className={`relative w-full rounded-t-3xl flex flex-col items-center justify-start pt-8 will-change-transform ${s.pillar}`}
+        className={`relative w-full rounded-t-3xl flex flex-col items-center justify-start pt-6 will-change-transform ${s.pillar}`}
       >
         {/* Madalya rengi üst kenar ışığı */}
-        <div aria-hidden="true" className={`absolute top-0 inset-x-0 h-24 rounded-t-3xl bg-gradient-to-b ${s.edge} pointer-events-none`} />
+        <div aria-hidden="true" className={`absolute top-0 inset-x-0 h-20 rounded-t-3xl bg-gradient-to-b ${s.edge} pointer-events-none`} />
 
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...TWEEN.enter, delay: delay + 0.35 }}
-          className={`absolute ${isWinner ? "-top-28" : "-top-20"} text-center w-full`}
+          className={`absolute ${isWinner ? "-top-24" : "-top-18"} text-center w-full`}
         >
-          <div className={`truncate max-w-[280px] px-2 mx-auto ${s.name}`}>{name}</div>
+          <div className={`truncate max-w-[260px] px-2 mx-auto ${s.name}`}>{name}</div>
           <div className={`tracking-widest ${s.score}`}>
             <NumberTicker value={score} delay={delay + 0.4} duration={1} />
           </div>
@@ -116,7 +114,7 @@ function Pillar({ place, name, score, night }: PillarProps) {
             initial={{ opacity: 0, scale: 0.6 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ ...SPRING.bouncy, delay: delay + 1.1 }}
-            className="relative rounded-full border border-amber-300/40 bg-amber-300/10 px-4 py-1.5 text-sm font-black uppercase tracking-[0.2em] text-amber-200 tabular-nums"
+            className="relative rounded-full border border-amber-300/40 bg-amber-300/10 px-3 py-1 text-xs font-black uppercase tracking-[0.15em] text-amber-200 tabular-nums"
           >
             {t("podium.nightPoints", night)}
           </motion.span>
@@ -269,7 +267,7 @@ export function HostPodium({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={TWEEN.screen}
-      className="flex flex-col items-center justify-between h-full w-full py-4 px-8 overflow-hidden bg-black relative select-none"
+      className="flex flex-col items-center justify-between h-full w-full py-2 px-6 overflow-hidden bg-black relative select-none"
     >
       <ConfettiCanvas ref={confettiRef} autoCannon={false} />
 
@@ -278,11 +276,11 @@ export function HostPodium({
         as="h2"
         tone="gold"
         animation="pop"
-        className="text-3xl md:text-5xl font-black mb-2 uppercase tracking-[0.3em] text-glow-gold flex-shrink-0"
+        className="text-2xl md:text-4xl font-black mb-1 uppercase tracking-[0.25em] text-glow-gold flex-shrink-0"
       />
 
       {/* Podyum Sahnesi */}
-      <div className="flex items-end justify-center w-full max-w-4xl gap-4 h-[330px] border-b-2 border-white/10 relative flex-shrink-0">
+      <div className="flex items-end justify-center w-full max-w-4xl gap-4 h-[260px] md:h-[280px] border-b-2 border-white/10 relative flex-shrink-0">
         <div className="absolute inset-0 bg-gradient-to-t from-amber-500/10 via-transparent to-transparent pointer-events-none" />
 
         {/* Şampiyon spot ışığı: dönen konik gradyan */}
@@ -292,7 +290,7 @@ export function HostPodium({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: DURATION.cinematic, delay: REVEAL_DELAY[1] + 0.3 }}
-            className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 w-[900px] h-[900px] rounded-full podium-spotlight pointer-events-none z-0"
+            className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 w-[800px] h-[800px] rounded-full podium-spotlight pointer-events-none z-0"
           />
         )}
 
@@ -307,7 +305,7 @@ export function HostPodium({
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...TWEEN.enter, delay: 3 }}
-          className="mt-2 w-full max-w-md flex justify-center flex-shrink-0"
+          className="mt-1 w-full max-w-md flex justify-center flex-shrink-0"
         >
           <ShareableRecapCard awards={awards} roomCode={room?.code} />
         </motion.div>
@@ -315,19 +313,19 @@ export function HostPodium({
 
       {/* OYUNUN ENLERI (AWARDS) */}
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ ...TWEEN.enter, delay: 3.4 }}
-        className="mt-3 w-full max-w-4xl flex-shrink-0"
+        className="mt-2 w-full max-w-4xl flex-shrink-0"
       >
-        <h3 className="text-center text-[11px] font-bold text-white/50 uppercase tracking-[0.35em] mb-2">
+        <h3 className="text-center text-[10px] font-bold text-white/50 uppercase tracking-[0.3em] mb-1.5">
           {t("podium.awardsTitle")}
         </h3>
         <motion.div
           variants={{ hidden: {}, visible: { transition: { staggerChildren: STAGGER.base, delayChildren: 3.6 } } }}
           initial="hidden"
           animate="visible"
-          className="grid grid-cols-1 md:grid-cols-3 gap-4"
+          className="grid grid-cols-1 md:grid-cols-3 gap-3"
         >
           {awardCards.map((card) => (
             <motion.div key={card.title} variants={listItem}>
@@ -336,13 +334,13 @@ export function HostPodium({
                 ambient={true}
                 radius="1rem"
                 className="bg-white/[0.03] backdrop-blur-2xl shadow-lg hover:bg-white/[0.06] transition-colors"
-                innerClassName="p-3.5 flex flex-col items-center justify-center text-center"
+                innerClassName="p-2.5 flex flex-col items-center justify-center text-center"
               >
                 <h4 className="text-white font-bold text-xs uppercase tracking-wider mb-0.5">{card.title}</h4>
-                <p className="text-white/40 text-[9px] font-medium uppercase tracking-widest mb-2">{card.desc}</p>
+                <p className="text-white/40 text-[9px] font-medium uppercase tracking-widest mb-1">{card.desc}</p>
                 {card.winner ? (
                   <>
-                    <div className="text-lg font-black text-amber-300 truncate w-full px-2 mx-auto tracking-wider">
+                    <div className="text-base font-black text-amber-300 truncate w-full px-2 mx-auto tracking-wider">
                       {card.winner.name}
                     </div>
                     <div className="text-white/60 font-medium text-[10px] uppercase tracking-widest tabular-nums">
@@ -364,12 +362,12 @@ export function HostPodium({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: DURATION.slow, delay: 4.6 }}
-        className="mt-3 mb-1 flex items-center justify-center gap-5 relative z-20 flex-shrink-0"
+        className="mt-2 mb-1 flex items-center justify-center gap-4 relative z-20 flex-shrink-0"
       >
         <button
           onClick={handleDownloadPDF}
           disabled={isGeneratingPDF}
-          className="px-6 py-3 border border-white/20 hover:bg-white/10 text-white font-semibold rounded-full transition-colors uppercase tracking-widest text-xs disabled:opacity-50 flex items-center gap-2"
+          className="px-5 py-2.5 border border-white/20 hover:bg-white/10 text-white font-semibold rounded-full transition-colors uppercase tracking-widest text-xs disabled:opacity-50 flex items-center gap-2"
         >
           {isGeneratingPDF ? "PDF HAZIRLANIYOR..." : "PDF İNDİR"}
         </button>
