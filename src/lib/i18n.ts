@@ -1029,6 +1029,8 @@ const translations = {
   },
   "dashboard.startGame": { tr: "Oyun Başlat", de: "Spiel starten", en: "Start Game" },
   "dashboard.startSession": { tr: "Oturumu Başlat", de: "Session starten", en: "Start Session" },
+  "dashboard.comingSoon": { tr: "ÇOK YAKINDA", de: "BALD VERFÜGBAR", en: "COMING SOON" },
+  "dashboard.comingSoonBadge": { tr: "🔒 ÇOK YAKINDA", de: "🔒 BALD VERFÜGBAR", en: "🔒 COMING SOON" },
   "dashboard.modeSensorDesc": {
     tr: "Hızlı olan kazanır! Gizemli görseli ilk sen bil, devasa neon butonla yarış.",
     de: "Wer schnell ist, gewinnt! Errate das mysteriöse Bild als Erster, hau auf den riesigen Neon-Buzzer.",

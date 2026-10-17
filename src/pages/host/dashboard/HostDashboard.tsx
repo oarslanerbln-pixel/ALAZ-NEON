@@ -94,10 +94,17 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
   };
 
   const handleStartGame = (game: GameType) => {
+    const card = GAMES.find((g) => g.id === game);
+    if (card?.isComingSoon) {
+      SoundManager.getInstance().playSFX(sounds.FAILURE);
+      return;
+    }
     setSetupGameMode(game);
   };
 
   const executeStartGame = async (game: GameType, settings?: Partial<Room>) => {
+    const card = GAMES.find((g) => g.id === game);
+    if (card?.isComingSoon) return;
     SoundManager.getInstance().playSFX(sounds.START);
     // Scattegories "lobby" ile başlar. Buraya kalıcı olarak "intro" yazmak
     // oyunu tamamen kilitliyordu: "intro" host'un YEREL sinematik animasyonu,
@@ -478,7 +485,10 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                           >
                           <button
                             onClick={() => handleStartGame(game.id)}
-                            className="w-full h-full relative group overflow-hidden rounded-[calc(2rem-1.5px)] p-8 sm:p-10 text-left transition-all duration-500"
+                            disabled={game.isComingSoon}
+                            className={`w-full h-full relative group overflow-hidden rounded-[calc(2rem-1.5px)] p-8 sm:p-10 text-left transition-all duration-500 ${
+                              game.isComingSoon ? "cursor-not-allowed" : ""
+                            }`}
                           >
                             {/* Devasa Filigran Animasyonlu Logo */}
                             <div className="absolute -right-12 -bottom-12 opacity-[0.05] group-hover:opacity-15 transition-all duration-1000 pointer-events-none scale-150 rotate-12">
@@ -496,12 +506,20 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                                   <div className="flex items-center gap-4 mb-5">
                                     <div className={`w-16 h-16 sm:w-20 sm:h-20 ${game.iconAccent} border-2 rounded-2xl flex items-center justify-center group-hover:scale-105 transition-all duration-500 shadow-xl backdrop-blur-md relative overflow-hidden shrink-0`}>
                                       <div className="absolute inset-0 bg-gradient-to-br from-white/15 to-transparent pointer-events-none" />
-                                      <GameAnimatedLogo game={game.id} size="md" glow={true} className="w-12 h-12" />
+                                      <GameAnimatedLogo game={game.id} size="md" glow={!game.isComingSoon} className="w-12 h-12" />
                                     </div>
                                     <div className="flex flex-col gap-1.5">
-                                      <span className="self-start rounded-full border border-white/15 bg-white/[0.08] px-4 py-1 text-xs font-black uppercase tracking-[0.25em] text-white/80">
-                                        {t(GAME_CATEGORY_KEY[game.category])}
-                                      </span>
+                                      <div className="flex items-center gap-2">
+                                        <span className="self-start rounded-full border border-white/15 bg-white/[0.08] px-4 py-1 text-xs font-black uppercase tracking-[0.25em] text-white/80">
+                                          {t(GAME_CATEGORY_KEY[game.category])}
+                                        </span>
+                                        {game.isComingSoon && (
+                                          <span className="rounded-full border border-amber-500/40 bg-amber-500/20 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.25)] flex items-center gap-1.5">
+                                            <span>🔒</span>
+                                            <span>{t("dashboard.comingSoon", "BALD VERFÜGBAR")}</span>
+                                          </span>
+                                        )}
+                                      </div>
                                       <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-white/40 font-bold">
                                         MOD {carouselIndex + 1} / {GAMES.length}
                                       </span>
@@ -517,10 +535,17 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                                 </div>
                                 
                                 <div className="mt-6 flex items-center gap-4 text-white text-xs sm:text-sm font-black tracking-[0.25em] uppercase">
-                                  <div className="bg-white/10 px-6 sm:px-8 py-3 sm:py-3.5 rounded-2xl flex items-center gap-3 backdrop-blur-md border border-white/20 group-hover:bg-white/20 group-hover:border-white/40 transition-all shadow-lg group-hover:shadow-[0_0_25px_rgba(255,255,255,0.2)]">
-                                    <span>{t("dashboard.startSession", "SESSION STARTEN")}</span>
-                                    <span className="text-xl sm:text-2xl leading-none group-hover:translate-x-2 transition-transform">➔</span>
-                                  </div>
+                                  {game.isComingSoon ? (
+                                    <div className="bg-white/5 px-6 sm:px-8 py-3 sm:py-3.5 rounded-2xl flex items-center gap-3 backdrop-blur-md border border-white/10 text-white/40 cursor-not-allowed shadow-none">
+                                      <span className="text-base">🔒</span>
+                                      <span>{t("dashboard.comingSoon", "BALD VERFÜGBAR")}</span>
+                                    </div>
+                                  ) : (
+                                    <div className="bg-white/10 px-6 sm:px-8 py-3 sm:py-3.5 rounded-2xl flex items-center gap-3 backdrop-blur-md border border-white/20 group-hover:bg-white/20 group-hover:border-white/40 transition-all shadow-lg group-hover:shadow-[0_0_25px_rgba(255,255,255,0.2)]">
+                                      <span>{t("dashboard.startSession", "SESSION STARTEN")}</span>
+                                      <span className="text-xl sm:text-2xl leading-none group-hover:translate-x-2 transition-transform">➔</span>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
 
@@ -538,9 +563,16 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                                 />
                                 <div className={`absolute inset-6 rounded-full ${game.bgAccent} blur-2xl opacity-60 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none`} />
                                 
-                                <div className="relative z-10 group-hover:scale-110 transition-transform duration-700">
-                                  <GameAnimatedLogo game={game.id} size="xl" glow={true} className="w-44 h-44 md:w-52 md:h-52 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]" />
+                                <div className={`relative z-10 transition-transform duration-700 ${game.isComingSoon ? "opacity-75 grayscale-[25%]" : "group-hover:scale-110"}`}>
+                                  <GameAnimatedLogo game={game.id} size="xl" glow={!game.isComingSoon} className="w-44 h-44 md:w-52 md:h-52 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]" />
                                 </div>
+                                {game.isComingSoon && (
+                                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <div className="w-14 h-14 rounded-full bg-black/60 backdrop-blur-md border border-amber-500/40 flex items-center justify-center text-2xl shadow-[0_0_20px_rgba(245,158,11,0.3)]">
+                                      🔒
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </button>
@@ -570,9 +602,15 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                       setDirection(idx > carouselIndex ? 1 : -1);
                       setCarouselIndex(idx);
                     }}
-                    aria-label={`${g.titlePrefix} ${g.titleHighlight}`}
+                    aria-label={`${g.titlePrefix} ${g.titleHighlight}${g.isComingSoon ? " (Locked)" : ""}`}
                     aria-current={idx === carouselIndex}
-                    className={`h-2 rounded-full transition-all duration-300 ${idx === carouselIndex ? 'w-8 bg-white' : 'w-2 bg-white/25 hover:bg-white/50'}`}
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      idx === carouselIndex
+                        ? 'w-8 bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)]'
+                        : g.isComingSoon
+                          ? 'w-2 bg-white/15 hover:bg-white/30'
+                          : 'w-2 bg-white/40 hover:bg-white/70'
+                    }`}
                   />
                 ))}
               </div>
