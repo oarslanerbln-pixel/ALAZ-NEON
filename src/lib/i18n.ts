@@ -750,6 +750,12 @@ const translations = {
   // ═══════════════════════════════════════════
   "xpBar.roundProgress": { tr: "TUR İLERLEMESİ", de: "RUNDENFORTSCHRITT", en: "ROUND PROGRESS" },
   "emoji.sendReaction": { tr: "TEPKİ GÖNDER", de: "REAKTION SENDEN", en: "SEND REACTION" },
+  "emoji.thumbsUp": { tr: "Beğen", de: "Daumen hoch", en: "Thumbs up" },
+  "emoji.thumbsDown": { tr: "Beğenme", de: "Daumen runter", en: "Thumbs down" },
+  "emoji.laugh": { tr: "Gül", de: "Lachen", en: "Laugh" },
+  "emoji.siren": { tr: "Uyarı", de: "Warnung", en: "Siren" },
+  "emoji.mindBlown": { tr: "Şok ol", de: "Schockiert", en: "Mind blown" },
+  "emoji.skull": { tr: "Öldüm", de: "Gestorben", en: "Skull" },
   "playerHeader.critical": { tr: "⚡ KRİTİK", de: "⚡ KRITISCH", en: "⚡ CRITICAL" },
   "playerHeader.active": { tr: "◉ AKTİF", de: "◉ AKTIV", en: "◉ ACTIVE" },
   "playerHeader.points": { tr: "PUAN", de: "PUNKTE", en: "POINTS" },
