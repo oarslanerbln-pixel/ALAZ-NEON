@@ -9,6 +9,15 @@ interface EmojiToolbarProps {
 
 const EMOJIS = ["👍", "👎", "😂", "🚨", "🤯", "💀"];
 
+const EMOJI_KEYS: Record<string, keyof typeof import("../../../lib/i18n").translations> = {
+  "👍": "emoji.thumbsUp",
+  "👎": "emoji.thumbsDown",
+  "😂": "emoji.laugh",
+  "🚨": "emoji.siren",
+  "🤯": "emoji.mindBlown",
+  "💀": "emoji.skull",
+};
+
 export function EmojiToolbar({ onEmojiClick }: EmojiToolbarProps) {
   const { t } = useLocale();
 
@@ -29,6 +38,7 @@ export function EmojiToolbar({ onEmojiClick }: EmojiToolbarProps) {
             <motion.button
               key={emoji}
               type="button"
+              aria-label={t(EMOJI_KEYS[emoji] as Parameters<typeof t>[0])}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.82 }}
               transition={SPRING.stiff}
