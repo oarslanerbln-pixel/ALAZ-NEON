@@ -1,0 +1,12 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-black: #000000;
+  --color-yellow: #ffff00;
+  --color-cyan: #00ffff;
+}
+
+body {
+  background-color: var(--color-black);
+  color: var(--color-yellow);
+}
