@@ -157,7 +157,8 @@ export function PlayerKabloController({ room, player }: Props) {
             key={i}
             whileTap={{ scale: 0.9 }}
             onClick={() => rotateCell(i)}
-            className="w-20 h-20 bg-black/50 rounded-xl relative overflow-hidden border border-white/5 flex items-center justify-center"
+            className="w-20 h-20 bg-black/50 rounded-xl relative overflow-hidden border border-white/5 flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            aria-label={`${t("kablo.rotatePiece")} ${i + 1}`}
           >
             {/* The wrapper that rotates */}
             <motion.div 

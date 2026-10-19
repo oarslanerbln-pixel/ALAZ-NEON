@@ -196,7 +196,7 @@ export function PlayerBarController({ room, player }: Props) {
             key={color}
             whileTap={{ scale: 0.9 }}
             onClick={() => handleBottleClick(color)}
-            className="h-44 rounded-2xl border-2 flex flex-col items-center justify-between p-2 relative overflow-hidden transition-all shadow-md active:brightness-125"
+            className="h-44 rounded-2xl border-2 flex flex-col items-center justify-between p-2 relative overflow-hidden transition-all shadow-md active:brightness-125 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             style={{ 
               borderColor: color,
               backgroundColor: `${color}15`
