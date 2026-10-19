@@ -1861,6 +1861,7 @@ const translations = {
   "kablo.powerTransferred": { tr: "GÜÇ AKTARILDI", de: "ENERGIE ÜBERTRAGEN", en: "POWER TRANSFERRED" },
   "kablo.totalSolved": { tr: "Toplam Çözülen:", de: "Gesamt gelöst:", en: "Total Solved:" },
   "kablo.lookAtTV": { tr: "TV'ye bak!", de: "Schau auf den TV!", en: "Look at the TV!" },
+  "kablo.rotatePiece": { tr: "Parçayı çevir", de: "Teil drehen", en: "Rotate piece" },
   
   // COLORS
   "colors.title": { tr: "NEON SAVAŞLARI", de: "NEON KRIEGE", en: "NEON WARS" },
