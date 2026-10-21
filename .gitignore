@@ -56,3 +56,4 @@ _arsiv/
 # ElevenLabs spiker betiği: örnek çıktılar ve kredi defteri (yerel)
 .voiceover-samples/
 scripts/.voiceover-ledger.json
+scripts/.voiceover-ledger-google.json
