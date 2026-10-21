@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { useNavigate } from "react-router-dom";
@@ -26,6 +26,9 @@ import { NumberTicker, ShimmerButton, GameAnimatedLogo } from "../../../componen
 import { NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
 import { NightFinale } from "../views/NightFinale";
 import { nightStandings, rankDeltas } from "../../../lib/nightLeague";
+import { SHOWCASE_IDLE_MS } from "../../../lib/showcase";
+import { useIdle } from "../../../hooks/useIdle";
+import { HostShowcase } from "./HostShowcase";
 
 /** QR kartının altında 1080'lik tuvale kaydırmasız sığan misafir satırı. */
 const DASHBOARD_LIST_MAX = 6;
@@ -49,11 +52,14 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
   const { isStaff } = useIsStaff();
   const rewardsBlocked = venue.rewards_enabled && Boolean(venue.reward_title?.trim()) && isStaff === false;
   const [isKioskMode, setIsKioskMode] = useState(false);
-  const [kioskImageIndex, setKioskImageIndex] = useState(0);
 
   // Game Setup State
   const [setupGameMode, setSetupGameMode] = useState<GameType | null>(null);
   const [showFinale, setShowFinale] = useState(false);
+  // Gece lobisi bir süre boş kalınca TV tanıtım döngüsüne geçer; kurulum
+  // penceresi ya da finale açıkken geçmez. İlk dokunuşta kapanır.
+  const idle = useIdle(SHOWCASE_IDLE_MS, room.status === "night_lobby" && !setupGameMode && !showFinale && !isKioskMode);
+  const showShowcase = isKioskMode || idle;
 
   // Carousel State
   const [carouselIndex, setCarouselIndex] = useState(0);
@@ -68,13 +74,6 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
   };
 
 
-  useEffect(() => {
-    if (!isKioskMode) return;
-    const interval = setInterval(() => {
-      setKioskImageIndex((prev) => (prev + 1) % (venue.promo_images?.length || 1));
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [isKioskMode, venue.promo_images]);
 
   /**
    * Geceyi bitirir: odayı "closed" durumuna alır ve ana sayfaya döner.
@@ -633,39 +632,14 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       </div>
       
       <AnimatePresence>
-        {isKioskMode && venue.promo_images && venue.promo_images.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setIsKioskMode(false)}
-            className="fixed inset-0 z-[999] bg-black cursor-pointer flex items-center justify-center"
-          >
-            <AnimatePresence mode="wait">
-              <motion.img
-                key={kioskImageIndex}
-                src={venue.promo_images[kioskImageIndex]}
-                initial={{ opacity: 0, scale: 1.05 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 1 }}
-                className="w-full h-full object-contain"
-                alt="Promo"
-              />
-            </AnimatePresence>
-            <div className="absolute top-8 right-8 text-white/30 text-[10px] uppercase tracking-widest bg-black/50 px-4 py-2 rounded-lg">
-              {t("dashboard.kioskExit")}
-            </div>
-            
-            {/* Show QR code subtly in corner during kiosk mode */}
-            <div className="absolute bottom-8 right-8 bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/20 flex flex-col items-center">
-              <span className="text-white font-bold uppercase tracking-widest text-[10px] mb-2">{t("host.joinGame", "Oyuna Katıl")}</span>
-              <div className="bg-white p-2 rounded-lg">
-                <QRCodeSVG value={joinUrl} size={80} bgColor="#ffffff" fgColor="#000000" level="H" />
-              </div>
-              <span className="text-alaz-orange font-mono font-bold mt-2">{room.code}</span>
-            </div>
-          </motion.div>
+        {showShowcase && (
+          <HostShowcase
+            key="showcase"
+            joinUrl={joinUrl}
+            roomCode={room.code}
+            venuePromos={venue.promo_images}
+            onClose={() => setIsKioskMode(false)}
+          />
         )}
       </AnimatePresence>
 
