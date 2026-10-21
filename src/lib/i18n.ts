@@ -1665,7 +1665,7 @@ const translations = {
     en: (n: string | number) => `${n} ${Number(n) === 1 ? "player" : "players"}`,
   },
   "quiz.streakFire": { tr: "ALEV", de: "FEUER", en: "ON FIRE" },
-  "quiz.morePlayers": {
+  "common.morePlayers": {
     tr: (n: string | number) => `+${n} oyuncu daha`,
     de: (n: string | number) => `+${n} weitere Spieler`,
     en: (n: string | number) => `+${n} more players`,

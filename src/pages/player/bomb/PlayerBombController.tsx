@@ -240,7 +240,7 @@ export function PlayerBombController({ room, player }: Props) {
                   onChange={(e) => setWord(e.target.value)}
                   autoFocus
                   disabled={isSubmitting}
-                  className="w-full bg-black/90 border-2 border-rose-500/60 text-white rounded-2xl p-4 text-2xl font-black text-center uppercase tracking-wider focus:outline-none focus:border-rose-400 focus:shadow-[0_0_30px_rgba(244,63,94,0.35)] shadow-inner"
+                  className="w-full bg-black/90 border-2 border-rose-500/60 text-white rounded-2xl p-4 text-2xl placeholder:text-base placeholder:font-bold font-black text-center uppercase tracking-wider focus:outline-none focus:border-rose-400 focus:shadow-[0_0_30px_rgba(244,63,94,0.35)] shadow-inner"
                   placeholder={t("bomb.wordPlaceholder")}
                 />
                 <ShimmerButton

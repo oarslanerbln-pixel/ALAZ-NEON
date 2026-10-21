@@ -161,7 +161,8 @@ export function PlayerSensorController({ room, player }: Props) {
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value)}
                   placeholder={t("sensor.answerPlaceholder")}
-                  className="w-full bg-black/80 border-2 border-emerald-400/80 p-4 text-2xl font-black text-center text-white placeholder-white/20 focus:outline-none focus:ring-4 focus:ring-emerald-500/50 rounded-2xl uppercase"
+                  // Yer tutucu 2xl büyük harfle 375px'te kesiliyordu ("WAS IST DEINE ANT…").
+                  className="w-full bg-black/80 border-2 border-emerald-400/80 p-4 text-2xl placeholder:text-base placeholder:font-bold font-black text-center text-white placeholder-white/30 focus:outline-none focus:ring-4 focus:ring-emerald-500/50 rounded-2xl uppercase"
                   autoFocus
                 />
                 <button

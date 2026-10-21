@@ -814,9 +814,13 @@ export function HostQuizDisplay({
                 animate={{ opacity: 1, scale: 1 }}
                 className="flex flex-col items-center justify-center w-full max-w-5xl text-center"
               >
-                <KineticSpark />
-                
-                <h1 className="text-6xl md:text-7xl font-black text-alaz-orange mb-4 uppercase drop-shadow-[0_0_40px_rgba(255,77,0,0.9)] tracking-widest">
+                {/* Logo kendi başına ~430px yer kaplıyordu; podyumla birlikte
+                    "yeni oyun" düğmesi 1080'lik tuvalin altına taşıyordu. */}
+                <div className="h-[260px] w-full flex items-center justify-center">
+                  <KineticSpark className="scale-[0.62]" />
+                </div>
+
+                <h1 className="text-6xl md:text-7xl font-black text-alaz-orange mb-2 uppercase drop-shadow-[0_0_40px_rgba(255,77,0,0.9)] tracking-widest">
                   {t("quiz.champion")}
                 </h1>
                 

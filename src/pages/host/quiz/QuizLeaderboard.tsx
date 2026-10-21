@@ -131,7 +131,7 @@ export function QuizLeaderboard({ players, streaks, previous, onSettled }: QuizL
         </div>
       </LayoutGroup>
       {hidden > 0 && (
-        <p className="mt-3 text-center text-xl font-bold text-white/50">{t("quiz.morePlayers", hidden)}</p>
+        <p className="mt-3 text-center text-xl font-bold text-white/50">{t("common.morePlayers", hidden)}</p>
       )}
     </div>
   );

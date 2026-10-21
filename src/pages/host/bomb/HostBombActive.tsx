@@ -246,7 +246,7 @@ export function HostBombActive({ room, players, onExplode }: Props) {
             })}
             {players.length > BOMB_ROSTER_MAX && (
               <p className="text-center text-base font-bold text-white/50 pt-1">
-                {t("quiz.morePlayers", players.length - BOMB_ROSTER_MAX)}
+                {t("common.morePlayers", players.length - BOMB_ROSTER_MAX)}
               </p>
             )}
           </div>
