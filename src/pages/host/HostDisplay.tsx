@@ -39,6 +39,7 @@ import { EmojiRain } from "../../components/EmojiRain";
 import { LetterSpinner } from "../../components/LetterSpinner";
 import { finishNightRound, NIGHT_ROUND_OPEN } from "../../lib/nightAwards";
 import { nightPointsForPlayers } from "../../lib/nightLeague";
+import { useHostAnnouncer } from "../../hooks/useHostAnnouncer";
 import {
   getRoundIntelligence,
   logRoundIntelligence,
@@ -51,6 +52,8 @@ export function HostDisplay() {
   const roomId = searchParams.get("roomId");
   const hostRoom = useHostRoom(roomId);
   const { room, loading, notFound, error } = hostRoom;
+  // Spiker yalnızca TV'de; erken dönüşlerden önce (hook sırası sabit kalmalı).
+  useHostAnnouncer(room);
 
   // Oyun ekranlarını TV boştayken önceden indir (bkz. preloadHostGameDisplays).
   // Erken dönüşlerden ÖNCE: hook sırası her render'da aynı kalmalı.

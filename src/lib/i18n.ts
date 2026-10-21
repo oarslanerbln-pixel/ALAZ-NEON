@@ -955,6 +955,8 @@ const translations = {
   // HOST HEADER / LOBBY EXTRAS
   // ═══════════════════════════════════════════
   "hostHeader.endEarly": { tr: "ERKEN BİTİR", de: "VORZEITIG BEENDEN", en: "END EARLY" },
+  "hostHeader.voiceOn": { tr: "Spikeri aç", de: "Moderator einschalten", en: "Turn announcer on" },
+  "hostHeader.voiceOff": { tr: "Spikeri kapat", de: "Moderator ausschalten", en: "Turn announcer off" },
   "hostHeader.roundLabel": {
     tr: (r: number, total: number) => `TUR ${r} / ${total}`,
     de: (r: number, total: number) => `RUNDE ${r} / ${total}`,

@@ -1,8 +1,9 @@
 import { NeonIcon } from "../../../components/NeonIcon";
 import { LanguageSwitcher } from "../../../components/LanguageSwitcher";
 import { useLocale } from "../../../hooks/useLocale";
-import { Volume2, VolumeX, Sparkles, Radio, Home, LayoutGrid } from "lucide-react";
+import { Volume2, VolumeX, Sparkles, Radio, Home, LayoutGrid, Mic, MicOff } from "lucide-react";
 import { SoundManager, sounds } from "../../../lib/audio";
+import { hostAnnouncer } from "../../../lib/announcerPlayer";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -38,8 +39,18 @@ export function HostHeader({
   const navigate = useNavigate();
   const [isMuted, setIsMuted] = useState(() => SoundManager.getInstance().getIsMuted());
 
+  const [isVoiceMuted, setIsVoiceMuted] = useState(() => hostAnnouncer.isVoiceMuted());
+
   const handleToggleMute = () => {
-    setIsMuted(SoundManager.getInstance().toggleMute());
+    const muted = SoundManager.getInstance().toggleMute();
+    if (muted) hostAnnouncer.stop();
+    setIsMuted(muted);
+  };
+
+  // Spiker müzikten bağımsız susturulabilir: bazı mekanlar müzik ister, anons istemez.
+  const handleToggleVoice = () => {
+    hostAnnouncer.setVoiceMuted(!isVoiceMuted);
+    setIsVoiceMuted(!isVoiceMuted);
   };
 
   const handleReturnToLobby = () => {
@@ -167,6 +178,15 @@ export function HostHeader({
           title={isMuted ? t("common.soundOn") : t("common.soundOff")}
         >
           {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+        </button>
+
+        <button
+          onClick={handleToggleVoice}
+          className="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/80 hover:text-white transition-all active:scale-95 cursor-pointer"
+          aria-label={isVoiceMuted ? t("hostHeader.voiceOn") : t("hostHeader.voiceOff")}
+          title={isVoiceMuted ? t("hostHeader.voiceOn") : t("hostHeader.voiceOff")}
+        >
+          {isVoiceMuted ? <MicOff className="w-4 h-4 text-red-400" /> : <Mic className="w-4 h-4 text-emerald-400" />}
         </button>
 
         {onEndGameEarly && (
