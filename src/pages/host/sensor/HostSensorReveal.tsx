@@ -21,7 +21,7 @@ export function HostSensorReveal({ currentImage, buzzerPlayerName, onNextRound }
       <motion.div
         animate={{ scale: [1, 1.2], opacity: [0.5, 0.2] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", repeatType: "mirror" }}
-        className="absolute w-[60vh] h-[60vh] rounded-full bg-green-600/10 blur-[100px]"
+        className="absolute w-[648px] h-[648px] rounded-full bg-green-600/10 blur-[100px]"
       />
 
       <motion.div 
