@@ -1545,6 +1545,24 @@ const translations = {
     en: "Write a real word!",
   },
   "bomb.toastError": { tr: "Bir hata oluştu!", de: "Ein Fehler ist aufgetreten!", en: "An error occurred!" },
+  "bomb.generalCategory": { tr: "GENEL", de: "ALLGEMEIN", en: "GENERAL" },
+  "bomb.livesShort": {
+    tr: (n: string | number) => `${n} CAN`,
+    de: (n: string | number) => `${n} LEBEN`,
+    en: (n: string | number) => `${n} ${Number(n) === 1 ? "LIFE" : "LIVES"}`,
+  },
+  "bomb.rosterTitle": {
+    tr: (n: string | number) => `⚡ OYUNCULAR (${n})`,
+    de: (n: string | number) => `⚡ SPIELER (${n})`,
+    en: (n: string | number) => `⚡ PLAYERS (${n})`,
+  },
+  "bomb.rejectHint": { tr: "Bombayı geri gönderir", de: "Bombe geht zurück", en: "Sends the bomb back" },
+  "bomb.wordChain": {
+    tr: (n: string | number) => `🔥 KELİME ZİNCİRİ (${n})`,
+    de: (n: string | number) => `🔥 WORTKETTE (${n})`,
+    en: (n: string | number) => `🔥 WORD CHAIN (${n})`,
+  },
+  "bomb.waitingFirstWord": { tr: "İlk kelime bekleniyor…", de: "Warte auf das erste Wort…", en: "Waiting for the first word…" },
 
   // ═══════════════════════════════════════════
   // INTRO CINEMATICS (HostIntro + HostQuizIntro ortak "hacker" açılışı)
@@ -1639,6 +1657,18 @@ const translations = {
     tr: (pts: string | number) => `+${pts} Hız Bonusu`,
     de: (pts: string | number) => `+${pts} Tempo-Bonus`,
     en: (pts: string | number) => `+${pts} Speed Bonus`,
+  },
+  "quiz.finalDouble": { tr: "💥 2X FİNAL", de: "💥 2X FINALE", en: "💥 2X FINAL" },
+  "quiz.voteCount": {
+    tr: (n: string | number) => `${n} oyuncu`,
+    de: (n: string | number) => `${n} Spieler`,
+    en: (n: string | number) => `${n} ${Number(n) === 1 ? "player" : "players"}`,
+  },
+  "quiz.streakFire": { tr: "ALEV", de: "FEUER", en: "ON FIRE" },
+  "quiz.morePlayers": {
+    tr: (n: string | number) => `+${n} oyuncu daha`,
+    de: (n: string | number) => `+${n} weitere Spieler`,
+    en: (n: string | number) => `+${n} more players`,
   },
   "quiz.waitingForTimer": { tr: "Soru TV ekranında gösteriliyor, süre başlamak üzere...", de: "Frage wird auf dem TV gezeigt, Timer startet gleich...", en: "Question is shown on TV, timer starting soon..." },
 
@@ -1759,6 +1789,11 @@ const translations = {
     en: "The correct answer is on screen. Get ready for the next round!",
   },
   "sensor.toastError": { tr: "Bir hata oluştu!", de: "Ein Fehler ist aufgetreten!", en: "An error occurred!" },
+  "sensor.tvBadge": { tr: "👁️ SENSÖR • GÖRSEL TAHMİN 👁️", de: "👁️ SENSOR • BILDERRATEN 👁️", en: "👁️ SENSOR • PICTURE GUESS 👁️" },
+  "sensor.tvPrompt": { tr: "BU GÖRSELİ İLK KİM BİLECEK?", de: "WER ERRÄT DAS BILD ZUERST?", en: "WHO GUESSES THIS PICTURE FIRST?" },
+  "sensor.someone": { tr: "BİRİ", de: "JEMAND", en: "SOMEONE" },
+  "sensor.buzzedSuffix": { tr: "BASTI!", de: "HAT GEDRÜCKT!", en: "BUZZED!" },
+  "sensor.playerGuess": { tr: "OYUNCUNUN TAHMİNİ:", de: "TIPP DES SPIELERS:", en: "PLAYER'S GUESS:" },
   "sensor.toastSubmitFailed": {
     tr: "Cevap gönderilemedi!",
     de: "Antwort konnte nicht gesendet werden!",

@@ -9,6 +9,7 @@ import { haptics } from "../../../lib/haptics";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { gameTitle } from "../../../lib/gameCatalog";
 import { PlayerStageScreen } from "../components/PlayerStageScreen";
+import { SPRING } from "../../../lib/motion";
 
 interface Props {
   room: Room;
@@ -122,7 +123,8 @@ export function PlayerSensorController({ room, player }: Props) {
             <motion.button
               whileTap={{ scale: 0.92 }}
               onClick={handleBuzz}
-              className="w-64 h-64 rounded-full bg-gradient-to-b from-red-500 to-red-800 border-4 border-red-400 shadow-[0_0_60px_rgba(239,68,68,0.8)] flex flex-col items-center justify-center active:brightness-125 transition-all"
+              transition={SPRING.stiff}
+              className="w-64 h-64 max-w-[70vw] max-h-[70vw] rounded-full bg-gradient-to-b from-red-500 to-red-800 border-4 border-red-400 shadow-[0_0_60px_rgba(239,68,68,0.8)] flex flex-col items-center justify-center active:brightness-125"
             >
               <span className="text-5xl mb-2">🚨</span>
               <span className="text-4xl font-black text-white uppercase tracking-widest drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)]">
@@ -178,7 +180,17 @@ export function PlayerSensorController({ room, player }: Props) {
       return (
         <div className="flex-1 flex flex-col items-center justify-center p-8 z-10 text-center">
           <div className="bg-red-950/40 border border-red-500/30 p-8 rounded-3xl backdrop-blur-xl max-w-xs w-full">
-            <span className="text-6xl mb-4 block animate-spin">🔒</span>
+            {/* Eskiden kilit sonsuza dek dönüyordu; artık kapanıyormuş gibi
+                bir kez sallanıp duruyor. */}
+            <motion.span
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1, rotate: [0, -14, 12, -6, 0] }}
+              transition={{ ...SPRING.bouncy, rotate: { duration: 0.5, delay: 0.1 } }}
+              className="text-6xl mb-4 block"
+              aria-hidden="true"
+            >
+              🔒
+            </motion.span>
             <h2 className="text-2xl font-black text-red-500 mb-2 uppercase tracking-wider">
               {t("sensor.locked")}
             </h2>
@@ -197,7 +209,15 @@ export function PlayerSensorController({ room, player }: Props) {
           <div className="bg-white/5 border border-white/15 p-8 rounded-3xl backdrop-blur-xl w-full max-w-xs">
             {isMe ? (
               <>
-                <span className="text-7xl mb-4 block">👑</span>
+                <motion.span
+                  initial={{ scale: 0.3, opacity: 0, rotate: -20 }}
+                  animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                  transition={SPRING.bouncy}
+                  className="text-7xl mb-4 block"
+                  aria-hidden="true"
+                >
+                  👑
+                </motion.span>
                 <h2 className="text-3xl font-black text-amber-400 mb-2 uppercase tracking-wider">
                   {t("sensor.congrats")}
                 </h2>
@@ -233,7 +253,7 @@ export function PlayerSensorController({ room, player }: Props) {
   };
 
   return (
-    <div className="absolute inset-0 bg-[#080010] flex flex-col overflow-hidden text-white">
+    <div className="absolute inset-0 bg-[#080010] flex flex-col overflow-hidden text-white pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.15)_0%,transparent_70%)] pointer-events-none" />
       
       <AnimatePresence mode="wait">

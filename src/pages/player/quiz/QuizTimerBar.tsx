@@ -43,8 +43,10 @@ export function QuizTimerBar({ durationSec, roundEndTime, live, onUrgentChange }
   return (
     <>
       {urgent && <div className="absolute inset-0 bg-red-600/10 motion-safe:animate-pulse pointer-events-none z-0" aria-hidden="true" />}
+      {/* Çentikli telefonlarda (viewport-fit=cover) y=0 durum çubuğunun
+          altında kalıyordu; çubuk güvenli alanın hemen altına iniyor. */}
       <div
-        className="absolute top-0 inset-x-0 h-1.5 bg-white/10 z-30"
+        className="absolute top-[env(safe-area-inset-top)] inset-x-0 h-1.5 bg-white/10 z-30"
         role="progressbar"
         aria-label={t("quiz.timeLeft")}
         aria-valuemin={0}
