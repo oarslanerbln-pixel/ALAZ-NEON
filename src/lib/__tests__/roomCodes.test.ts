@@ -43,7 +43,12 @@ describe("isRoomLive", () => {
 
   it("kapanmış oda canlı değil", () => {
     expect(isRoomLive(room({ status: "closed" }), NOW)).toBe(false);
-    expect(isRoomLive(room({ status: "finished" }), NOW)).toBe(false);
+  });
+
+  it("biten mini oyun (finished) geceyi bitirmiyor — oda canlı kalıyor", () => {
+    // Quiz/bomba bitince host lobiye dönene kadar misafir kodla giremiyor,
+    // kod da başka bir odaya verilebiliyordu.
+    expect(isRoomLive(room({ status: "finished" }), NOW)).toBe(true);
   });
 
   it("created_at'i olmayan eski oda canlı SAYILIYOR — güvenli taraf meşgul saymak", () => {
@@ -59,14 +64,14 @@ describe("pickJoinableRoom", () => {
   });
 
   it("yalnızca kapanmış odalar varsa null", () => {
-    expect(pickJoinableRoom([room({ status: "finished" })], NOW)).toBeNull();
+    expect(pickJoinableRoom([room({ status: "closed" })], NOW)).toBeNull();
   });
 
   it("kapanmış oda önce gelse bile canlı oda seçiliyor — asıl hata buydu", () => {
     // Firestore dönüş sırası garanti değil. Eski kod docs[0]'ı alıp durum
     // kontrolünü sonra yaptığı için oyuncu burada "oyun başlamış" hatası
     // alıp canlı odaya hiç giremiyordu.
-    const dead = room({ status: "finished", created_at: NOW - 5000 });
+    const dead = room({ status: "closed", created_at: NOW - 5000 });
     const live = room({ status: "lobby", created_at: NOW - 1000 });
     expect(pickJoinableRoom([dead, live], NOW)).toBe(live);
   });

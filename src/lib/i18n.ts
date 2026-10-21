@@ -14,7 +14,21 @@ const translations = {
   "common.back": { tr: "ANA SAYFA", de: "STARTSEITE", en: "HOME" },
   "common.returnToLobby": { tr: "LOBİYE DÖN", de: "ZUR LOBBY", en: "LOBBY" },
   "common.confirmReturnLobby": { tr: "Mevcut oyunu bitirip lobiye dönmek istiyor musunuz?", de: "Möchtest du das aktuelle Spiel beenden und zur Lobby zurückkehren?", en: "Do you want to end the game and return to lobby?" },
-  "common.confirmExitHome": { tr: "Ana sayfaya dönmek istediğinizden emin misiniz?", de: "Möchtest du wirklich zur Startseite zurückkehren?", en: "Are you sure you want to return to home?" },
+  "common.confirmExitHome": {
+    tr: "Ana sayfaya dönülsün mü? Oda açık kalır, misafirler düşmez; ana sayfadaki \"Son odaya devam\" ile aynı koda geri dönebilirsiniz.",
+    de: "Zur Startseite wechseln? Der Raum bleibt offen und die Gäste bleiben verbunden; mit \"Letzten Raum fortsetzen\" kommst du zum selben Code zurück.",
+    en: "Go to the home screen? The room stays open and guests stay connected; use \"Resume last room\" to get back to the same code.",
+  },
+  "landing.resumeRoom": {
+    tr: (code: string) => `SON ODAYA DEVAM · ${code}`,
+    de: (code: string) => `LETZTEN RAUM FORTSETZEN · ${code}`,
+    en: (code: string) => `RESUME LAST ROOM · ${code}`,
+  },
+  "landing.resumeRoomHint": {
+    tr: "Misafirler QR'ı yeniden okutmak zorunda kalmaz",
+    de: "Gäste müssen den QR-Code nicht erneut scannen",
+    en: "Guests don't need to scan the QR code again",
+  },
   "common.confirmEndNight": {
     tr: "Geceyi bitirip odayı kapatmak istediğinizden emin misiniz? Misafirler oyundan çıkarılacak.",
     de: "Möchtest du den Abend beenden und den Raum schließen? Die Gäste werden aus dem Spiel entfernt.",
@@ -453,6 +467,16 @@ const translations = {
     tr: "BAĞLANILIYOR...",
     de: "VERBINDUNG WIRD HERGESTELLT...",
     en: "CONNECTING...",
+  },
+  "join.welcomeBack": {
+    tr: (name: string) => `TEKRAR HOŞ GELDİN, ${name}`,
+    de: (name: string) => `WILLKOMMEN ZURÜCK, ${name}`,
+    en: (name: string) => `WELCOME BACK, ${name}`,
+  },
+  "join.resuming": {
+    tr: "Puanınla kaldığın yerden devam ediyorsun...",
+    de: "Du machst mit deinen Punkten weiter...",
+    en: "Picking up where you left off, points included...",
   },
   "join.submit": { tr: "SAVAŞA KATIL", de: "AM KAMPF TEILNEHMEN", en: "JOIN THE BATTLE" },
   "join.errorNoRoom": {

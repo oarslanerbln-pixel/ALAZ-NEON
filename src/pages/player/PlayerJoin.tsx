@@ -6,7 +6,8 @@ import { onAuthStateChanged } from "firebase/auth";
 import type { User } from "firebase/auth";
 import { db, auth } from "../../lib/firebase";
 import { retentionExpiry } from "../../lib/retention";
-import { findJoinableRoomByCode } from "../../lib/roomQueries";
+import { findJoinableRoomByCode, findPlayerResume } from "../../lib/roomQueries";
+import { readPlayerSession, savePlayerSession, type SessionPlayer } from "../../lib/roomSession";
 import { useLocale } from "../../hooks/useLocale";
 import { errorMessage } from "../../lib/errors";
 import { PhoneAuth } from "../../components/PhoneAuth";
@@ -31,6 +32,13 @@ export function PlayerJoin() {
   const { profile, updateNickname } = useUserProfile();
   const { t } = useLocale();
   const [nicknamePrefilledFrom, setNicknamePrefilledFrom] = useState<string | null>(null);
+  // QR ile gelen ve bu odada zaten kaydı olan misafiri formu hiç göstermeden
+  // eski kaydına geri götürüyoruz (bkz. lib/roomSession.ts). Kontrol bitene
+  // kadar form yerine bekleme ekranı: yoksa form bir an görünüp kayboluyor.
+  const [resumeCheckPending, setResumeCheckPending] = useState(
+    () => !!urlCode && !!readPlayerSession(localStorage),
+  );
+  const [resumingAs, setResumingAs] = useState<string | null>(null);
 
   // Profile'dan gelen nickname'i RENDER sırasında senkronla (bkz. useRoom.ts
   // vb. aynı desen) — effect içinde yapmak fazladan bir render turu
@@ -48,6 +56,36 @@ export function PlayerJoin() {
     });
     return () => unsubscribe();
   }, []);
+
+  const resumeSession = (roomId: string, player: SessionPlayer) => {
+    savePlayerSession(localStorage, {
+      roomId,
+      playerId: player.id,
+      nickname: player.nickname,
+      teamName: player.team_name,
+    });
+    setResumingAs(player.nickname);
+    // Kısa "tekrar hoş geldin" — misafir neden form görmediğini anlasın.
+    window.setTimeout(() => navigate("/play", { replace: true }), 900);
+  };
+
+  useEffect(() => {
+    if (!urlCode || authChecking) return;
+    const session = readPlayerSession(localStorage);
+    if (!session) return;
+    let cancelled = false;
+    findPlayerResume(session, urlCode, currentUser?.uid).then((decision) => {
+      if (cancelled) return;
+      if (decision.kind === "resume") resumeSession(decision.roomId, decision.player);
+      else setResumeCheckPending(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // resumeSession her render'da yeniden oluşuyor; tetikleyici yalnızca
+    // kod ve oturum bilgisinin netleşmesi.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlCode, authChecking, currentUser?.uid]);
 
   // Check room mode when code changes
   useEffect(() => {
@@ -69,6 +107,18 @@ export function PlayerJoin() {
 
     try {
       const cleanCode = roomCode.trim().toUpperCase();
+
+      // Kodu elle giren misafir de bu odada zaten kayıtlıysa yeni kayıt
+      // açmıyoruz: puanı eski kayıtta, yenisi lobide hayalet kopya olurdu.
+      const resume = await findPlayerResume(
+        readPlayerSession(localStorage),
+        cleanCode,
+        currentUser?.uid,
+      );
+      if (resume.kind === "resume") {
+        resumeSession(resume.roomId, resume.player);
+        return;
+      }
 
       // Onceden sorgudan donen ILK dokuman aliniyor, durum kontrolu ondan
       // SONRA yapiliyordu: kod cakismasi varsa oyuncu kapanmis eski odaya
@@ -115,10 +165,12 @@ export function PlayerJoin() {
             expires_at: retentionExpiry(),
         });
 
-        localStorage.setItem("cafe_game_playerId", playerRef.id);
-        localStorage.setItem("cafe_game_roomId", room.id);
-        localStorage.setItem("cafe_game_playerName", nickname.trim());
-        localStorage.setItem("cafe_game_teamName", room.game_mode === "team" ? teamName.trim() : "");
+        savePlayerSession(localStorage, {
+          roomId: room.id,
+          playerId: playerRef.id,
+          nickname: nickname.trim(),
+          teamName: room.game_mode === "team" ? teamName.trim() : null,
+        });
         navigate("/play");
       } catch (playerError) {
         setErrorMsg(t("join.errorPlayer") + errorMessage(playerError));
@@ -181,7 +233,21 @@ export function PlayerJoin() {
               )}
             </AnimatePresence>
 
-            {authChecking ? (
+            {resumingAs ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex flex-col items-center gap-3 py-10 text-center"
+                role="status"
+              >
+                <span className="text-2xl md:text-3xl font-black uppercase tracking-[0.15em] text-white">
+                  {t("join.welcomeBack", resumingAs)}
+                </span>
+                <span className="text-alaz-orange text-[10px] font-bold uppercase tracking-[0.3em] animate-pulse">
+                  {t("join.resuming")}
+                </span>
+              </motion.div>
+            ) : authChecking || resumeCheckPending ? (
               <div className="flex justify-center items-center py-10">
                 <span className="text-alaz-orange font-bold uppercase tracking-widest animate-pulse">CONNECTING...</span>
               </div>

@@ -26,8 +26,16 @@ export const ROOM_CODE_LIFETIME_MS = 24 * 60 * 60 * 1000;
 /** Oda kodu uzunluğu — QR okutamayan misafir bunu elle giriyor. */
 export const ROOM_CODE_LENGTH = 4;
 
-/** Oyuncunun artık katılamayacağı durumlar. */
-const CLOSED_STATUSES: ReadonlySet<string> = new Set(["closed", "finished"]);
+/**
+ * Oyuncunun artık katılamayacağı durumlar — yalnızca gecenin sonu.
+ *
+ * "finished" eskiden burada da vardı ama o tek bir mini oyunun bittiğini
+ * söylüyor, gecenin değil: host podyumdan lobiye dönene kadar oda aynı kodla
+ * yaşamaya devam ediyor. Kapalı sayılınca iki şey bozuluyordu: misafir o
+ * arada kodla bile giremiyordu ve kod boşta sanılıp başka bir odaya
+ * verilebiliyordu. Geceyi yalnızca "closed" bitiriyor (HostDashboard.endNight).
+ */
+const CLOSED_STATUSES: ReadonlySet<string> = new Set(["closed"]);
 
 export type RoomLike = Pick<Room, "status"> & { created_at?: number };
 

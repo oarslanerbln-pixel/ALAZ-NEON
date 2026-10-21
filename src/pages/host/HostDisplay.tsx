@@ -10,6 +10,7 @@ import { DURATION, EASE } from "../../lib/motion";
 import { sounds, SoundManager } from "../../lib/audio";
 import { calculateRoundScores } from "../../lib/scoring";
 import { Sentinel } from "../../lib/sentinel";
+import { saveHostRoomId } from "../../lib/roomSession";
 import { grantGameRewards } from "../../lib/rewards";
 import { useVenue } from "../../contexts/VenueContextCore";
 
@@ -65,6 +66,14 @@ export function HostDisplay() {
     const timer = setTimeout(preloadHostGameDisplays, 3_000);
     return () => clearTimeout(timer);
   }, []);
+
+  // Bu cihazın son odası — TV ana sayfaya düşerse LandingPage'deki "son odaya
+  // devam" aynı koda döndürüyor; yeni oda açılıp herkes QR'ı yeniden
+  // okutmak zorunda kalmıyor (bkz. lib/roomSession.ts).
+  const roomFound = !!room;
+  useEffect(() => {
+    if (roomId && roomFound) saveHostRoomId(localStorage, roomId);
+  }, [roomId, roomFound]);
 
   // Oda durum kapıları. HostDisplay'in kendi hook sayısı sabit olduğu için
   // buradaki erken dönüşler hook sırasını bozmuyor. Eskiden burada çıplak bir

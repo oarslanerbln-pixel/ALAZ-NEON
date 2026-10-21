@@ -6,14 +6,39 @@ import { SoundManager, sounds } from "../lib/audio";
 import { useLocale } from "../hooks/useLocale";
 import { useVenue } from "../contexts/VenueContextCore";
 import { AttractMode } from "../components/AttractMode";
-import { Smartphone, Tv, Trophy, LogIn, ArrowRight } from "lucide-react";
+import { Smartphone, Tv, Trophy, LogIn, ArrowRight, RotateCcw } from "lucide-react";
 import { AuroraBackdrop, BeamBorder, GridPattern, ShimmerButton } from "../components/fx";
+import { useAuth } from "../hooks/useAuth";
+import { fetchRoomById } from "../lib/roomQueries";
+import { canResumeHostRoom, readHostRoomId } from "../lib/roomSession";
 
 export function LandingPage() {
   const navigate = useNavigate();
   const { t } = useLocale();
   const { venue } = useVenue();
   const [isIdle, setIsIdle] = useState(false);
+  const { user, loading: authLoading } = useAuth();
+  const [resumableRoom, setResumableRoom] = useState<{ id: string; code: string } | null>(null);
+
+  // Bu cihaz bu gece zaten bir oda açtıysa ve oda hâlâ açıksa, yeni oda
+  // açtırmak yerine ona dönmeyi öneriyoruz: yeni oda yeni kod demek, salondaki
+  // herkes QR'ı yeniden okutmak zorunda kalıyordu.
+  useEffect(() => {
+    if (authLoading) return;
+    const roomId = readHostRoomId(localStorage);
+    if (!roomId) return;
+    let cancelled = false;
+    fetchRoomById(roomId)
+      .then((room) => {
+        if (!cancelled && canResumeHostRoom(room, user?.uid)) {
+          setResumableRoom({ id: room.id, code: room.code });
+        }
+      })
+      .catch((err) => console.error("[LandingPage] Son oda okunamadı:", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, user?.uid]);
 
   // Idle Timer logic for Nightclub Attract Screen
   useEffect(() => {
@@ -105,6 +130,28 @@ export function LandingPage() {
 
       {/* ════════════════ ACTION BUTTONS SECTION ════════════════ */}
       <footer className="w-full max-w-4xl mx-auto pb-4 sm:pb-8 relative z-30 shrink-0">
+        {resumableRoom && (
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => {
+              SoundManager.getInstance().playSFX(sounds.CLICK);
+              navigate(`/host/display?roomId=${resumableRoom.id}`);
+            }}
+            className="w-full mb-5 sm:mb-6 flex items-center justify-between gap-3 px-5 py-4 rounded-2xl bg-cyan-400/10 hover:bg-cyan-400/20 border border-cyan-400/50 text-left cursor-pointer transition-colors shadow-[0_0_25px_rgba(0,210,255,0.25)]"
+          >
+            <span className="min-w-0">
+              <span className="block text-sm sm:text-base font-mono font-black uppercase tracking-[0.15em] text-white truncate">
+                {t("landing.resumeRoom", resumableRoom.code)}
+              </span>
+              <span className="block text-[11px] text-cyan-200/80 font-bold mt-0.5">
+                {t("landing.resumeRoomHint")}
+              </span>
+            </span>
+            <RotateCcw className="w-6 h-6 text-cyan-300 shrink-0" />
+          </motion.button>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-8 w-full">
           
           {/* BUTTON 1: JETZT BEITRETEN (SPIELER / GAST) */}
