@@ -8,6 +8,8 @@ import { getLocale } from "../lib/i18n";
 import type { RoutedGame } from "../lib/gameRouting";
 import type { Player, Room, RoomStatus } from "../types/database";
 import { HostDashboard } from "../pages/host/dashboard/HostDashboard";
+import { HostShowcase } from "../pages/host/dashboard/HostShowcase";
+import { TVScaleFrame } from "../components/TVScaleFrame";
 import { HOST_GAME_DISPLAYS } from "../pages/host/gameDisplays";
 import { PLAYER_GAME_CONTROLLERS } from "../pages/player/gameControllers";
 import { PlayerGameShell } from "../pages/player/components/PlayerGameShell";
@@ -19,6 +21,7 @@ import { PlayerGameShell } from "../pages/player/components/PlayerGameShell";
  *
  *   /__screens?side=host&game=quiz&status=question_active&n=8
  *   /__screens?side=player&game=bomb&status=bomb_active&me=0
+ *   /__screens?side=host&game=showcase&slide=1   (TV tanıtım döngüsü)
  *
  * `n` oyuncu sayısı, `me` telefonun hangi oyuncu olduğu, `left` kalan süre (sn). Firebase bu yolda
  * ulaşılamayan bir emülatöre bağlı (bkz. lib/firebase `isScreenPreview`),
@@ -53,7 +56,7 @@ function mockPlayers(n: number): Player[] {
   }));
 }
 
-function mockRoom(game: RoutedGame | "dashboard", status: RoomStatus, players: Player[], secondsLeft: number): Room {
+function mockRoom(game: RoutedGame | "dashboard" | "showcase", status: RoomStatus, players: Player[], secondsLeft: number): Room {
   // Odaya yazılan soru gibi: doğru şık yok (bkz. PublicQuizQuestion).
   // Sorular arayüz diliyle aynı havuzdan: Almanca ekranda Türkçe soru çıkmasın.
   const questions = poolFor(getLocale())
@@ -66,7 +69,7 @@ function mockRoom(game: RoutedGame | "dashboard", status: RoomStatus, players: P
     status,
     created_at: Date.now(),
     host_last_active: Date.now(),
-    active_game: game === "dashboard" ? "none" : game,
+    active_game: game === "dashboard" || game === "showcase" ? "none" : game,
     categories: [],
     timer_setting: 20,
     total_rounds: 5,
@@ -94,7 +97,7 @@ const noop = async () => {};
 export function ScreenPreview() {
   const [params] = useSearchParams();
   const side = params.get("side") === "player" ? "player" : "host";
-  const game = (params.get("game") ?? "quiz") as RoutedGame | "dashboard";
+  const game = (params.get("game") ?? "quiz") as RoutedGame | "dashboard" | "showcase";
   const status = (params.get("status") ?? "lobby") as RoomStatus;
   const n = Number(params.get("n") ?? 8);
   const me = Number(params.get("me") ?? 1);
@@ -107,6 +110,13 @@ export function ScreenPreview() {
   if (!isScreenPreview) return null;
 
   if (side === "host") {
+    if (game === "showcase") {
+      return (
+        <TVScaleFrame>
+          <HostShowcase joinUrl="https://alaz-neon-web.web.app/join?code=4821" roomCode="4821" onClose={() => {}} initialIndex={Number(params.get("slide") ?? 0)} />
+        </TVScaleFrame>
+      );
+    }
     if (game === "dashboard") {
       return <HostDashboard room={room} players={players} updateRoomStatus={noop} />;
     }
