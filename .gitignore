@@ -52,3 +52,7 @@ errors.txt
 _dbg_*
 _arsiv/
 .env*
+
+# ElevenLabs spiker betiği: örnek çıktılar ve kredi defteri (yerel)
+.voiceover-samples/
+scripts/.voiceover-ledger.json
