@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import type { Room, Player } from "../../../types/database";
 import { db } from "../../../lib/firebase";
 import { doc, updateDoc, collection, getDocs, query, where, arrayUnion } from "firebase/firestore";
@@ -14,6 +14,7 @@ import { bombLives } from "../../../lib/bomb";
 import { gameTitle } from "../../../lib/gameCatalog";
 import { PlayerStageScreen } from "../components/PlayerStageScreen";
 import { ShimmerButton } from "../../../components/fx";
+import { DURATION, EASE, SPRING } from "../../../lib/motion";
 
 interface Props {
   room: Room;
@@ -125,11 +126,32 @@ export function PlayerBombController({ room, player }: Props) {
   if (room.status === "bomb_explosion") {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-rose-950 text-white p-6 text-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-red-600/30 animate-pulse pointer-events-none" />
-        <span className="text-7xl mb-4 animate-bounce">💥</span>
-        <h1 className="text-4xl font-black text-white tracking-widest uppercase drop-shadow-md">
+        {/* Tek seferlik patlama flaşı: sürekli yanıp sönen kırmızı yerine
+            (WCAG 2.3.1) bir kez parlayıp sönüyor. */}
+        <motion.div
+          initial={{ opacity: 0.8 }}
+          animate={{ opacity: 0.2 }}
+          transition={{ duration: DURATION.slow, ease: EASE.out }}
+          className="absolute inset-0 bg-red-600/40 pointer-events-none"
+          aria-hidden="true"
+        />
+        <motion.span
+          initial={{ scale: 0.3, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1, rotate: [0, -8, 8, -4, 0] }}
+          transition={{ ...SPRING.bouncy, rotate: { duration: 0.5, delay: 0.15 } }}
+          className="text-7xl mb-4 inline-block"
+          aria-hidden="true"
+        >
+          💥
+        </motion.span>
+        <motion.h1
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, duration: DURATION.base, ease: EASE.out }}
+          className="text-4xl font-black text-white tracking-widest uppercase drop-shadow-md"
+        >
           {t("bomb.explodedShort")}
-        </h1>
+        </motion.h1>
         <p className="mt-3 font-semibold text-sm tracking-wider uppercase text-white/70">
           {t("bomb.watchMainScreen")}
         </p>
@@ -146,7 +168,7 @@ export function PlayerBombController({ room, player }: Props) {
   const latestWord = (room.used_words || []).slice(-1)[0];
 
   return (
-    <div className={`flex-1 flex flex-col min-h-[100dvh] p-4 transition-colors duration-500 ${
+    <div className={`flex-1 flex flex-col min-h-[100dvh] px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] transition-colors duration-500 ${
       isMyTurn ? 'bg-[#180408]' : 'bg-[#07070d]'
     } text-white justify-between relative overflow-hidden select-none`}>
       
@@ -173,26 +195,30 @@ export function PlayerBombController({ room, player }: Props) {
               }`}
             />
           ))}
-          <span className="text-[11px] font-mono font-bold text-white/50 ml-1.5 uppercase">
-            {currentLives} CAN
+          <span className="text-xs font-mono font-bold text-white/60 ml-1.5 uppercase">
+            {t("bomb.livesShort", currentLives)}
           </span>
         </div>
 
         {/* Category Pill */}
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30">
-          <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{t("bomb.category")}</span>
-          <span className="text-xs font-black text-rose-300 uppercase tracking-wide">
-            {room.active_letter || "GENEL"}
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 min-w-0">
+          <span className="text-[11px] font-mono text-white/50 uppercase tracking-wider shrink-0">{t("bomb.category")}</span>
+          <span className="text-xs font-black text-rose-300 uppercase tracking-wide truncate">
+            {room.active_letter || t("bomb.generalCategory")}
           </span>
         </div>
       </header>
 
       {/* Main Action Center */}
       <div className="flex-1 flex flex-col justify-center items-center max-w-md mx-auto w-full my-4 z-20">
+        <AnimatePresence mode="wait" initial={false}>
         {isMyTurn ? (
           <motion.div
+            key="my-turn"
             initial={{ scale: 0.92, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.96, opacity: 0, transition: { duration: DURATION.fast, ease: EASE.in } }}
+            transition={SPRING.bouncy}
             className="w-full"
           >
             <div className="w-full bg-[#1b070b]/95 border-2 border-rose-500/70 rounded-3xl p-6 shadow-[0_0_50px_rgba(244,63,94,0.25)] backdrop-blur-2xl flex flex-col items-center text-center relative overflow-hidden">
@@ -214,7 +240,7 @@ export function PlayerBombController({ room, player }: Props) {
                   onChange={(e) => setWord(e.target.value)}
                   autoFocus
                   disabled={isSubmitting}
-                  className="w-full bg-black/90 border-2 border-rose-500/60 text-white rounded-2xl p-4 text-2xl font-black text-center uppercase tracking-wider focus:outline-none focus:border-rose-400 focus:shadow-[0_0_30px_rgba(244,63,94,0.35)] shadow-inner"
+                  className="w-full bg-black/90 border-2 border-rose-500/60 text-white rounded-2xl p-4 text-2xl placeholder:text-base placeholder:font-bold font-black text-center uppercase tracking-wider focus:outline-none focus:border-rose-400 focus:shadow-[0_0_30px_rgba(244,63,94,0.35)] shadow-inner"
                   placeholder={t("bomb.wordPlaceholder")}
                 />
                 <ShimmerButton
@@ -230,23 +256,40 @@ export function PlayerBombController({ room, player }: Props) {
             </div>
           </motion.div>
         ) : (
-          <div className="text-center p-8 bg-[#0c0c16]/90 border border-white/[0.08] rounded-3xl backdrop-blur-xl w-full shadow-2xl">
+          <motion.div
+            key="waiting"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8, transition: { duration: DURATION.fast, ease: EASE.in } }}
+            transition={{ duration: DURATION.base, ease: EASE.out }}
+            className="text-center p-8 bg-[#0c0c16]/90 border border-white/[0.08] rounded-3xl backdrop-blur-xl w-full shadow-2xl"
+          >
             <div className="text-5xl mb-3 opacity-80">💣</div>
-            <h2 className="text-[11px] font-mono font-bold text-white/40 uppercase tracking-widest mb-1.5">
+            <h2 className="text-xs font-mono font-bold text-white/50 uppercase tracking-widest mb-1.5">
               {t("bomb.elsewhereLabel")}
             </h2>
             <p className="text-xl font-bold text-white tracking-tight mb-4">
               {t("bomb.atAnotherTable")}
             </p>
             {latestWord && (
-              <div className="bg-white/[0.04] border border-white/10 rounded-xl px-4 py-2.5 inline-flex items-center gap-2">
-                <span className="text-[10px] text-white/40 font-mono uppercase">{t("bomb.lastWord")}:</span>
-                <span className="text-sm font-black text-amber-300 uppercase tracking-wider">{latestWord}</span>
+              <div className="bg-white/[0.04] border border-white/10 rounded-xl px-4 py-2.5 inline-flex items-center gap-2 max-w-full">
+                <span className="text-[11px] text-white/50 font-mono uppercase shrink-0">{t("bomb.lastWord")}:</span>
+                {/* Her yeni kelime kısa bir yaylanmayla giriyor: bomba el değiştirdi. */}
+                <motion.span
+                  key={latestWord}
+                  initial={{ opacity: 0, scale: 0.6 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={SPRING.bouncy}
+                  className="text-sm font-black text-amber-300 uppercase tracking-wider truncate"
+                >
+                  {latestWord}
+                </motion.span>
               </div>
             )}
-            <p className="mt-4 text-xs text-white/40 font-medium">{t("bomb.waitYourTurn")}</p>
-          </div>
+            <p className="mt-4 text-xs text-white/50 font-medium">{t("bomb.waitYourTurn")}</p>
+          </motion.div>
         )}
+        </AnimatePresence>
       </div>
 
       {/* Bottom Status */}

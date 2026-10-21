@@ -21,16 +21,16 @@ export function HostSensorReveal({ currentImage, buzzerPlayerName, onNextRound }
       <motion.div
         animate={{ scale: [1, 1.2], opacity: [0.5, 0.2] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", repeatType: "mirror" }}
-        className="absolute w-[60vh] h-[60vh] rounded-full bg-green-600/10 blur-[100px]"
+        className="absolute w-[648px] h-[648px] rounded-full bg-green-600/10 blur-[100px]"
       />
 
       <motion.div 
         initial={{ opacity: 0, y: 50, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.8, type: "spring" }}
-        className="relative z-10 w-full max-w-5xl flex flex-col items-center"
+        className="relative z-10 w-full max-w-4xl flex flex-col items-center"
       >
-        <div className="w-full aspect-video rounded-2xl overflow-hidden border border-green-500/50 shadow-[0_0_100px_rgba(34,197,94,0.3)] mb-10 relative">
+        <div className="w-full aspect-video rounded-2xl overflow-hidden border border-green-500/50 shadow-[0_0_100px_rgba(34,197,94,0.3)] mb-6 relative">
           <img 
             src={currentImage.url}
             className="w-full h-full object-cover"
@@ -42,7 +42,7 @@ export function HostSensorReveal({ currentImage, buzzerPlayerName, onNextRound }
           {currentImage.answer}
         </h2>
         
-        <div className="bg-green-500/10 border border-green-500/30 px-8 py-3 rounded-full mb-12 backdrop-blur-md">
+        <div className="bg-green-500/10 border border-green-500/30 px-8 py-3 rounded-full mb-8 backdrop-blur-md">
           <p className="text-2xl text-green-400 font-bold tracking-widest uppercase">
             {t("sensor.wonPoints", buzzerPlayerName || "")}
           </p>

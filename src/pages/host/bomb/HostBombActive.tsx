@@ -8,6 +8,10 @@ import { db } from "../../../lib/firebase";
 import { useLocale } from "../../../hooks/useLocale";
 import { pickBombHolder } from "../../../lib/bomb";
 import { CardSpotlight, ShimmerButton } from "../../../components/fx";
+import { SPRING } from "../../../lib/motion";
+
+/** Sol listede kaydırmasız gösterilen en fazla oyuncu (1080'lik tuvale göre). */
+const BOMB_ROSTER_MAX = 12;
 
 interface Props {
   room: Room;
@@ -152,7 +156,7 @@ export function HostBombActive({ room, players, onExplode }: Props) {
 
   if (!targetPlayer) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-screen bg-[#050002] gap-6">
+      <div className="flex-1 flex flex-col items-center justify-center h-full bg-[#050002] gap-6">
         <span className="text-8xl motion-safe:animate-pulse" aria-hidden="true">💣</span>
         <p className="text-3xl font-black uppercase tracking-[0.2em] text-white/70">{t("bomb.changingHands")}</p>
       </div>
@@ -165,7 +169,7 @@ export function HostBombActive({ room, players, onExplode }: Props) {
   return (
     <motion.div 
       animate={containerControls}
-      className={`flex-1 flex flex-col items-center justify-between min-h-screen p-8 relative overflow-hidden transition-colors duration-300 ${
+      className={`flex-1 flex flex-col items-center justify-between h-full p-8 relative overflow-hidden transition-colors duration-300 ${
         timeLeft <= 4 ? 'bg-[#200008]' : 'bg-[#050002]'
       }`}
     >
@@ -188,7 +192,7 @@ export function HostBombActive({ room, players, onExplode }: Props) {
           💣 {t("bomb.category")} 💣
         </span>
         <h1 className="text-5xl md:text-6xl font-black text-white uppercase tracking-wider drop-shadow-[0_0_25px_rgba(255,0,60,0.9)]">
-          {room.active_letter || "GENEL"}
+          {room.active_letter || t("bomb.generalCategory")}
         </h1>
       </div>
 
@@ -201,39 +205,50 @@ export function HostBombActive({ room, players, onExplode }: Props) {
           ambient={true} 
           className="w-72 bg-black/70 border border-white/10 p-5 rounded-2xl backdrop-blur-md hidden lg:flex flex-col gap-3 shadow-[0_0_30px_rgba(0,0,0,0.6)]"
         >
-          <h3 className="text-xs font-mono uppercase tracking-widest text-gray-400 font-bold mb-1">
-            ⚡ OYUNCULAR ({players.length})
+          <h3 className="text-base font-mono uppercase tracking-widest text-gray-300 font-bold mb-1">
+            {t("bomb.rosterTitle", players.length)}
           </h3>
-          <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
-            {players.map((p) => {
+          {/* Eskiden max-h-[40vh] + kaydırma çubuğu: TV'de kimse kaydıramıyor,
+              40vh de tuvalin değil pencerenin yüksekliği. Kalabalıkta satırlar
+              sıkışıyor, sığmayanlar alttaki sayaçla özetleniyor. */}
+          <div className={`flex flex-col ${players.length > 8 ? "gap-1" : "gap-2"}`}>
+            {players.slice(0, BOMB_ROSTER_MAX).map((p) => {
               const pLives = p.lives !== undefined ? p.lives : 3;
               const isTurn = p.id === targetPlayer.id;
               const isEliminated = pLives <= 0;
 
               return (
-                <div 
+                <motion.div
                   key={p.id}
-                  className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
-                    isTurn 
-                      ? "bg-red-600/30 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.6)] scale-105" 
+                  // Bomba kimdeyse onun satırı yaylanarak öne çıkar.
+                  animate={{ scale: isTurn ? 1.05 : 1, opacity: isEliminated ? 0.3 : 1 }}
+                  transition={SPRING.snappy}
+                  className={`flex items-center justify-between gap-2 rounded-xl border transition-colors ${players.length > 8 ? "px-3 py-1.5" : "p-3"} ${
+                    isTurn
+                      ? "bg-red-600/30 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.6)]"
                       : isEliminated
-                      ? "bg-black/30 border-white/5 opacity-30 grayscale"
+                      ? "bg-black/30 border-white/5 grayscale"
                       : "bg-white/5 border-white/10"
                   }`}
                 >
-                  <span className={`font-bold text-base truncate max-w-[120px] ${isTurn ? "text-white font-black" : "text-gray-300"}`}>
+                  <span className={`font-bold text-lg truncate min-w-0 ${isTurn ? "text-white font-black" : "text-gray-300"}`}>
                     {p.nickname}
                   </span>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 shrink-0">
                     {Array.from({ length: 3 }).map((_, i) => (
-                      <span key={i} className="text-sm">
+                      <span key={i} className="text-base">
                         {i < pLives ? "❤️" : "🖤"}
                       </span>
                     ))}
                   </div>
-                </div>
+                </motion.div>
               );
             })}
+            {players.length > BOMB_ROSTER_MAX && (
+              <p className="text-center text-base font-bold text-white/50 pt-1">
+                {t("common.morePlayers", players.length - BOMB_ROSTER_MAX)}
+              </p>
+            )}
           </div>
         </CardSpotlight>
 
@@ -262,7 +277,9 @@ export function HostBombActive({ room, players, onExplode }: Props) {
                 strokeLinecap="round" 
                 strokeLinejoin="round" 
                 style={{ filter: `drop-shadow(0px 0px ${timeLeft <= 4 ? '50px' : '25px'} rgba(255,0,60,0.9))` }}
-                className="transition-all duration-200"
+                // Yalnızca renkler geçişli: `transition-all` drop-shadow filtresini
+                // her eşikte 200ms boyunca 340px'lik alanda yeniden boyuyordu.
+                className="transition-colors duration-200"
               >
                 <circle cx="11.5" cy="11.5" r="9"/>
                 <path d="m19.5 4.5 1.5 1.5"/>
@@ -335,8 +352,8 @@ export function HostBombActive({ room, players, onExplode }: Props) {
                   <span className="text-red-300 font-black tracking-widest text-sm uppercase text-center">
                     {t("bomb.rejectWord")}
                   </span>
-                  <span className="text-[10px] text-gray-400 font-mono">
-                    (Bombayı geri gönderir - 3.5s)
+                  <span className="text-sm text-gray-300 font-mono">
+                    {t("bomb.rejectHint")}
                   </span>
                 </ShimmerButton>
               </motion.div>
@@ -353,24 +370,39 @@ export function HostBombActive({ room, players, onExplode }: Props) {
           className="bg-black/80 border border-white/15 p-4 rounded-2xl backdrop-blur-md shadow-[0_0_30px_rgba(255,100,0,0.15)]"
         >
           <div className="flex items-center gap-3 mb-2">
-            <span className="text-xs font-mono font-bold text-amber-400 uppercase tracking-widest">
-              🔥 KELİME ZİNCİRİ ({usedWords.length})
+            <span className="text-base font-mono font-bold text-amber-400 uppercase tracking-widest">
+              {t("bomb.wordChain", usedWords.length)}
             </span>
           </div>
-          <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none">
+          <div className="flex items-center gap-2 overflow-hidden py-1">
             {usedWords.length === 0 ? (
-              <span className="text-sm text-gray-500 font-mono">İlk kelime bekleniyor...</span>
+              <span className="text-lg text-gray-400 font-mono">{t("bomb.waitingFirstWord")}</span>
             ) : (
-              usedWords.slice(-8).map((w, idx) => (
-                <div key={idx} className="flex items-center gap-2 shrink-0">
-                  <span className="px-3.5 py-1.5 rounded-lg bg-red-600/20 border border-red-500/40 text-white font-bold text-sm">
-                    {w}
-                  </span>
-                  {idx < Math.min(usedWords.length - 1, 7) && (
-                    <span className="text-gray-600 text-xs">➔</span>
-                  )}
-                </div>
-              ))
+              // Anahtar kelimenin zincirdeki mutlak sırası: yeni kelime sağdan
+              // yaylanarak girer, eskiler `layout` ile sola kayar.
+              <AnimatePresence initial={false} mode="popLayout">
+                {usedWords.slice(-8).map((w, idx, shown) => {
+                  const position = usedWords.length - shown.length + idx;
+                  return (
+                    <motion.div
+                      key={`${position}-${w}`}
+                      layout="position"
+                      initial={{ opacity: 0, scale: 0.6, x: 24 }}
+                      animate={{ opacity: 1, scale: 1, x: 0 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={SPRING.snappy}
+                      className="flex items-center gap-2 shrink-0"
+                    >
+                      <span className={`px-3.5 py-1.5 rounded-lg border font-bold text-lg ${idx === shown.length - 1 ? "bg-amber-500/25 border-amber-400 text-amber-100" : "bg-red-600/20 border-red-500/40 text-white"}`}>
+                        {w}
+                      </span>
+                      {idx < shown.length - 1 && (
+                        <span className="text-gray-500 text-sm">➔</span>
+                      )}
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
             )}
           </div>
         </CardSpotlight>

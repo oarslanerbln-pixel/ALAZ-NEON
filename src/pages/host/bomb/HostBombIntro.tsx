@@ -26,7 +26,7 @@ export function HostBombIntro({ room, onComplete }: Props) {
   }, []);
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center min-h-screen bg-[#050002] relative overflow-hidden">
+    <div className="flex-1 flex flex-col items-center justify-center h-full bg-[#050002] relative overflow-hidden">
       {/* Glitchy radar/warning background */}
       <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.1]" />
       <motion.div 

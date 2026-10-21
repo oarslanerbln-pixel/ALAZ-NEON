@@ -36,7 +36,7 @@ export function HostBombExplosion({ room, players, onComplete }: Props) {
   const currentLives = targetPlayer?.lives !== undefined ? targetPlayer.lives : 3;
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center min-h-screen bg-black relative overflow-hidden">
+    <div className="flex-1 flex flex-col items-center justify-center h-full bg-black relative overflow-hidden">
       {/* Intense Blinding Flash */}
       <motion.div
         initial={{ opacity: 1 }}

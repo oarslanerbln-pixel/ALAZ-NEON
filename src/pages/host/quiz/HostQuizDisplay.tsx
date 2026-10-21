@@ -14,6 +14,7 @@ import { KineticSpark } from "../../../components/KineticSpark";
 import type { Answer } from "../../../types/database";
 
 import { HostQuizIntro } from "./views/HostQuizIntro";
+import { QuizLeaderboard, type PreviousRanking } from "./QuizLeaderboard";
 import { TimerRing } from "../../../components/TimerRing";
 import { BeamBorder } from "../../../components/fx/BeamBorder";
 import { CardSpotlight, KineticText, NumberTicker, ShimmerButton } from "../../../components/fx";
@@ -21,6 +22,7 @@ import { HostHeader } from "../components/HostHeader";
 import { HostLobby } from "../views/HostLobby";
 import { HostTutorial } from "../components/HostTutorial";
 import { useLocale } from "../../../hooks/useLocale";
+import { DURATION, EASE, SPRING } from "../../../lib/motion";
 import { grantGameRewards } from "../../../lib/rewards";
 import { useVenue } from "../../../contexts/VenueContextCore";
 
@@ -78,6 +80,8 @@ export function HostQuizDisplay({
   // Track streaks per player (consecutive correct answers)
   const streaksRef = useRef<Record<string, number>>({});
   const [playerStreaks, setPlayerStreaks] = useState<Record<string, number>>({});
+  // Bir önceki ara sıralama: yeni sıralama ekranı buradan başlayıp kayıyor.
+  const [lastRanking, setLastRanking] = useState<PreviousRanking>({ order: [], scores: {} });
 
   // Reentrancy guard for ending question
   const endingQuestionRef = useRef(false);
@@ -491,7 +495,7 @@ export function HostQuizDisplay({
                   )}
                   {isFinalRound && (
                     <span className="px-6 py-2 rounded-full bg-red-600/30 border border-red-500 text-red-400 font-black tracking-widest uppercase text-xl animate-pulse">
-                      💥 2X FİNAL
+                      {t("quiz.finalDouble")}
                     </span>
                   )}
                 </div>
@@ -531,9 +535,12 @@ export function HostQuizDisplay({
                   <div className="text-white/50 text-2xl animate-pulse">{t("quiz.loading")}</div>
                 ) : (
                   <>
-                    {/* Top Bar: Category & Live Answered Counter */}
-                    <div className="flex justify-between items-center w-full mb-6 px-4">
-                      <div className="flex items-center gap-3">
+                    {/* Üst çubuk: soru/kategori · süre halkası · canlı cevap sayacı.
+                        Halka eskiden soru kartıyla şıklar arasında kendi
+                        satırındaydı; uzun bir soruda şıklar ve "süreyi bitir"
+                        düğmesi 1080'lik tuvalin altından taşıyordu. */}
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center w-full mb-6 px-4">
+                      <div className="flex items-center gap-3 min-w-0">
                         <span className="px-4 py-1.5 rounded-md bg-white/10 border border-white/20 text-gray-300 font-mono text-lg uppercase font-bold">
                           {t("quiz.questionCounter", currentRoundNum, totalRounds)}
                         </span>
@@ -544,8 +551,26 @@ export function HostQuizDisplay({
                         )}
                       </div>
 
+                      <TimerRing
+                        timeLeft={timeLeft}
+                        maxTime={room.timer_setting || 30}
+                        tone={timeLeft <= 5 ? "critical" : timeLeft <= 10 ? "warning" : "calm"}
+                        size={128}
+                      >
+                        {/* Son 5 saniye: her saniye rakam küçük bir vuruşla değişir. */}
+                        <motion.span
+                          key={timeLeft <= 5 ? timeLeft : "calm"}
+                          initial={timeLeft <= 5 ? { scale: 1.35, opacity: 0.4 } : false}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={SPRING.snappy}
+                          className={`inline-block text-5xl font-black tabular-nums tracking-tighter ${timeLeft <= 5 ? "text-red-500" : "text-white"}`}
+                        >
+                          {timeLeft}
+                        </motion.span>
+                      </TimerRing>
+
                       {/* Live Answered Tracker */}
-                      <div className="flex items-center gap-3 bg-black/60 border border-cyan-500/40 px-6 py-2 rounded-full shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+                      <div className="justify-self-end flex items-center gap-3 bg-black/60 border border-cyan-500/40 px-6 py-2 rounded-full shadow-[0_0_20px_rgba(6,182,212,0.3)]">
                         <span className="w-3 h-3 rounded-full bg-cyan-400 animate-ping" />
                         <span className="font-mono font-bold text-cyan-400 text-lg">
                           {t("quiz.liveAnswered", answeredCount, players.length)}
@@ -570,20 +595,6 @@ export function HostQuizDisplay({
                         />
                       </div>
                     </BeamBorder>
-
-                    {/* Boşalan süre halkası (HostPlaying ile aynı dil). */}
-                    <div className="flex items-center justify-center mb-8">
-                      <TimerRing
-                        timeLeft={timeLeft}
-                        maxTime={room.timer_setting || 30}
-                        tone={timeLeft <= 5 ? "critical" : timeLeft <= 10 ? "warning" : "calm"}
-                        size={150}
-                      >
-                        <span className={`text-6xl font-black tabular-nums tracking-tighter ${timeLeft <= 5 ? "text-red-500" : "text-white"}`}>
-                          {timeLeft}
-                        </span>
-                      </TimerRing>
-                    </div>
 
                     {/* 4 Options Grid with CardSpotlight */}
                     <div className="grid grid-cols-2 gap-6 w-full mb-6">
@@ -676,20 +687,24 @@ export function HostQuizDisplay({
                         const percentage = voteStats.total > 0 ? Math.round((count / voteStats.total) * 100) : 0;
 
                         return (
-                          <div 
-                            key={opt} 
-                            className={`p-6 rounded-xl border-2 relative overflow-hidden flex flex-col justify-between transition-all duration-700 ${
-                              isCorrect 
-                                ? "bg-green-500/25 border-green-500 shadow-[0_0_50px_rgba(34,197,94,0.7)] scale-[1.02]" 
-                                : `bg-black/50 border-white/10 ${isDimmed ? "opacity-40" : ""}`
+                          <motion.div
+                            key={opt}
+                            // Doğru şık öne çıkıp yaylanır, diğerleri söner. Eskiden
+                            // `transition-all` gölgeyi de 700ms boyunca boyuyordu.
+                            animate={{ scale: isCorrect ? 1.02 : 1, opacity: isDimmed ? 0.4 : 1 }}
+                            transition={isCorrect ? { ...SPRING.bouncy, delay: 0.2 } : { duration: DURATION.slow, ease: EASE.out }}
+                            className={`p-6 rounded-xl border-2 relative overflow-hidden flex flex-col justify-between transition-colors duration-500 ${
+                              isCorrect
+                                ? "bg-green-500/25 border-green-500 shadow-[0_0_50px_rgba(34,197,94,0.7)]"
+                                : "bg-black/50 border-white/10"
                             }`}
                           >
-                            {/* Vote Percentage Fill Bar */}
-                            <motion.div 
-                              initial={{ width: 0 }}
-                              animate={{ width: `${percentage}%` }}
-                              transition={{ duration: 1, ease: "easeOut" }}
-                              className={`absolute inset-y-0 left-0 ${isCorrect ? "bg-green-500/20" : "bg-white/5"} pointer-events-none`}
+                            {/* Oy yüzdesi dolgusu: width yerine scaleX (yalnızca compositor). */}
+                            <motion.div
+                              initial={{ scaleX: 0 }}
+                              animate={{ scaleX: percentage / 100 }}
+                              transition={{ duration: 1, ease: EASE.out }}
+                              className={`absolute inset-0 origin-left ${isCorrect ? "bg-green-500/20" : "bg-white/5"} pointer-events-none`}
                             />
 
                             <div className="flex items-center gap-4 relative z-10">
@@ -705,14 +720,14 @@ export function HostQuizDisplay({
 
                             {/* Vote stats footer */}
                             <div className="flex justify-between items-center mt-4 pt-3 border-t border-white/10 relative z-10 text-sm font-mono">
-                              <span className={isCorrect ? "text-green-400 font-bold" : "text-gray-500"}>
-                                {count} Oyuncu
+                              <span className={`text-lg ${isCorrect ? "text-green-400 font-bold" : "text-gray-400"}`}>
+                                {t("quiz.voteCount", count)}
                               </span>
-                              <span className={`font-black ${isCorrect ? "text-green-400 text-lg" : "text-gray-500"}`}>
+                              <span className={`font-black text-xl tabular-nums ${isCorrect ? "text-green-400" : "text-gray-400"}`}>
                                 %{percentage}
                               </span>
                             </div>
-                          </div>
+                          </motion.div>
                         );
                       })}
                     </div>
@@ -771,47 +786,12 @@ export function HostQuizDisplay({
                   )}
                 </div>
 
-                <div className="w-full space-y-3 mb-10 max-h-[50vh] overflow-y-auto pr-2">
-                  {[...players].sort((a,b) => b.total_score - a.total_score).map((p, idx) => {
-                    const streak = playerStreaks[p.id] || 0;
-                    return (
-                      <motion.div 
-                        key={p.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.05 }}
-                        className={`flex items-center p-5 rounded-xl border-2 transition-all ${
-                          idx === 0 
-                            ? "bg-amber-500/20 border-amber-400 shadow-[0_0_30px_rgba(251,191,36,0.4)]" 
-                            : idx === 1
-                            ? "bg-slate-300/15 border-slate-300"
-                            : idx === 2
-                            ? "bg-amber-700/15 border-amber-700"
-                            : "bg-black/60 border-white/10"
-                        }`}
-                      >
-                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl font-black mr-5 ${
-                          idx === 0 ? "bg-amber-400 text-black" : idx === 1 ? "bg-slate-300 text-black" : idx === 2 ? "bg-amber-700 text-white" : "bg-white/10 text-gray-400"
-                        }`}>
-                          #{idx + 1}
-                        </div>
-
-                        <div className="flex-1 flex items-center gap-3">
-                          <span className="text-2xl md:text-3xl font-black text-white">{p.nickname}</span>
-                          {streak >= 2 && (
-                            <span className="px-3 py-1 rounded-full bg-red-600/30 border border-red-500 text-red-400 text-xs font-black uppercase tracking-wider flex items-center gap-1 animate-pulse">
-                              🔥 x{streak} {streak >= 3 ? "ALEV" : ""}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="text-3xl md:text-4xl font-black text-alaz-orange tabular-nums">
-                          <NumberTicker value={p.total_score} /> <span className="text-sm font-normal text-gray-400">{t("quiz.pts")}</span>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
+                <QuizLeaderboard
+                  players={players}
+                  streaks={playerStreaks}
+                  previous={lastRanking}
+                  onSettled={setLastRanking}
+                />
 
                 <ShimmerButton
                   onClick={nextQuestion}
@@ -834,9 +814,13 @@ export function HostQuizDisplay({
                 animate={{ opacity: 1, scale: 1 }}
                 className="flex flex-col items-center justify-center w-full max-w-5xl text-center"
               >
-                <KineticSpark />
-                
-                <h1 className="text-6xl md:text-7xl font-black text-alaz-orange mb-4 uppercase drop-shadow-[0_0_40px_rgba(255,77,0,0.9)] tracking-widest">
+                {/* Logo kendi başına ~430px yer kaplıyordu; podyumla birlikte
+                    "yeni oyun" düğmesi 1080'lik tuvalin altına taşıyordu. */}
+                <div className="h-[260px] w-full flex items-center justify-center">
+                  <KineticSpark className="scale-[0.62]" />
+                </div>
+
+                <h1 className="text-6xl md:text-7xl font-black text-alaz-orange mb-2 uppercase drop-shadow-[0_0_40px_rgba(255,77,0,0.9)] tracking-widest">
                   {t("quiz.champion")}
                 </h1>
                 
@@ -861,7 +845,7 @@ export function HostQuizDisplay({
                             {t("quiz.podium2nd")}
                           </span>
                           <h3 className="text-2xl font-black text-white mb-2 truncate w-full">{second.nickname}</h3>
-                          <div className="text-2xl font-black text-slate-300">{second.total_score} {t("quiz.pts")}</div>
+                          <div className="text-2xl font-black text-slate-300"><NumberTicker value={second.total_score} delay={0.6} /> {t("quiz.pts")}</div>
                         </motion.div>
                       )}
 
@@ -879,7 +863,7 @@ export function HostQuizDisplay({
                           </span>
                           <h2 className="text-4xl font-black text-white mb-3 truncate w-full">{first.nickname}</h2>
                           <div className="text-4xl font-black text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.8)]">
-                            {first.total_score} {t("quiz.pts")}
+                            <NumberTicker value={first.total_score} delay={0.9} /> {t("quiz.pts")}
                           </div>
                         </motion.div>
                       )}
@@ -897,7 +881,7 @@ export function HostQuizDisplay({
                             {t("quiz.podium3rd")}
                           </span>
                           <h3 className="text-2xl font-black text-white mb-2 truncate w-full">{third.nickname}</h3>
-                          <div className="text-2xl font-black text-amber-600">{third.total_score} {t("quiz.pts")}</div>
+                          <div className="text-2xl font-black text-amber-600"><NumberTicker value={third.total_score} delay={0.6} /> {t("quiz.pts")}</div>
                         </motion.div>
                       )}
                     </div>

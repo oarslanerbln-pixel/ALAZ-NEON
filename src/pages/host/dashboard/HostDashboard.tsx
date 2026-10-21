@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { useNavigate } from "react-router-dom";
@@ -26,6 +26,12 @@ import { NumberTicker, ShimmerButton, GameAnimatedLogo } from "../../../componen
 import { NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
 import { NightFinale } from "../views/NightFinale";
 import { nightStandings, rankDeltas } from "../../../lib/nightLeague";
+import { SHOWCASE_IDLE_MS } from "../../../lib/showcase";
+import { useIdle } from "../../../hooks/useIdle";
+import { HostShowcase } from "./HostShowcase";
+
+/** QR kartının altında 1080'lik tuvale kaydırmasız sığan misafir satırı. */
+const DASHBOARD_LIST_MAX = 6;
 
 
 
@@ -46,11 +52,14 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
   const { isStaff } = useIsStaff();
   const rewardsBlocked = venue.rewards_enabled && Boolean(venue.reward_title?.trim()) && isStaff === false;
   const [isKioskMode, setIsKioskMode] = useState(false);
-  const [kioskImageIndex, setKioskImageIndex] = useState(0);
 
   // Game Setup State
   const [setupGameMode, setSetupGameMode] = useState<GameType | null>(null);
   const [showFinale, setShowFinale] = useState(false);
+  // Gece lobisi bir süre boş kalınca TV tanıtım döngüsüne geçer; kurulum
+  // penceresi ya da finale açıkken geçmez. İlk dokunuşta kapanır.
+  const idle = useIdle(SHOWCASE_IDLE_MS, room.status === "night_lobby" && !setupGameMode && !showFinale && !isKioskMode);
+  const showShowcase = isKioskMode || idle;
 
   // Carousel State
   const [carouselIndex, setCarouselIndex] = useState(0);
@@ -65,13 +74,6 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
   };
 
 
-  useEffect(() => {
-    if (!isKioskMode) return;
-    const interval = setInterval(() => {
-      setKioskImageIndex((prev) => (prev + 1) % (venue.promo_images?.length || 1));
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [isKioskMode, venue.promo_images]);
 
   /**
    * Geceyi bitirir: odayı "closed" durumuna alır ve ana sayfaya döner.
@@ -351,7 +353,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                   {t("dashboard.joinTitle")}
                 </h3>
 
-                <p className="text-white/65 text-sm font-medium text-center px-2 mb-5 leading-relaxed text-balance">
+                <p className="text-white/65 text-base font-medium text-center px-2 mb-3 leading-snug text-balance">
                   {t("dashboard.joinBody")}
                 </p>
 
@@ -366,9 +368,9 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                   <QRCodeSVG value={joinUrl} size={200} bgColor="#ffffff" fgColor="#000000" level="H" marginSize={1} />
                 </BeamBorder>
 
-                <div className="mt-5 flex flex-col items-center">
-                  <span className="text-white/40 text-[11px] uppercase tracking-[0.3em] font-bold mb-2">{t("hostHeader.roomCode")}</span>
-                  <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-xl flex items-center justify-center">
+                <div className="mt-3 flex flex-col items-center">
+                  <span className="text-white/50 text-sm uppercase tracking-[0.3em] font-bold mb-1.5">{t("hostHeader.roomCode")}</span>
+                  <div className="bg-white/5 border border-white/10 px-6 py-2 rounded-xl flex items-center justify-center">
                     <p className="text-alaz-orange font-mono font-black text-3xl tracking-widest drop-shadow-[0_0_15px_rgba(255,85,0,0.5)]">{room.code}</p>
                   </div>
                 </div>
@@ -390,9 +392,13 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
               </div>
             </div>
 
-            <div className="flex-1 bg-[#0b0b14]/90 backdrop-blur-3xl rounded-2xl border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.2)] p-4 flex flex-col overflow-hidden max-h-[250px]">
-              <div className="flex items-center justify-between gap-3 mb-4">
-                <h3 className="text-gray-300 font-black text-sm uppercase tracking-widest">
+            {/* Eskiden max-h-[250px] + overflow-y-auto: QR kartının altında
+                ~157px kalıyordu, TV'de kimse kaydıramadığı için 8 misafirden
+                yalnız 3'ü görünüyordu. Artık kalan yüksekliği dolduruyor,
+                satırlar sıkı ve sığmayanlar tek satırda özetleniyor. */}
+            <div className="flex-1 min-h-0 bg-[#0b0b14]/90 backdrop-blur-3xl rounded-2xl border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.2)] p-4 flex flex-col overflow-hidden">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <h3 className="text-gray-300 font-black text-base uppercase tracking-widest">
                   {t("dashboard.playersCount", players.length)}
                 </h3>
                 {/* Gece puanı dağıtılmışsa finale geçilebilir (bkz. NightFinale). */}
@@ -408,22 +414,22 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                   </ShimmerButton>
                 )}
               </div>
-              <div className="flex-1 overflow-y-auto pr-2 space-y-2">
+              <div className="flex-1 min-h-0 overflow-hidden space-y-1.5">
                 {players.length === 0 ? (
-                  <div className="text-gray-500 text-sm text-center mt-10">{t("dashboard.waiting")}</div>
+                  <div className="text-gray-400 text-base text-center mt-10">{t("dashboard.waiting")}</div>
                 ) : (
-                  leaderboard.map((p, i) => (
+                  leaderboard.slice(0, DASHBOARD_LIST_MAX).map((p, i) => (
                     <motion.div
                       key={p.id}
                       layout
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="bg-white/5 border border-white/10 p-3 rounded-xl flex justify-between items-center gap-3"
+                      className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl flex justify-between items-center gap-3"
                     >
                       <span className="w-6 text-center text-sm font-black text-white/40 tabular-nums" aria-hidden="true">
                         {(p.night_score ?? 0) > 0 && i < 3 ? ["🥇", "🥈", "🥉"][i] : i + 1}
                       </span>
-                      <span className="flex-1 truncate font-bold text-white">{p.nickname}</span>
+                      <span className="flex-1 min-w-0 truncate font-bold text-lg text-white">{p.nickname}</span>
                       {deltas[p.id] !== 0 && (
                         <motion.span
                           key={`${p.id}-${ranks.key}`}
@@ -440,6 +446,11 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                       </span>
                     </motion.div>
                   ))
+                )}
+                {players.length > DASHBOARD_LIST_MAX && (
+                  <p className="pt-1 text-center text-base font-bold text-white/50">
+                    {t("common.morePlayers", players.length - DASHBOARD_LIST_MAX)}
+                  </p>
                 )}
               </div>
             </div>
@@ -621,39 +632,14 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       </div>
       
       <AnimatePresence>
-        {isKioskMode && venue.promo_images && venue.promo_images.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setIsKioskMode(false)}
-            className="fixed inset-0 z-[999] bg-black cursor-pointer flex items-center justify-center"
-          >
-            <AnimatePresence mode="wait">
-              <motion.img
-                key={kioskImageIndex}
-                src={venue.promo_images[kioskImageIndex]}
-                initial={{ opacity: 0, scale: 1.05 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 1 }}
-                className="w-full h-full object-contain"
-                alt="Promo"
-              />
-            </AnimatePresence>
-            <div className="absolute top-8 right-8 text-white/30 text-[10px] uppercase tracking-widest bg-black/50 px-4 py-2 rounded-lg">
-              {t("dashboard.kioskExit")}
-            </div>
-            
-            {/* Show QR code subtly in corner during kiosk mode */}
-            <div className="absolute bottom-8 right-8 bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/20 flex flex-col items-center">
-              <span className="text-white font-bold uppercase tracking-widest text-[10px] mb-2">{t("host.joinGame", "Oyuna Katıl")}</span>
-              <div className="bg-white p-2 rounded-lg">
-                <QRCodeSVG value={joinUrl} size={80} bgColor="#ffffff" fgColor="#000000" level="H" />
-              </div>
-              <span className="text-alaz-orange font-mono font-bold mt-2">{room.code}</span>
-            </div>
-          </motion.div>
+        {showShowcase && (
+          <HostShowcase
+            key="showcase"
+            joinUrl={joinUrl}
+            roomCode={room.code}
+            venuePromos={venue.promo_images}
+            onClose={() => setIsKioskMode(false)}
+          />
         )}
       </AnimatePresence>
 

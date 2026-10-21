@@ -12,7 +12,7 @@ import { gameTitle } from "../../../lib/gameCatalog";
 import { PlayerStageScreen } from "../components/PlayerStageScreen";
 import { QuizTimerBar } from "./QuizTimerBar";
 import { NumberTicker } from "../../../components/fx";
-import { SPRING } from "../../../lib/motion";
+import { SPRING, STAGGER } from "../../../lib/motion";
 
 interface PlayerQuizControllerProps {
   room: Room;
@@ -114,7 +114,9 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
   const totalRounds = room.total_rounds || 5;
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-between min-h-screen bg-[#07070d] text-white relative overflow-hidden select-none pb-6">
+    // 100dvh: mobil tarayıcının adres çubuğu açıkken 100vh ekranı taşırıp
+    // kaydırma çubuğu çıkarıyordu. Üst/alt dolgu çentik ve home bar için.
+    <div className="flex-1 flex flex-col items-center justify-between min-h-[100dvh] bg-[#07070d] text-white relative overflow-hidden select-none pt-[env(safe-area-inset-top)] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       {gameState === "question_active" && (
         <QuizTimerBar
           key={room.current_question_index ?? 0}
@@ -133,13 +135,14 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
         </div>
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-alaz-orange/10 border border-alaz-orange/30 text-alaz-orange backdrop-blur-xl">
           <span className="text-xs">⚡</span>
-          <span className="text-xs font-black font-mono">{player.total_score}</span>
-          <span className="text-[10px] text-white/40 uppercase">{t("quiz.pts", "PTS")}</span>
+          {/* Açılışta sıfırdan saymasın; yalnızca puan arttığında saysın. */}
+          <NumberTicker value={player.total_score} initial={player.total_score} className="text-xs font-black font-mono tabular-nums" />
+          <span className="text-[11px] text-white/50 uppercase">{t("quiz.pts")}</span>
         </div>
       </header>
 
       {/* Content Area */}
-      <div className="relative z-10 w-full max-w-md px-4 flex-1 flex flex-col justify-center">
+      <div className="relative z-10 w-full max-w-md px-4 flex-1 flex flex-col justify-center min-h-0">
         <AnimatePresence mode="wait">
           
           {/* LOBBY */}
@@ -181,10 +184,12 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="w-full flex flex-col gap-3"
+              // Soru üstte, şıklar altta: tek elle oynarken başparmak ekranın
+              // alt yarısına rahat uzanıyor, üst köşelere değil.
+              className="w-full flex-1 flex flex-col gap-3 py-2"
             >
               {/* Question Preview Box */}
-              <div className="w-full bg-[#0d0d18]/95 border border-white/[0.09] rounded-2xl p-4 sm:p-5 shadow-2xl backdrop-blur-xl text-center mb-1">
+              <div className="w-full bg-[#0d0d18]/95 border border-white/[0.09] rounded-2xl p-4 sm:p-5 shadow-2xl backdrop-blur-xl text-center mb-auto">
                 {currentQ.category && (
                   <span className="inline-block text-[10px] font-mono uppercase text-cyan-400 font-bold tracking-[0.2em] px-2.5 py-0.5 rounded-full bg-cyan-400/10 border border-cyan-400/20 mb-2">
                     {currentQ.category}
@@ -196,21 +201,23 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
               </div>
 
               {/* 4 Obsidian Glass Options */}
-              {(["A", "B", "C", "D"] as const).map(opt => {
+              {(["A", "B", "C", "D"] as const).map((opt, i) => {
                 const isSelected = selectedOption === opt;
 
                 return (
                   <motion.button
                     key={opt}
-                    whileTap={{ scale: hasSubmitted ? 1 : 0.96 }}
-                    transition={SPRING.stiff}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: hasSubmitted && !isSelected ? 0.25 : 1, y: 0, scale: isSelected ? 1.02 : 1 }}
+                    transition={{ ...SPRING.snappy, delay: hasSubmitted ? 0 : i * STAGGER.tight }}
+                    whileTap={hasSubmitted ? undefined : { scale: 0.96 }}
                     onClick={() => !hasSubmitted && handleSubmit(opt)}
                     disabled={hasSubmitted}
-                    className={`w-full p-4 rounded-2xl border transition-all duration-200 flex items-center gap-3.5 text-left relative overflow-hidden select-none ${
+                    className={`w-full min-h-[60px] p-4 rounded-2xl border transition-colors duration-200 flex items-center gap-3.5 text-left relative overflow-hidden select-none ${
                       isSelected
-                        ? "bg-white text-black border-white shadow-[0_0_35px_rgba(255,255,255,0.35)] scale-[1.02]"
-                        : "bg-[#0c0c16]/90 border-white/[0.08] text-white hover:border-white/20 active:scale-[0.98]"
-                    } ${hasSubmitted && !isSelected ? "opacity-25 grayscale-[50%]" : ""}`}
+                        ? "bg-white text-black border-white shadow-[0_0_35px_rgba(255,255,255,0.35)]"
+                        : "bg-[#0c0c16]/90 border-white/[0.08] text-white hover:border-white/20"
+                    }`}
                   >
                     <div className={`w-10 h-10 rounded-xl border flex items-center justify-center text-sm font-black shrink-0 transition-colors ${
                       isSelected

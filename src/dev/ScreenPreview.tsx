@@ -1,0 +1,140 @@
+import { Suspense, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
+
+import { SENSOR_IMAGES } from "../data/sensorImages";
+import { poolFor } from "../lib/quizQuestions";
+import { isScreenPreview } from "../lib/firebase";
+import { getLocale } from "../lib/i18n";
+import type { RoutedGame } from "../lib/gameRouting";
+import type { Player, Room, RoomStatus } from "../types/database";
+import { HostDashboard } from "../pages/host/dashboard/HostDashboard";
+import { HostShowcase } from "../pages/host/dashboard/HostShowcase";
+import { TVScaleFrame } from "../components/TVScaleFrame";
+import { HOST_GAME_DISPLAYS } from "../pages/host/gameDisplays";
+import { PLAYER_GAME_CONTROLLERS } from "../pages/player/gameControllers";
+import { PlayerGameShell } from "../pages/player/components/PlayerGameShell";
+
+/**
+ * Yalnızca geliştirmede açılan ekran önizlemesi: host ve oyuncu ekranlarını
+ * sahte oda verisiyle, gerçek bir oda açmadan her durumda gösterir. Görsel
+ * kontrol (taşma, kesilme, dokunma hedefleri) için:
+ *
+ *   /__screens?side=host&game=quiz&status=question_active&n=8
+ *   /__screens?side=player&game=bomb&status=bomb_active&me=0
+ *   /__screens?side=host&game=showcase&slide=1   (TV tanıtım döngüsü)
+ *
+ * `n` oyuncu sayısı, `me` telefonun hangi oyuncu olduğu, `left` kalan süre (sn). Firebase bu yolda
+ * ulaşılamayan bir emülatöre bağlı (bkz. lib/firebase `isScreenPreview`),
+ * yani yazımlar hiçbir yere gitmez.
+ */
+
+const NAMES = [
+  "Ayşe",
+  "Muhammed Emin Karadağlı",
+  "Jo",
+  "Schmetterling_2000",
+  "Zeynep 🔥",
+  "Kevin-Maximilian",
+  "Ece",
+  "Ali Rıza",
+  "Leonie",
+  "Bartu",
+  "Mehmet Can",
+  "Sophie-Charlotte",
+];
+
+function mockPlayers(n: number): Player[] {
+  return Array.from({ length: n }, (_, i) => ({
+    id: `p${i}`,
+    room_id: "preview",
+    nickname: NAMES[i % NAMES.length],
+    team_name: null,
+    total_score: Math.max(0, 1450 - i * 170 + (i % 3) * 40),
+    night_score: 25 - i * 2,
+    created_at: Date.now() - i * 60_000,
+    lives: i % 4 === 3 ? 1 : 3,
+  }));
+}
+
+function mockRoom(game: RoutedGame | "dashboard" | "showcase", status: RoomStatus, players: Player[], secondsLeft: number): Room {
+  // Odaya yazılan soru gibi: doğru şık yok (bkz. PublicQuizQuestion).
+  // Sorular arayüz diliyle aynı havuzdan: Almanca ekranda Türkçe soru çıkmasın.
+  const questions = poolFor(getLocale())
+    .slice(0, 5)
+    .map((q) => ({ id: q.id, text: q.text, category: q.category, options: q.options, difficulty: q.difficulty, funFact: q.funFact }));
+  const sensor = SENSOR_IMAGES[0];
+  return {
+    id: "preview",
+    code: "4821",
+    status,
+    created_at: Date.now(),
+    host_last_active: Date.now(),
+    active_game: game === "dashboard" || game === "showcase" ? "none" : game,
+    categories: [],
+    timer_setting: 20,
+    total_rounds: 5,
+    current_round: 2,
+    round_end_time: Date.now() + secondsLeft * 1000,
+    game_mode: "individual",
+    locale: "tr",
+    quiz_questions: questions,
+    current_question_index: 1,
+    quiz_reveal: status === "question_reveal" ? { index: 1, option: "B" } : null,
+    bomb_target_player: players[0]?.id,
+    used_words: ["elma", "armut"],
+    bomb_speed_multiplier: 1.2,
+    used_bomb_categories: [],
+    sensor_current_media: sensor?.url,
+    sensor_media_answer: sensor?.answer,
+    sensor_buzzer_player_id: status === "sensor_buzzed" || status === "sensor_reveal" ? players[1]?.id ?? null : null,
+    sensor_buzzer_timestamp: null,
+    sensor_player_answer: status === "sensor_buzzed" ? "Eyfel Kulesi" : null,
+  };
+}
+
+const noop = async () => {};
+
+export function ScreenPreview() {
+  const [params] = useSearchParams();
+  const side = params.get("side") === "player" ? "player" : "host";
+  const game = (params.get("game") ?? "quiz") as RoutedGame | "dashboard" | "showcase";
+  const status = (params.get("status") ?? "lobby") as RoomStatus;
+  const n = Number(params.get("n") ?? 8);
+  const me = Number(params.get("me") ?? 1);
+  // Kalan süre (sn): sakin / amber / kırmızı süre tonlarını ayrı ayrı görmek için.
+  const left = Number(params.get("left") ?? 14);
+
+  const players = useMemo(() => mockPlayers(n), [n]);
+  const room = useMemo(() => mockRoom(game, status, players, left), [game, status, players, left]);
+
+  if (!isScreenPreview) return null;
+
+  if (side === "host") {
+    if (game === "showcase") {
+      return (
+        <TVScaleFrame>
+          <HostShowcase joinUrl="https://alaz-neon-web.web.app/join?code=4821" roomCode="4821" onClose={() => {}} initialIndex={Number(params.get("slide") ?? 0)} />
+        </TVScaleFrame>
+      );
+    }
+    if (game === "dashboard") {
+      return <HostDashboard room={room} players={players} updateRoomStatus={noop} />;
+    }
+    const Display = HOST_GAME_DISPLAYS[game];
+    return (
+      <Suspense fallback={null}>
+        <Display room={room} players={players} updateRoomStatus={noop} updatePlayerScore={noop} />
+      </Suspense>
+    );
+  }
+
+  const Controller = PLAYER_GAME_CONTROLLERS[game as RoutedGame];
+  const player = players[me] ?? players[0];
+  return (
+    <PlayerGameShell>
+      <Suspense fallback={null}>
+        <Controller room={room} player={player} />
+      </Suspense>
+    </PlayerGameShell>
+  );
+}

@@ -5,6 +5,19 @@ import type { Room } from "../../../types/database";
 import type { SensorImage } from "../../../data/sensorImages";
 import { safeForDisplay } from "../../../lib/profanity";
 import { SoundManager, sounds } from "../../../lib/audio";
+import { DURATION } from "../../../lib/motion";
+
+/** Görselin tamamen netleştiği süre (saniye). */
+const SENSOR_REVEAL_SEC = 25;
+/**
+ * Sabit bulanıklık katmanları, en bulanığı en üstte ve ilk sönen. Aralıklar
+ * örtüşüyor ki geçiş basamaklı değil sürekli görünsün.
+ */
+const SENSOR_BLUR_LAYERS = [
+  { blur: 6, from: 15, to: SENSOR_REVEAL_SEC },
+  { blur: 16, from: 7, to: 17 },
+  { blur: 40, from: 0, to: 9 },
+] as const;
 
 interface Props {
   room: Room;
@@ -39,10 +52,10 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
       {/* TOP HEADER: Category & Clue */}
       <div className="absolute top-8 z-20 flex flex-col items-center">
         <span className="px-5 py-1.5 rounded-full border border-purple-500/40 bg-purple-500/10 text-purple-400 font-mono tracking-widest text-xs uppercase font-bold mb-1">
-          👁️ SENSÖR • GÖRSEL TAHMİN 👁️
+          {t("sensor.tvBadge")}
         </span>
         <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-wider drop-shadow-md">
-          {currentImage.category || "BU GÖRSELİ İLK KİM BİLECEK?"}
+          {currentImage.category || t("sensor.tvPrompt")}
         </h2>
       </div>
 
@@ -50,19 +63,33 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
       {gameState === "sensor_active" && (
         <div className="relative w-full max-w-5xl aspect-video rounded-3xl overflow-hidden border-2 border-purple-500/40 shadow-[0_0_90px_rgba(168,85,247,0.3)] bg-black/60 backdrop-blur-xl mt-12 flex flex-col items-center justify-center">
           
-          {/* Animated Image with Progressive Unblur */}
-          <motion.img 
+          {/* Kademeli netleşme. Eskiden `filter: blur()` 25 sn boyunca her
+              karede değişiyordu: TV kutusunun GPU'su 1000×560'lık görseli her
+              karede yeniden bulanıklaştırıyordu (motion-system §1 yasağı).
+              Artık bulanıklığı SABİT üç kopya üst üste duruyor ve sırayla
+              sönüyor; yalnızca opacity + scale, yani compositor işi. */}
+          <motion.div
             key={currentImage.url}
-            src={currentImage.url}
-            initial={{ filter: "blur(40px) contrast(150%)", scale: 1.15, opacity: 0 }}
-            animate={{ filter: "blur(0px) contrast(100%)", scale: 1, opacity: 1 }}
-            transition={{ 
-              opacity: { duration: 0.6 },
-              filter: { duration: 25, ease: "linear" },
-              scale: { duration: 25, ease: "linear" }
-            }}
-            className="w-full h-full object-cover"
-          />
+            initial={{ scale: 1.15, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ opacity: { duration: DURATION.slow }, scale: { duration: SENSOR_REVEAL_SEC, ease: "linear" } }}
+            className="absolute inset-0"
+          >
+            <img src={currentImage.url} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            {SENSOR_BLUR_LAYERS.map(({ blur, from, to }) => (
+              <motion.img
+                key={blur}
+                src={currentImage.url}
+                alt=""
+                aria-hidden="true"
+                initial={{ opacity: 1 }}
+                animate={{ opacity: 0 }}
+                transition={{ delay: from, duration: to - from, ease: "linear" }}
+                style={{ filter: `blur(${blur}px) contrast(${100 + blur}%)` }}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ))}
+          </motion.div>
           
           {/* Active Buzzer Ready Badge */}
           <div className="absolute top-6 right-6 bg-black/85 px-6 py-3 text-purple-400 font-mono font-bold uppercase tracking-[0.3em] text-xs rounded-xl border border-purple-500/50 shadow-lg animate-pulse backdrop-blur-md flex items-center gap-2">
@@ -72,11 +99,11 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
 
           {/* Progress / Reveal Bar at the bottom */}
           <div className="absolute bottom-0 inset-x-0 h-2 bg-black/60">
-            <motion.div 
-              initial={{ width: "0%" }}
-              animate={{ width: "100%" }}
-              transition={{ duration: 25, ease: "linear" }}
-              className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-amber-400 shadow-[0_0_15px_rgba(168,85,247,0.8)]"
+            <motion.div
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ duration: SENSOR_REVEAL_SEC, ease: "linear" }}
+              className="h-full origin-left bg-gradient-to-r from-purple-500 via-pink-500 to-amber-400 shadow-[0_0_15px_rgba(168,85,247,0.8)]"
             />
           </div>
         </div>
@@ -106,7 +133,7 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
               </div>
               
               <p className="text-2xl text-white font-black mb-6 tracking-wide">
-                ⚡ <span className="text-red-400 uppercase">{buzzerPlayerName || "BİRİ"}</span> BASTI!
+                ⚡ <span className="text-red-400 uppercase">{buzzerPlayerName || t("sensor.someone")}</span> {t("sensor.buzzedSuffix")}
               </p>
               
               {room.sensor_player_answer ? (
@@ -116,7 +143,7 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
                   className="mb-8 bg-white/5 border border-white/15 rounded-2xl p-6 w-full"
                 >
                   <p className="text-red-400 text-xs mb-2 uppercase tracking-widest font-mono">
-                    OYUNCUNUN TAHMİNİ:
+                    {t("sensor.playerGuess")}
                   </p>
                   <p className="text-4xl md:text-5xl font-black text-white tracking-wide uppercase drop-shadow-[0_0_20px_rgba(255,255,255,0.7)]">
                     "{safeForDisplay(room.sensor_player_answer)}"
@@ -149,7 +176,8 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
                     onClick={() => onEvaluate(true)}
                     className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 border border-emerald-400 text-white rounded-2xl font-black uppercase tracking-wider text-lg transition-all shadow-[0_0_30px_rgba(16,185,129,0.5)] transform active:scale-95 flex items-center justify-center gap-2"
                   >
-                    <span>✅</span> {t("sensor.correct")} (+1000)
+                    {/* HostSensorDisplay.handleEvaluate doğru cevaba +100 yazıyor; etiket +1000 diyordu. */}
+                    <span>✅</span> {t("sensor.correct")} (+100)
                   </button>
                   <button 
                     onClick={() => onEvaluate(false)}

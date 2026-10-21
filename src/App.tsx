@@ -24,6 +24,11 @@ const PlayerGame = lazy(() =>
 const HostSetup = lazy(() =>
   import("./pages/host/HostSetup").then((m) => ({ default: m.HostSetup }))
 );
+// Yalnızca geliştirmede: sahte veriyle ekran önizlemesi (bkz. src/dev/ScreenPreview).
+// Üretim derlemesinde `import.meta.env.DEV` false olduğu için chunk hiç oluşmaz.
+const ScreenPreview = import.meta.env.DEV
+  ? lazy(() => import("./dev/ScreenPreview").then((m) => ({ default: m.ScreenPreview })))
+  : null;
 const HostDisplay = lazy(() =>
   import("./pages/host/HostDisplay").then((m) => ({ default: m.HostDisplay }))
 );
@@ -81,6 +86,7 @@ function App() {
         <ToastProvider>
           <Suspense fallback={<RouteFallback />}>
             <Routes>
+              {ScreenPreview && <Route path="/__screens" element={<ScreenPreview />} />}
               {/* Core Layout Wraps Everything */}
               <Route element={<Layout />}>
                 {/* New Landing Page as Root */}

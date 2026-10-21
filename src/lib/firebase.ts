@@ -1,11 +1,25 @@
 import { initializeApp } from "firebase/app";
 import {
+  connectFirestoreEmulator,
   getFirestore,
   initializeFirestore,
+  memoryLocalCache,
   persistentLocalCache,
   persistentMultipleTabManager,
 } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { connectAuthEmulator, getAuth } from "firebase/auth";
+
+/**
+ * Geliştirmedeki ekran önizlemesi (`/__screens`, bkz. src/dev/ScreenPreview).
+ * Sahte oda verisiyle çalışır; üretim veritabanına hiçbir istek gitmesin diye
+ * Firebase ulaşılamayan bir emülatöre bağlanır ve önbellek bellekte kalır
+ * (kalıcı önbellekte kuyruğa giren bir yazım sonraki gerçek oturumda
+ * üretime gönderilirdi).
+ */
+export const isScreenPreview =
+  import.meta.env.DEV &&
+  typeof window !== "undefined" &&
+  window.location.pathname.startsWith("/__screens");
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
@@ -50,6 +64,11 @@ const app = initializeApp(firebaseConfig);
  * yapılandırmaya düşüyoruz.
  */
 function createFirestore() {
+  if (isScreenPreview) {
+    const previewDb = initializeFirestore(app, { localCache: memoryLocalCache() });
+    connectFirestoreEmulator(previewDb, "127.0.0.1", 1);
+    return previewDb;
+  }
   try {
     return initializeFirestore(app, {
       localCache: persistentLocalCache({
@@ -68,3 +87,6 @@ function createFirestore() {
 // Initialize Cloud Firestore and get a reference to the service
 export const db = createFirestore();
 export const auth = getAuth(app);
+if (isScreenPreview) {
+  connectAuthEmulator(auth, "http://127.0.0.1:1", { disableWarnings: true });
+}
