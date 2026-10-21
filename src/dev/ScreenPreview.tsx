@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { SENSOR_IMAGES } from "../data/sensorImages";
 import { poolFor } from "../lib/quizQuestions";
 import { isScreenPreview } from "../lib/firebase";
+import { getLocale } from "../lib/i18n";
 import type { RoutedGame } from "../lib/gameRouting";
 import type { Player, Room, RoomStatus } from "../types/database";
 import { HostDashboard } from "../pages/host/dashboard/HostDashboard";
@@ -19,7 +20,7 @@ import { PlayerGameShell } from "../pages/player/components/PlayerGameShell";
  *   /__screens?side=host&game=quiz&status=question_active&n=8
  *   /__screens?side=player&game=bomb&status=bomb_active&me=0
  *
- * `n` oyuncu sayısı, `me` telefonun hangi oyuncu olduğu. Firebase bu yolda
+ * `n` oyuncu sayısı, `me` telefonun hangi oyuncu olduğu, `left` kalan süre (sn). Firebase bu yolda
  * ulaşılamayan bir emülatöre bağlı (bkz. lib/firebase `isScreenPreview`),
  * yani yazımlar hiçbir yere gitmez.
  */
@@ -52,9 +53,10 @@ function mockPlayers(n: number): Player[] {
   }));
 }
 
-function mockRoom(game: RoutedGame | "dashboard", status: RoomStatus, players: Player[]): Room {
+function mockRoom(game: RoutedGame | "dashboard", status: RoomStatus, players: Player[], secondsLeft: number): Room {
   // Odaya yazılan soru gibi: doğru şık yok (bkz. PublicQuizQuestion).
-  const questions = poolFor("tr")
+  // Sorular arayüz diliyle aynı havuzdan: Almanca ekranda Türkçe soru çıkmasın.
+  const questions = poolFor(getLocale())
     .slice(0, 5)
     .map((q) => ({ id: q.id, text: q.text, category: q.category, options: q.options, difficulty: q.difficulty, funFact: q.funFact }));
   const sensor = SENSOR_IMAGES[0];
@@ -69,7 +71,7 @@ function mockRoom(game: RoutedGame | "dashboard", status: RoomStatus, players: P
     timer_setting: 20,
     total_rounds: 5,
     current_round: 2,
-    round_end_time: Date.now() + 14_000,
+    round_end_time: Date.now() + secondsLeft * 1000,
     game_mode: "individual",
     locale: "tr",
     quiz_questions: questions,
@@ -96,9 +98,11 @@ export function ScreenPreview() {
   const status = (params.get("status") ?? "lobby") as RoomStatus;
   const n = Number(params.get("n") ?? 8);
   const me = Number(params.get("me") ?? 1);
+  // Kalan süre (sn): sakin / amber / kırmızı süre tonlarını ayrı ayrı görmek için.
+  const left = Number(params.get("left") ?? 14);
 
   const players = useMemo(() => mockPlayers(n), [n]);
-  const room = useMemo(() => mockRoom(game, status, players), [game, status, players]);
+  const room = useMemo(() => mockRoom(game, status, players, left), [game, status, players, left]);
 
   if (!isScreenPreview) return null;
 
