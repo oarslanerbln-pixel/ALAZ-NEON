@@ -13,7 +13,7 @@ import { activePlayers } from "../../../lib/liveness";
 import { bombLives } from "../../../lib/bomb";
 import { gameTitle } from "../../../lib/gameCatalog";
 import { PlayerStageScreen } from "../components/PlayerStageScreen";
-import { CardSpotlight, ShimmerButton } from "../../../components/fx";
+import { ShimmerButton } from "../../../components/fx";
 
 interface Props {
   room: Room;
@@ -83,10 +83,6 @@ export function PlayerBombController({ room, player }: Props) {
         allPlayers.push({ id: doc.id, ...doc.data() } as Player);
       });
 
-      // Önce canı olan DİĞER oyuncular, sonra canlılık süzgeci. Eskiden
-      // süzgeç kimseyi bırakmazsa (telefon saati ileri, herkes "pasif"
-      // görünüyor) bomba atanın KENDİSİNE geri dönüyordu. activePlayers
-      // hiç canlı yoksa listenin tamamını döndürüyor; bomba kendine dönmez.
       const candidates = activePlayers(allPlayers.filter((p) => p.id !== player.id && bombLives(p) > 0));
 
       let nextPlayerId = player.id;
@@ -128,13 +124,13 @@ export function PlayerBombController({ room, player }: Props) {
 
   if (room.status === "bomb_explosion") {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-red-600 text-white p-6 text-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-white/20 animate-pulse pointer-events-none" />
-        <span className="text-8xl mb-4 animate-bounce">💥</span>
-        <h1 className="text-5xl font-black text-black tracking-widest uppercase drop-shadow-md">
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-rose-950 text-white p-6 text-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-red-600/30 animate-pulse pointer-events-none" />
+        <span className="text-7xl mb-4 animate-bounce">💥</span>
+        <h1 className="text-4xl font-black text-white tracking-widest uppercase drop-shadow-md">
           {t("bomb.explodedShort")}
         </h1>
-        <p className="mt-4 font-bold text-lg tracking-widest uppercase text-black/80">
+        <p className="mt-3 font-semibold text-sm tracking-wider uppercase text-white/70">
           {t("bomb.watchMainScreen")}
         </p>
       </div>
@@ -147,70 +143,67 @@ export function PlayerBombController({ room, player }: Props) {
     );
   }
 
-  // Active game screen
   const latestWord = (room.used_words || []).slice(-1)[0];
 
   return (
-    <div className={`flex-1 flex flex-col min-h-[100dvh] p-4 transition-colors duration-300 ${
-      isMyTurn ? 'bg-[#2a0008]' : 'bg-[#0a0003]'
-    } text-white justify-between relative overflow-hidden`}>
+    <div className={`flex-1 flex flex-col min-h-[100dvh] p-4 transition-colors duration-500 ${
+      isMyTurn ? 'bg-[#180408]' : 'bg-[#07070d]'
+    } text-white justify-between relative overflow-hidden select-none`}>
       
-      {/* Tension Heartbeat Edge Pulse on holder's device */}
+      {/* Edge Glow Pulse when it is player's turn */}
       {isMyTurn && (
         <motion.div
-          animate={{ opacity: [0.35, 0.85, 0.35] }}
-          transition={{ duration: 0.9, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute inset-0 pointer-events-none border-4 border-red-500 shadow-[inset_0_0_50px_rgba(255,0,60,0.5)] z-30"
+          animate={{ opacity: [0.3, 0.7, 0.3] }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute inset-0 pointer-events-none shadow-[inset_0_0_60px_rgba(244,63,94,0.4)] z-30"
         />
       )}
 
       {/* Top Header: Lives & Category */}
-      <div className="flex justify-between items-center px-4 py-3 rounded-2xl bg-black/60 border border-white/10 backdrop-blur-md z-20">
-        <div className="flex gap-1.5 items-center">
+      <header className="flex justify-between items-center px-4 py-3 rounded-2xl bg-[#0d0d18]/90 border border-white/[0.08] backdrop-blur-xl z-20 max-w-md mx-auto w-full">
+        {/* Sleek Ruby Life Crystals */}
+        <div className="flex gap-2 items-center">
           {Array.from({ length: 3 }).map((_, i) => (
-            <span key={i} className="text-xl">
-              {i < currentLives ? "❤️" : "🖤"}
-            </span>
+            <span
+              key={i}
+              className={`w-3.5 h-3.5 rounded-full transition-all duration-300 ${
+                i < currentLives
+                  ? "bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.85)] scale-100"
+                  : "bg-white/10 border border-white/10 scale-90"
+              }`}
+            />
           ))}
-        </div>
-        <div className="text-right">
-          <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">
-            {t("bomb.category")}
+          <span className="text-[11px] font-mono font-bold text-white/50 ml-1.5 uppercase">
+            {currentLives} CAN
           </span>
-          <span className="text-sm font-black text-red-400 uppercase tracking-wider">
+        </div>
+
+        {/* Category Pill */}
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30">
+          <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{t("bomb.category")}</span>
+          <span className="text-xs font-black text-rose-300 uppercase tracking-wide">
             {room.active_letter || "GENEL"}
           </span>
         </div>
-      </div>
+      </header>
 
       {/* Main Action Center */}
-      <div className="flex-1 flex flex-col justify-center items-center max-w-sm mx-auto w-full my-4 z-20">
+      <div className="flex-1 flex flex-col justify-center items-center max-w-md mx-auto w-full my-4 z-20">
         {isMyTurn ? (
           <motion.div
-            initial={{ scale: 0.85, opacity: 0 }}
+            initial={{ scale: 0.92, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className="w-full"
           >
-            <CardSpotlight
-              tone="pink"
-              ambient={true}
-              className="w-full bg-red-950/85 border-2 border-red-500 rounded-3xl p-6 shadow-[0_0_50px_rgba(239,68,68,0.5)] backdrop-blur-xl flex flex-col items-center text-center relative overflow-hidden"
-            >
-              {/* Internal tension glow */}
-              <motion.div
-                animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.35, 0.15] }}
-                transition={{ duration: 0.9, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,0,60,0.4),transparent_70%)] pointer-events-none"
-              />
-
-              <div className="flex items-center gap-2 mb-3 relative z-10">
-                <span className="text-3xl animate-bounce">💣</span>
-                <h2 className="text-2xl font-black text-red-400 uppercase tracking-tight">
+            <div className="w-full bg-[#1b070b]/95 border-2 border-rose-500/70 rounded-3xl p-6 shadow-[0_0_50px_rgba(244,63,94,0.25)] backdrop-blur-2xl flex flex-col items-center text-center relative overflow-hidden">
+              <div className="flex items-center gap-2.5 mb-2 relative z-10">
+                <span className="text-3xl">💣</span>
+                <h2 className="text-2xl font-black text-rose-300 uppercase tracking-tight">
                   {t("bomb.yourTurn")}
                 </h2>
               </div>
               
-              <p className="text-xs text-gray-300 mb-5 font-medium relative z-10">
+              <p className="text-xs text-white/60 mb-5 font-medium relative z-10">
                 {t("bomb.typeAndThrow")}
               </p>
 
@@ -221,49 +214,45 @@ export function PlayerBombController({ room, player }: Props) {
                   onChange={(e) => setWord(e.target.value)}
                   autoFocus
                   disabled={isSubmitting}
-                  className="w-full bg-black/90 border-2 border-red-400 text-white rounded-2xl p-4 text-2xl font-black text-center uppercase tracking-wider focus:outline-none focus:ring-4 focus:ring-red-500/50 shadow-inner"
+                  className="w-full bg-black/90 border-2 border-rose-500/60 text-white rounded-2xl p-4 text-2xl font-black text-center uppercase tracking-wider focus:outline-none focus:border-rose-400 focus:shadow-[0_0_30px_rgba(244,63,94,0.35)] shadow-inner"
                   placeholder={t("bomb.wordPlaceholder")}
                 />
                 <ShimmerButton
                   type="submit"
                   color="orange"
                   disabled={!word.trim() || isSubmitting}
-                  innerClassName="!bg-gradient-to-r !from-red-600 !to-amber-600 text-white font-black text-lg uppercase tracking-wider py-4 shadow-[0_0_25px_rgba(239,68,68,0.6)]"
+                  innerClassName="!bg-gradient-to-r !from-rose-600 !to-amber-500 text-white font-black text-base uppercase tracking-wider py-4 shadow-[0_0_25px_rgba(244,63,94,0.4)]"
                   className="w-full"
                 >
                   {isSubmitting ? t("bomb.throwing") : `🔥 ${t("bomb.throwBomb")}`}
                 </ShimmerButton>
               </form>
-            </CardSpotlight>
+            </div>
           </motion.div>
         ) : (
-          <CardSpotlight
-            tone="orange"
-            ambient={true}
-            className="text-center p-6 bg-black/60 border border-white/10 rounded-3xl backdrop-blur-md w-full shadow-[0_0_30px_rgba(0,0,0,0.6)]"
-          >
-            <div className="text-6xl mb-4 animate-pulse">💣</div>
-            <h2 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest mb-1">
+          <div className="text-center p-8 bg-[#0c0c16]/90 border border-white/[0.08] rounded-3xl backdrop-blur-xl w-full shadow-2xl">
+            <div className="text-5xl mb-3 opacity-80">💣</div>
+            <h2 className="text-[11px] font-mono font-bold text-white/40 uppercase tracking-widest mb-1.5">
               {t("bomb.elsewhereLabel")}
             </h2>
-            <p className="text-2xl font-black text-white uppercase tracking-tight mb-4">
+            <p className="text-xl font-bold text-white tracking-tight mb-4">
               {t("bomb.atAnotherTable")}
             </p>
             {latestWord && (
-              <div className="bg-white/5 border border-white/10 rounded-xl p-3 inline-block max-w-full">
-                <span className="text-[10px] text-gray-400 font-mono block">{t("bomb.lastWord")}</span>
-                <span className="text-lg font-black text-amber-400 uppercase">{latestWord}</span>
+              <div className="bg-white/[0.04] border border-white/10 rounded-xl px-4 py-2.5 inline-flex items-center gap-2">
+                <span className="text-[10px] text-white/40 font-mono uppercase">{t("bomb.lastWord")}:</span>
+                <span className="text-sm font-black text-amber-300 uppercase tracking-wider">{latestWord}</span>
               </div>
             )}
-            <p className="mt-4 text-xs text-gray-500">{t("bomb.waitYourTurn")}</p>
-          </CardSpotlight>
+            <p className="mt-4 text-xs text-white/40 font-medium">{t("bomb.waitYourTurn")}</p>
+          </div>
         )}
       </div>
 
       {/* Bottom Status */}
-      <div className="text-center py-2 text-[11px] font-mono text-gray-500 z-20">
-        ALAZ NEON PARTY • BOMB PARTY
-      </div>
+      <footer className="text-center py-2 text-[10px] font-mono text-white/20 z-20">
+        HENGAME BOMB
+      </footer>
     </div>
   );
 }

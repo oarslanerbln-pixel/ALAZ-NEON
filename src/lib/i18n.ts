@@ -753,6 +753,8 @@ const translations = {
   "playerHeader.critical": { tr: "⚡ KRİTİK", de: "⚡ KRITISCH", en: "⚡ CRITICAL" },
   "playerHeader.active": { tr: "◉ AKTİF", de: "◉ AKTIV", en: "◉ ACTIVE" },
   "playerHeader.points": { tr: "PUAN", de: "PUNKTE", en: "POINTS" },
+  "playerHeader.round": { tr: "TUR", de: "RUNDE", en: "ROUND" },
+  "playerHeader.letter": { tr: "HARF", de: "BUCHSTABE", en: "LETTER" },
   // Ses düğmesi ikon-only: ekran okuyucu için erişilebilir ada ihtiyacı var.
   // Etiket eylemi anlatıyor ("sesi aç"), durumu değil — düğmeye basınca ne
   // olacağını söylemek, o anki durumu okumaktan daha yararlı.
@@ -953,6 +955,8 @@ const translations = {
   // HOST HEADER / LOBBY EXTRAS
   // ═══════════════════════════════════════════
   "hostHeader.endEarly": { tr: "ERKEN BİTİR", de: "VORZEITIG BEENDEN", en: "END EARLY" },
+  "hostHeader.voiceOn": { tr: "Spikeri aç", de: "Moderator einschalten", en: "Turn announcer on" },
+  "hostHeader.voiceOff": { tr: "Spikeri kapat", de: "Moderator ausschalten", en: "Turn announcer off" },
   "hostHeader.roundLabel": {
     tr: (r: number, total: number) => `TUR ${r} / ${total}`,
     de: (r: number, total: number) => `RUNDE ${r} / ${total}`,
@@ -1029,6 +1033,8 @@ const translations = {
   },
   "dashboard.startGame": { tr: "Oyun Başlat", de: "Spiel starten", en: "Start Game" },
   "dashboard.startSession": { tr: "Oturumu Başlat", de: "Session starten", en: "Start Session" },
+  "dashboard.comingSoon": { tr: "ÇOK YAKINDA", de: "BALD VERFÜGBAR", en: "COMING SOON" },
+  "dashboard.comingSoonBadge": { tr: "🔒 ÇOK YAKINDA", de: "🔒 BALD VERFÜGBAR", en: "🔒 COMING SOON" },
   "dashboard.modeSensorDesc": {
     tr: "Hızlı olan kazanır! Gizemli görseli ilk sen bil, devasa neon butonla yarış.",
     de: "Wer schnell ist, gewinnt! Errate das mysteriöse Bild als Erster, hau auf den riesigen Neon-Buzzer.",

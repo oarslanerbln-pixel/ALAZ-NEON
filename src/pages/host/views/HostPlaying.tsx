@@ -104,8 +104,8 @@ export function HostPlaying({
       />
 
       {/* Ana Çekirdek — Harf + Reaktör Zamanlayıcı */}
-      <div className={`flex-1 flex flex-col items-center justify-center w-full relative z-10 my-2 ${isOver ? "animate-screen-shake" : ""}`}>
-        <div className="flex items-center justify-center gap-16 lg:gap-24 relative">
+      <div className={`flex-1 flex flex-col items-center justify-center w-full relative z-10 my-1 ${isOver ? "animate-screen-shake" : ""}`}>
+        <div className="flex items-center justify-center gap-12 lg:gap-20 relative">
           {/* Aktif Harf Çekirdeği (3D Gyro Glass Core) */}
           <motion.div
             initial={{ x: -60, opacity: 0, scale: 0.9 }}
@@ -121,24 +121,24 @@ export function HostPlaying({
               aria-hidden="true"
               animate={{ rotate: 360 }}
               transition={{ duration: 16, repeat: Infinity, ease: "linear" }}
-              className="absolute inset-[-14px] rounded-[2.8rem] border border-cyan-400/40 shadow-[0_0_25px_rgba(0,243,255,0.2)] border-l-transparent border-r-transparent opacity-60 pointer-events-none"
+              className="absolute inset-[-12px] rounded-[2.5rem] border border-cyan-400/40 shadow-[0_0_25px_rgba(0,243,255,0.2)] border-l-transparent border-r-transparent opacity-60 pointer-events-none"
             />
             <motion.div
               aria-hidden="true"
               animate={{ rotate: -360 }}
               transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-              className="absolute inset-[-24px] rounded-[3.2rem] border border-alaz-orange/40 shadow-[0_0_20px_rgba(255,77,0,0.25)] border-t-transparent border-b-transparent opacity-50 pointer-events-none"
+              className="absolute inset-[-20px] rounded-[2.8rem] border border-alaz-orange/40 shadow-[0_0_20px_rgba(255,77,0,0.25)] border-t-transparent border-b-transparent opacity-50 pointer-events-none"
             />
 
             {/* Kristal Harf Kutusu */}
-            <div className="w-64 h-64 md:w-72 md:h-72 rounded-[2.5rem] border border-white/20 flex items-center justify-center shadow-[0_20px_60px_rgba(0,0,0,0.6),inset_0_0_40px_rgba(255,255,255,0.05)] bg-white/[0.03] backdrop-blur-3xl relative overflow-hidden group">
+            <div className="w-56 h-56 md:w-64 md:h-64 rounded-[2.2rem] border border-white/20 flex items-center justify-center shadow-[0_20px_60px_rgba(0,0,0,0.6),inset_0_0_40px_rgba(255,255,255,0.05)] bg-white/[0.03] backdrop-blur-3xl relative overflow-hidden group">
               <div className="absolute inset-0 bg-gradient-to-tr from-white/[0.08] via-transparent to-white/[0.03] pointer-events-none" />
               <motion.div
                 key={currentLetter}
                 initial={{ scale: 0.5, opacity: 0, rotateY: 90 }}
                 animate={{ scale: 1, opacity: 1, rotateY: 0 }}
                 transition={SPRING.bouncy}
-                className="text-[8rem] md:text-[11rem] font-black tracking-tight text-white leading-none drop-shadow-[0_0_40px_rgba(255,255,255,0.4)]"
+                className="text-[7rem] md:text-[9.5rem] font-black tracking-tight text-white leading-none drop-shadow-[0_0_40px_rgba(255,255,255,0.4)]"
               >
                 {currentLetter}
               </motion.div>
@@ -146,10 +146,10 @@ export function HostPlaying({
           </motion.div>
 
           {/* Enerji ayracı */}
-          <div className="h-64 w-[1px] bg-gradient-to-b from-transparent via-white/30 to-transparent relative">
+          <div className="h-56 w-[1px] bg-gradient-to-b from-transparent via-white/30 to-transparent relative">
             <motion.div
               aria-hidden="true"
-              animate={{ y: [0, 220, 0] }}
+              animate={{ y: [0, 190, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: EASE.inOut }}
               className="absolute top-0 left-1/2 -translate-x-1/2 w-[3px] h-10 bg-cyan-400 rounded-full shadow-[0_0_15px_#00f3ff] will-change-transform"
             />
@@ -160,17 +160,17 @@ export function HostPlaying({
             initial={{ x: 60, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ ...SPRING.gentle, delay: 0.25 }}
-            className="text-left relative w-[320px]"
+            className="text-left relative w-[290px]"
           >
             <div className="flex flex-col items-start">
-              <span className="text-sm font-black text-white/50 uppercase tracking-[0.35em] mb-2 ml-4 flex items-center gap-2">
+              <span className="text-xs font-black text-white/50 uppercase tracking-[0.35em] mb-1.5 ml-4 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
                 {t("playing.seconds")}
               </span>
-              <TimerRing timeLeft={timeLeft} maxTime={maxTime} tone={tone} size={270}>
+              <TimerRing timeLeft={timeLeft} maxTime={maxTime} tone={tone} size={250}>
                 <div className={isCritical ? "animate-heartbeat" : ""}>
                   <div
-                    className={`relative h-[1.1em] overflow-hidden text-[7rem] md:text-[9rem] font-light leading-none tracking-tight tabular-nums transition-colors duration-500 ${
+                    className={`relative h-[1.1em] overflow-hidden text-[6rem] md:text-[8rem] font-light leading-none tracking-tight tabular-nums transition-colors duration-500 ${
                       isCritical
                         ? "text-red-400 drop-shadow-[0_0_30px_rgba(255,0,51,0.6)]"
                         : tone === "warning"
@@ -199,8 +199,8 @@ export function HostPlaying({
       </div>
 
       {/* Kategoriler ve Canlı Gönderim Durumu */}
-      <div className="w-full max-w-[96rem] px-8 flex flex-col items-center gap-4">
-        <div className={`grid gap-5 w-full ${categories.length <= 3 ? "grid-cols-3" : categories.length <= 5 ? "grid-cols-5" : "grid-cols-4"}`}>
+      <div className="w-full max-w-[96rem] px-6 flex flex-col items-center gap-3">
+        <div className={`grid gap-4 w-full ${categories.length <= 3 ? "grid-cols-3" : categories.length <= 5 ? "grid-cols-5" : "grid-cols-4"}`}>
           {categories.map((cat, idx) => (
             <motion.div
               key={cat}
@@ -212,13 +212,13 @@ export function HostPlaying({
               {/* Dönen konik kenarlık parlaması */}
               <div aria-hidden="true" className="absolute inset-0 bg-[conic-gradient(from_0deg,transparent_0_180deg,rgba(255,255,255,0.25)_360deg)] animate-[spin_8s_linear_infinite]" />
 
-              <div className="relative h-full w-full bg-white/[0.03] backdrop-blur-3xl p-4 text-center rounded-[15px] z-10 flex flex-col items-center justify-center border border-white/10 group-hover:bg-white/[0.06] transition-colors">
-                <span className="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-[0.25em] mb-1.5 flex items-center justify-center gap-2">
+              <div className="relative h-full w-full bg-white/[0.03] backdrop-blur-3xl p-3 text-center rounded-[15px] z-10 flex flex-col items-center justify-center border border-white/10 group-hover:bg-white/[0.06] transition-colors">
+                <span className="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-[0.25em] mb-1 flex items-center justify-center gap-1.5">
                   <span className="w-2 h-[1px] bg-cyan-400/40" />
                   {String(idx + 1).padStart(2, "0")}
                   <span className="w-2 h-[1px] bg-cyan-400/40" />
                 </span>
-                <p className="text-lg lg:text-xl font-medium text-white tracking-wide truncate max-w-full">
+                <p className="text-base lg:text-lg font-medium text-white tracking-wide truncate max-w-full">
                   {cat}
                 </p>
               </div>

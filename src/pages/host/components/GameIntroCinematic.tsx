@@ -90,26 +90,26 @@ export function GameIntroCinematic({ eyebrow, title, subtitle, roster = [], step
         {phase === "title" && (
           <motion.div
             key="title"
-            className="relative flex flex-col items-center text-center px-16"
+            className="relative flex flex-col items-center text-center px-10 md:px-16"
             exit={{ opacity: 0, scale: 0.96, transition: { duration: DURATION.base, ease: EASE.in } }}
           >
             <motion.p
               initial={{ opacity: 0, letterSpacing: "0.2em" }}
-              animate={{ opacity: 1, letterSpacing: "0.6em" }}
+              animate={{ opacity: 1, letterSpacing: "0.5em" }}
               transition={{ duration: DURATION.cinematic, ease: EASE.out }}
-              className="flex items-center gap-6 text-2xl font-black uppercase"
+              className="flex items-center gap-4 md:gap-6 text-xl md:text-2xl font-black uppercase"
               style={{ color: `rgb(${primary})` }}
             >
-              <span className="h-px w-16 bg-current opacity-50" aria-hidden="true" />
+              <span className="h-px w-12 md:w-16 bg-current opacity-50" aria-hidden="true" />
               {eyebrow}
-              <span className="h-px w-16 bg-current opacity-50" aria-hidden="true" />
+              <span className="h-px w-12 md:w-16 bg-current opacity-50" aria-hidden="true" />
             </motion.p>
 
             <RevealText
               text={title}
               delay={0.25}
               stagger={0.12}
-              className="mt-6 text-[170px] leading-[0.95] font-black uppercase tracking-tight bg-gradient-to-b from-white via-white to-white/60 bg-clip-text text-transparent"
+              className="mt-4 md:mt-6 text-[100px] md:text-[135px] lg:text-[155px] leading-none font-black uppercase tracking-tight bg-gradient-to-b from-white via-white to-white/60 bg-clip-text text-transparent"
             />
 
             {subtitle && (
@@ -117,28 +117,28 @@ export function GameIntroCinematic({ eyebrow, title, subtitle, roster = [], step
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.1, duration: DURATION.slow, ease: EASE.out }}
-                className="mt-8 text-4xl font-black uppercase tracking-[0.4em]"
-                style={{ color: `rgb(${secondary})`, textShadow: `0 0 40px rgba(${secondary},0.45)` }}
+                className="mt-5 md:mt-7 text-2xl md:text-3xl font-black uppercase tracking-[0.35em]"
+                style={{ color: `rgb(${secondary})`, textShadow: `0 0 35px rgba(${secondary},0.45)` }}
               >
                 {subtitle}
               </motion.p>
             )}
 
             {roster.length > 0 && (
-              <div className="mt-14 flex max-w-[1400px] flex-wrap justify-center gap-3">
+              <div className="mt-8 md:mt-10 flex max-w-[1300px] flex-wrap justify-center gap-2.5">
                 {roster.slice(0, ROSTER_MAX).map((name, i) => (
                   <motion.span
                     key={`${name}-${i}`}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 1.4 + i * 0.06, duration: DURATION.base, ease: EASE.out }}
-                    className="rounded-full border border-white/10 bg-white/[0.05] px-5 py-2 text-2xl font-bold text-white/80"
+                    className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-1.5 text-lg md:text-xl font-bold text-white/80"
                   >
                     {name}
                   </motion.span>
                 ))}
                 {roster.length > ROSTER_MAX && (
-                  <span className="rounded-full px-5 py-2 text-2xl font-bold text-white/50">+{roster.length - ROSTER_MAX}</span>
+                  <span className="rounded-full px-4 py-1.5 text-lg md:text-xl font-bold text-white/50">+{roster.length - ROSTER_MAX}</span>
                 )}
               </div>
             )}
@@ -148,19 +148,19 @@ export function GameIntroCinematic({ eyebrow, title, subtitle, roster = [], step
         {phase === "rules" && (
           <motion.div
             key="rules"
-            className="relative w-full max-w-[1500px] px-16 flex flex-col items-center"
+            className="relative w-full max-w-[1400px] px-8 md:px-14 flex flex-col items-center"
             exit={{ opacity: 0, y: -24, transition: { duration: DURATION.base, ease: EASE.in } }}
           >
             <motion.p
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: DURATION.slow, ease: EASE.out }}
-              className="text-2xl font-black uppercase tracking-[0.5em] text-white/50"
+              className="text-xl md:text-2xl font-black uppercase tracking-[0.4em] text-white/50"
             >
               {t("intro.howToPlay")}
             </motion.p>
 
-            <div className="mt-14 grid w-full gap-8" style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}>
+            <div className="mt-8 md:mt-10 grid w-full gap-5 md:gap-6" style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}>
               {steps.map((step, i) => (
                 <motion.div
                   key={step.text}
@@ -169,12 +169,12 @@ export function GameIntroCinematic({ eyebrow, title, subtitle, roster = [], step
                   transition={{ ...SPRING.gentle, delay: 0.2 + i * 0.18 }}
                 >
                   <BeamBorder rgb={i % 2 ? secondary : primary} duration={5 + i} radius="2rem" className="h-full" innerClassName="bg-[#07070c]/95">
-                    <div className="h-full flex flex-col items-start gap-6 p-10">
+                    <div className="h-full flex flex-col items-start gap-4 md:gap-5 p-6 md:p-8">
                       <div className="flex w-full items-center justify-between">
-                        <span className="text-7xl leading-none" aria-hidden="true">{step.icon}</span>
-                        <span className="text-5xl font-black tabular-nums text-white/15">{String(i + 1).padStart(2, "0")}</span>
+                        <span className="text-5xl md:text-6xl leading-none" aria-hidden="true">{step.icon}</span>
+                        <span className="text-4xl font-black tabular-nums text-white/15">{String(i + 1).padStart(2, "0")}</span>
                       </div>
-                      <p className="text-4xl font-bold leading-snug text-white text-balance">{step.text}</p>
+                      <p className="text-2xl md:text-3xl font-bold leading-snug text-white text-balance">{step.text}</p>
                     </div>
                   </BeamBorder>
                 </motion.div>
@@ -186,13 +186,13 @@ export function GameIntroCinematic({ eyebrow, title, subtitle, roster = [], step
         {phase === "count" && (
           <motion.div
             key="count"
-            className="relative flex flex-col items-center gap-12"
+            className="relative flex flex-col items-center gap-8 md:gap-10"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, scale: 1.08, transition: { duration: DURATION.base, ease: EASE.in } }}
           >
-            <BeamBorder rgb={primary} duration={1} thickness={3} radius="9999px" className="w-[420px] h-[420px]" innerClassName="bg-[#05050a]">
-              <div className="w-full h-full flex items-center justify-center rounded-full" style={{ boxShadow: `inset 0 0 120px rgba(${primary},0.18)` }}>
+            <BeamBorder rgb={primary} duration={1} thickness={3} radius="9999px" className="w-[340px] h-[340px] md:w-[380px] md:h-[380px]" innerClassName="bg-[#05050a]">
+              <div className="w-full h-full flex items-center justify-center rounded-full" style={{ boxShadow: `inset 0 0 100px rgba(${primary},0.18)` }}>
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={count}
@@ -200,15 +200,15 @@ export function GameIntroCinematic({ eyebrow, title, subtitle, roster = [], step
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.6 }}
                     transition={{ duration: DURATION.base, ease: EASE.out }}
-                    className="text-[240px] font-black leading-none tabular-nums"
-                    style={{ textShadow: `0 0 60px rgba(${primary},0.6)` }}
+                    className="text-[180px] md:text-[210px] font-black leading-none tabular-nums"
+                    style={{ textShadow: `0 0 50px rgba(${primary},0.6)` }}
                   >
                     {count}
                   </motion.span>
                 </AnimatePresence>
               </div>
             </BeamBorder>
-            <p className="text-3xl font-black uppercase tracking-[0.45em] text-white/60">{t("intro.phonesReady")}</p>
+            <p className="text-2xl md:text-3xl font-black uppercase tracking-[0.4em] text-white/60">{t("intro.phonesReady")}</p>
           </motion.div>
         )}
       </AnimatePresence>

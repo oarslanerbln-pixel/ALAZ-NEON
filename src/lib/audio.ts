@@ -6,7 +6,12 @@ export class SoundManager {
   private missing: Set<string> = new Set();
   /** Dosya yerine synth pad çalınan müzik yolu */
   private padFor: string | null = null;
-  private pad: { ctx: AudioContext; stop: () => void } | null = null;
+  private pad: { ctx: AudioContext; gain: GainNode; base: number; stop: () => void } | null = null;
+  /** Müzik yolunun istenen (kısılmamış) ses seviyesi */
+  private musicVolumes: Map<string, number> = new Map();
+  /** Spiker konuşurken müziğin çarpanı (1 = tam ses) */
+  private duckLevel = 1;
+  private duckTimer: ReturnType<typeof setInterval> | null = null;
 
   private constructor() {
     if (typeof window !== "undefined") {
@@ -321,8 +326,9 @@ export class SoundManager {
       return;
     }
 
+    this.musicVolumes.set(path, volume);
     const music = this.getSound(path);
-    music.volume = volume;
+    music.volume = volume * this.duckLevel;
     music.loop = true;
     music.play().catch((e: DOMException) => {
       if (e?.name === "NotSupportedError" || e?.name === "NotFoundError") {
@@ -346,7 +352,7 @@ export class SoundManager {
         (window as Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       const ctx = new AudioCtx();
       const master = ctx.createGain();
-      master.gain.value = volume * 0.25;
+      master.gain.value = volume * 0.25 * this.duckLevel;
       const filter = ctx.createBiquadFilter();
       filter.type = "lowpass";
       filter.frequency.value = 900;
@@ -377,6 +383,8 @@ export class SoundManager {
 
       this.pad = {
         ctx,
+        gain: master,
+        base: volume * 0.25,
         stop: () => {
           try {
             oscs.forEach((o) => o.stop());
@@ -399,6 +407,40 @@ export class SoundManager {
       this.pad = null;
       this.padFor = null;
     }
+  }
+
+  /**
+   * Müziği spiker için kısar (level < 1) ya da geri açar (1). Ani sıçrama
+   * yerine ~250 ms içinde yumuşak geçer; sonradan başlayan müzik de aynı
+   * çarpanla açılır.
+   */
+  public setMusicDuck(level: number) {
+    const target = Math.min(1, Math.max(0, level));
+    if (target === this.duckLevel) return;
+    const from = this.duckLevel;
+    this.duckLevel = target;
+
+    if (this.pad) {
+      const now = this.pad.ctx.currentTime;
+      this.pad.gain.gain.cancelScheduledValues(now);
+      this.pad.gain.gain.setTargetAtTime(this.pad.base * target, now, 0.08);
+    }
+
+    if (this.duckTimer) clearInterval(this.duckTimer);
+    const steps = 5;
+    let step = 0;
+    this.duckTimer = setInterval(() => {
+      step++;
+      const k = from + ((target - from) * step) / steps;
+      this.musicVolumes.forEach((base, path) => {
+        const music = this.sounds.get(path);
+        if (music) music.volume = Math.min(1, Math.max(0, base * k));
+      });
+      if (step >= steps && this.duckTimer) {
+        clearInterval(this.duckTimer);
+        this.duckTimer = null;
+      }
+    }, 50);
   }
 
   public stopSound(path: string) {

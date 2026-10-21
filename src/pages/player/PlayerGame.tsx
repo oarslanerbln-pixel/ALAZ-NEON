@@ -29,6 +29,7 @@ import { PlayerReview } from "./views/PlayerReview";
 import { PlayerStandings } from "./views/PlayerStandings";
 import { BackgroundSlider } from "../../components/BackgroundSlider";
 import { PlayerTutorial } from "./components/PlayerTutorial";
+import { PlayerStageScreen } from "./components/PlayerStageScreen";
 
 import { Suspense } from "react";
 import { PLAYER_GAME_CONTROLLERS } from "./gameControllers";
@@ -299,37 +300,16 @@ export function PlayerGame() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.05 }}
-              className="flex flex-col items-center justify-center text-center p-8 min-h-[60vh] relative z-10"
+              className="flex-1 flex flex-col justify-center min-h-[60vh]"
             >
-              <div className="relative w-28 h-28 flex items-center justify-center mb-8">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-                  className="absolute inset-0 rounded-full border-2 border-dashed border-alaz-orange/50"
-                />
-                <motion.div
-                  animate={{ rotate: -360 }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                  className="absolute inset-3 rounded-full border-2 border-dotted border-cyber-yellow/60"
-                />
-                <motion.div
-                  animate={{ scale: [1, 1.3, 1], opacity: [0.7, 1, 0.7] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  className="w-14 h-14 rounded-full bg-alaz-orange/20 border border-alaz-orange flex items-center justify-center shadow-[0_0_25px_rgba(255,77,0,0.5)]"
-                >
-                  <span className="text-2xl animate-pulse">⚡</span>
-                </motion.div>
-              </div>
-
-              <h2 className="text-2xl md:text-3xl font-black text-white tracking-[0.2em] mb-3 uppercase font-mono">
-                {gameState === "countdown" ? t("game.determiningLetter") : gameState === "ad_break" ? t("game.adBreakTitle") : t("game.starting")}
-              </h2>
-              <p className="text-alaz-orange text-sm md:text-base font-bold tracking-widest uppercase animate-pulse mb-6">
-                {gameState === "ad_break" ? t("game.adBreakDesc") : t("game.watchMainScreen")}
-              </p>
-              <div className="bg-black/60 border border-white/10 p-4 max-w-xs text-xs text-gray-400 font-mono rounded-sm">
-                {t("game.roundHint", currentRound || 1, room?.total_rounds || 3)}
-              </div>
+              <PlayerStageScreen
+                icon="⚡"
+                tone="orange"
+                eyebrow={t("game.roundHint", currentRound || 1, room?.total_rounds || 3)}
+                title={gameState === "countdown" ? t("game.determiningLetter") : gameState === "ad_break" ? t("game.adBreakTitle") : t("game.starting")}
+                body={gameState === "ad_break" ? t("game.adBreakDesc") : t("game.watchMainScreen")}
+                waiting
+              />
             </motion.div>
           )}
 

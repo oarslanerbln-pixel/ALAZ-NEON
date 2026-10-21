@@ -4,6 +4,7 @@ import { HoldButton } from "../../../components/HoldButton";
 import { useLocale } from "../../../hooks/useLocale";
 import { haptics } from "../../../lib/haptics";
 import { SPRING, STAGGER, TWEEN } from "../../../lib/motion";
+import { Sparkles } from "lucide-react";
 
 interface PlayerPlayingProps {
   categories: string[];
@@ -18,11 +19,9 @@ interface PlayerPlayingProps {
 }
 
 /**
- * Cevap ekranı (mobil). Süre işlerken ekran ANINDA kullanılabilir olmalı:
- * giriş kademesi çok kısa (40ms), odaklanmayan kategoriler yalnızca
- * opaklık/ölçekle sönüyor (grayscale filtresi kaldırıldı — her kare paint).
- * Input'ta `whileFocus` ölçeği yok: iOS Safari ölçeklenen input'un metnini
- * klavye açılırken bulanık rasterize ediyordu.
+ * Modern, sade ve klas Arena cevap kumandası.
+ * Karmaşık hacker terminali renkleri yerine şık koyu cam (dark glass) kartlar,
+ * anında odaklanan temiz inputlar ve sezgisel 2X Joker seçimi.
  */
 export function PlayerPlaying({
   categories,
@@ -52,82 +51,87 @@ export function PlayerPlaying({
       initial="hidden"
       animate="visible"
       variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: STAGGER.tight } } }}
-      className="space-y-4"
+      className="space-y-3.5 max-w-md mx-auto"
     >
       {categories.map((cat, idx) => {
-        // Etiket ile alani programatik olarak bagliyoruz: ekran okuyucu alana
-        // gelince kategori adini okusun, ve etikete dokunmak alani odaklasin.
-        // Kategori adi dogrudan id olamaz (bosluk ve Turkce karakter iceriyor).
         const inputId = `${fieldIdPrefix}-answer-${idx}`;
         const isFocused = focusedCategory === cat;
         const isOthersFocused = focusedCategory !== null && !isFocused;
         const isJoker = jokerCategory === cat;
+        const numStr = String(idx + 1).padStart(2, "0");
 
         return (
-          <motion.div key={cat} variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: SPRING.snappy } }}>
+          <motion.div key={cat} variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, transition: SPRING.snappy } }}>
             <motion.div
-              animate={{ opacity: isOthersFocused ? 0.35 : 1, scale: isOthersFocused ? 0.97 : 1 }}
+              animate={{ opacity: isOthersFocused ? 0.45 : 1, scale: isOthersFocused ? 0.98 : 1 }}
               transition={SPRING.snappy}
-              className="space-y-3 origin-top"
+              className={`rounded-2xl transition-all duration-300 p-4 border relative overflow-hidden backdrop-blur-xl ${
+                isJoker
+                  ? "bg-[#14120f]/95 border-amber-400/50 shadow-[0_0_25px_rgba(251,191,36,0.12)]"
+                  : isFocused
+                    ? "bg-[#121222]/95 border-alaz-orange/60 shadow-[0_0_25px_rgba(255,85,0,0.12)]"
+                    : "bg-[#0c0c16]/85 border-white/[0.08] hover:border-white/15"
+              }`}
             >
-              <div className="flex items-center justify-between ml-2 mb-2">
-                <label htmlFor={inputId} className="text-xs text-hacker-green/80 font-black font-mono uppercase tracking-[0.3em]">
-                  &gt; {idx + 1}. {cat}
+              {/* Category Header Row */}
+              <div className="flex items-center justify-between mb-2">
+                <label
+                  htmlFor={inputId}
+                  className="text-xs font-bold uppercase tracking-[0.18em] text-white/80 flex items-center gap-2 cursor-pointer select-none"
+                >
+                  <span className="font-mono text-alaz-orange/70 text-[11px] font-black">{numStr}</span>
+                  <span className="text-white font-black">{cat}</span>
                 </label>
-                <motion.button
+
+                {/* 2X Joker Button */}
+                <button
                   type="button"
                   onClick={() => toggleJoker(cat)}
                   disabled={isLocked}
-                  whileTap={{ scale: 0.94 }}
-                  transition={SPRING.stiff}
-                  className={`touch-target px-3 py-2 min-h-[44px] text-[10px] font-black tracking-widest uppercase transition-colors flex items-center gap-1 border-l-2
-                    ${
-                      isJoker
-                        ? "bg-alaz-orange/20 text-alaz-orange border-alaz-orange shadow-[0_0_10px_rgba(255,77,0,0.3)]"
-                        : "bg-white/5 text-gray-500 border-transparent hover:text-white"
-                    }
-                  `}
+                  className={`touch-target px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase transition-all flex items-center gap-1.5 active:scale-95 border ${
+                    isJoker
+                      ? "bg-gradient-to-r from-amber-400 to-amber-500 text-black border-amber-300 shadow-[0_0_15px_rgba(251,191,36,0.4)]"
+                      : "bg-white/[0.04] text-white/40 hover:text-white/80 border-white/10 hover:border-white/20"
+                  }`}
                 >
-                  <div className={`w-2 h-2 ${isJoker ? "bg-alaz-orange animate-pulse" : "bg-gray-600"}`} />
-                  {t("game.jokerLabel")}
-                </motion.button>
+                  <Sparkles className={`w-3 h-3 ${isJoker ? "text-black fill-black" : "text-amber-400/60"}`} />
+                  <span>2X JOKER</span>
+                </button>
               </div>
-              <div className="relative group">
+
+              {/* Clean Minimalist Input */}
+              <div className="relative">
                 <input
                   id={inputId}
                   type="text"
                   value={answers[cat] || ""}
                   onChange={(e) => onAnswerChange(cat, e.target.value)}
                   disabled={isLocked}
-                  placeholder={t("game.inputPlaceholder", activeLetter)}
+                  placeholder={`${activeLetter}...`}
                   autoComplete="off"
                   autoCorrect="off"
                   spellCheck={false}
-                  className={`w-full bg-black/80 border-2 rounded-sm px-4 py-3.5 md:px-8 md:py-5 font-mono font-bold transition-[border-color,box-shadow,opacity] duration-200 disabled:opacity-50 text-lg md:text-xl cyber-panel focus:outline-none
-                    ${
-                      isJoker
-                        ? "border-alaz-orange/60 text-white focus:border-alaz-orange focus:shadow-[0_0_20px_rgba(255,77,0,0.3)] placeholder:text-alaz-orange/30"
-                        : "border-hacker-green/30 text-cyber-yellow placeholder:text-hacker-green/30 focus:border-hacker-green focus:shadow-[0_0_20px_rgba(0,255,65,0.2)]"
-                    }
-                  `}
+                  className={`w-full bg-transparent border-0 border-b-2 py-2 text-xl font-bold font-sans transition-all duration-200 disabled:opacity-40 focus:outline-none ${
+                    isJoker
+                      ? "border-amber-400/60 text-amber-200 placeholder:text-amber-400/25 focus:border-amber-400"
+                      : "border-white/10 text-white placeholder:text-white/20 focus:border-alaz-orange"
+                  }`}
                   onFocus={(e) => {
                     setFocusedCategory(cat);
                     e.currentTarget.scrollIntoView({ behavior: "smooth", block: "center" });
                   }}
                   onBlur={() => setFocusedCategory(null)}
                 />
-                <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none">
-                  <div className={`w-3 h-3 animate-flicker ${isJoker ? "bg-alaz-orange shadow-[0_0_15px_#ff4d00]" : "bg-cyber-yellow shadow-[0_0_15px_#fcee0a]"}`} />
-                </div>
               </div>
             </motion.div>
           </motion.div>
         );
       })}
 
+      {/* Early Submission */}
       <motion.div
-        variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: TWEEN.enter } }}
-        className="pt-6 pb-8"
+        variants={{ hidden: { opacity: 0, y: 15 }, visible: { opacity: 1, y: 0, transition: TWEEN.enter } }}
+        className="pt-4 pb-8"
       >
         <HoldButton
           onComplete={onSubmitEarly}
@@ -135,7 +139,7 @@ export function PlayerPlaying({
           text={submitStatus === "submitting" ? t("game.submitting") : t("game.submitEarly")}
           holdText={t("game.submitting")}
         />
-        <p className="text-[10px] text-center text-gray-600 font-bold uppercase tracking-[0.3em] mt-4">
+        <p className="text-[10px] text-center text-white/40 font-medium uppercase tracking-[0.2em] mt-3">
           {t("game.earlyHint")}
         </p>
       </motion.div>

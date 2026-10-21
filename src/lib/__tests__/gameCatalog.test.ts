@@ -55,4 +55,11 @@ describe("oyun katalogu", () => {
       expect(card.titleHighlight.trim(), card.id).not.toBe("");
     }
   });
+
+  it("yalnizca 3 amiral gemisi mod aktif (Arena, Quiz, Bomb), kalan 11 mod kilitli", () => {
+    const active = GAME_CARDS.filter((g) => !g.isComingSoon).map((g) => g.id);
+    const locked = GAME_CARDS.filter((g) => g.isComingSoon).map((g) => g.id);
+    expect(active.sort()).toEqual(["bomb", "quiz", "scattegories"]);
+    expect(locked.length).toBe(11);
+  });
 });

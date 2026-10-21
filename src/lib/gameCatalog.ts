@@ -33,6 +33,7 @@ export interface GameCard {
   hoverBgAccent: string;
   iconAccent: string;
   borderAccent: string;
+  isComingSoon?: boolean;
 }
 
 /**
@@ -59,7 +60,8 @@ export const GAME_CARDS = [
     bgAccent: "bg-alaz-orange/20",
     hoverBgAccent: "group-hover:bg-alaz-orange/40",
     iconAccent: "bg-alaz-orange/10 border-alaz-orange/40",
-    borderAccent: "hover:border-alaz-orange/60"
+    borderAccent: "hover:border-alaz-orange/60",
+    isComingSoon: false,
   },
   {
     id: "quiz",
@@ -74,7 +76,8 @@ export const GAME_CARDS = [
     bgAccent: "bg-neon-blue/20",
     hoverBgAccent: "group-hover:bg-neon-blue/40",
     iconAccent: "bg-neon-blue/10 border-neon-blue/40",
-    borderAccent: "hover:border-neon-blue/60"
+    borderAccent: "hover:border-neon-blue/60",
+    isComingSoon: false,
   },
   {
     id: "bomb",
@@ -89,7 +92,8 @@ export const GAME_CARDS = [
     bgAccent: "bg-red-500/20",
     hoverBgAccent: "group-hover:bg-red-500/40",
     iconAccent: "bg-red-500/10 border-red-500/40",
-    borderAccent: "hover:border-red-500/60"
+    borderAccent: "hover:border-red-500/60",
+    isComingSoon: false,
   },
   {
     id: "sensor",
@@ -104,7 +108,8 @@ export const GAME_CARDS = [
     bgAccent: "bg-neon-pink/20",
     hoverBgAccent: "group-hover:bg-neon-pink/40",
     iconAccent: "bg-neon-pink/10 border-neon-pink/40",
-    borderAccent: "hover:border-neon-pink/60"
+    borderAccent: "hover:border-neon-pink/60",
+    isComingSoon: true,
   },
   {
     id: "overload",
@@ -119,7 +124,8 @@ export const GAME_CARDS = [
     bgAccent: "bg-cyan-400/20",
     hoverBgAccent: "group-hover:bg-cyan-400/40",
     iconAccent: "bg-cyan-400/10 border-cyan-400/40",
-    borderAccent: "hover:border-cyan-400/60"
+    borderAccent: "hover:border-cyan-400/60",
+    isComingSoon: true,
   },
   {
     id: "colors",
@@ -134,7 +140,8 @@ export const GAME_CARDS = [
     bgAccent: "bg-purple-500/20",
     hoverBgAccent: "group-hover:bg-purple-500/40",
     iconAccent: "bg-purple-500/10 border-purple-500/40",
-    borderAccent: "hover:border-purple-500/60"
+    borderAccent: "hover:border-purple-500/60",
+    isComingSoon: true,
   },
   {
     id: "wheel",
@@ -149,14 +156,15 @@ export const GAME_CARDS = [
     bgAccent: "bg-cyber-yellow/20",
     hoverBgAccent: "group-hover:bg-cyber-yellow/40",
     iconAccent: "bg-cyber-yellow/10 border-cyber-yellow/40",
-    borderAccent: "hover:border-cyber-yellow/60"
+    borderAccent: "hover:border-cyber-yellow/60",
+    isComingSoon: true,
   },
   {
     id: "vault",
     category: "knowledge",
     titlePrefix: "NEON",
     titleHighlight: "ŞİFRE",
-    gradientText: "from-emerald-400 to-teal-500 drop-shadow-[0_0_10px_rgba(16,185,129,0.3)]",
+    gradientText: "from-emerald-400 to-teal-500 drop-shadow-[0_0_10px_rgba(168,85,247,0.3)]",
     shadowColor: "rgba(16,185,129,0.3)",
     icon: "flame" as const,
     iconColor: "green" as const,
@@ -164,7 +172,8 @@ export const GAME_CARDS = [
     bgAccent: "bg-emerald-500/20",
     hoverBgAccent: "group-hover:bg-emerald-500/40",
     iconAccent: "bg-emerald-500/10 border-emerald-500/40",
-    borderAccent: "hover:border-emerald-500/60"
+    borderAccent: "hover:border-emerald-500/60",
+    isComingSoon: true,
   },
   {
     id: "unity",
@@ -179,7 +188,8 @@ export const GAME_CARDS = [
     bgAccent: "bg-amber-500/20",
     hoverBgAccent: "group-hover:bg-amber-500/40",
     iconAccent: "bg-amber-500/10 border-amber-500/40",
-    borderAccent: "hover:border-amber-500/60"
+    borderAccent: "hover:border-amber-500/60",
+    isComingSoon: true,
   },
   {
     id: "echo",
@@ -194,7 +204,8 @@ export const GAME_CARDS = [
     bgAccent: "bg-indigo-500/20",
     hoverBgAccent: "group-hover:bg-indigo-500/40",
     iconAccent: "bg-indigo-500/10 border-indigo-500/40",
-    borderAccent: "hover:border-indigo-500/60"
+    borderAccent: "hover:border-indigo-500/60",
+    isComingSoon: true,
   },
   {
     id: "pulse",
@@ -209,7 +220,8 @@ export const GAME_CARDS = [
     bgAccent: "bg-neon-blue/20",
     hoverBgAccent: "group-hover:bg-neon-blue/40",
     iconAccent: "bg-neon-blue/10 border-neon-blue/40",
-    borderAccent: "hover:border-neon-blue/60"
+    borderAccent: "hover:border-neon-blue/60",
+    isComingSoon: true,
   },
   {
     id: "bar",
@@ -224,7 +236,8 @@ export const GAME_CARDS = [
     bgAccent: "bg-pink-500/20",
     hoverBgAccent: "group-hover:bg-pink-500/40",
     iconAccent: "bg-pink-500/10 border-pink-500/40",
-    borderAccent: "hover:border-pink-500/60"
+    borderAccent: "hover:border-pink-500/60",
+    isComingSoon: true,
   },
   {
     id: "kablo",
@@ -239,7 +252,8 @@ export const GAME_CARDS = [
     bgAccent: "bg-yellow-500/20",
     hoverBgAccent: "group-hover:bg-yellow-500/40",
     iconAccent: "bg-yellow-500/10 border-yellow-500/40",
-    borderAccent: "hover:border-yellow-500/60"
+    borderAccent: "hover:border-yellow-500/60",
+    isComingSoon: true,
   },
   {
     id: "ayna",
@@ -254,7 +268,8 @@ export const GAME_CARDS = [
     bgAccent: "bg-cyan-400/20",
     hoverBgAccent: "group-hover:bg-cyan-400/40",
     iconAccent: "bg-cyan-400/10 border-cyan-300/40",
-    borderAccent: "hover:border-cyan-300/60"
+    borderAccent: "hover:border-cyan-300/60",
+    isComingSoon: true,
   }
 ] as const satisfies readonly GameCard[];
 
