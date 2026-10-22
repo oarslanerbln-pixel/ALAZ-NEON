@@ -11,7 +11,7 @@ import {
   type Tv,
 } from "./support/cafe";
 import { quizAnswerKey, skipHostTutorial, tapOption, waitForReveal, wrongOption } from "./support/games";
-import { adminGet, adminQuery, adminSet, clearAuth, clearFirestore } from "./support/emulator";
+import { adminGet, adminQuery, adminSet, clearAuth, clearFirestore, meterDropNextAnswerAck, meterRead } from "./support/emulator";
 
 /**
  * Kafede olan şeyler: wifi kopar, misafir sayfayı yeniler, biri geç gelir,
@@ -186,6 +186,45 @@ test("telefon kilitlenip açılır: soru değişmişse yeni soruya cevap verebil
     await expect(anna.page.getByTestId("quiz-option-A"), "yeni soruda şıklar açık olmalı").toBeEnabled({ timeout: 15_000 });
     await tapOption(anna, key[1]);
     await expect.poll(async () => (await answersFor(tv.roomId, 1)).map((a) => a.player_id)).toContain(anna.playerId);
+  } finally {
+    await closeAll(tv, ...phones);
+  }
+});
+
+test("cevap onayı yolda kaybolur: telefon cevabı kayıtlı sayar, ikinci cevaba açılmaz", async ({ browser }) => {
+  const { tv, phones } = await nightWithPhones(browser, ["ANNA", "BEN", "CEM"]);
+  try {
+    await startQuiz(tv);
+    await openQuestion(tv);
+    const key = await quizAnswerKey(tv.roomId);
+    const [anna, ...rest] = phones;
+    // Cevap sunucuya ulaşır, onayı telefona dönmez; SDK yazımı yeni akışta
+    // yeniden gönderir ve sunucu "zaten var" der (CI'da kendiliğinden yakalandı).
+    await meterDropNextAnswerAck();
+    await tapOption(anna, key[0]);
+    await expect(anna.page.getByTestId("quiz-option-A")).toBeDisabled();
+    // Eskiden hata yakalanınca şıklar açılıyor, seçim siliniyor, "zaten
+    // cevapladım mı" sorgusu dönene kadar ikinci bir şık seçilebiliyordu
+    // (TV ilk cevabı puanlar, telefon ikinciyi gösterir). Kısa pencereyi
+    // kaçırmamak için sayfa içinde izliyoruz.
+    await anna.page.evaluate(() => {
+      const w = window as unknown as { __reopened?: boolean };
+      w.__reopened = false;
+      const check = () => {
+        if (document.querySelector('[data-testid^="quiz-option-"]:not([disabled])')) w.__reopened = true;
+      };
+      new MutationObserver(check).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["disabled"] });
+    });
+    await expect.poll(async () => (await meterRead()).droppedAnswer.resent, { timeout: 30_000 }).toBe(true);
+    // Yeniden gönderimin yanıtı telefona ulaşsın.
+    await anna.page.waitForTimeout(2_000);
+    expect(await anna.page.evaluate(() => (window as unknown as { __reopened?: boolean }).__reopened), "şıklar yeniden açıldı").toBe(false);
+    expect(anna.errors.filter((e) => /Failed to submit quiz answer/.test(e))).toEqual([]);
+    await expect(anna.page.getByText("ANTWORT GESPEICHERT 🔒")).toBeVisible();
+    expect((await answersFor(tv.roomId, 0)).map((a) => a.player_id)).toEqual([anna.playerId]);
+    await Promise.all(rest.map((p, i) => tapOption(p, wrongOption(key[0], i))));
+    await waitForReveal(tv, 0);
+    await expect.poll(async () => Number((await adminGet(`players/${anna.playerId}`))?.total_score)).toBeGreaterThan(0);
   } finally {
     await closeAll(tv, ...phones);
   }

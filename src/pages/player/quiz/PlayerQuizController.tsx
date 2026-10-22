@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { collection, addDoc, query, where, getDocs, limit, serverTimestamp } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { retentionExpiry } from "../../../lib/retention";
+import { isAlreadyExists } from "../../../lib/errors";
 import { AnimatePresence, motion } from "framer-motion";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { haptics } from "../../../lib/haptics";
@@ -106,6 +107,13 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
       });
       haptics.success();
     } catch (err) {
+      // Onay yolda kaybolup SDK yeniden gönderince "zaten var": cevap kayıtlı.
+      // Eskiden şıklar açılıp seçim siliniyordu; o arada basılan ikinci şık
+      // telefonda görünürken TV ilkini puanlıyordu.
+      if (isAlreadyExists(err)) {
+        haptics.success();
+        return;
+      }
       console.error("Failed to submit quiz answer", err);
       hasSubmittedRef.current = false;
       setHasSubmitted(false);
