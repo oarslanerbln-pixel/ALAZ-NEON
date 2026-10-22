@@ -70,6 +70,9 @@ Bunları baştan sona okuma, hedefli `grep` ile gir:
 - Framer Motion geçişlerinde `<AnimatePresence mode="wait">` + benzersiz `key`.
 - Skor yazan her yol için `firestore.rules` tarafını da güncelle; istemci
   kurcalanabilir kabul edilir.
+- `firestore.rules` canlıya elle deploy edilmez: `main`'e girince
+  `.github/workflows/rules.yml` test edip deploy eder, her sabah canlıyla
+  karşılaştırır (kurulum: `docs/rules-deploy.md`).
 - Commit mesajları Türkçe ve `tip(kapsam): özet` biçiminde (`feat(quiz): …`).
 
 Ayrıntılı kodlama standartları: `docs/coding-standards.md`.

@@ -1,0 +1,111 @@
+name: Firestore kuralları (canlı)
+
+# Kurallar canlıya elle gidiyordu ve 21–22.10.2026'da unutulmuştu: testte yeşil
+# olan hile korumaları canlıda yoktu (denetim P8). Bu iş akışı:
+#   - main'e kural değişikliği girince önce kural testlerini koşar, sonra
+#     yalnızca firestore.rules'u deploy eder (hosting'e dokunmaz);
+#   - her sabah canlıdaki kuralları depoyla karşılaştırır (salt okuma) ve
+#     fark varsa kırmızı olur.
+# FIREBASE_RULES_SA sırrı eklenene kadar hiçbir şey yapmaz, yalnızca uyarır.
+# Kurulum: docs/rules-deploy.md
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - firestore.rules
+      - firebase.json
+      - .github/workflows/rules.yml
+  schedule:
+    # 08:17 UTC = Berlin 09:17–10:17: kafe saatleri dışında.
+    - cron: "17 8 * * *"
+  workflow_dispatch:
+
+# Aynı anda iki deploy olmasın; sıradaki yarıda kesilmesin.
+concurrency:
+  group: firestore-rules-live
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  secret:
+    name: Servis hesabı tanımlı mı
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - id: check
+        env:
+          SA: ${{ secrets.FIREBASE_RULES_SA }}
+        run: |
+          if [ -n "$SA" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::FIREBASE_RULES_SA sırrı yok: kurallar deploy edilmedi ve canlıyla karşılaştırılmadı. Kurulum: docs/rules-deploy.md"
+          fi
+
+  deploy:
+    name: Kural testleri → deploy
+    needs: secret
+    # Yalnızca main: elle tetikleme başka bir daldan birleşmemiş kuralı canlıya taşımasın.
+    if: needs.secret.outputs.ready == 'true' && github.event_name != 'schedule' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # Ayarlardan bu ortama onaylayıcı eklenirse deploy elle onay bekler.
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Testten geçmeyen kural canlıya gitmesin.
+      - name: Kural testleri (emulator)
+        run: npm run test:rules
+        env:
+          GCLOUD_PROJECT: alaz-neon-rules-test
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_RULES_SA }}
+          token_format: access_token
+
+      - name: Deploy (yalnızca firestore:rules)
+        run: npx firebase deploy --only firestore:rules --non-interactive
+
+      - name: Canlı kurallar depoyla aynı mı
+        run: node scripts/rules-drift.mjs
+        env:
+          ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+
+  drift:
+    name: Canlı ↔ depo karşılaştırması
+    needs: secret
+    if: needs.secret.outputs.ready == 'true' && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_RULES_SA }}
+          token_format: access_token
+
+      - name: Canlı kurallar depoyla aynı mı
+        run: node scripts/rules-drift.mjs
+        env:
+          ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
