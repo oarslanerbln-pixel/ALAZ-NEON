@@ -87,6 +87,17 @@ export async function adminSet(path: string, data: Plain): Promise<void> {
   );
 }
 
+/** Yalnızca verilen alanları günceller (adminSet belgenin tamamını değiştirir). */
+export async function adminUpdate(path: string, data: Plain): Promise<void> {
+  const mask = Object.keys(data)
+    .map((k) => `updateMask.fieldPaths=${encodeURIComponent(k)}`)
+    .join("&");
+  await ok(
+    await fetch(`${DOCS}/${path}?${mask}`, { method: "PATCH", headers: OWNER, body: JSON.stringify({ fields: toFields(data) }) }),
+    `adminUpdate ${path}`,
+  );
+}
+
 export async function adminGet(path: string): Promise<Plain | null> {
   const res = await fetch(`${DOCS}/${path}`, { headers: OWNER });
   if (res.status === 404) return null;

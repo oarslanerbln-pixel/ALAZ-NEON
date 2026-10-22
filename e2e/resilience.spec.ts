@@ -11,7 +11,16 @@ import {
   type Tv,
 } from "./support/cafe";
 import { quizAnswerKey, skipHostTutorial, tapOption, waitForReveal, wrongOption } from "./support/games";
-import { adminGet, adminQuery, adminSet, clearAuth, clearFirestore, meterDropNextAnswerAck, meterRead } from "./support/emulator";
+import {
+  adminGet,
+  adminQuery,
+  adminSet,
+  adminUpdate,
+  clearAuth,
+  clearFirestore,
+  meterDropNextAnswerAck,
+  meterRead,
+} from "./support/emulator";
 
 /**
  * Kafede olan şeyler: wifi kopar, misafir sayfayı yeniler, biri geç gelir,
@@ -186,6 +195,55 @@ test("telefon kilitlenip açılır: soru değişmişse yeni soruya cevap verebil
     await expect(anna.page.getByTestId("quiz-option-A"), "yeni soruda şıklar açık olmalı").toBeEnabled({ timeout: 15_000 });
     await tapOption(anna, key[1]);
     await expect.poll(async () => (await answersFor(tv.roomId, 1)).map((a) => a.player_id)).toContain(anna.playerId);
+  } finally {
+    await closeAll(tv, ...phones);
+  }
+});
+
+test("host hızlı geçer: yavaş telefon önceki ekranda takılıp yeni soruyu kaçırmaz", async ({ browser }) => {
+  test.setTimeout(8 * 60_000);
+  const { tv, phones } = await nightWithPhones(browser, Array.from({ length: 8 }, (_, i) => `HIZ${i + 1}`));
+  try {
+    await startQuiz(tv);
+    await openQuestion(tv);
+    await expect.poll(async () => (await adminGet(`rooms/${tv.roomId}`))?.status).toBe("question_active");
+    // Durumları bundan sonra test, host'un yazdığı sırayla yazar; TV'nin
+    // kendi zamanlayıcısı araya girmesin.
+    await tv.page.close();
+    // Eski/pil tasarrufundaki telefon: 4× yavaş işlemci. Takılma ancak
+    // çıkış animasyonu yavaşken ekranlar art arda değişince çıkıyordu
+    // (CI'daki ilk e2e koşusunda kendiliğinden yakalandı).
+    for (const p of phones) await (await p.context.newCDPSession(p.page)).send("Emulation.setCPUThrottlingRate", { rate: 4 });
+    const room = `rooms/${tv.roomId}`;
+    const gap = () => new Promise((r) => setTimeout(r, Math.random() * 300));
+    const missed: string[] = [];
+    for (let k = 0; k < 20; k++) {
+      const q = k % 5;
+      const next = (k + 1) % 5;
+      await Promise.all(phones.map((p) => p.page.getByTestId("quiz-option-A").click({ timeout: 2_000 }).catch(() => undefined)));
+      // Host'un en hızlı temposu: açıklama → doğru şık → sıralama → sonraki soru → TIMER.
+      await adminUpdate(room, { status: "question_reveal", quiz_reveal: null });
+      await gap();
+      await adminUpdate(room, { quiz_reveal: { index: q, option: "A" } });
+      await gap();
+      await adminUpdate(room, { status: "quiz_leaderboard" });
+      await gap();
+      await adminUpdate(room, { status: "question_intro", current_question_index: next, current_round: next + 1 });
+      await gap();
+      await adminUpdate(room, { status: "question_active", round_end_time: Date.now() + 30_000 });
+      const late = await Promise.all(
+        phones.map((p) =>
+          expect(p.page.getByTestId("quiz-option-A"))
+            .toBeVisible({ timeout: 10_000 })
+            .then(
+              () => null,
+              () => `${k + 1}. soru geçişi: ${p.nickname}`,
+            ),
+        ),
+      );
+      missed.push(...late.filter((m): m is string => m !== null));
+    }
+    expect(missed, "telefon önceki ekranda takılıp yeni soruyu göstermedi").toEqual([]);
   } finally {
     await closeAll(tv, ...phones);
   }

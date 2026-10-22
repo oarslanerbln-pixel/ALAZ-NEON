@@ -163,7 +163,12 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
 
       {/* Content Area */}
       <div className="relative z-10 w-full max-w-md px-4 flex-1 flex flex-col justify-center min-h-0">
-        <AnimatePresence mode="wait">
+        {/* Soru numarasıyla anahtarlı: host ekranları hızlı geçerken yavaş
+            telefonda bir çıkış animasyonu hiç bitmeyebiliyor ve "wait" kipi
+            yeni ekranı sonsuza dek bekletiyordu (telefon önceki sorunun
+            açıklamasında kalıp yeni soruyu kaçırıyordu). Yeni soru ağacı
+            baştan kurar. */}
+        <AnimatePresence mode="wait" key={questionIndex}>
           
           {/* LOBBY */}
           {(gameState === "lobby" || gameState === "quiz_lobby") && (
