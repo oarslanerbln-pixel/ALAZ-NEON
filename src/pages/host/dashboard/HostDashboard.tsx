@@ -24,6 +24,7 @@ import { BeamBorder } from "../../../components/fx/BeamBorder";
 import { GridPattern } from "../../../components/fx/GridPattern";
 import { NumberTicker, ShimmerButton, GameAnimatedLogo } from "../../../components/fx";
 import { NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
+import { clearRoomAnswers, resetPlayersForNewGame } from "../../../lib/gameReset";
 import { nextBombCategory } from "../../../lib/bomb";
 import { NightFinale } from "../views/NightFinale";
 import { nightStandings, rankDeltas } from "../../../lib/nightLeague";
@@ -116,8 +117,16 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     // sonsuz döngü kurup lobiye hiç ulaşılamamasına yol açıyordu.
     // Quiz/bomba/sensör kendi intro DURUMLARINI ekranlarında yönettiği için
     // onlarda böyle bir sorun yok.
+    // Her oyun temiz başlar: önceki oyunun cevapları, skoru ve canları yeni
+    // oyuna taşınmasın (bkz. lib/gameReset.ts). Başarısız olursa oyun yine
+    // başlar; yalnızca konsola düşer.
+    await Promise.all([
+      clearRoomAnswers(room.id),
+      resetPlayersForNewGame(players.map((p) => p.id)),
+    ]).catch((err) => console.error("[HostDashboard] Yeni oyun sıfırlaması başarısız:", err));
+
     let initialStatus: Room["status"] = "lobby";
-    let extraUpdates: Partial<Room> = { active_game: game, ...settings, ...NIGHT_ROUND_OPEN };
+    let extraUpdates: Partial<Room> = { active_game: game, current_round: 0, ...settings, ...NIGHT_ROUND_OPEN };
 
     if (game === "quiz") {
       Promise.all([
@@ -152,9 +161,8 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     if (game === "bomb") {
       // Canı olan VE hâlâ sinyal gönderen oyuncular: bomba, telefonu cebine
       // koyup gitmiş bir misafire verilirse tur süre dolana kadar kilitlenir.
-      const activePlayers = activePlayersOf(
-        players.filter((p) => (p.lives === undefined ? 3 : p.lives) > 0),
-      );
+      // Canlar yukarıda dolduruldu: yalnızca hâlâ sinyal gönderenlere bak.
+      const activePlayers = activePlayersOf(players);
       const randomPlayer = activePlayers.length > 0 ? activePlayers[Math.floor(Math.random() * activePlayers.length)] : null;
       const { category, used } = nextBombCategory(settings?.categories || room.categories, []);
 
