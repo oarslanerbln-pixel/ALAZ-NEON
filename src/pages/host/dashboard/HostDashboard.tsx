@@ -24,6 +24,7 @@ import { BeamBorder } from "../../../components/fx/BeamBorder";
 import { GridPattern } from "../../../components/fx/GridPattern";
 import { NumberTicker, ShimmerButton, GameAnimatedLogo } from "../../../components/fx";
 import { NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
+import { nextBombCategory } from "../../../lib/bomb";
 import { NightFinale } from "../views/NightFinale";
 import { nightStandings, rankDeltas } from "../../../lib/nightLeague";
 import { SHOWCASE_IDLE_MS } from "../../../lib/showcase";
@@ -155,17 +156,18 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
         players.filter((p) => (p.lives === undefined ? 3 : p.lives) > 0),
       );
       const randomPlayer = activePlayers.length > 0 ? activePlayers[Math.floor(Math.random() * activePlayers.length)] : null;
-      const availableCategories = settings?.categories || room.categories || [];
-      const randomCategory = availableCategories.length > 0 ? availableCategories[Math.floor(Math.random() * availableCategories.length)] : "GENEL";
-      
+      const { category, used } = nextBombCategory(settings?.categories || room.categories, []);
+
       initialStatus = "tutorial";
       extraUpdates = {
         ...extraUpdates,
         tutorial_step: 0,
         current_round: 1,
-        bomb_target_player: randomPlayer?.id,
-        active_letter: randomCategory,
-        used_bomb_categories: [randomCategory],
+        // undefined Firestore'da yazım hatası (TV hata ekranına düşüyordu):
+        // kimse yoksa alan hiç yazılmaz.
+        ...(randomPlayer ? { bomb_target_player: randomPlayer.id } : {}),
+        active_letter: category,
+        used_bomb_categories: used,
         used_words: [],
         bomb_speed_multiplier: 1.0,
       };

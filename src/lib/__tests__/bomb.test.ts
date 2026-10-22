@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { bombLives, pickBombHolder } from "../bomb";
+import { bombLives, nextBombCategory, pickBombHolder } from "../bomb";
 
 describe("bombLives", () => {
   it("yazılmamış can tam sayılır", () => {
@@ -32,5 +32,30 @@ describe("pickBombHolder", () => {
   it("canı olan kimse kalmadıysa null", () => {
     expect(pickBombHolder([{ id: "x", lives: 0 }], null)).toBeNull();
     expect(pickBombHolder([{ id: "x", lives: 2 }], "x")).toBeNull();
+  });
+});
+
+describe("nextBombCategory", () => {
+  it("kategori listesi boşsa genel kategori (\"\") döner — undefined yazılmaz", () => {
+    expect(nextBombCategory([], [])).toEqual({ category: "", used: [""] });
+    expect(nextBombCategory(undefined, undefined)).toEqual({ category: "", used: [""] });
+  });
+
+  it("kullanılmamış kategorilerden seçer ve listeye ekler", () => {
+    expect(nextBombCategory(["Tiere", "Städte", "Namen"], ["Tiere"], () => 0)).toEqual({
+      category: "Städte",
+      used: ["Tiere", "Städte"],
+    });
+  });
+
+  it("hepsi kullanılınca listeyi baştan başlatır", () => {
+    expect(nextBombCategory(["Tiere", "Städte"], ["Tiere", "Städte"], () => 0.99)).toEqual({
+      category: "Städte",
+      used: ["Städte"],
+    });
+  });
+
+  it("eski gecenin 'GENEL' gibi listede olmayan kayıtlarını yok sayar", () => {
+    expect(nextBombCategory(["Tiere"], ["GENEL", ""], () => 0)).toEqual({ category: "Tiere", used: ["Tiere"] });
   });
 });

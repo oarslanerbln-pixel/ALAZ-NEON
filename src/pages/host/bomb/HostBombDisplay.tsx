@@ -16,6 +16,7 @@ import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { finishNightRound, NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
 import { placementPointsByScore } from "../../../lib/nightLeague";
+import { nextBombCategory } from "../../../lib/bomb";
 
 interface Props {
   room: Room;
@@ -40,11 +41,7 @@ export function HostBombDisplay({
       if (activePlayers.length === 0) return;
       
       const randomPlayer = activePlayers[Math.floor(Math.random() * activePlayers.length)];
-      let availableCategories = room.categories.filter(c => !(room.used_bomb_categories || []).includes(c));
-      if (availableCategories.length === 0) {
-        availableCategories = room.categories;
-      }
-      const randomCategory = availableCategories[Math.floor(Math.random() * availableCategories.length)];
+      const { category, used } = nextBombCategory(room.categories, []);
 
       await updateDoc(doc(db, "rooms", room.id), {
         status: "tutorial",
@@ -52,8 +49,8 @@ export function HostBombDisplay({
         current_round: 1,
         bomb_target_player: randomPlayer.id,
         // Repurposing active_letter as active_category for simplicity without changing types heavily
-        active_letter: randomCategory,
-        used_bomb_categories: [randomCategory],
+        active_letter: category,
+        used_bomb_categories: used,
         used_words: [],
         bomb_speed_multiplier: 1.0,
       });
@@ -167,22 +164,16 @@ export function HostBombDisplay({
       // Start next round with new category and random player
       const randomPlayer = activePlayers[Math.floor(Math.random() * activePlayers.length)];
       
-      let availableCategories = room.categories.filter(c => !(room.used_bomb_categories || []).includes(c));
-      if (availableCategories.length === 0) {
-        availableCategories = room.categories;
-      }
-      const randomCategory = availableCategories[Math.floor(Math.random() * availableCategories.length)];
-      
-      const newUsedCategories = availableCategories.length === room.categories.length 
-          ? [randomCategory] 
-          : [...(room.used_bomb_categories || []), randomCategory];
+      // Gece lobisinden açılan bombada kategori listesi boş: eskiden burada
+      // `active_letter: undefined` yazılıp TV patlama ekranında kalıyordu.
+      const { category, used } = nextBombCategory(room.categories, room.used_bomb_categories);
 
       await updateDoc(doc(db, "rooms", room.id), {
         status: "bomb_intro",
         current_round: room.current_round + 1,
         bomb_target_player: randomPlayer.id,
-        active_letter: randomCategory,
-        used_bomb_categories: newUsedCategories,
+        active_letter: category,
+        used_bomb_categories: used,
         used_words: [],
         bomb_speed_multiplier: 1.0,
       });
