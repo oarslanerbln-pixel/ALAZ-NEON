@@ -7,7 +7,13 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager,
 } from "firebase/firestore";
-import { connectAuthEmulator, getAuth } from "firebase/auth";
+import {
+  browserLocalPersistence,
+  browserSessionPersistence,
+  connectAuthEmulator,
+  indexedDBLocalPersistence,
+  initializeAuth,
+} from "firebase/auth";
 
 /**
  * Geliştirmedeki ekran önizlemesi (`/__screens`, bkz. src/dev/ScreenPreview).
@@ -86,7 +92,16 @@ function createFirestore() {
 
 // Initialize Cloud Firestore and get a reference to the service
 export const db = createFirestore();
-export const auth = getAuth(app);
+/**
+ * `getAuth()` tarayıcıda açılır pencere/yönlendirme girişi için Google'ın
+ * iframe'ini (auth/iframe.js + gapi, ~135 KB, iki ek alan adı) her sayfada
+ * peşinen yüklüyor. Uygulamada popup/redirect girişi yok (anonim, e-posta,
+ * telefon): aynı kalıcılıkla ama çözücüsüz başlatıyoruz. Telefonla katılan
+ * misafir kafe wifi'sinde bu yükü indirmek zorunda kalmıyor.
+ */
+export const auth = initializeAuth(app, {
+  persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence],
+});
 if (isScreenPreview) {
   connectAuthEmulator(auth, "http://127.0.0.1:1", { disableWarnings: true });
 }
