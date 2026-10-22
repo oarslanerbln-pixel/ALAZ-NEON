@@ -4,6 +4,7 @@ import { useSearchParams, useNavigate, Navigate } from "react-router-dom";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { retentionExpiry } from "../../lib/retention";
+import { isAlreadyExists } from "../../lib/errors";
 import { NeonIcon } from "../../components/NeonIcon";
 import { HostOfflineBanner } from "../../components/HostOfflineBanner";
 import { DatabaseStatus } from "../../components/DatabaseStatus";
@@ -167,7 +168,9 @@ export function PlayerGame() {
           expires_at: retentionExpiry(),
         });
       } catch (err) {
-        submitError = err;
+        // Onay yolda kaybolup SDK yeniden gönderince "zaten var": cevap
+        // kayıtlı; hata gösterip ikinci kez göndertmemek gerek.
+        if (!isAlreadyExists(err)) submitError = err;
       }
 
       if (submitError) {

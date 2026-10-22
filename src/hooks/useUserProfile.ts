@@ -39,7 +39,18 @@ export function useUserProfile() {
 
       profileUnsub.current = onSnapshot(userRef, async (docSnap) => {
         if (docSnap.exists()) {
-          setProfile({ uid, ...docSnap.data() } as UserProfile);
+          // Belge eksik alanlı olabilir: katılım, profil açılmadan önce
+          // takma adı `{ nickname }` olarak birleştirip yazabiliyor (ardından
+          // tam profil yazımı kuralca reddediliyor). Eksikleri varsayılanla
+          // doldur; yoksa profil kartı `phone_number.replace` ile çöküyordu.
+          setProfile({
+            uid,
+            phone_number: "",
+            nickname: "",
+            total_lifetime_score: 0,
+            current_league: "BRONZE",
+            ...docSnap.data(),
+          } as UserProfile);
           setLoading(false);
         } else {
           // Create initial profile if it doesn't exist
@@ -51,7 +62,15 @@ export function useUserProfile() {
             created_at: Date.now(),
             last_active: Date.now(),
           };
-          await setDoc(userRef, newProfile);
+          try {
+            await setDoc(userRef, newProfile);
+          } catch (err) {
+            // Katılım ekranında hook iki kez bağlı (form + profil kartı): ikisi
+            // aynı anda "profil yok" görüp yazıyor, ikinci yazım güncellemeye
+            // dönüşüp kuralca reddediliyor. Profil zaten açıldı; snapshot gelir.
+            console.warn("[useUserProfile] Profil zaten oluşturulmuş:", err);
+            return;
+          }
           setProfile({ uid, ...newProfile } as UserProfile);
           setLoading(false);
         }

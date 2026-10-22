@@ -7,7 +7,13 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager,
 } from "firebase/firestore";
-import { connectAuthEmulator, getAuth } from "firebase/auth";
+import {
+  browserLocalPersistence,
+  browserSessionPersistence,
+  connectAuthEmulator,
+  indexedDBLocalPersistence,
+  initializeAuth,
+} from "firebase/auth";
 
 /**
  * Geliştirmedeki ekran önizlemesi (`/__screens`, bkz. src/dev/ScreenPreview).
@@ -29,6 +35,17 @@ const firebaseConfig = {
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
   appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
 };
+
+/**
+ * Uçtan uca testler (Playwright, bkz. e2e/) yerel Firebase Emulator Suite'e
+ * bağlanır. Yalnızca `demo-` önekli proje kimliğiyle açılır: emülatör bu
+ * önekte gerçek bir projeye hiç dokunmaz, yanlışlıkla üretim yapılandırmasıyla
+ * derlenen bir paket de kullanıcıları localhost'a yönlendiremez.
+ */
+const emulatorHost = import.meta.env.VITE_FIREBASE_EMULATOR_HOST || "";
+const firestoreEmulatorPort = Number(import.meta.env.VITE_FIRESTORE_EMULATOR_PORT || 8080);
+export const isEmulatorMode =
+  emulatorHost !== "" && firebaseConfig.projectId.startsWith("demo-");
 
 // Check if any config is missing
 const isFirebaseConfigured = Boolean(
@@ -69,6 +86,17 @@ function createFirestore() {
     connectFirestoreEmulator(previewDb, "127.0.0.1", 1);
     return previewDb;
   }
+  if (isEmulatorMode) {
+    // Kalıcı önbellek üretimdeki gibi açık kalır: test, kafe wifi'sinin
+    // kopup geri gelmesini gerçek yapılandırmayla denesin.
+    const e2eDb = initializeFirestore(app, {
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager(),
+      }),
+    });
+    connectFirestoreEmulator(e2eDb, emulatorHost, firestoreEmulatorPort);
+    return e2eDb;
+  }
   try {
     return initializeFirestore(app, {
       localCache: persistentLocalCache({
@@ -86,7 +114,18 @@ function createFirestore() {
 
 // Initialize Cloud Firestore and get a reference to the service
 export const db = createFirestore();
-export const auth = getAuth(app);
+/**
+ * `getAuth()` tarayıcıda açılır pencere/yönlendirme girişi için Google'ın
+ * iframe'ini (auth/iframe.js + gapi, ~135 KB, iki ek alan adı) her sayfada
+ * peşinen yüklüyor. Uygulamada popup/redirect girişi yok (anonim, e-posta,
+ * telefon): aynı kalıcılıkla ama çözücüsüz başlatıyoruz. Telefonla katılan
+ * misafir kafe wifi'sinde bu yükü indirmek zorunda kalmıyor.
+ */
+export const auth = initializeAuth(app, {
+  persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence],
+});
 if (isScreenPreview) {
   connectAuthEmulator(auth, "http://127.0.0.1:1", { disableWarnings: true });
+} else if (isEmulatorMode) {
+  connectAuthEmulator(auth, `http://${emulatorHost}:9099`, { disableWarnings: true });
 }

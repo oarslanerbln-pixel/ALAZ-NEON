@@ -11,7 +11,10 @@ export function useEmojiPulse(
   const lastProcessedTime = useRef<number>(0);
 
   useEffect(() => {
-    if (!roomId) return;
+    // Yalnızca tepkileri GÖSTEREN ekran (TV) dinler. Telefonlar hook'u sadece
+    // göndermek için kullanıyor; her telefonun açtığı boş dinleyici her
+    // tepkide N okuma demekti.
+    if (!roomId || !onReaction) return;
 
     // Odaya girmeden önce gönderilmiş eski reaksiyonlar tekrar oynatılmasın
     lastProcessedTime.current = Date.now();
