@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useId } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { collection, addDoc } from "firebase/firestore";
@@ -31,6 +31,7 @@ export function PlayerJoin() {
   const [authChecking, setAuthChecking] = useState(true);
   const { profile, updateNickname } = useUserProfile();
   const { t } = useLocale();
+  const fieldIdPrefix = useId();
   const [nicknamePrefilledFrom, setNicknamePrefilledFrom] = useState<string | null>(null);
   // QR ile gelen ve bu odada zaten kaydı olan misafiri formu hiç göstermeden
   // eski kaydına geri götürüyoruz (bkz. lib/roomSession.ts). Kontrol bitene
@@ -266,7 +267,7 @@ export function PlayerJoin() {
                 <div className="space-y-6">
                   {/* Room Code */}
               <div className="group">
-                <label className="flex items-center gap-2 text-white/50 text-[10px] font-bold uppercase tracking-[0.3em] mb-3 ml-2">
+                <label htmlFor={`${fieldIdPrefix}-room`} className="flex items-center gap-2 text-white/50 text-[10px] font-bold uppercase tracking-[0.3em] mb-3 ml-2">
                   {t("join.roomCode")}
                 </label>
                 <div className="flex bg-white/[0.02] border border-white/10 rounded-2xl group-focus-within:border-alaz-orange/60 group-focus-within:bg-white/[0.04] transition-all shadow-inner overflow-hidden relative">
@@ -277,6 +278,7 @@ export function PlayerJoin() {
                     </div>
                   ) : (
                     <input
+                      id={`${fieldIdPrefix}-room`}
                       type="text"
                       required
                       maxLength={4}
@@ -293,12 +295,13 @@ export function PlayerJoin() {
 
               {/* Nickname */}
               <div className="group mt-6">
-                <label className="flex items-center gap-2 text-white/50 text-[10px] font-bold uppercase tracking-[0.3em] mb-3 ml-2">
+                <label htmlFor={`${fieldIdPrefix}-nickname`} className="flex items-center gap-2 text-white/50 text-[10px] font-bold uppercase tracking-[0.3em] mb-3 ml-2">
                   {t("join.nickname")}
                 </label>
                 <div className="flex bg-white/[0.02] border border-white/10 rounded-2xl group-focus-within:border-alaz-orange/60 group-focus-within:bg-white/[0.04] transition-all shadow-inner overflow-hidden relative">
                   <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-alaz-orange/80 to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity" />
                   <input
+                    id={`${fieldIdPrefix}-nickname`}
                     type="text"
                     required
                     autoFocus={!!urlCode}
@@ -321,7 +324,7 @@ export function PlayerJoin() {
                     exit={{ opacity: 0, height: 0 }}
                     className="group"
                   >
-                    <label className="flex items-center gap-2 text-[#ff003c]/70 text-xs font-bold uppercase tracking-widest mb-2">
+                    <label htmlFor={`${fieldIdPrefix}-team`} className="flex items-center gap-2 text-[#ff003c]/70 text-xs font-bold uppercase tracking-widest mb-2">
                       <span className="text-alaz-orange">[3]</span> {t("join.teamLabel")}
                     </label>
                     <div className="flex bg-[#ff003c]/5 border border-[#ff003c]/30 group-focus-within:border-[#ff003c] transition-colors">
@@ -329,6 +332,7 @@ export function PlayerJoin() {
                         TEAM
                       </div>
                       <input
+                        id={`${fieldIdPrefix}-team`}
                         type="text"
                         required
                         value={teamName}
