@@ -10,6 +10,8 @@
 //            Ham sayı `emulatorDocChanges` olarak ayrıca tutulur.
 //   yazma  = Write kanalındaki ve :commit isteklerindeki her `writes` öğesi
 // Sayaçlar GET /__meter ile okunur, POST /__meter/reset ile sıfırlanır.
+// POST /__meter/drop-next-answer-ack: bir sonraki cevabın onayını düşürür
+// (bkz. aşağıda "Arıza enjeksiyonu").
 import http from "node:http";
 import { StringDecoder } from "node:string_decoder";
 
@@ -134,10 +136,34 @@ function countWrites(writes) {
   }
 }
 
+// Bağlantı havuzu yok: Node 22'nin varsayılan keep-alive ajanı emülatörün
+// kapattığı boşta soketi yeniden kullanıp her koşuda onlarca "socket hang
+// up" üretiyordu; testlere kafe wifi'sinden bağımsız, rastgele kopmalar
+// sokuyordu.
+const upstreamAgent = new http.Agent({ keepAlive: false });
+const HOP_BY_HOP = new Set(["connection", "keep-alive", "proxy-connection", "transfer-encoding", "upgrade"]);
+
+// Arıza enjeksiyonu (POST /__meter/drop-next-answer-ack): bir sonraki cevap
+// yazımı emülatöre ulaşır ama onayı telefona hiç dönmez, Write akışı kopar.
+// Kafe wifi'sinde "yazım sunucuda, onay yolda kayboldu" durumu: SDK yazımı
+// yeni akışta yeniden gönderir.
+let dropNextAnswerAck = false;
+// Onayı düşürülen cevap belgesi ve SDK'nın onu yeniden gönderip göndermediği.
+let droppedAnswer = { name: null, resent: false };
+const writeBackchannels = new Map(); // Write akışı SID → açık geri kanal yanıtı
+const brokenSids = new Set();
+
+function answerWrites(payloads) {
+  return payloads
+    .flatMap((p) => p.writes ?? [])
+    .map((w) => String(w.update?.name ?? ""))
+    .filter((name) => name.includes("/documents/answers/"));
+}
+
 const server = http.createServer((req, res) => {
   if (req.url === "/__meter") {
     res.writeHead(200, { "content-type": "application/json", "access-control-allow-origin": "*" });
-    res.end(JSON.stringify({ ...stats, elapsedMs: Date.now() - stats.since }));
+    res.end(JSON.stringify({ ...stats, elapsedMs: Date.now() - stats.since, droppedAnswer }));
     return;
   }
   if (req.url === "/__meter/reset") {
@@ -149,6 +175,13 @@ const server = http.createServer((req, res) => {
     res.end();
     return;
   }
+  if (req.url === "/__meter/drop-next-answer-ack") {
+    dropNextAnswerAck = true;
+    droppedAnswer = { name: null, resent: false };
+    res.writeHead(204, { "access-control-allow-origin": "*" });
+    res.end();
+    return;
+  }
 
   const url = req.url ?? "";
   const isListen = url.includes("/Listen/channel");
@@ -156,16 +189,51 @@ const server = http.createServer((req, res) => {
   const isCommit = url.includes(":commit");
   const isBatchGet = url.includes(":batchGet");
   const isRunQuery = url.includes(":runQuery");
+  const sid = new URL(url, "http://x").searchParams.get("SID") ?? "init";
+  const corsError = (status) => {
+    if (!res.headersSent) {
+      res.writeHead(status, {
+        "access-control-allow-origin": req.headers.origin ?? "*",
+        "access-control-allow-credentials": "true",
+      });
+    }
+    res.end();
+  };
+
+  // Enjekte edilen kopmadan sonra eski oturum ölü: WebChannel "bilinmeyen
+  // SID" alıp akışı yeniden kursun (gerçekte sunucu da böyle yanıtlar).
+  if (isWrite && brokenSids.has(sid)) {
+    req.resume();
+    corsError(400);
+    return;
+  }
+  if (isWrite && req.method === "GET") {
+    writeBackchannels.set(sid, res);
+    res.on("close", () => {
+      if (writeBackchannels.get(sid) === res) writeBackchannels.delete(sid);
+    });
+  }
 
   const reqChunks = [];
   req.on("data", (c) => reqChunks.push(c));
   req.on("end", () => {
     const body = Buffer.concat(reqChunks);
+    let dropAck = false;
     if (req.method === "POST" && body.length > 0) {
       const text = body.toString("utf8");
       if (isWrite) {
         stats.writeRequests++;
-        for (const p of webChannelPayloads(text)) countWrites(p.writes);
+        const payloads = webChannelPayloads(text);
+        for (const p of payloads) countWrites(p.writes);
+        const answers = answerWrites(payloads);
+        if (droppedAnswer.name && answers.includes(droppedAnswer.name)) droppedAnswer.resent = true;
+        if (dropNextAnswerAck && answers.length > 0) {
+          dropNextAnswerAck = false;
+          dropAck = true;
+          droppedAnswer = { name: answers[0], resent: false };
+          // Onay geri kanaldan gelir: yazım emülatöre gitmeden kanalı sustur.
+          brokenSids.add(sid);
+        }
       } else if (isCommit) {
         stats.commitRequests++;
         try {
@@ -178,17 +246,31 @@ const server = http.createServer((req, res) => {
       }
     }
 
+    const headers = Object.fromEntries(Object.entries(req.headers).filter(([k]) => !HOP_BY_HOP.has(k)));
     const upstream = http.request(
       {
         host: TARGET_HOST,
         port: TARGET_PORT,
         method: req.method,
         path: url,
-        headers: { ...req.headers, host: `${TARGET_HOST}:${TARGET_PORT}` },
+        agent: upstreamAgent,
+        headers: { ...headers, host: `${TARGET_HOST}:${TARGET_PORT}` },
       },
       (up) => {
-        res.writeHead(up.statusCode ?? 502, up.headers);
-        const sid = new URL(url, "http://x").searchParams.get("SID") ?? "init";
+        if (dropAck) {
+          // Yazım emülatöre ulaştı; telefon ne bu isteğin yanıtını ne de
+          // geri kanaldaki onayı görür.
+          up.resume();
+          up.on("end", () => {
+            res.destroy();
+            writeBackchannels.get(sid)?.destroy();
+          });
+          return;
+        }
+        res.writeHead(
+          up.statusCode ?? 502,
+          Object.fromEntries(Object.entries(up.headers).filter(([k]) => !HOP_BY_HOP.has(k))),
+        );
         const onData = isListen
           ? listenParser(sid)
           : isBatchGet
@@ -198,7 +280,8 @@ const server = http.createServer((req, res) => {
               : null;
         up.on("data", (chunk) => {
           if (onData) onData(chunk);
-          res.write(chunk);
+          if (isWrite && brokenSids.has(sid)) return;
+          if (!res.destroyed) res.write(chunk);
         });
         up.on("end", () => res.end());
         up.on("error", () => res.destroy());
@@ -208,13 +291,7 @@ const server = http.createServer((req, res) => {
       console.error(`[firestore-meter] upstream ${req.method} ${url.slice(0, 80)}: ${err.message}`);
       // CORS başlığı olmadan dönen hata tarayıcıda "CORS" diye görünüp asıl
       // sebebi gizliyordu.
-      if (!res.headersSent) {
-        res.writeHead(502, {
-          "access-control-allow-origin": req.headers.origin ?? "*",
-          "access-control-allow-credentials": "true",
-        });
-      }
-      res.end();
+      corsError(502);
     });
     upstream.end(body);
   });

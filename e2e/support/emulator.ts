@@ -126,6 +126,8 @@ export interface MeterStats {
   writes: number;
   deletes: number;
   elapsedMs: number;
+  /** Onayı düşürülen cevap belgesi; `resent`: SDK onu yeni akışta yeniden gönderdi. */
+  droppedAnswer: { name: string | null; resent: boolean };
 }
 
 export async function meterReset(): Promise<void> {
@@ -134,4 +136,12 @@ export async function meterReset(): Promise<void> {
 
 export async function meterRead(): Promise<MeterStats> {
   return (await (await fetch(`${METER}/__meter`)).json()) as MeterStats;
+}
+
+/**
+ * Bir sonraki cevap yazımı emülatöre ulaşır ama onayı telefona dönmez ve
+ * Write akışı kopar (kafe wifi'si). Bkz. e2e/support/firestore-meter.mjs.
+ */
+export async function meterDropNextAnswerAck(): Promise<void> {
+  await fetch(`${METER}/__meter/drop-next-answer-ack`, { method: "POST" });
 }
