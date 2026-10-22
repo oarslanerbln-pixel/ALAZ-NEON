@@ -34,6 +34,8 @@ C: diski doluysa tarayıcıları ve emülatör jar'ını başka diske alın:
   takma ad, telefon kilidi (CDP ile sayfa dondurma), host'un hızlı geçtiği
   yavaş telefonlar (4× CPU kısıtı), cevap onayının yolda kaybolması (vekilde
   arıza enjeksiyonu).
+- `cost.spec.ts` — Firestore maliyeti: 6 telefon 40 sn lobide < 60 faturalı okuma
+  (nabız yalnızca TV'ye düşmeli; bkz. denetim K3/P1).
 - `staff-venue.spec.ts` — personel girişi, `/admin/venue`, ödül kodu.
 - `measure.spec.ts` — 20/40 oyuncuda Firestore yükü ve gecikme, TV kare hızı.
 

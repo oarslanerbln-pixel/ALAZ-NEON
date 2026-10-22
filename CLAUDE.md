@@ -30,7 +30,9 @@ alanları dinler ve `answers` koleksiyonuna yazar. Player asla oda state'ini
 değiştirmez (buzz gibi yarışlı işlemler `runTransaction` ile).
 
 Firestore koleksiyonları: `rooms` (durum makinesi), `players` (skorlar),
-`answers` (cevaplar), ayrıca mekan/ödül/rapor koleksiyonları.
+`answers` (cevaplar), `presence/{uid}` (oyuncu nabzı; yalnızca TV dinler —
+nabzı `players`'a yazmak her telefonun listesine okuma düşürür), ayrıca
+mekan/ödül/rapor koleksiyonları.
 
 ## Dosya haritası
 

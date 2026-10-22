@@ -118,6 +118,40 @@ beforeEach(async () => {
   await testEnv.clearFirestore();
 });
 
+describe("presence — oyuncu nabzı (denetim P1)", () => {
+  beforeEach(() => seed());
+  const beat = (extra: Record<string, unknown> = {}) => ({ room_id: ROOM_ID, last_active: Date.now(), ...extra });
+
+  it("oyuncu kendi nabzını yazıp yenileyebilir", async () => {
+    await assertSucceeds(setDoc(doc(asPlayer(), "presence", PLAYER_UID), beat()));
+    await assertSucceeds(setDoc(doc(asPlayer(), "presence", PLAYER_UID), beat()));
+  });
+
+  it("başkasının nabzını yazamaz (hayalet oyuncuyu canlı gösteremez)", async () => {
+    await assertFails(setDoc(doc(asPlayer(), "presence", HOST_UID), beat()));
+  });
+
+  it("nabız belgesine fazladan alan (skor vb.) yazılamaz", async () => {
+    await assertFails(setDoc(doc(asPlayer(), "presence", PLAYER_UID), beat({ total_score: 999 })));
+  });
+
+  it("last_active sayı, room_id metin olmalı", async () => {
+    await assertFails(setDoc(doc(asPlayer(), "presence", PLAYER_UID), beat({ last_active: "şimdi" })));
+    await assertFails(setDoc(doc(asPlayer(), "presence", PLAYER_UID), beat({ room_id: 42 })));
+  });
+
+  it("girişsiz kullanıcı nabız yazamaz ve okuyamaz", async () => {
+    await assertFails(setDoc(doc(asGuest(), "presence", PLAYER_UID), beat()));
+    await assertFails(getDocs(query(collection(asGuest(), "presence"), where("room_id", "==", ROOM_ID))));
+  });
+
+  it("host odanın nabızlarını room_id sorgusuyla okuyabilir; nabız silinemez", async () => {
+    await assertSucceeds(setDoc(doc(asPlayer(), "presence", PLAYER_UID), beat()));
+    await assertSucceeds(getDocs(query(collection(asHost(), "presence"), where("room_id", "==", ROOM_ID))));
+    await assertFails(deleteDoc(doc(asPlayer(), "presence", PLAYER_UID)));
+  });
+});
+
 describe("answers koleksiyonu", () => {
   beforeEach(() => seed());
 
