@@ -57,3 +57,7 @@ _arsiv/
 .voiceover-samples/
 scripts/.voiceover-ledger.json
 scripts/.voiceover-ledger-google.json
+
+# Playwright uçtan uca testleri: test derlemesi ve raporlar
+dist-e2e
+e2e-results/

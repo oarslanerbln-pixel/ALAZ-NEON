@@ -219,6 +219,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
                 return (
                   <motion.button
                     key={opt}
+                    data-testid={`quiz-option-${opt}`}
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: hasSubmitted && !isSelected ? 0.25 : 1, y: 0, scale: isSelected ? 1.02 : 1 }}
                     transition={{ ...SPRING.snappy, delay: hasSubmitted ? 0 : i * STAGGER.tight }}

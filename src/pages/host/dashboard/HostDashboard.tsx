@@ -375,7 +375,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                   radius="1.25rem"
                   innerClassName="bg-white p-3.5 shadow-[0_0_40px_rgba(255,85,0,0.2)] flex items-center justify-center"
                 >
-                  <QRCodeSVG value={joinUrl} size={200} bgColor="#ffffff" fgColor="#000000" level="H" marginSize={1} />
+                  <QRCodeSVG data-testid="join-qr" value={joinUrl} size={200} bgColor="#ffffff" fgColor="#000000" level="H" marginSize={1} />
                 </BeamBorder>
 
                 <div className="mt-3 flex flex-col items-center">
