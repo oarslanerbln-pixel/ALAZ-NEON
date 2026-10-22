@@ -144,9 +144,9 @@ const NOISE = /ERR_BLOCKED_BY_CLIENT|net::ERR_FAILED|Failed to load resource|fav
  */
 export const KNOWN_ERRORS: Array<{ id: string; pattern: RegExp }> = [
   // Emoji tepkisi: rooms/{id}/transient için kural yok; TV'nin dinleyicisi reddediliyor.
-  { id: "P8 emoji transient kuralı yok", pattern: /snapshot listener: FirebaseError: \[code=permission-denied\]: No matching allow statements/ },
+  { id: "O5 emoji transient kuralı yok", pattern: /snapshot listener: FirebaseError: \[code=permission-denied\]: No matching allow statements/ },
   // Klasik turun "intelligence" kaydı: round_logs için kural yok, her tur reddediliyor.
-  { id: "H12 round_logs kuralı yok", pattern: /Intelligence log failed: .*PERMISSION_DENIED/ },
+  { id: "O6 round_logs kuralı yok", pattern: /Intelligence log failed: .*PERMISSION_DENIED/ },
 ];
 
 export function realErrors(t: Tracked): string[] {

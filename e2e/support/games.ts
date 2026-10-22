@@ -44,23 +44,30 @@ export async function tapOption(phone: Phone, opt: Option): Promise<number> {
   return at;
 }
 
+type ProbeWindow = { __probe?: number | null; __probeLast?: string | null };
+
 /**
  * TV'de "⚡ n / N SPIELER BEREIT" sayacının n'ye ulaştığı anı (TV saatiyle)
  * yakalar. Sayfa içinde MutationObserver: Playwright'ın yoklama aralığı
- * ölçüme girmesin.
+ * ölçüme girmesin. `textContent` okunuyor: `innerText` her mutasyonda
+ * yerleşim hesaplatır, yük altındaki TV'yi ölçüm sırasında yavaşlatmasın.
  */
 export async function armAnsweredProbe(tv: Page, n: number, total: number): Promise<void> {
   await tv.evaluate(
     ({ n, total }) => {
-      // Herkes cevaplayınca TV soruyu hemen kapatıyor: "N / N" hiç
-      // çizilmeyebilir, o yüzden kilit/açıklama ekranı da sayılır.
-      const wants = [`${n} / ${total} SPIELER BEREIT`];
-      if (n === total) wants.push("Antworten gesperrt", "RICHTIGE ANTWORT");
-      const w = window as unknown as { __probe?: number | null };
+      const w = window as unknown as ProbeWindow;
       w.__probe = null;
+      w.__probeLast = null;
       const check = () => {
-        const text = document.body.innerText;
-        if (w.__probe == null && wants.some((x) => text.includes(x))) {
+        const text = document.body.textContent ?? "";
+        const m = /⚡ (\d+) \/ (\d+) SPIELER BEREIT/.exec(text);
+        if (m) w.__probeLast = m[0];
+        // Herkes cevaplayınca TV soruyu hemen kapatıyor: "N / N" hiç
+        // çizilmeyebilir, o yüzden doğru şıkkın açıklanması da sayılır.
+        const reached =
+          (m != null && Number(m[1]) === n && Number(m[2]) === total) ||
+          (n === total && text.includes("RICHTIGE ANTWORT"));
+        if (w.__probe == null && reached) {
           w.__probe = Date.now();
           obs.disconnect();
         }
@@ -73,13 +80,20 @@ export async function armAnsweredProbe(tv: Page, n: number, total: number): Prom
   );
 }
 
+/**
+ * Sayaç beklenen değere ulaşmazsa TV'nin en son gösterdiği sayaçla düşer:
+ * "1 / 11" hayalet oyuncu kaydı, "0 / 10" TV'ye ulaşmayan cevap demektir.
+ */
 export async function readProbe(tv: Page, timeout = 15_000): Promise<number> {
-  const handle = await tv.waitForFunction(
-    () => (window as unknown as { __probe?: number | null }).__probe ?? null,
-    undefined,
-    { timeout },
-  );
-  return (await handle.jsonValue()) as number;
+  try {
+    const handle = await tv.waitForFunction(() => (window as unknown as ProbeWindow).__probe ?? null, undefined, { timeout });
+    return (await handle.jsonValue()) as number;
+  } catch (err) {
+    const last = await tv.evaluate(() => (window as unknown as ProbeWindow).__probeLast ?? null).catch(() => null);
+    throw new Error(`TV cevap sayacı ${timeout} ms içinde beklenen değere ulaşmadı (son görülen: ${last ?? "sayaç yok"})`, {
+      cause: err,
+    });
+  }
 }
 
 export interface QuizResult {
@@ -132,7 +146,7 @@ export async function playQuiz(
     trace(`quiz soru ${q + 1}: herkes cevapladı, açıklama bekleniyor`);
     // Herkes cevapladı → TV soruyu kendiliğinden kapatır ve doğru şıkkı açıklar.
     // Sunucu, doğru şık odaya yazılana (puanlama bitene) kadar bekler: düğme
-    // ondan önce görünüyor ve erken basmak ekranı geri attırıyor (bulgu H14).
+    // ondan önce görünüyor ve erken basmak ekranı geri attırıyor (bulgu O1).
     await waitForReveal(tv, q);
     await tv.page.getByRole("button", { name: "RANGLISTE ANZEIGEN" }).click({ timeout: 30_000 });
     const last = q === questions - 1;

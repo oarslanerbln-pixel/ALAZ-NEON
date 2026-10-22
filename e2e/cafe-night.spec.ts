@@ -21,7 +21,7 @@ import { recordMetric, trace } from "./support/metrics";
  * TV'ye yansır, gece lobisine dönülür ve misafirler QR'ı yeniden
  * okutmadan bir sonraki oyuna aynı profille geçer.
  *
- * Telefon sayısı: E2E_PHONES (CI'da 10, yerel tam tur 30).
+ * Telefon sayısı: E2E_PHONES (varsayılan 10, CI'da 8, yerel tam tur 30).
  */
 const PHONES = Number(process.env.E2E_PHONES ?? 10);
 const QUESTIONS = 5;
