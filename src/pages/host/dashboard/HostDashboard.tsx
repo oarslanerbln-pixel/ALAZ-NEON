@@ -110,6 +110,15 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     const card = GAMES.find((g) => g.id === game);
     if (card?.isComingSoon) return;
     SoundManager.getInstance().playSFX(sounds.START);
+    // Her oyun temiz başlar: önceki oyunun cevapları, skoru ve canları yeni
+    // oyuna taşınmasın (bkz. lib/gameReset.ts). Sunucu onayı BEKLENMİYOR:
+    // yazımlar yerel önbellekte hemen uygulanıp sırayla gönderiliyor; kafe
+    // wifi'si yavaşken TV ayar penceresinde donup kalmasın (oda durumu
+    // yazımı skor sıfırlamasından sonra kuyruğa giriyor).
+    const resetFailed = (err: unknown) => console.error("[HostDashboard] Yeni oyun sıfırlaması başarısız:", err);
+    resetPlayersForNewGame(players.map((p) => p.id)).catch(resetFailed);
+    clearRoomAnswers(room.id).catch(resetFailed);
+
     // Scattegories "lobby" ile başlar. Buraya kalıcı olarak "intro" yazmak
     // oyunu tamamen kilitliyordu: "intro" host'un YEREL sinematik animasyonu,
     // odaya ait bir durum değil. Yerel animasyon bitip gameState "lobby"ye
@@ -117,14 +126,6 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     // sonsuz döngü kurup lobiye hiç ulaşılamamasına yol açıyordu.
     // Quiz/bomba/sensör kendi intro DURUMLARINI ekranlarında yönettiği için
     // onlarda böyle bir sorun yok.
-    // Her oyun temiz başlar: önceki oyunun cevapları, skoru ve canları yeni
-    // oyuna taşınmasın (bkz. lib/gameReset.ts). Başarısız olursa oyun yine
-    // başlar; yalnızca konsola düşer.
-    await Promise.all([
-      clearRoomAnswers(room.id),
-      resetPlayersForNewGame(players.map((p) => p.id)),
-    ]).catch((err) => console.error("[HostDashboard] Yeni oyun sıfırlaması başarısız:", err));
-
     let initialStatus: Room["status"] = "lobby";
     let extraUpdates: Partial<Room> = { active_game: game, current_round: 0, ...settings, ...NIGHT_ROUND_OPEN };
 
