@@ -45,9 +45,13 @@ service cloud.firestore {
     }
 
     // Bomb mode: the player currently holding the bomb passes it on.
+    // Yalnızca bombayı TUTAN oyuncu: eskiden giriş yapmış herkes (odada
+    // olmayan biri bile) bombayı istediği kişiye yönlendirebiliyor, fitili
+    // kısaltabiliyor ve used_words'e TV'de görünen her şeyi yazabiliyordu.
     function isBombPass() {
       return resource.data.status == 'bomb_active' &&
-        touchesOnly(['previous_bomb_target_player', 'bomb_target_player', 'used_words']);
+        touchesOnly(['previous_bomb_target_player', 'bomb_target_player', 'used_words']) &&
+        get(/databases/$(database)/documents/players/$(resource.data.bomb_target_player)).data.uid == request.auth.uid;
     }
 
     // Sensor mode: the first player to hit the buzzer claims the round.
@@ -135,8 +139,21 @@ service cloud.firestore {
       // Anyone can see the players
       allow read: if true;
       
-      // Authenticated users can join a room (create their player profile)
-      allow create: if isAuth() && request.resource.data.uid == request.auth.uid;
+      // Authenticated users can join a room (create their player profile).
+      // Katılım kaydı yalnızca PlayerJoin'in yazdığı alanlarla ve SIFIR
+      // skorla açılabilir: eskiden misafir konsoldan total_score: 99999 ile
+      // katılıp oyunun ve ödülün (kazanan total_score'dan seçiliyor)
+      // sahibi olabiliyordu.
+      function isValidJoin() {
+        let d = request.resource.data;
+        return d.uid == request.auth.uid &&
+          d.keys().hasOnly(['room_id', 'nickname', 'team_name', 'total_score', 'night_score', 'uid', 'created_at', 'expires_at']) &&
+          d.room_id is string &&
+          d.nickname is string && d.nickname.size() > 0 && d.nickname.size() <= 40 &&
+          d.get('total_score', 0) == 0 &&
+          d.get('night_score', 0) == 0;
+      }
+      allow create: if isAuth() && isValidJoin();
 
       // A player's own game counters (Kablo, Colors, Bar) are
       // updated via increment() directly from the player's device. These
@@ -355,7 +372,11 @@ service cloud.firestore {
       // işletme hesabına (barda doğrulama yapan personel) açık, ve yalnızca
       // status/claimed_at alanlarına dokunabiliyor — başka bir alanı
       // (uid, code, title...) değiştiremiyor.
+      // Yalnızca 'available' → 'claimed' ve bir kez: iki bar cihazı aynı
+      // kodu aynı anda onaylayamaz, kullanılmış kod geri açılamaz.
       allow update: if isStaff() &&
+        resource.data.status == 'available' &&
+        request.resource.data.status == 'claimed' &&
         touchesOnly(['status', 'claimed_at']);
 
       allow delete: if false;
