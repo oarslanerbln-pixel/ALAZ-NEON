@@ -1,14 +1,15 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { doc, collection, query, where, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { Sentinel } from "../lib/sentinel";
-import { HOST_HEARTBEAT_MS } from "../lib/liveness";
+import { HOST_HEARTBEAT_MS, mergePresence } from "../lib/liveness";
 import { useHeartbeat } from "./useHeartbeat";
 import type { Room, Player, Answer } from "../types/database";
 
 export function useHostRoom(roomId: string | null) {
   const [room, setRoom] = useState<Room | null>(null);
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [rawPlayers, setPlayers] = useState<Player[]>([]);
+  const [lastActiveByUid, setLastActiveByUid] = useState<ReadonlyMap<string, number>>(() => new Map());
   const [submittedPlayerIds, setSubmittedPlayerIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(Boolean(roomId));
   const [notFound, setNotFound] = useState(!roomId);
@@ -22,6 +23,7 @@ export function useHostRoom(roomId: string | null) {
     setTrackedRoomId(roomId);
     setRoom(null);
     setPlayers([]);
+    setLastActiveByUid(new Map());
     setSubmittedPlayerIds([]);
     setError(null);
     setLoading(Boolean(roomId));
@@ -76,6 +78,23 @@ export function useHostRoom(roomId: string | null) {
       }
     );
 
+    // 2b. Oyuncu nabızları (presence/{uid}). Ayrı koleksiyonda: oyuncu
+    // belgesinde dururken her nabız odadaki her telefonun lobi listesine
+    // okuma olarak düşüyordu. Bunu yalnızca TV dinliyor (nabız başına 1 okuma).
+    const qPresence = query(collection(db, "presence"), where("room_id", "==", roomId));
+    const presenceUnsub = onSnapshot(
+      qPresence,
+      (snapshot) => {
+        const next = new Map<string, number>();
+        snapshot.forEach((d) => {
+          const beat = d.data().last_active;
+          if (typeof beat === "number") next.set(d.id, beat);
+        });
+        setLastActiveByUid(next);
+      },
+      (err) => console.error("[useHostRoom] Nabızlar dinlenemedi:", err),
+    );
+
     // 3. Answer Tracking Subscription
     const qAnswers = query(collection(db, "answers"), where("room_id", "==", roomId));
     const answersUnsub = onSnapshot(qAnswers, (snapshot) => {
@@ -106,6 +125,7 @@ export function useHostRoom(roomId: string | null) {
     return () => {
       roomUnsub();
       playersUnsub();
+      presenceUnsub();
       answersUnsub();
     };
   }, [roomId]);
@@ -145,6 +165,9 @@ export function useHostRoom(roomId: string | null) {
       console.error("[useHostRoom] Skor güncellenemedi:", playerId, err);
     }
   }, []);
+
+  // Bomba/voltaj hedefi `last_active`'e bakıyor (lib/liveness).
+  const players = useMemo(() => mergePresence(rawPlayers, lastActiveByUid), [rawPlayers, lastActiveByUid]);
 
   return {
     room,

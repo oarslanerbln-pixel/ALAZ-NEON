@@ -18,7 +18,7 @@ import { useLocale } from "../../hooks/useLocale";
 import { useRoom } from "../../hooks/useRoom";
 import { usePlayer } from "../../hooks/usePlayer";
 import { useEmojiPulse } from "../../hooks/useEmojiPulse";
-import { useHeartbeat } from "../../hooks/useHeartbeat";
+import { usePlayerPresence } from "../../hooks/useHeartbeat";
 import { PLAYER_HEARTBEAT_MS } from "../../lib/liveness";
 
 // Extracted Components
@@ -80,7 +80,8 @@ export function PlayerGame() {
   }, [player]);
 
   // Canlılık sinyali — hayalet oyuncuya bomba/voltaj geçmesini önlüyor.
-  useHeartbeat("players", "last_active", playerId, PLAYER_HEARTBEAT_MS);
+  // Oyuncu belgesine değil presence/{uid} belgesine: bkz. usePlayerPresence.
+  usePlayerPresence(roomId, player?.uid, PLAYER_HEARTBEAT_MS);
 
   // Derived States
   const gameState = room?.status || "lobby";

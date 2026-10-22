@@ -240,10 +240,27 @@ export interface Player {
    */
   expires_at?: Timestamp;
   lives?: number;
+  /**
+   * Eski nabız alanı. Nabız artık `presence/{uid}` belgesinde (bkz.
+   * lib/liveness → mergePresence); host listesine oradan birleştiriliyor.
+   */
   last_active?: number;
   colors_clicks?: number;
   bar_score?: number;
   kablo_score?: number;
+}
+
+/**
+ * Oyuncu telefonunun canlılık sinyali: `presence/{uid}` (uid = oturum).
+ * `players` belgesinde değil, çünkü oradaki her yazma odadaki her telefonun
+ * oyuncu listesi dinleyicisine okuma olarak düşüyordu (lobide dakikada
+ * 4N(N+2) okuma). Bunu yalnızca TV dinliyor.
+ */
+export interface Presence {
+  room_id: string;
+  /** Telefonun saatiyle `Date.now()`. */
+  last_active: number;
+  expires_at?: Timestamp;
 }
 
 export interface Answer {

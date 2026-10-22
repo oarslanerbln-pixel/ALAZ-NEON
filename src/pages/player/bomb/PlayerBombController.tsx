@@ -9,7 +9,7 @@ import { containsProfanity } from "../../../lib/profanity";
 import { looksLikeGibberish } from "../../../lib/wordValidation";
 import { useLocale } from "../../../hooks/useLocale";
 import { haptics } from "../../../lib/haptics";
-import { activePlayers } from "../../../lib/liveness";
+import { activePlayers, mergePresence } from "../../../lib/liveness";
 import { bombLives } from "../../../lib/bomb";
 import { gameTitle } from "../../../lib/gameCatalog";
 import { PlayerStageScreen } from "../components/PlayerStageScreen";
@@ -76,15 +76,25 @@ export function PlayerBombController({ room, player }: Props) {
     haptics.tap();
 
     try {
-      const playersRef = collection(db, "players");
-      const q = query(playersRef, where("room_id", "==", room.id));
-      const querySnapshot = await getDocs(q);
+      const [querySnapshot, presenceSnapshot] = await Promise.all([
+        getDocs(query(collection(db, "players"), where("room_id", "==", room.id))),
+        // Nabızlar presence/{uid}'de (bkz. usePlayerPresence): cebe konmuş
+        // telefona bomba geçmesin.
+        getDocs(query(collection(db, "presence"), where("room_id", "==", room.id))),
+      ]);
       const allPlayers: Player[] = [];
       querySnapshot.forEach((doc) => {
         allPlayers.push({ id: doc.id, ...doc.data() } as Player);
       });
+      const lastActiveByUid = new Map<string, number>();
+      presenceSnapshot.forEach((doc) => {
+        const beat = doc.data().last_active;
+        if (typeof beat === "number") lastActiveByUid.set(doc.id, beat);
+      });
 
-      const candidates = activePlayers(allPlayers.filter((p) => p.id !== player.id && bombLives(p) > 0));
+      const candidates = activePlayers(
+        mergePresence(allPlayers, lastActiveByUid).filter((p) => p.id !== player.id && bombLives(p) > 0),
+      );
 
       let nextPlayerId = player.id;
       if (candidates.length > 0) {
