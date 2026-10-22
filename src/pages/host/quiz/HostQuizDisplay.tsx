@@ -741,8 +741,12 @@ export function HostQuizDisplay({
                       </motion.div>
                     )}
 
+                    {/* Puanlama bitip doğru şık odaya yazılmadan basılırsa TV
+                        sıralamaya geçip endQuestion'ın son yazımıyla cevap
+                        ekranına geri zıplıyordu: düğme o zamana kadar kapalı. */}
                     <ShimmerButton
                       onClick={showLeaderboard}
+                      disabled={revealedOption(room, currentQIndex) === null}
                       color="yellow"
                       thickness={2}
                       radius="1rem"
