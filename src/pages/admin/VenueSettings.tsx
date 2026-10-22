@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
@@ -28,7 +28,7 @@ const REWARD_TYPE_OPTIONS: { value: Reward["type"]; label: string }[] = [
  */
 export function VenueSettings() {
   const navigate = useNavigate();
-  const { venue } = useVenue();
+  const { venue, loading: venueLoading } = useVenue();
   const { user: authUser, isStaff } = useIsStaff();
 
   const [name, setName] = useState("");
@@ -56,12 +56,13 @@ export function VenueSettings() {
   const [errorMsg, setErrorMsg] = useState("");
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
-  useEffect(() => {
-  }, []);
-
-  // Context'ten gelen canlı değeri form alanlarına yansıt (yalnızca ilk
-  // yüklemede/dışarıdan değişince — kullanıcı yazarken üzerine yazma).
-  useEffect(() => {
+  // Form, kayıtlı marka GELDİKTEN sonra bir kez doldurulur. Eskiden ilk
+  // render'da (veri henüz yokken) varsayılan "HENGAME" ayarlarıyla doluyordu:
+  // sayfayı yer iminden açıp "Kaydet"e basan mekân sahibi gerçek adını,
+  // sponsor reklamlarını ve tanıtım görsellerini siliyordu.
+  const [formFilled, setFormFilled] = useState(false);
+  if (!venueLoading && !formFilled) {
+    setFormFilled(true);
     setName(venue.name);
     setLogoUrl(venue.logo_url || "");
     setPrimaryColor(venue.primary_color || DEFAULT_VENUE_CONFIG.primary_color!);
@@ -73,8 +74,7 @@ export function VenueSettings() {
     setPromoImages(venue.promo_images || []);
     setSponsorAds(venue.sponsor_ads || []);
     setWheelSlices(venue.wheel_slices || DEFAULT_VENUE_CONFIG.wheel_slices || []);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }
 
   const addPromoImage = () => {
     const url = newPromoUrl.trim();
@@ -123,7 +123,7 @@ export function VenueSettings() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || !formFilled) return;
     setErrorMsg("");
     setSaving(true);
     try {
@@ -573,7 +573,7 @@ export function VenueSettings() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             type="submit"
-            disabled={saving}
+            disabled={saving || !formFilled}
             className="w-full py-5 bg-gradient-to-r from-alaz-orange to-[#ff003c] text-white font-black text-lg rounded-2xl uppercase tracking-widest disabled:opacity-50 transition-all"
           >
             {saving ? "Kaydediliyor..." : "Markayı Kaydet"}
