@@ -11,7 +11,7 @@ import {
   type Tv,
 } from "./support/cafe";
 import { quizAnswerKey, skipHostTutorial, tapOption, waitForReveal, wrongOption } from "./support/games";
-import { adminGet, adminQuery, clearAuth, clearFirestore } from "./support/emulator";
+import { adminGet, adminQuery, adminSet, clearAuth, clearFirestore } from "./support/emulator";
 
 /**
  * Kafede olan şeyler: wifi kopar, misafir sayfayı yeniler, biri geç gelir,
@@ -188,5 +188,45 @@ test("telefon kilitlenip açılır: soru değişmişse yeni soruya cevap verebil
     await expect.poll(async () => (await answersFor(tv.roomId, 1)).map((a) => a.player_id)).toContain(anna.playerId);
   } finally {
     await closeAll(tv, ...phones);
+  }
+});
+
+test("eksik profil belgesi: katılım ekranı çökmez (ör. yalnızca takma adı olan users kaydı)", async ({ browser }) => {
+  const tv = await openNight(browser);
+  const joinUrl = await scanTvQr(tv);
+  const phone = await newPhone(browser, 2, "EKSIK");
+  try {
+    // Hızlı ya da yavaş bağlantıda katılım, profil oluşturulmadan önce
+    // takma adı `{nickname}` olarak birleştirip yazabiliyor; sonra tam profil
+    // yazımı kuralca reddediliyor ve belge telefon numarasız kalıyor.
+    await phone.page.goto(joinUrl);
+    await expect(phone.page.getByPlaceholder("KRIEGER")).toBeVisible({ timeout: 30_000 });
+    const uid = await phone.page.evaluate(
+      () =>
+        new Promise<string>((resolve, reject) => {
+          const req = indexedDB.open("firebaseLocalStorageDb");
+          req.onerror = () => reject(req.error);
+          req.onsuccess = () => {
+            const tx = req.result.transaction("firebaseLocalStorage", "readonly");
+            const all = tx.objectStore("firebaseLocalStorage").getAll();
+            all.onsuccess = () => {
+              const row = (all.result as Array<{ value?: { uid?: string } }>).find((r) => r.value?.uid);
+              if (row?.value?.uid) resolve(row.value.uid);
+              else reject(new Error("anonim uid bulunamadı"));
+            };
+          };
+        }),
+    );
+    await adminSet(`users/${uid}`, { nickname: "EKSIK" });
+    await phone.page.reload();
+    // Profil kartı ya takma adı gösterir ya da sayfa hata ekranına düşer.
+    const crash = phone.page.getByText("Bir Hata Oluştu");
+    await expect(phone.page.getByRole("heading", { name: "EKSIK" }).or(crash)).toBeVisible({ timeout: 30_000 });
+    await expect(crash, "profil kartı telefon numarasız belgede çöküyordu").toHaveCount(0);
+    await expect(phone.page.getByPlaceholder("KRIEGER")).toBeVisible({ timeout: 30_000 });
+    await joinFromQr(phone, joinUrl);
+    await expectTvPlayerCount(tv.page, 1);
+  } finally {
+    await closeAll(tv, phone);
   }
 });
