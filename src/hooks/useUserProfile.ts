@@ -51,7 +51,15 @@ export function useUserProfile() {
             created_at: Date.now(),
             last_active: Date.now(),
           };
-          await setDoc(userRef, newProfile);
+          try {
+            await setDoc(userRef, newProfile);
+          } catch (err) {
+            // Katılım ekranında hook iki kez bağlı (form + profil kartı): ikisi
+            // aynı anda "profil yok" görüp yazıyor, ikinci yazım güncellemeye
+            // dönüşüp kuralca reddediliyor. Profil zaten açıldı; snapshot gelir.
+            console.warn("[useUserProfile] Profil zaten oluşturulmuş:", err);
+            return;
+          }
           setProfile({ uid, ...newProfile } as UserProfile);
           setLoading(false);
         }
