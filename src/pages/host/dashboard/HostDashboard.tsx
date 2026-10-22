@@ -24,6 +24,8 @@ import { BeamBorder } from "../../../components/fx/BeamBorder";
 import { GridPattern } from "../../../components/fx/GridPattern";
 import { NumberTicker, ShimmerButton, GameAnimatedLogo } from "../../../components/fx";
 import { NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
+import { clearRoomAnswers, resetPlayersForNewGame } from "../../../lib/gameReset";
+import { nextBombCategory } from "../../../lib/bomb";
 import { NightFinale } from "../views/NightFinale";
 import { nightStandings, rankDeltas } from "../../../lib/nightLeague";
 import { SHOWCASE_IDLE_MS } from "../../../lib/showcase";
@@ -108,6 +110,15 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     const card = GAMES.find((g) => g.id === game);
     if (card?.isComingSoon) return;
     SoundManager.getInstance().playSFX(sounds.START);
+    // Her oyun temiz başlar: önceki oyunun cevapları, skoru ve canları yeni
+    // oyuna taşınmasın (bkz. lib/gameReset.ts). Sunucu onayı BEKLENMİYOR:
+    // yazımlar yerel önbellekte hemen uygulanıp sırayla gönderiliyor; kafe
+    // wifi'si yavaşken TV ayar penceresinde donup kalmasın (oda durumu
+    // yazımı skor sıfırlamasından sonra kuyruğa giriyor).
+    const resetFailed = (err: unknown) => console.error("[HostDashboard] Yeni oyun sıfırlaması başarısız:", err);
+    resetPlayersForNewGame(players.map((p) => p.id)).catch(resetFailed);
+    clearRoomAnswers(room.id).catch(resetFailed);
+
     // Scattegories "lobby" ile başlar. Buraya kalıcı olarak "intro" yazmak
     // oyunu tamamen kilitliyordu: "intro" host'un YEREL sinematik animasyonu,
     // odaya ait bir durum değil. Yerel animasyon bitip gameState "lobby"ye
@@ -116,7 +127,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     // Quiz/bomba/sensör kendi intro DURUMLARINI ekranlarında yönettiği için
     // onlarda böyle bir sorun yok.
     let initialStatus: Room["status"] = "lobby";
-    let extraUpdates: Partial<Room> = { active_game: game, ...settings, ...NIGHT_ROUND_OPEN };
+    let extraUpdates: Partial<Room> = { active_game: game, current_round: 0, ...settings, ...NIGHT_ROUND_OPEN };
 
     if (game === "quiz") {
       Promise.all([
@@ -151,21 +162,21 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     if (game === "bomb") {
       // Canı olan VE hâlâ sinyal gönderen oyuncular: bomba, telefonu cebine
       // koyup gitmiş bir misafire verilirse tur süre dolana kadar kilitlenir.
-      const activePlayers = activePlayersOf(
-        players.filter((p) => (p.lives === undefined ? 3 : p.lives) > 0),
-      );
+      // Canlar yukarıda dolduruldu: yalnızca hâlâ sinyal gönderenlere bak.
+      const activePlayers = activePlayersOf(players);
       const randomPlayer = activePlayers.length > 0 ? activePlayers[Math.floor(Math.random() * activePlayers.length)] : null;
-      const availableCategories = settings?.categories || room.categories || [];
-      const randomCategory = availableCategories.length > 0 ? availableCategories[Math.floor(Math.random() * availableCategories.length)] : "GENEL";
-      
+      const { category, used } = nextBombCategory(settings?.categories || room.categories, []);
+
       initialStatus = "tutorial";
       extraUpdates = {
         ...extraUpdates,
         tutorial_step: 0,
         current_round: 1,
-        bomb_target_player: randomPlayer?.id,
-        active_letter: randomCategory,
-        used_bomb_categories: [randomCategory],
+        // undefined Firestore'da yazım hatası (TV hata ekranına düşüyordu):
+        // kimse yoksa alan hiç yazılmaz.
+        ...(randomPlayer ? { bomb_target_player: randomPlayer.id } : {}),
+        active_letter: category,
+        used_bomb_categories: used,
         used_words: [],
         bomb_speed_multiplier: 1.0,
       };
@@ -365,7 +376,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                   radius="1.25rem"
                   innerClassName="bg-white p-3.5 shadow-[0_0_40px_rgba(255,85,0,0.2)] flex items-center justify-center"
                 >
-                  <QRCodeSVG value={joinUrl} size={200} bgColor="#ffffff" fgColor="#000000" level="H" marginSize={1} />
+                  <QRCodeSVG data-testid="join-qr" value={joinUrl} size={200} bgColor="#ffffff" fgColor="#000000" level="H" marginSize={1} />
                 </BeamBorder>
 
                 <div className="mt-3 flex flex-col items-center">

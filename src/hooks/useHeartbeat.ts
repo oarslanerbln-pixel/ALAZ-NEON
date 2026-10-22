@@ -1,36 +1,21 @@
-import { useEffect } from "react";
-import { doc, updateDoc } from "firebase/firestore";
+import { useCallback, useEffect } from "react";
+import { doc, setDoc, updateDoc } from "firebase/firestore";
 
 import { db } from "../lib/firebase";
-
-type HeartbeatTarget =
-  | { collection: "rooms"; field: "host_last_active" }
-  | { collection: "players"; field: "last_active" };
+import { retentionExpiry } from "../lib/retention";
 
 /**
- * Canlılık sinyali — host ekranı ve oyuncu telefonu için tek uygulama.
- *
- * Sekme görünürken `intervalMs`'de bir `field` alanına `Date.now()` yazar.
- * Sekme gizlenince durur, görünür olunca beklemeden bir sinyal atar. Eskiden
- * iki ayrı kopya vardı ve ikisi de arka planda yazmaya devam ediyordu:
- * kilitli telefon sinyal gönderip "canlı" görünüyor (bombayı alıp tur boyunca
- * kilitliyordu), her yazma da odadaki her dinleyiciye bir okuma olarak
- * yansıyordu. Geri dönüşte anlık sinyal, oyuncunun 15 sn beklemeden tekrar
- * hedeflenebilir olmasını sağlıyor.
+ * Sekme görünürken `intervalMs`'de bir `beat` çağırır. Sekme gizlenince durur,
+ * görünür olunca beklemeden bir sinyal atar. Eskiden iki ayrı kopya vardı ve
+ * ikisi de arka planda yazmaya devam ediyordu: kilitli telefon sinyal
+ * gönderip "canlı" görünüyor (bombayı alıp tur boyunca kilitliyordu), her
+ * yazma da odadaki her dinleyiciye bir okuma olarak yansıyordu. Geri dönüşte
+ * anlık sinyal, oyuncunun 15 sn beklemeden tekrar hedeflenebilir olmasını
+ * sağlıyor.
  */
-export function useHeartbeat(
-  target: HeartbeatTarget["collection"],
-  field: HeartbeatTarget["field"],
-  docId: string | null,
-  intervalMs: number,
-) {
+function useVisibleInterval(beat: (() => void) | null, intervalMs: number) {
   useEffect(() => {
-    if (!docId) return;
-    const ref = doc(db, target, docId);
-    const beat = () => {
-      updateDoc(ref, { [field]: Date.now() }).catch(() => {});
-    };
-
+    if (!beat) return;
     let timer: ReturnType<typeof setInterval> | null = null;
     const start = () => {
       if (timer !== null) return;
@@ -50,5 +35,36 @@ export function useHeartbeat(
       document.removeEventListener("visibilitychange", sync);
       stop();
     };
-  }, [target, field, docId, intervalMs]);
+  }, [beat, intervalMs]);
+}
+
+/** Host ekranının canlılık sinyali: `rooms/{id}.host_last_active`. */
+export function useHeartbeat(target: "rooms", field: "host_last_active", docId: string | null, intervalMs: number) {
+  // Kimlik değişmedikçe aynı fonksiyon: yoksa her render'da aralık yeniden
+  // kurulup hemen bir sinyal daha yazılırdı.
+  const beat = useCallback(() => {
+    if (docId) updateDoc(doc(db, target, docId), { [field]: Date.now() }).catch(() => {});
+  }, [target, field, docId]);
+  useVisibleInterval(docId ? beat : null, intervalMs);
+}
+
+/**
+ * Oyuncu telefonunun canlılık sinyali: `presence/{uid}`.
+ *
+ * Oyuncu belgesine (`players/{id}.last_active`) yazılmıyor: o belgeyi odadaki
+ * her telefonun lobi listesi dinliyor ve her nabız N okuma ediyordu (lobide
+ * dakikada 4N(N+2); 20 kişide Spark kotası ~27 dakikada bitiyordu). Presence
+ * belgesini yalnızca TV dinliyor. Belge kimliği oturum uid'i olduğu için kural
+ * ek okuma (`get()`) gerektirmiyor.
+ */
+export function usePlayerPresence(roomId: string | null, uid: string | null | undefined, intervalMs: number) {
+  const beat = useCallback(() => {
+    if (!roomId || !uid) return;
+    setDoc(doc(db, "presence", uid), {
+      room_id: roomId,
+      last_active: Date.now(),
+      expires_at: retentionExpiry(),
+    }).catch(() => {});
+  }, [roomId, uid]);
+  useVisibleInterval(roomId && uid ? beat : null, intervalMs);
 }

@@ -11,3 +11,16 @@ export function errorMessage(err: unknown): string {
   }
   return String(err);
 }
+
+/**
+ * Firestore "already-exists" hatası mı.
+ *
+ * `addDoc` belgeyi "yoksa oluştur" koşuluyla, istemcide üretilen rastgele
+ * kimlikle yazar. Yazım sunucuya ulaşıp onayı yolda kaybolunca (kafe
+ * wifi'si) SDK yazımı yeni akışta yeniden gönderir ve sunucu "zaten var"
+ * der. Kimlik rastgele olduğu için bu, aynı yazımın ilk denemesinin kayda
+ * geçtiği anlamına gelir: çağıran taraf başarı saymalı.
+ */
+export function isAlreadyExists(err: unknown): boolean {
+  return typeof err === "object" && err !== null && (err as { code?: unknown }).code === "already-exists";
+}

@@ -10,7 +10,7 @@ export interface Winner {
  * Saf kazanan hesaplama mantığı — Firestore'a hiç dokunmuyor, bilerek
  * `./firebase`'i (ya da onu import eden hiçbir şeyi) import ETMİYOR.
  *
- * Sebep: `firebase.ts` modül yüklenirken `getAuth(app)` çağırıyor; env
+ * Sebep: `firebase.ts` modül yüklenirken Auth'u başlatıyor (`initializeAuth`); env
  * değişkenleri yoksa (CI'daki `Unit tests` adımı .env.local taşımıyor)
  * bu çağrı `auth/invalid-api-key` ile patlıyor. `scoring.ts` de aynı
  * sebeple firebase.ts'i hiç import etmiyor — kurulu örüntü bu: saf hesap

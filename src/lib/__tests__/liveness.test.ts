@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { activePlayers, isHostOnline, isPlayerActive } from "../liveness";
+import { activePlayers, isHostOnline, isPlayerActive, mergePresence } from "../liveness";
 
 const NOW = 1_700_000_000_000;
 const player = (last_active?: number) => ({ last_active });
@@ -58,5 +58,25 @@ describe("isHostOnline", () => {
 
   it("alan hiç yoksa ÇEVRİMİÇİ sayılıyor — eski odalar yanlış uyarı almasın", () => {
     expect(isHostOnline(null, NOW)).toBe(true);
+  });
+});
+
+describe("mergePresence", () => {
+  const p = (id: string, uid?: string, last_active?: number) => ({ id, uid, last_active });
+
+  it("nabzı uid ile eşleştirip last_active'e yazar", () => {
+    const merged = mergePresence([p("a", "u1"), p("b", "u2")], new Map([["u1", NOW - 1_000]]));
+    expect(merged).toEqual([p("a", "u1", NOW - 1_000), p("b", "u2")]);
+  });
+
+  it("nabzı olmayan oyuncunun eski değeri ve 'canlı' varsayımı korunur", () => {
+    const merged = mergePresence([p("a", "u1", NOW - 60_000), p("b")], new Map([["u9", NOW]]));
+    expect(merged).toEqual([p("a", "u1", NOW - 60_000), p("b")]);
+    expect(activePlayers(merged, NOW).map((x) => x.id)).toEqual(["b"]);
+  });
+
+  it("sessizleşen telefon elenir, nabız atan kalır", () => {
+    const merged = mergePresence([p("a", "u1"), p("b", "u2")], new Map([["u1", NOW - 2_000], ["u2", NOW - 45_000]]));
+    expect(activePlayers(merged, NOW).map((x) => x.id)).toEqual(["a"]);
   });
 });

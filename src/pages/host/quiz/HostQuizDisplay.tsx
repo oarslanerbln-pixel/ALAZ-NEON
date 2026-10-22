@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
-import { collection, query, where, getDocs, doc, writeBatch, onSnapshot } from "firebase/firestore";
+import { collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { ParticleBackground } from "../../../components/ParticleBackground";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
+import { clearRoomAnswers, resetPlayersForNewGame } from "../../../lib/gameReset";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { getQuizQuestions } from "../../../lib/quizQuestions";
 import { recentQuestionIds, rememberQuestions } from "../../../lib/questionHistory";
@@ -114,15 +115,10 @@ export function HostQuizDisplay({
   const startGame = async () => {
     if (!roomId || !room) return;
     
-    // Clear old answers
+    // Eski cevaplar: tek writeBatch 500 işlemi aşınca (gece yarısına doğru
+    // olağan) commit düşüyor ve eski cevaplar kalıyordu; parça parça siliniyor.
     try {
-      const q = query(collection(db, "answers"), where("room_id", "==", roomId));
-      const snapshot = await getDocs(q);
-      if (!snapshot.empty) {
-        const batch = writeBatch(db);
-        snapshot.forEach(docSnap => batch.delete(docSnap.ref));
-        await batch.commit();
-      }
+      await clearRoomAnswers(roomId);
     } catch (e) {
       console.warn("Could not delete old answers:", e);
     }
@@ -388,19 +384,13 @@ export function HostQuizDisplay({
 
   const resetGame = async () => {
     if (!roomId) return;
-    const batch = writeBatch(db);
-    players.forEach(p => {
-      const pRef = doc(db, "players", p.id);
-      batch.update(pRef, { total_score: 0 });
-    });
-
-    const q = query(collection(db, "answers"), where("room_id", "==", roomId));
-    const snapshot = await getDocs(q);
-    snapshot.forEach(docSnap => {
-      batch.delete(docSnap.ref);
-    });
-
-    await batch.commit();
+    // Eskiden tek writeBatch: oyuncu + cevap sayısı 500'ü geçince commit
+    // düşüyor, yakalanmadığı için "YENİ OYUN BAŞLAT" sessizce hiçbir şey yapmıyordu.
+    try {
+      await Promise.all([resetPlayersForNewGame(players.map((p) => p.id)), clearRoomAnswers(roomId)]);
+    } catch (err) {
+      console.error("[HostQuizDisplay] Yeni oyun sıfırlaması başarısız:", err);
+    }
     streaksRef.current = {};
     setPlayerStreaks({});
     await updateRoomStatus("quiz_lobby", { current_round: 0, current_question_index: 0, ...NIGHT_ROUND_OPEN });
@@ -751,8 +741,12 @@ export function HostQuizDisplay({
                       </motion.div>
                     )}
 
+                    {/* Puanlama bitip doğru şık odaya yazılmadan basılırsa TV
+                        sıralamaya geçip endQuestion'ın son yazımıyla cevap
+                        ekranına geri zıplıyordu: düğme o zamana kadar kapalı. */}
                     <ShimmerButton
                       onClick={showLeaderboard}
+                      disabled={revealedOption(room, currentQIndex) === null}
                       color="yellow"
                       thickness={2}
                       radius="1rem"

@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
-import { collection, query, where, getDocs, doc, writeBatch } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { clearRoomAnswers, resetPlayersForNewGame } from "../../lib/gameReset";
 import { db } from "../../lib/firebase";
 import { ParticleBackground } from "../../components/ParticleBackground";
 import { TVScaleFrame } from "../../components/TVScaleFrame";
@@ -496,12 +497,13 @@ function HostDisplayGame({
 
   const resetGame = async () => {
     if (!roomId) return;
-    const batch = writeBatch(db);
-    players.forEach(p => {
-      const pRef = doc(db, "players", p.id);
-      batch.update(pRef, { total_score: 0 });
-    });
-    await batch.commit();
+    // Harfler sıfırlandığı için eski cevaplar da gitmeli: aynı harf yeni
+    // oyunda yeniden çıkınca en eski (önceki oyunun) cevabı puanlanıyordu.
+    try {
+      await Promise.all([resetPlayersForNewGame(players.map((p) => p.id)), clearRoomAnswers(roomId)]);
+    } catch (err) {
+      console.error("[HostDisplay] Yeni oyun sıfırlaması başarısız:", err);
+    }
     setPlayerStats({});
     setRoundResults([]);
     setGameHistory([]);

@@ -118,6 +118,40 @@ beforeEach(async () => {
   await testEnv.clearFirestore();
 });
 
+describe("presence — oyuncu nabzı (denetim P1)", () => {
+  beforeEach(() => seed());
+  const beat = (extra: Record<string, unknown> = {}) => ({ room_id: ROOM_ID, last_active: Date.now(), ...extra });
+
+  it("oyuncu kendi nabzını yazıp yenileyebilir", async () => {
+    await assertSucceeds(setDoc(doc(asPlayer(), "presence", PLAYER_UID), beat()));
+    await assertSucceeds(setDoc(doc(asPlayer(), "presence", PLAYER_UID), beat()));
+  });
+
+  it("başkasının nabzını yazamaz (hayalet oyuncuyu canlı gösteremez)", async () => {
+    await assertFails(setDoc(doc(asPlayer(), "presence", HOST_UID), beat()));
+  });
+
+  it("nabız belgesine fazladan alan (skor vb.) yazılamaz", async () => {
+    await assertFails(setDoc(doc(asPlayer(), "presence", PLAYER_UID), beat({ total_score: 999 })));
+  });
+
+  it("last_active sayı, room_id metin olmalı", async () => {
+    await assertFails(setDoc(doc(asPlayer(), "presence", PLAYER_UID), beat({ last_active: "şimdi" })));
+    await assertFails(setDoc(doc(asPlayer(), "presence", PLAYER_UID), beat({ room_id: 42 })));
+  });
+
+  it("girişsiz kullanıcı nabız yazamaz ve okuyamaz", async () => {
+    await assertFails(setDoc(doc(asGuest(), "presence", PLAYER_UID), beat()));
+    await assertFails(getDocs(query(collection(asGuest(), "presence"), where("room_id", "==", ROOM_ID))));
+  });
+
+  it("host odanın nabızlarını room_id sorgusuyla okuyabilir; nabız silinemez", async () => {
+    await assertSucceeds(setDoc(doc(asPlayer(), "presence", PLAYER_UID), beat()));
+    await assertSucceeds(getDocs(query(collection(asHost(), "presence"), where("room_id", "==", ROOM_ID))));
+    await assertFails(deleteDoc(doc(asPlayer(), "presence", PLAYER_UID)));
+  });
+});
+
 describe("answers koleksiyonu", () => {
   beforeEach(() => seed());
 
@@ -1029,5 +1063,113 @@ describe("ayna_survey — anonim salon anketi", () => {
 
   it("misafir odanın tüm anketini sorgulayamaz", async () => {
     await assertFails(getDocs(query(collection(asPlayer(), "ayna_survey"), where("room_id", "==", ROOM_ID))));
+  });
+});
+
+/**
+ * Ekim 2026 denetimi (docs/audit-2026-10.md): istemciyi atlayan bir misafirin
+ * tarayıcı konsolundan yapabildikleri. Her test bir bulguya karşılık geliyor.
+ */
+describe("denetim 2026-10 — misafir konsolu", () => {
+  const OUTSIDER_UID = "uid-outsider";
+  const asOutsider = () => testEnv.authenticatedContext(OUTSIDER_UID).firestore();
+
+  describe("players — katılırken skor", () => {
+    beforeEach(() => seed());
+
+    it("misafir odaya yüksek oyun skoruyla katılamaz — ödül kazananı total_score'dan seçiliyor", async () => {
+      await assertFails(
+        addDoc(collection(asPlayer(), "players"), {
+          room_id: ROOM_ID, uid: PLAYER_UID, nickname: "HILE", team_name: null,
+          total_score: 99999, night_score: 0, created_at: Date.now(),
+        })
+      );
+    });
+
+    it("misafir odaya gecelik skorla katılamaz", async () => {
+      await assertFails(
+        addDoc(collection(asPlayer(), "players"), {
+          room_id: ROOM_ID, uid: PLAYER_UID, nickname: "HILE", team_name: null,
+          total_score: 0, night_score: 250, created_at: Date.now(),
+        })
+      );
+    });
+
+    it("misafir kayda can ya da başka oyun alanı ekleyemez", async () => {
+      await assertFails(
+        addDoc(collection(asPlayer(), "players"), {
+          room_id: ROOM_ID, uid: PLAYER_UID, nickname: "HILE", team_name: null,
+          total_score: 0, night_score: 0, lives: 99, created_at: Date.now(),
+        })
+      );
+    });
+
+    it("katılım yazımı aynı veriyle tekrarlanabilir (onayı kaybolan isteğin yeniden denemesi)", async () => {
+      const join = {
+        room_id: ROOM_ID, nickname: "ANNA", team_name: null, total_score: 0, night_score: 0,
+        uid: PLAYER_UID, created_at: 1_700_000_000_000,
+      };
+      await assertSucceeds(setDoc(doc(asPlayer(), "players", "player-retry"), join));
+      await assertSucceeds(setDoc(doc(asPlayer(), "players", "player-retry"), join));
+    });
+
+    it("uygulamanın gönderdiği katılım kaydı geçer (PlayerJoin ile aynı alanlar)", async () => {
+      await assertSucceeds(
+        addDoc(collection(asPlayer(), "players"), {
+          room_id: ROOM_ID, nickname: "ANNA", team_name: null, total_score: 0, night_score: 0,
+          uid: PLAYER_UID, created_at: Date.now(), expires_at: new Date(Date.now() + 86_400_000),
+        })
+      );
+    });
+  });
+
+  describe("rooms — bombayı yalnız tutan paslar", () => {
+    beforeEach(() => seed({ status: "bomb_active", bomb_target_player: PLAYER_ID, used_words: [] }));
+
+    it("bombayı tutmayan oyuncu bombayı başkasına yönlendiremez", async () => {
+      await assertFails(
+        updateDoc(doc(testEnv.authenticatedContext(STRANGER_UID).firestore(), "rooms", ROOM_ID), {
+          previous_bomb_target_player: PLAYER_ID,
+          bomb_target_player: PLAYER_ID,
+          used_words: ["küfür"],
+        })
+      );
+    });
+
+    it("odada olmayan biri bombayı yönlendiremez", async () => {
+      await assertFails(
+        updateDoc(doc(asOutsider(), "rooms", ROOM_ID), {
+          previous_bomb_target_player: PLAYER_ID,
+          bomb_target_player: OTHER_PLAYER_ID,
+          used_words: ["x"],
+        })
+      );
+    });
+  });
+
+  describe("rewards — kod yalnız bir kez kullanılır", () => {
+    const REWARD_ID = "reward-audit";
+    async function seedReward(status: string) {
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), "rewards", REWARD_ID), {
+          uid: PLAYER_UID, nickname: "OYUNCU", type: "drink", title: "Espresso",
+          status, code: "Z9Y8X7", earned_at: Date.now(),
+        });
+      });
+    }
+
+    it("kullanılmış ödül ikinci kez 'claimed' işaretlenemez — iki bar cihazı aynı kodu onaylıyordu", async () => {
+      await seedStaff();
+      await seedReward("claimed");
+      await assertFails(
+        updateDoc(doc(asVenueOwner(), "rewards", REWARD_ID), { status: "claimed", claimed_at: Date.now() })
+      );
+    });
+
+    it("kullanılmış ödül yeniden 'available' yapılamaz", async () => {
+      await seedStaff();
+      await seedReward("claimed");
+      await assertFails(updateDoc(doc(asVenueOwner(), "rewards", REWARD_ID), { status: "available" }));
+    });
   });
 });

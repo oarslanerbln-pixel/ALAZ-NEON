@@ -65,6 +65,25 @@ export function activePlayers<T extends Pick<Player, "last_active">>(
 }
 
 /**
+ * `presence` belgelerindeki nabzı oyuncu listesine birleştirir.
+ *
+ * Nabız `presence/{uid}` belgesinde tutuluyor (oyuncu belgesine yazınca her
+ * telefonun lobi listesine okuma olarak düşüyordu). Eşleşme oyuncunun `uid`
+ * alanıyla; nabzı olmayan oyuncunun eski `last_active` değeri (ya da hiç
+ * değer yoksa "canlı" varsayımı, bkz. isPlayerActive) korunur.
+ */
+export function mergePresence<T extends Pick<Player, "uid" | "last_active">>(
+  players: readonly T[],
+  lastActiveByUid: ReadonlyMap<string, number>,
+): T[] {
+  if (lastActiveByUid.size === 0) return [...players];
+  return players.map((p) => {
+    const beat = p.uid ? lastActiveByUid.get(p.uid) : undefined;
+    return beat === undefined ? p : { ...p, last_active: beat };
+  });
+}
+
+/**
  * Host ekranı hâlâ bağlı mı — saat kaymasına dayanıklı.
  *
  * `host_last_active` TV'nin saatiyle yazılıyor. Eskiden misafir bunu kendi

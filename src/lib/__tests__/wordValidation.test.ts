@@ -81,3 +81,16 @@ describe("analyzeGibberish gerekçesi", () => {
     expect(analyzeGibberish("k").reason).toBe("tooShort");
   });
 });
+
+describe("analyzeGibberish — özel karakterler (denetim 2026-10)", () => {
+  // Kelime parçası kaçışsız RegExp'e konuyordu: "(Berlin)" cevabı host'un
+  // Arena puanlamasını istisnayla durduruyor, bombada gönderimi sessizce
+  // engelliyordu.
+  it.each(["(Berlin)", "ab(cde", "c++c++", "[abc]x", "a.b*c?d"])("%s istisna fırlatmaz", (word) => {
+    expect(() => analyzeGibberish(word)).not.toThrow();
+  });
+
+  it("tekrar eden parça tespiti özel karakterle de çalışır", () => {
+    expect(analyzeGibberish("a+ba+ba+b").reason).toBe("repeatedPattern");
+  });
+});

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, doc, setDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import type { User } from "firebase/auth";
 import { db, auth } from "../../lib/firebase";
@@ -152,7 +152,13 @@ export function PlayerJoin() {
            await updateNickname(nickname.trim());
         }
 
-        const playerRef = await addDoc(collection(db, "players"), {
+        // Kimlik istemcide üretilip setDoc ile yazılıyor: addDoc "yoksa
+        // oluştur" koşuluyla gidiyor; kayıt sunucuda açılıp onay yolda
+        // kaybolunca (kafe wifi'si) SDK'nın yeniden denemesi ALREADY_EXISTS
+        // ile reddediliyor, misafir hata görüp odada hayalet kayıt kalıyordu.
+        // Aynı veriyle tekrar yazım kuralca serbest (değişen alan yok).
+        const playerRef = doc(collection(db, "players"));
+        await setDoc(playerRef, {
             room_id: room.id,
             nickname: nickname.trim(),
             team_name: room.game_mode === "team" ? teamName.trim() : null,

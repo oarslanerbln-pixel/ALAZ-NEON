@@ -67,7 +67,10 @@ function isRepeatedUnit(word: string): boolean {
   for (let unit = 3; unit <= word.length / 2; unit++) {
     if (word.length % unit !== 0) continue;
     const head = word.slice(0, unit);
-    if (word.match(new RegExp(`^(${head})+$`, "u"))) return true;
+    // RegExp kurmadan karşılaştırma: kelime parçası "(", "+", "[" içerince
+    // (ör. "(Berlin)") kaçışsız desen istisna fırlatıp Arena puanlamasını
+    // durduruyordu.
+    if (head.repeat(word.length / unit) === word) return true;
   }
   return false;
 }
