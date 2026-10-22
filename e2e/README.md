@@ -18,7 +18,7 @@ C: diski doluysa tarayıcıları ve emülatör jar'ını başka diske alın:
 | Parça | Ne yapar |
 |---|---|
 | `firebase emulators:exec --only auth,firestore --project demo-hurrem-e2e` | Auth (9099) ve Firestore (8080) emülatörü; `demo-` projesi gerçek bir projeye hiç bağlanmaz |
-| `e2e/support/firestore-meter.mjs` (8081) | Emülatörün önünde sayaçlı vekil: faturalanan okuma/yazmaları sayar |
+| `e2e/support/firestore-meter.mjs` (8081) | Emülatörün önünde sayaçlı vekil: faturalanan okuma/yazmaları sayar; `POST /__meter/drop-next-answer-ack` bir sonraki cevabın onayını düşürür |
 | `npm run build:e2e` + `vite preview` (4173) | Üretim paketi, `VITE_FIREBASE_EMULATOR_HOST` ile emülatöre bağlı (`src/lib/firebase.ts`, yalnız `demo-` projede açılır) |
 | `e2e/support/devices.ts` | Telefon/TV bağlamları; localhost dışına giden her isteği engeller (üretim Firebase, TTS, CDN) |
 | `e2e/support/qr.ts` | TV'deki QR'ı **ekran görüntüsünden** jsQR ile çözer |
@@ -31,7 +31,9 @@ C: diski doluysa tarayıcıları ve emülatör jar'ını başka diske alın:
 - `game-modes.spec.ts` — açık her mod bir tur (Arena, Quiz, Bomb), aynı gece
   ikinci quiz, kilitli modların başlatılamaması.
 - `resilience.spec.ts` — wifi kopması, sayfa yenileme, geç katılım, aynı
-  takma ad, telefon kilidi (CDP ile sayfa dondurma).
+  takma ad, telefon kilidi (CDP ile sayfa dondurma), host'un hızlı geçtiği
+  yavaş telefonlar (4× CPU kısıtı), cevap onayının yolda kaybolması (vekilde
+  arıza enjeksiyonu).
 - `staff-venue.spec.ts` — personel girişi, `/admin/venue`, ödül kodu.
 - `measure.spec.ts` — 20/40 oyuncuda Firestore yükü ve gecikme, TV kare hızı.
 
