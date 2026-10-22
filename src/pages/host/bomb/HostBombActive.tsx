@@ -41,6 +41,10 @@ export function HostBombActive({ room, players, onExplode }: Props) {
   const introPlayedRef = useRef(false);
   const announced10Ref = useRef(false);
   const announced5Ref = useRef(false);
+  // Hangi fitilin (round_end_time) patlaması bildirildi. Efekt `timeLeft`'e
+  // bağlı olduğu için 1→0 geçişinde yeniden kuruluyor ve yeni aralık da 0'ı
+  // görüp onExplode'u ikinci kez çağırıyordu: tek patlamada 2 can gidiyordu.
+  const explodedFuseRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!introPlayedRef.current) {
@@ -92,6 +96,8 @@ export function HostBombActive({ room, players, onExplode }: Props) {
           return;
         }
         clearInterval(interval);
+        if (explodedFuseRef.current === room.round_end_time) return;
+        explodedFuseRef.current = room.round_end_time ?? null;
         onExplodeRef.current(targetPlayer.id);
       }
     }, remainingInterval(timeLeft));
