@@ -152,11 +152,18 @@ test("aynı gece ikinci quiz: eski cevaplar yeni oyunu bozmaz", async ({ browser
     expect(scores.SPIELER1, "hep yanlış cevap veren bu oyunda 0 puan").toBe(0);
     expect(scores.SPIELER2).toBeGreaterThan(scores.SPIELER3);
     // Gecelik lig: 1. oyunda herkes eşit (hep doğru), 2. oyunu SPIELER2 kazandı.
+    // Gecelik puan oyun bitişinde arka planda transaction'la yazılıyor
+    // (lib/nightAwards); TV'nin "finished" ve "night_lobby" yazımları aynı oda
+    // belgesine düştüğü için transaction yeniden denenebiliyor. TV lobiye
+    // dönmüş olsa da puan sunucuya henüz ulaşmamış olabilir: bekle.
     await returnToNightLobby(tv);
-    const night = Object.fromEntries(
-      await Promise.all(phones.map(async (p) => [p.nickname, Number((await adminGet(`players/${p.playerId}`))?.night_score)])),
-    );
-    expect(night.SPIELER2).toBeGreaterThan(night.SPIELER1);
+    const nightLead = async () => {
+      const night = Object.fromEntries(
+        await Promise.all(phones.map(async (p) => [p.nickname, Number((await adminGet(`players/${p.playerId}`))?.night_score)])),
+      );
+      return night.SPIELER2 - night.SPIELER1;
+    };
+    await expect.poll(nightLead, { timeout: 30_000, message: "2. oyunu kazanan SPIELER2 gecelik ligde öne geçmeli" }).toBeGreaterThan(0);
   } finally {
     await closeAll(tv, ...phones);
   }
