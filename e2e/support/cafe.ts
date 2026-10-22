@@ -99,6 +99,18 @@ export async function expectTvPlayerCount(tv: Page, n: number, timeout = 30_000)
   await expect(tv.getByText(`Spieler (${n})`, { exact: true })).toBeVisible({ timeout });
 }
 
+const showcaseHandled = new WeakSet<Page>();
+
+async function dismissShowcaseOnAction(tv: Page): Promise<void> {
+  if (showcaseHandled.has(tv)) return;
+  showcaseHandled.add(tv);
+  const showcase = tv.locator("div.fixed.inset-0.cursor-pointer");
+  await tv.addLocatorHandler(showcase, async () => {
+    await showcase.click();
+    await expect(showcase).toBeHidden();
+  });
+}
+
 /**
  * Karuselden oyunu seçip ayar penceresinde "SPIEL STARTEN". `configure`
  * pencere açıkken ayar düğmelerine basabilir (soru sayısı, süre...).
@@ -108,13 +120,11 @@ export async function startGameFromDashboard(
   game: "QUIZ" | "ARENA" | "BOMB",
   configure?: (modal: Page) => Promise<void>,
 ): Promise<void> {
-  // TV 90 sn dokunulmazsa tanıtım döngüsüne geçer (HostShowcase, tam ekran);
-  // personel gibi bir dokunuşla kapat.
-  const showcase = tv.locator("div.fixed.inset-0.cursor-pointer");
-  if (await showcase.isVisible()) {
-    await showcase.click();
-    await expect(showcase).toBeHidden();
-  }
+  // TV 90 sn dokunulmazsa tanıtım döngüsüne geçer (HostShowcase, tam ekran).
+  // Bir kez bakıp kapatmak yetmiyordu: döngü bu adımlar sırasında da açılıp
+  // tıklamanın önüne geçebiliyor. Playwright her TV eyleminden önce açıksa
+  // personel gibi bir dokunuşla kapatır.
+  await dismissShowcaseOnAction(tv);
   // Karusel noktaları oyun adını aria-label olarak taşıyor ("HENGAME QUIZ").
   await tv.getByRole("button", { name: `HENGAME ${game}`, exact: true }).click();
   const card = tv
