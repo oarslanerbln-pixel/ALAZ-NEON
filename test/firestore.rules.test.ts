@@ -1070,6 +1070,15 @@ describe("denetim 2026-10 — misafir konsolu", () => {
       );
     });
 
+    it("katılım yazımı aynı veriyle tekrarlanabilir (onayı kaybolan isteğin yeniden denemesi)", async () => {
+      const join = {
+        room_id: ROOM_ID, nickname: "ANNA", team_name: null, total_score: 0, night_score: 0,
+        uid: PLAYER_UID, created_at: 1_700_000_000_000,
+      };
+      await assertSucceeds(setDoc(doc(asPlayer(), "players", "player-retry"), join));
+      await assertSucceeds(setDoc(doc(asPlayer(), "players", "player-retry"), join));
+    });
+
     it("uygulamanın gönderdiği katılım kaydı geçer (PlayerJoin ile aynı alanlar)", async () => {
       await assertSucceeds(
         addDoc(collection(asPlayer(), "players"), {
