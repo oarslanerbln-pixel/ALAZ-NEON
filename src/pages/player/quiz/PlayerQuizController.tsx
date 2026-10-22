@@ -31,6 +31,18 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
   // Synchronous double-tap submission lock
   const hasSubmittedRef = useRef(false);
 
+  // Soru değişince seçim sıfırlanır. Yalnızca durum geçişine bakmak yetmiyor:
+  // telefon kilitliyken (ya da wifi koparken) ara durumlar tek bir snapshot'ta
+  // birleşiyor; 1. sorunun "question_active"inden doğrudan 2. sorunun
+  // "question_active"ine uyanan telefon eski cevabıyla kilitli kalıyordu.
+  const questionIndex = room.current_question_index ?? 0;
+  const [seenQuestionIndex, setSeenQuestionIndex] = useState(questionIndex);
+  if (questionIndex !== seenQuestionIndex) {
+    setSeenQuestionIndex(questionIndex);
+    setSelectedOption(null);
+    setHasSubmitted(false);
+  }
+
   // Synchronize game state during render
   if (room.status !== gameState) {
     if (
