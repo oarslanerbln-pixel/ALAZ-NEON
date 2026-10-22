@@ -1,4 +1,4 @@
-import { expect, type Browser, type Page } from "@playwright/test";
+import { expect, type Browser, type BrowserContextOptions, type Page } from "@playwright/test";
 import { adminGet, adminQuery } from "./emulator";
 import { decodeQrFromScreen } from "./qr";
 import { openPhone, openTv, type Tracked } from "./devices";
@@ -70,8 +70,13 @@ export interface Phone extends Tracked {
   scannedAt?: number;
 }
 
-export async function newPhone(browser: Browser, index: number, nickname: string): Promise<Phone> {
-  const phone = await openPhone(browser, index);
+export async function newPhone(
+  browser: Browser,
+  index: number,
+  nickname: string,
+  extra: BrowserContextOptions = {},
+): Promise<Phone> {
+  const phone = await openPhone(browser, index, extra);
   await forceGerman(phone);
   return { ...phone, nickname };
 }
@@ -103,6 +108,13 @@ export async function startGameFromDashboard(
   game: "QUIZ" | "ARENA" | "BOMB",
   configure?: (modal: Page) => Promise<void>,
 ): Promise<void> {
+  // TV 90 sn dokunulmazsa tanıtım döngüsüne geçer (HostShowcase, tam ekran);
+  // personel gibi bir dokunuşla kapat.
+  const showcase = tv.locator("div.fixed.inset-0.cursor-pointer");
+  if (await showcase.isVisible()) {
+    await showcase.click();
+    await expect(showcase).toBeHidden();
+  }
   // Karusel noktaları oyun adını aria-label olarak taşıyor ("HENGAME QUIZ").
   await tv.getByRole("button", { name: `HENGAME ${game}`, exact: true }).click();
   const card = tv

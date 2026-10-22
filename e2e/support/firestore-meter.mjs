@@ -3,12 +3,15 @@
 // Uygulama E2E derlemesinde emülatöre bu vekil üzerinden bağlanır
 // (VITE_FIRESTORE_EMULATOR_PORT). Vekil trafiği olduğu gibi aktarır ve
 // faturalanan işlemleri yaklaşık sayar:
-//   okuma  = dinleyicilere giden her `documentChange` + batchGet `found`
-//            + runQuery `document` (Firestore her teslim edilen dokümanı
-//            bir okuma sayar)
+//   okuma  = dinleyici (hedef) başına yeni ya da GERÇEKTEN değişmiş belge
+//            (updateTime farklı) + batchGet `found` + runQuery `document`.
+//            Emülatör bir belge değişince sorgunun bütün sonucunu yeniden
+//            gönderiyor; üretim yalnızca değişeni gönderir ve faturalar.
+//            Ham sayı `emulatorDocChanges` olarak ayrıca tutulur.
 //   yazma  = Write kanalındaki ve :commit isteklerindeki her `writes` öğesi
 // Sayaçlar GET /__meter ile okunur, POST /__meter/reset ile sıfırlanır.
 import http from "node:http";
+import { StringDecoder } from "node:string_decoder";
 
 const LISTEN_PORT = Number(process.env.METER_PORT ?? 8081);
 const TARGET_PORT = Number(process.env.FIRESTORE_PORT ?? 8080);
@@ -17,6 +20,7 @@ const TARGET_HOST = process.env.FIRESTORE_HOST ?? "127.0.0.1";
 const fresh = () => ({
   since: Date.now(),
   reads: 0,
+  emulatorDocChanges: 0,
   removes: 0,
   writes: 0,
   deletes: 0,
@@ -25,6 +29,62 @@ const fresh = () => ({
   commitRequests: 0,
 });
 let stats = fresh();
+
+// WebChannel oturumu (SID) + hedef + belge → son görülen updateTime.
+const seen = new Map();
+
+function countDocumentChange(sid, change) {
+  const name = change?.document?.name;
+  const updateTime = change?.document?.updateTime;
+  for (const t of change?.targetIds ?? []) {
+    stats.emulatorDocChanges++;
+    const key = `${sid}|${t}|${name}`;
+    if (seen.get(key) !== updateTime) {
+      seen.set(key, updateTime);
+      stats.reads++;
+    }
+  }
+}
+
+function walk(node, sid) {
+  if (Array.isArray(node)) {
+    for (const x of node) walk(x, sid);
+  } else if (node && typeof node === "object") {
+    if (node.documentChange) countDocumentChange(sid, node.documentChange);
+    else if (node.documentRemove || node.documentDelete) stats.removes++;
+  }
+}
+
+/**
+ * Listen yanıtı WebChannel çerçeveleri: "<uzunluk>\n<json>" art arda.
+ * Doğrusal ayrıştırma: her çerçeve bir kez JSON.parse edilir. (İlk sürüm
+ * büyüyen tamponu her parçada regex'le baştan tarıyordu; 20 telefonda vekil
+ * tıkanıp tüm Firestore trafiğini yavaşlatıyordu.)
+ */
+function listenParser(sid) {
+  const decoder = new StringDecoder("utf8");
+  let buf = "";
+  return (chunk) => {
+    buf += decoder.write(chunk);
+    for (;;) {
+      const nl = buf.indexOf("\n");
+      if (nl === -1) return;
+      const len = Number(buf.slice(0, nl));
+      if (!Number.isFinite(len) || len < 0) {
+        buf = ""; // beklenmeyen biçim: bu yanıtı saymayı bırak
+        return;
+      }
+      if (buf.length - (nl + 1) < len) return;
+      const frame = buf.slice(nl + 1, nl + 1 + len);
+      buf = buf.slice(nl + 1 + len);
+      try {
+        walk(JSON.parse(frame), sid);
+      } catch {
+        /* sayılamayan çerçeve */
+      }
+    }
+  };
+}
 
 function countAll(text, needle) {
   let n = 0;
@@ -81,6 +141,9 @@ const server = http.createServer((req, res) => {
     return;
   }
   if (req.url === "/__meter/reset") {
+    // Görülen belgeler sıfırlanmaz: sıfırlamadan sonraki ilk değişiklik
+    // de gerçek bir değişiklik olarak sayılsın, eski sonuçların yeniden
+    // gönderimi değil.
     stats = fresh();
     res.writeHead(204, { "access-control-allow-origin": "*" });
     res.end();
@@ -125,11 +188,9 @@ const server = http.createServer((req, res) => {
       },
       (up) => {
         res.writeHead(up.statusCode ?? 502, up.headers);
+        const sid = new URL(url, "http://x").searchParams.get("SID") ?? "init";
         const onData = isListen
-          ? streamCounter(['"documentChange"', '"documentRemove"', '"documentDelete"'], (needle, n) => {
-              if (needle === '"documentChange"') stats.reads += n;
-              else stats.removes += n;
-            })
+          ? listenParser(sid)
           : isBatchGet
             ? streamCounter(['"found"'], (_n, n) => (stats.reads += n))
             : isRunQuery

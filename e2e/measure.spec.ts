@@ -31,9 +31,13 @@ test.beforeEach(async () => {
   await clearAuth();
 });
 
-/** Ölçüm telefonları: görsel/medya indirmez, animasyon azaltılmış — bellek için. */
+/**
+ * Ölçüm telefonları: görsel/medya indirmez ve "hareketi azalt" açık (uygulama
+ * buna uyuyor). 20–40 tarayıcı sayfası tek makinede koşuyor; telefonların
+ * çizim yükü TV'yi ve emülatörü boğup ölçümü bozmasın.
+ */
 async function lightPhone(browser: Browser, i: number): Promise<Phone> {
-  const p = await newPhone(browser, i, `M${String(i + 1).padStart(2, "0")}`);
+  const p = await newPhone(browser, i, `M${String(i + 1).padStart(2, "0")}`, { reducedMotion: "reduce" });
   await p.context.route(/\.(png|jpe?g|webp|mp4|webm|mp3)(\?|$)/, (r) => r.abort());
   return p;
 }
@@ -56,7 +60,18 @@ for (const N of SIZES) {
         await joinFromQr(phones[i], joinUrl);
         joinMs.push((await countProbe(tv.page)) - t0);
       }
-      for (let i = 8; i < N; i += 8) await Promise.all(phones.slice(i, i + 8).map((p) => joinFromQr(p, joinUrl)));
+      let joinRetries = 0;
+      const joinWithRetry = async (p: Phone) => {
+        try {
+          await joinFromQr(p, joinUrl);
+        } catch {
+          // Yük altında katılım hatası (ör. "Raum nicht gefunden"): misafir
+          // gibi bir kez daha dener; sayı rapora yazılır.
+          joinRetries++;
+          await joinFromQr(p, joinUrl);
+        }
+      };
+      for (let i = 8; i < N; i += 8) await Promise.all(phones.slice(i, i + 8).map(joinWithRetry));
       await expectTvPlayerCount(tv.page, N, 60_000);
       const joinOps = await meterRead();
 
@@ -76,6 +91,7 @@ for (const N of SIZES) {
       const quizOps = await meterRead();
 
       recordMetric(`players${N}`, {
+        joinRetries,
         joinLatencyMs: summarize(joinMs),
         answerLatencyMs: summarize(quiz.answerLatencyMs),
         burstLatencyMs: summarize(quiz.burstLatencyMs),
@@ -96,7 +112,7 @@ async function armCountProbe(tv: Page, n: number): Promise<void> {
     const w = window as unknown as { __count?: number | null };
     w.__count = null;
     const obs = new MutationObserver(() => {
-      if (w.__count == null && document.body.innerText.includes(want)) {
+      if (w.__count == null && (document.body.textContent ?? "").includes(want)) {
         w.__count = Date.now();
         obs.disconnect();
       }
@@ -182,6 +198,9 @@ test("TV kare hızı ve taşma — 1080p ve 4K", async ({ browser }) => {
   try {
     await Promise.all(phones.map((p) => joinFromQr(p, joinUrl)));
     await expectTvPlayerCount(tv.page, 12);
+    // Telefon sayfaları aynı makinede çizim yapıp TV ölçümünü düşürmesin
+    // (kayıtları odada kalır, TV listeyi göstermeye devam eder).
+    await Promise.all(phones.map((p) => p.context.close()));
     await tv.page.waitForTimeout(3_000);
     await sample("nightLobby12");
 
@@ -194,7 +213,9 @@ test("TV kare hızı ve taşma — 1080p ve 4K", async ({ browser }) => {
     await tv.page.getByRole("button", { name: "TIMER STARTEN" }).click({ timeout: 60_000 });
     await expect(tv.page.getByText(/SPIELER BEREIT/)).toBeVisible();
     await sample("quizQuestion");
-    recordMetric("tvFrames", results);
+    // --headed + E2E_GPU=1: makinenin gerçek GPU'su; başsız: yazılım çizimi
+    // (SwiftShader) — GPU'su zayıf bir TV kutusuna daha yakın.
+    recordMetric(process.env.E2E_GPU ? "tvFrames_gpu" : "tvFrames_software", results);
   } finally {
     await closeAll(tv, ...phones);
   }

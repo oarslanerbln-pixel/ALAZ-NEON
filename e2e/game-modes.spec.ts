@@ -135,8 +135,11 @@ test("aynı gece ikinci quiz: eski cevaplar yeni oyunu bozmaz", async ({ browser
     // Bu kez SPIELER2 hep doğru, SPIELER1 hep yanlış: kazanan SPIELER2 olmalı.
     await startGameFromDashboard(tv.page, "QUIZ", opts);
     await expect.poll(async () => (await roomOf(tv.roomId))?.status, { timeout: 20_000 }).toMatch(/quiz_intro|question_intro|tutorial/);
-    expect(await adminQuery("answers", "room_id", tv.roomId), "eski cevaplar silinmeli").toHaveLength(0);
-    for (const p of phones) expect(Number((await adminGet(`players/${p.playerId}`))?.total_score), "oyun skoru sıfırlanmalı").toBe(0);
+    // Sıfırlama TV'yi bekletmeden arka planda sunucuya gidiyor.
+    await expect.poll(async () => (await adminQuery("answers", "room_id", tv.roomId)).length, { message: "eski cevaplar silinmeli" }).toBe(0);
+    for (const p of phones) {
+      await expect.poll(async () => Number((await adminGet(`players/${p.playerId}`))?.total_score), { message: "oyun skoru sıfırlanmalı" }).toBe(0);
+    }
     expect(Number((await roomOf(tv.roomId))?.current_round), "tur sayacı sıfırlanmalı (yoksa 1. soru final ×2 sayılır)").toBe(0);
 
     // playQuiz, ilk telefonun cevabının TV sayacında "1 / 3" olarak görünmesini

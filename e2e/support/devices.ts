@@ -62,9 +62,13 @@ export async function openTv(browser: Browser): Promise<Tracked> {
   return track(context);
 }
 
-export async function openPhone(browser: Browser, index: number): Promise<Tracked & { model: string }> {
+export async function openPhone(
+  browser: Browser,
+  index: number,
+  extra: BrowserContextOptions = {},
+): Promise<Tracked & { model: string }> {
   const model = PHONE_MODELS[index % PHONE_MODELS.length];
-  const context = await browser.newContext(deviceOptions(model));
+  const context = await browser.newContext({ ...deviceOptions(model), ...extra });
   return { ...(await track(context)), model };
 }
 
