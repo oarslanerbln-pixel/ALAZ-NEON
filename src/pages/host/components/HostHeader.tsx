@@ -88,7 +88,7 @@ export function HostHeader({
           <button
             onClick={handleReturnToLobby}
             aria-label={t("common.returnToLobby")}
-            className="flex items-center gap-2 text-xs font-mono font-bold text-alaz-orange hover:text-white bg-alaz-orange/10 hover:bg-alaz-orange border border-alaz-orange/40 hover:border-alaz-orange px-3.5 py-2 rounded-2xl transition-all active:scale-95 cursor-pointer shadow-[0_0_15px_rgba(255,85,0,0.25)]"
+            className="flex items-center gap-2 text-xs font-mono font-bold text-alaz-orange hover:text-white bg-alaz-orange/10 hover:bg-alaz-orange border border-alaz-orange/40 hover:border-alaz-orange px-3.5 py-2 rounded-2xl transition-all active:scale-95 cursor-pointer shadow-[0_0_15px_rgba(255,85,0,0.25)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             title={t("common.returnToLobby", "LOBİYE DÖN")}
           >
             <LayoutGrid className="w-4 h-4" />
@@ -100,7 +100,7 @@ export function HostHeader({
         <button
           onClick={handleExitHome}
           aria-label={t("common.back")}
-          className="flex items-center gap-1.5 text-xs font-mono font-bold text-white/70 hover:text-white bg-white/5 hover:bg-white/15 border border-white/15 hover:border-white/40 px-3.5 py-2 rounded-2xl transition-all active:scale-95 cursor-pointer"
+          className="flex items-center gap-1.5 text-xs font-mono font-bold text-white/70 hover:text-white bg-white/5 hover:bg-white/15 border border-white/15 hover:border-white/40 px-3.5 py-2 rounded-2xl transition-all active:scale-95 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           title={t("common.back", "ANA SAYFA")}
         >
           <Home className="w-4 h-4 text-cyan-400" />
@@ -162,7 +162,7 @@ export function HostHeader({
             onClick={onTriggerAdBreak}
             aria-label={t("hostHeader.adBreak")}
             title={t("hostHeader.adBreak")}
-            className="text-[11px] text-white/80 hover:text-white border border-white/15 hover:border-white/40 bg-white/5 hover:bg-white/15 px-3.5 py-2 rounded-2xl uppercase tracking-[0.15em] font-bold transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+            className="text-[11px] text-white/80 hover:text-white border border-white/15 hover:border-white/40 bg-white/5 hover:bg-white/15 px-3.5 py-2 rounded-2xl uppercase tracking-[0.15em] font-bold transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             <Radio className="w-3.5 h-3.5 text-amber-400" />
             <span className="hidden md:inline">{t("hostHeader.adBreak")}</span>
@@ -173,7 +173,7 @@ export function HostHeader({
 
         <button
           onClick={handleToggleMute}
-          className="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/80 hover:text-white transition-all active:scale-95 cursor-pointer"
+          className="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/80 hover:text-white transition-all active:scale-95 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           aria-label={isMuted ? t("common.soundOn") : t("common.soundOff")}
           title={isMuted ? t("common.soundOn") : t("common.soundOff")}
         >
@@ -182,7 +182,7 @@ export function HostHeader({
 
         <button
           onClick={handleToggleVoice}
-          className="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/80 hover:text-white transition-all active:scale-95 cursor-pointer"
+          className="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/80 hover:text-white transition-all active:scale-95 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           aria-label={isVoiceMuted ? t("hostHeader.voiceOn") : t("hostHeader.voiceOff")}
           title={isVoiceMuted ? t("hostHeader.voiceOn") : t("hostHeader.voiceOff")}
         >
