@@ -375,6 +375,8 @@ function HostDisplayGame({
     const nextUpdateData = {
       ...(room.current_round === 0 ? { tutorial_step: 0 } : {}),
       used_letters: newUsedLetters,
+      next_letter: randomLetter,
+      active_letter: randomLetter,
     };
 
     if (hasAds) {
@@ -400,10 +402,13 @@ function HostDisplayGame({
   }, [roomId, room, updateRoomStatus]);
 
   const handleGameIntroComplete = useCallback(() => {
-    // Aynı sebep: harf çarkı dönerken de oda durumu hâlâ senkronsuzdu.
-    updateRoomStatus("countdown");
+    // Aynı sebep: harf çarkı dönerken de oda durumu ve harf senkronize ediliyor
+    updateRoomStatus("countdown", {
+      next_letter: nextLetter,
+      active_letter: nextLetter,
+    });
     setGameState("countdown");
-  }, [updateRoomStatus]);
+  }, [nextLetter, updateRoomStatus]);
 
   const handleSpinnerComplete = async () => {
     if (!roomId || !room) return;

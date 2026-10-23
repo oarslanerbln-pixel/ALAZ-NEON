@@ -12,6 +12,7 @@ import { AYNA_MAX, AYNA_MIN, aynaRoundKey, parseGuess, topScorers } from "../../
 import { AYNA_CATEGORY_KEY, aynaRoundQuestion, formatAynaDelta, formatAynaValue, type AynaQuestion } from "../../../lib/aynaQuestions";
 import { salonQuestionById } from "../../../lib/aynaSalon";
 import type { Player, Room } from "../../../types/database";
+import { PlayerIntroVideo } from "../components/PlayerIntroVideo";
 
 interface Props {
   room: Room;
@@ -82,23 +83,12 @@ function Wordmark({ className = "text-2xl" }: { className?: string }) {
 }
 
 function IntroCard() {
-  const { t } = useLocale();
   return (
-    <div className="flex-1 flex flex-col items-center justify-center text-center gap-8">
-      <Wordmark className="text-6xl" />
-      <p className="text-xl font-bold text-white/85">{t("ayna.tagline")}</p>
-      <ol className="w-full max-w-sm flex flex-col gap-3 text-left">
-        {(["ayna.step1", "ayna.step2", "ayna.step3"] as const).map((k, i) => (
-          <li key={k} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3">
-            <span className="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br from-cyan-400 to-violet-500 text-black font-black flex items-center justify-center">
-              {i + 1}
-            </span>
-            <span className="font-bold">{t(k)}</span>
-          </li>
-        ))}
-      </ol>
-      <p className="text-sm text-cyan-200/80 motion-safe:animate-pulse">{t("ayna.watchTv")}</p>
-    </div>
+    <PlayerIntroVideo
+      gameTitle="HENGAME AYNA"
+      currentRound={1}
+      totalRounds={5}
+    />
   );
 }
 
@@ -349,7 +339,11 @@ function ActiveRound({ room, player, question, index, total }: ActiveProps) {
 
   const change = (next: number) => {
     setTouched(true);
-    setGuess(Math.min(AYNA_MAX, Math.max(AYNA_MIN, Math.round(next))));
+    const rounded = Math.min(AYNA_MAX, Math.max(AYNA_MIN, Math.round(next)));
+    if (rounded !== guess) {
+      haptics.impact();
+    }
+    setGuess(rounded);
   };
 
   const shown = formatAynaValue(lockedValue ?? guess, question.unit, locale);

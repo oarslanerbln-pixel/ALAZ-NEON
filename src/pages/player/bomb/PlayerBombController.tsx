@@ -13,6 +13,7 @@ import { activePlayers, mergePresence } from "../../../lib/liveness";
 import { bombLives } from "../../../lib/bomb";
 import { gameTitle } from "../../../lib/gameCatalog";
 import { PlayerStageScreen } from "../components/PlayerStageScreen";
+import { PlayerIntroVideo } from "../components/PlayerIntroVideo";
 import { ShimmerButton } from "../../../components/fx";
 import { DURATION, EASE, SPRING } from "../../../lib/motion";
 
@@ -30,6 +31,23 @@ export function PlayerBombController({ room, player }: Props) {
   const isMyTurn = room.bomb_target_player === player.id;
   const currentLives = player.lives !== undefined ? player.lives : 3;
   const isSubmittingRef = useRef(false);
+
+  // Kalp atışı haptik nabzı: bomba oyuncudayken düzenli titreşim verir
+  useEffect(() => {
+    if (!isMyTurn || room.status !== "bomb_active") return;
+    const interval = setInterval(() => {
+      haptics.impact();
+    }, 950);
+    return () => clearInterval(interval);
+  }, [isMyTurn, room.status]);
+
+  // Patlama anında güçlü dokunsal sarsıntı ve sinematik patlama sesi
+  useEffect(() => {
+    if (room.status === "bomb_explosion") {
+      haptics.impact();
+      SoundManager.getInstance().playSFX(sounds.CINEMATIC_BOOM, 0.7);
+    }
+  }, [room.status]);
 
   useEffect(() => {
     if (isMyTurn && room.status === "bomb_active") {
@@ -129,7 +147,11 @@ export function PlayerBombController({ room, player }: Props) {
 
   if (room.status === "bomb_intro") {
     return (
-      <PlayerStageScreen icon="💣" tone="red" eyebrow={gameTitle("bomb")} title={t("bomb.preparing")} waiting />
+      <PlayerIntroVideo
+        gameTitle="HENGAME BOMB"
+        currentRound={room.current_round || 1}
+        totalRounds={room.total_rounds || 3}
+      />
     );
   }
 
@@ -231,17 +253,24 @@ export function PlayerBombController({ room, player }: Props) {
             transition={SPRING.bouncy}
             className="w-full"
           >
-            <div className="w-full bg-[#1b070b]/95 border-2 border-rose-500/70 rounded-3xl p-6 shadow-[0_0_50px_rgba(244,63,94,0.25)] backdrop-blur-2xl flex flex-col items-center text-center relative overflow-hidden">
-              <div className="flex items-center gap-2.5 mb-2 relative z-10">
-                <span className="text-3xl">💣</span>
-                <h2 className="text-2xl font-black text-rose-300 uppercase tracking-tight">
+            <div className="w-full bg-[#1b070b]/95 border-2 border-rose-500/70 rounded-3xl p-6 shadow-[0_0_60px_rgba(244,63,94,0.35)] backdrop-blur-2xl flex flex-col items-center text-center relative overflow-hidden">
+              {/* Lazer Köşebentler */}
+              <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-rose-500 shadow-[0_0_10px_#f43f5e]" />
+              <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-amber-500 shadow-[0_0_10px_#f59e0b]" />
+              <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-amber-500 shadow-[0_0_10px_#f59e0b]" />
+              <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-rose-500 shadow-[0_0_10px_#f43f5e]" />
+
+              <div className="flex items-center gap-2.5 mb-1 relative z-10">
+                <span className="text-3xl animate-bounce">💣</span>
+                <h2 className="text-2xl font-black text-rose-300 uppercase tracking-tight drop-shadow-[0_0_15px_rgba(244,63,94,0.8)]">
                   {t("bomb.yourTurn")}
                 </h2>
               </div>
               
-              <p className="text-xs text-white/60 mb-5 font-medium relative z-10">
-                {t("bomb.typeAndThrow")}
-              </p>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-300 font-mono text-xs font-bold uppercase tracking-wider mb-4 relative z-10">
+                <span>{t("bomb.category")}:</span>
+                <span className="text-white font-black">{room.active_letter || t("bomb.generalCategory")}</span>
+              </div>
 
               <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3 relative z-10">
                 <input
@@ -250,14 +279,14 @@ export function PlayerBombController({ room, player }: Props) {
                   onChange={(e) => setWord(e.target.value)}
                   autoFocus
                   disabled={isSubmitting}
-                  className="w-full bg-black/90 border-2 border-rose-500/60 text-white rounded-2xl p-4 text-2xl placeholder:text-base placeholder:font-bold font-black text-center uppercase tracking-wider focus:outline-none focus:border-rose-400 focus:shadow-[0_0_30px_rgba(244,63,94,0.35)] shadow-inner"
+                  className="w-full bg-black/90 border-2 border-rose-500/70 text-white rounded-2xl p-4 text-2xl placeholder:text-sm placeholder:font-bold font-black text-center uppercase tracking-wider focus:outline-none focus:border-amber-400 focus:shadow-[0_0_35px_rgba(251,191,36,0.45)] shadow-inner transition-all"
                   placeholder={t("bomb.wordPlaceholder")}
                 />
                 <ShimmerButton
                   type="submit"
                   color="orange"
                   disabled={!word.trim() || isSubmitting}
-                  innerClassName="!bg-gradient-to-r !from-rose-600 !to-amber-500 text-white font-black text-base uppercase tracking-wider py-4 shadow-[0_0_25px_rgba(244,63,94,0.4)]"
+                  innerClassName="!bg-gradient-to-r !from-rose-600 via-red-600 !to-amber-500 text-white font-black text-base uppercase tracking-widest py-4 shadow-[0_0_30px_rgba(244,63,94,0.5)] active:scale-95 transition-transform"
                   className="w-full"
                 >
                   {isSubmitting ? t("bomb.throwing") : `🔥 ${t("bomb.throwBomb")}`}

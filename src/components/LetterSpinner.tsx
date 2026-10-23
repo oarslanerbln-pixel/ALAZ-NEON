@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SoundManager, sounds } from "../lib/audio";
 import { DURATION, EASE, SPRING } from "../lib/motion";
 import { useLocale } from "../hooks/useLocale";
+import { haptics } from "../lib/haptics";
 
 interface LetterSpinnerProps {
   targetLetter: string;
-  onComplete: () => void;
+  onComplete?: () => void;
 }
 
 const LETTERS = "ABCDEFGHIJKLMNOPRSTUVYZ".split("");
@@ -195,10 +196,11 @@ export function LetterSpinner({
         const currentRpm = Math.max(5, Math.floor((1 - progress) * 100));
         setRpmGauge(currentRpm);
 
-        // Hıza orantılı azalan tıkırtı efekti (mekanik dişli hissi)
+        // Hıza orantılı azalan tıkırtı efekti (mekanik dişli hissi) & Dokunsal titreşim
         const tickInterval = 40 + Math.pow(progress, 2) * 260;
         if (now - lastTickTime > tickInterval) {
           SoundManager.getInstance().playSFX(sounds.VOTE_TICK, 0.35);
+          haptics.tap();
           lastTickTime = now;
         }
 
@@ -208,17 +210,20 @@ export function LetterSpinner({
         setRpmGauge(0);
         setPhase("locking");
         SoundManager.getInstance().playSFX(sounds.CLICK, 0.5);
+        haptics.impact();
 
         setTimeout(() => {
           setPhase("locked");
           SoundManager.getInstance().playSFX(sounds.CLICK, 0.5);
+          haptics.impact();
 
           setTimeout(() => {
             setPhase("climax");
+            haptics.impact();
 
             // Sinematik bitiş
             setTimeout(() => {
-              onCompleteRef.current();
+              onCompleteRef.current?.();
             }, 1200);
           }, 600);
         }, 500);
@@ -230,7 +235,7 @@ export function LetterSpinner({
   }, []);
 
   return (
-    <div className="relative w-full h-[620px] flex flex-col items-center justify-center select-none overflow-hidden">
+    <div className="relative w-full h-[520px] sm:h-[580px] md:h-[620px] flex flex-col items-center justify-center select-none overflow-hidden">
       {/* 3D Hacimsel Parçacık ve Kayan Yıldızlar Tuvali */}
       <canvas
         ref={canvasRef}
@@ -256,7 +261,7 @@ export function LetterSpinner({
           3D JİROSKOPİK HALKALAR & ŞEFFAF HOLOGRAFİK HARF SAHNESİ
           (ÖNÜNDE ARKA PLANI KAPATAN HİÇBİR KUTU / KART YOKTUR)
           ═══════════════════════════════════════════════════════════════ */}
-      <div className="relative z-10 w-[420px] h-[360px] flex items-center justify-center perspective-[1200px]">
+      <div className="relative z-10 w-[300px] sm:w-[380px] md:w-[420px] h-[300px] sm:h-[340px] md:h-[360px] flex items-center justify-center perspective-[1200px]">
         {/* Ortam Işık Aurası (Ambient Volumetric Glow) */}
         <div
           aria-hidden="true"
@@ -273,7 +278,7 @@ export function LetterSpinner({
           }}
           transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
           style={{ transformStyle: "preserve-3d" }}
-          className="absolute w-84 h-84 rounded-full border border-cyan-400/35 border-dashed shadow-[0_0_35px_rgba(0,243,255,0.25)] pointer-events-none"
+          className="absolute w-64 h-64 sm:w-72 sm:h-72 md:w-84 md:h-84 rounded-full border border-cyan-400/35 border-dashed shadow-[0_0_35px_rgba(0,243,255,0.25)] pointer-events-none"
         />
 
         {/* 3D Jiroskop Halkası 2 (Orta — Alaz Turuncu) */}
@@ -286,7 +291,7 @@ export function LetterSpinner({
           }}
           transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
           style={{ transformStyle: "preserve-3d" }}
-          className="absolute w-72 h-72 rounded-full border-2 border-alaz-orange/45 shadow-[0_0_30px_rgba(255,85,0,0.3)] pointer-events-none border-t-transparent border-b-transparent"
+          className="absolute w-52 h-52 sm:w-60 sm:h-60 md:w-72 md:h-72 rounded-full border-2 border-alaz-orange/45 shadow-[0_0_30px_rgba(255,85,0,0.3)] pointer-events-none border-t-transparent border-b-transparent"
         />
 
         {/* 3D Jiroskop Halkası 3 (İç — Altın Kor) */}
@@ -298,7 +303,7 @@ export function LetterSpinner({
           }}
           transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
           style={{ transformStyle: "preserve-3d" }}
-          className="absolute w-60 h-60 rounded-full border border-amber-300/50 shadow-[0_0_25px_rgba(251,191,36,0.25)] pointer-events-none"
+          className="absolute w-40 h-40 sm:w-48 sm:h-48 md:w-60 md:h-60 rounded-full border border-amber-300/50 shadow-[0_0_25px_rgba(251,191,36,0.25)] pointer-events-none"
         />
 
         {/* ═══════════════════════════════════════════════════════════
@@ -314,7 +319,7 @@ export function LetterSpinner({
           }
           transition={{ duration: 0.45, ease: EASE.out }}
           style={{ transformStyle: "preserve-3d" }}
-          className="relative w-64 h-64 md:w-72 md:h-72 flex items-center justify-center pointer-events-none"
+          className="relative w-48 h-48 sm:w-60 sm:h-60 md:w-72 md:h-72 flex items-center justify-center pointer-events-none"
         >
           {/* Lazer Odaklama Köşebentleri (Optic Reticle) */}
           <div className="absolute inset-0 pointer-events-none">
@@ -352,7 +357,7 @@ export function LetterSpinner({
                   animate={{ opacity: 1, scale: 1, rotateX: 0, z: 0 }}
                   exit={{ opacity: 0, scale: 1.25, rotateX: -90, z: 60 }}
                   transition={{ duration: 0.11, ease: "linear" }}
-                  className="text-8xl md:text-[9.5rem] font-black tracking-tight text-white font-sans select-none drop-shadow-[0_0_35px_rgba(255,255,255,0.85)] drop-shadow-[0_0_65px_rgba(0,243,255,0.45)]"
+                  className="text-7xl sm:text-8xl md:text-[9.5rem] font-black tracking-tight text-white font-sans select-none drop-shadow-[0_0_35px_rgba(255,255,255,0.85)] drop-shadow-[0_0_65px_rgba(0,243,255,0.45)]"
                 >
                   {LETTERS[displayIndex]}
                 </motion.div>
@@ -362,7 +367,7 @@ export function LetterSpinner({
                   initial={{ scale: 0.15, opacity: 0, rotateY: -60, z: -120 }}
                   animate={{ scale: [0.15, 1.25, 0.96, 1.05, 1], opacity: 1, rotateY: 0, z: 0 }}
                   transition={SPRING.bouncy}
-                  className="text-9xl md:text-[12.5rem] font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-amber-200 to-alaz-orange drop-shadow-[0_15px_35px_rgba(0,0,0,0.9)] drop-shadow-[0_0_55px_rgba(255,85,0,0.95)] drop-shadow-[0_0_100px_rgba(251,191,36,0.7)] select-none will-change-transform"
+                  className="text-8xl sm:text-9xl md:text-[12.5rem] font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-amber-200 to-alaz-orange drop-shadow-[0_15px_35px_rgba(0,0,0,0.9)] drop-shadow-[0_0_55px_rgba(255,85,0,0.95)] drop-shadow-[0_0_100px_rgba(251,191,36,0.7)] select-none will-change-transform"
                 >
                   {effectiveLetter}
                 </motion.div>

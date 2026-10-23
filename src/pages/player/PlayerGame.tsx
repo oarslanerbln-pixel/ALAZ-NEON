@@ -32,6 +32,7 @@ import { BackgroundSlider } from "../../components/BackgroundSlider";
 import { PlayerTutorial } from "./components/PlayerTutorial";
 import { PlayerStageScreen } from "./components/PlayerStageScreen";
 import { PlayerIntroVideo } from "./components/PlayerIntroVideo";
+import { LetterSpinner } from "../../components/LetterSpinner";
 
 import { Suspense } from "react";
 import { PLAYER_GAME_CONTROLLERS } from "./gameControllers";
@@ -307,9 +308,23 @@ export function PlayerGame() {
             />
           )}
 
-          {(gameState === "countdown" || gameState === "ad_break") && (
+          {gameState === "countdown" && (
             <motion.div
-              key="preparing"
+              key="countdown"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.05 }}
+              className="flex-1 flex flex-col items-center justify-center min-h-[60vh] w-full"
+            >
+              <LetterSpinner
+                targetLetter={room?.next_letter || room?.active_letter || activeLetter}
+              />
+            </motion.div>
+          )}
+
+          {gameState === "ad_break" && (
+            <motion.div
+              key="ad_break"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.05 }}
@@ -319,8 +334,8 @@ export function PlayerGame() {
                 icon="⚡"
                 tone="orange"
                 eyebrow={t("game.roundHint", currentRound || 1, room?.total_rounds || 3)}
-                title={gameState === "countdown" ? t("game.determiningLetter") : t("game.adBreakTitle")}
-                body={gameState === "ad_break" ? t("game.adBreakDesc") : t("game.watchMainScreen")}
+                title={t("game.adBreakTitle")}
+                body={t("game.adBreakDesc")}
                 waiting
               />
             </motion.div>
