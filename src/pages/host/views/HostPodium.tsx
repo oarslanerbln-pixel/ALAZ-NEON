@@ -246,7 +246,7 @@ export function HostPodium({
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
 
       const date = new Date().toISOString().split("T")[0];
-      pdf.save(`ALAZ-NEON-Sonuclar-${date}.pdf`);
+      pdf.save(`HENGAME-Sonuclar-${date}.pdf`);
     } catch (error) {
       console.error("PDF generation failed:", error);
     } finally {

@@ -122,7 +122,7 @@ export function LandingPage() {
           <KineticSpark 
             showTagline 
             delay={-1} 
-            text={venue.name} 
+            text={venue.name && venue.name !== "ALAZ NEON" && venue.name !== "ALAZ" ? venue.name : "HENGAME"} 
             tagline="DAS ULTIMATIVE NIGHTLIFE PARTY-GAME" 
           />
         </div>

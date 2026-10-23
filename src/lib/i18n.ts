@@ -1605,7 +1605,7 @@ const translations = {
   "intro.arena.step3": { tr: "Kimsenin yazmadığı cevap daha çok puan getirir", de: "Einzigartige Antworten bringen mehr Punkte", en: "Unique answers score more" },
   "intro.arena.title": { tr: "HENGAME ARENA", de: "HENGAME ARENA", en: "HENGAME ARENA" },
   "intro.arena.subtitle": { tr: "ATEŞ SERBEST", de: "FEUER FREI", en: "FIRE AT WILL" },
-  "arena.spinnerProtocol": { tr: "HEDEF HARF PROTOKOLÜ // AKTİF", de: "ZIELBUCHSTABEN-PROTOKOLL // AKTIV", en: "TARGET LETTER PROTOCOL // ACTIVE" },
+  "arena.spinnerProtocol": { tr: "HENGAME ARENA", de: "HENGAME ARENA", en: "HENGAME ARENA" },
   "arena.spinnerResolving": { tr: "KUANTUM ÇEKİRDEK KİLİTLENİYOR...", de: "QUANTUM-KERN WIRD GESPERRT...", en: "LOCKING QUANTUM CORE..." },
   "arena.spinnerLocked": { tr: "HEDEF HARF KİLİTLENDİ!", de: "ZIELBUCHSTABE ARRETIERT!", en: "TARGET LETTER LOCKED!" },
   "intro.quiz.title": { tr: "HENGAME QUIZ", de: "HENGAME QUIZ", en: "HENGAME QUIZ" },
@@ -1818,7 +1818,7 @@ const translations = {
     en: "The correct answer is on screen. Get ready for the next round!",
   },
   "sensor.toastError": { tr: "Bir hata oluştu!", de: "Ein Fehler ist aufgetreten!", en: "An error occurred!" },
-  "sensor.tvBadge": { tr: "👁️ SENSÖR • GÖRSEL TAHMİN 👁️", de: "👁️ SENSOR • BILDERRATEN 👁️", en: "👁️ SENSOR • PICTURE GUESS 👁️" },
+  "sensor.tvBadge": { tr: "👁️ HENGAME SENSÖR 👁️", de: "👁️ HENGAME SENSOR 👁️", en: "👁️ HENGAME SENSOR 👁️" },
   "sensor.tvPrompt": { tr: "BU GÖRSELİ İLK KİM BİLECEK?", de: "WER ERRÄT DAS BILD ZUERST?", en: "WHO GUESSES THIS PICTURE FIRST?" },
   "sensor.someone": { tr: "BİRİ", de: "JEMAND", en: "SOMEONE" },
   "sensor.buzzedSuffix": { tr: "BASTI!", de: "HAT GEDRÜCKT!", en: "BUZZED!" },
@@ -1991,7 +1991,7 @@ const translations = {
     de: "Gäste verbringen wenig Zeit, schauen auf ihre Handys und verlassen die Location frühzeitig.",
     en: "Guests spend little time, look at their phones, and leave the venue early."
   },
-  "b2b.solutionTitle": { tr: "ÇÖZÜM: ALAZ NEON", de: "DIE LÖSUNG: ALAZ NEON", en: "THE SOLUTION: ALAZ NEON" },
+  "b2b.solutionTitle": { tr: "ÇÖZÜM: HENGAME", de: "DIE LÖSUNG: HENGAME", en: "THE SOLUTION: HENGAME" },
   "b2b.solutionDesc": {
     tr: "Televizyonlarınızı dev bir interaktif oyun konsoluna dönüştürün. Müşterileriniz sadece kendi telefonlarından (uygulama indirmeden) oyuna dahil olur.",
     de: "Verwandeln Sie Ihre Fernseher in eine riesige interaktive Spielekonsole. Ihre Gäste nehmen einfach mit ihren eigenen Smartphones teil (ohne App-Download).",

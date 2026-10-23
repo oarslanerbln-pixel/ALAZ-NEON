@@ -128,7 +128,7 @@ export function HostHeader({
               </span>
             </div>
             <h1 className="text-sm md:text-base font-black tracking-tight uppercase text-white drop-shadow-md font-sans truncate max-w-[160px]">
-              {room.venue_name || "ALAZ NEON"}
+              {room.venue_name || "HENGAME"}
             </h1>
           </div>
         </div>

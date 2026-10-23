@@ -214,7 +214,7 @@ export function HostBombActive({ room, players, onExplode }: Props) {
       {/* TOP: Category Header */}
       <div className="w-full flex flex-col items-center justify-center z-20 pt-4">
         <span className="px-6 py-1.5 rounded-full border border-red-500/40 bg-red-500/10 text-red-400 font-mono tracking-widest text-sm uppercase font-bold mb-2 shadow-[0_0_15px_rgba(255,0,60,0.3)]">
-          💣 {t("bomb.category")} 💣
+          💣 HENGAME BOMB 💣
         </span>
         <h1 className="text-5xl md:text-6xl font-black text-white uppercase tracking-wider drop-shadow-[0_0_25px_rgba(255,0,60,0.9)]">
           {room.active_letter || t("bomb.generalCategory")}

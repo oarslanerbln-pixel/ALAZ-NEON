@@ -115,7 +115,7 @@ export function PlayerSensorController({ room, player }: Props) {
           {/* Top Status Header */}
           <div className="mb-6 flex items-center gap-2 px-4 py-1.5 rounded-full border border-purple-500/40 bg-purple-950/40 text-purple-300 font-mono tracking-widest text-xs uppercase font-bold shadow-lg">
             <span className="w-2 h-2 rounded-full bg-purple-400 animate-ping" />
-            <span>SENSÖR BUZZER LIVE</span>
+            <span>HENGAME SENSÖR</span>
           </div>
 
           {/* 3D Physical Arcade Dome Buzzer Button */}
