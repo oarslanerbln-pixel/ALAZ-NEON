@@ -15,6 +15,10 @@ import { PLAYER_GAME_CONTROLLERS } from "../pages/player/gameControllers";
 import { PlayerGameShell } from "../pages/player/components/PlayerGameShell";
 import { LetterSpinner } from "../components/LetterSpinner";
 import { HostPlaying } from "../pages/host/views/HostPlaying";
+import { CyberTargetArena } from "../components/gyro/CyberTargetArena";
+import { AirPointerController } from "../components/gyro/AirPointerController";
+import { Slingshot3DArena } from "../components/slingshot/Slingshot3DArena";
+import { SlingshotController } from "../components/slingshot/SlingshotController";
 
 /**
  * Yalnızca geliştirmede açılan ekran önizlemesi: host ve oyuncu ekranlarını
@@ -146,6 +150,43 @@ export function ScreenPreview() {
         </TVScaleFrame>
       );
     }
+    if ((game as string) === "sniper" || (game as string) === "air_pointer") {
+      return (
+        <TVScaleFrame>
+          <CyberTargetArena
+            players={players.map((p, i) => ({
+              id: p.id,
+              nickname: p.nickname,
+              color: ["#00f3ff", "#ff5500", "#f43f5e", "#10b981"][i % 4],
+              x: i % 2 === 0 ? -0.35 : 0.35,
+              y: i > 1 ? 0.25 : -0.25,
+              score: p.total_score,
+            }))}
+            timeLeft={left}
+          />
+        </TVScaleFrame>
+      );
+    }
+    if ((game as string) === "slingshot" || (game as string) === "penalti") {
+      return (
+        <TVScaleFrame>
+          <Slingshot3DArena
+            players={players.map((p, i) => ({
+              id: p.id,
+              nickname: p.nickname,
+              color: ["#00f3ff", "#ff5500", "#f43f5e", "#10b981"][i % 4],
+              score: Math.floor(p.total_score / 200),
+            }))}
+            currentShooter={{
+              id: players[0].id,
+              nickname: players[0].nickname,
+              color: "#00f3ff",
+              score: 2,
+            }}
+          />
+        </TVScaleFrame>
+      );
+    }
     const Display = HOST_GAME_DISPLAYS[game as RoutedGame];
     return (
       <Suspense fallback={null}>
@@ -154,8 +195,28 @@ export function ScreenPreview() {
     );
   }
 
-  const Controller = PLAYER_GAME_CONTROLLERS[game as RoutedGame];
   const player = players[me] ?? players[0];
+
+  if ((game as string) === "sniper" || (game as string) === "air_pointer") {
+    return (
+      <PlayerGameShell>
+        <AirPointerController
+          playerColor="cyan"
+          playerNickname={player.nickname}
+        />
+      </PlayerGameShell>
+    );
+  }
+
+  if ((game as string) === "slingshot" || (game as string) === "penalti") {
+    return (
+      <PlayerGameShell>
+        <SlingshotController roundHint="PENALTI ŞUTU" />
+      </PlayerGameShell>
+    );
+  }
+
+  const Controller = PLAYER_GAME_CONTROLLERS[game as RoutedGame];
   return (
     <PlayerGameShell>
       <Suspense fallback={null}>

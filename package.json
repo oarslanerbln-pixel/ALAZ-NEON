@@ -21,6 +21,7 @@
   "dependencies": {
     "@sentry/react": "^10.70.0",
     "@tailwindcss/vite": "^4.2.1",
+    "@types/three": "^0.186.0",
     "firebase": "^12.17.1",
     "framer-motion": "^12.43.0",
     "html2canvas": "^1.4.1",
@@ -30,7 +31,8 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.1",
-    "tailwindcss": "^4.2.1"
+    "tailwindcss": "^4.2.1",
+    "three": "^0.186.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
