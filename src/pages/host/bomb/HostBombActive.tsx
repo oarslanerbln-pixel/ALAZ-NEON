@@ -9,9 +9,28 @@ import { useLocale } from "../../../hooks/useLocale";
 import { pickBombHolder } from "../../../lib/bomb";
 import { CardSpotlight, ShimmerButton } from "../../../components/fx";
 import { SPRING } from "../../../lib/motion";
+import { Cyber3DBomb } from "./Cyber3DBomb";
 
 /** Sol listede kaydırmasız gösterilen en fazla oyuncu (1080'lik tuvale göre). */
 const BOMB_ROSTER_MAX = 12;
+
+function CyberHeart({ active, size = "md" }: { active: boolean; size?: "sm" | "md" | "lg" }) {
+  const dim = size === "lg" ? "w-6 h-6" : size === "sm" ? "w-3.5 h-3.5" : "w-4.5 h-4.5";
+  return (
+    <div className={`relative ${dim} flex items-center justify-center shrink-0`}>
+      {active ? (
+        <svg viewBox="0 0 24 24" fill="#ff0055" className="w-full h-full filter drop-shadow-[0_0_8px_#ff0055]">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" className="w-full h-full opacity-35">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+          <line x1="4" y1="4" x2="20" y2="20" stroke="#ff003c" strokeWidth="2.5" />
+        </svg>
+      )}
+    </div>
+  );
+}
 
 interface Props {
   room: Room;
@@ -240,11 +259,9 @@ export function HostBombActive({ room, players, onExplode }: Props) {
                   <span className={`font-bold text-lg truncate min-w-0 ${isTurn ? "text-white font-black" : "text-gray-300"}`}>
                     {p.nickname}
                   </span>
-                  <div className="flex gap-1 shrink-0">
+                  <div className="flex gap-1.5 shrink-0 items-center">
                     {Array.from({ length: 3 }).map((_, i) => (
-                      <span key={i} className="text-base">
-                        {i < pLives ? "❤️" : "🖤"}
-                      </span>
+                      <CyberHeart key={i} active={i < pLives} size="sm" />
                     ))}
                   </div>
                 </motion.div>
@@ -258,65 +275,26 @@ export function HostBombActive({ room, players, onExplode }: Props) {
           </div>
         </CardSpotlight>
 
-        {/* Center: Glowing Bomb with Urgency Countdown */}
+        {/* Center: 3D Cyber Bomb with Dynamic Burning Fuse */}
         <div className="flex-1 flex flex-col items-center justify-center">
           <motion.div
             animate={bombControls}
             className="relative flex items-center justify-center"
           >
-            <div className="relative">
-              {/* Spinning Fuse Ring */}
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: Math.max(0.4, timeLeft / 2), repeat: Infinity, ease: "linear" }}
-                className="absolute -inset-6 rounded-full border-4 border-dashed border-red-500/40"
-              />
-
-              {/* Bomb Icon */}
-              <svg 
-                width="340" 
-                height="340" 
-                viewBox="0 0 24 24" 
-                fill={timeLeft <= 4 ? "rgba(255,0,60,0.25)" : "none"} 
-                stroke={timeLeft <= 4 ? "#ff003c" : "#ff4d00"} 
-                strokeWidth="1.2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                style={{ filter: `drop-shadow(0px 0px ${timeLeft <= 4 ? '50px' : '25px'} rgba(255,0,60,0.9))` }}
-                // Yalnızca renkler geçişli: `transition-all` drop-shadow filtresini
-                // her eşikte 200ms boyunca 340px'lik alanda yeniden boyuyordu.
-                className="transition-colors duration-200"
-              >
-                <circle cx="11.5" cy="11.5" r="9"/>
-                <path d="m19.5 4.5 1.5 1.5"/>
-                <path d="m21.5 1.5-1.5 1.5"/>
-                <path d="M19.5 1.5c-1 1-2 2-3 2s-3-2-5-2-4 2-5 2"/>
-                <path d="M19 8h2"/>
-              </svg>
-
-              {/* Timer Text inside the Bomb */}
-              <div className="absolute inset-0 flex items-center justify-center pt-2">
-                <motion.span 
-                  key={timeLeft}
-                  initial={{ scale: 1.4, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className={`text-8xl md:text-9xl font-black tabular-nums tracking-tighter ${
-                    timeLeft <= 4 ? 'text-white animate-pulse drop-shadow-[0_0_40px_rgba(255,0,60,1)]' : 'text-transparent bg-clip-text bg-gradient-to-b from-[#ff7700] to-[#ff003c]'
-                  }`}
-                >
-                  {timeLeft}
-                </motion.span>
-              </div>
-            </div>
+            <Cyber3DBomb timeLeft={timeLeft} maxTime={15} />
           </motion.div>
 
           {/* Current Target Player Card */}
           <CardSpotlight 
             tone="pink" 
             ambient={true} 
-            className="mt-8 text-center bg-black/70 px-10 py-6 rounded-3xl backdrop-blur-xl border-2 border-red-500/50 shadow-[0_0_50px_rgba(255,0,60,0.3)] relative w-full max-w-md"
+            className="mt-6 text-center bg-black/75 px-10 py-5 rounded-3xl backdrop-blur-xl border-2 border-red-500/50 shadow-[0_0_50px_rgba(255,0,60,0.3)] relative w-full max-w-md overflow-hidden"
           >
-            <span className="text-xs font-mono font-bold text-[#ff4d00] uppercase tracking-[0.4em] block mb-2">
+            {/* Lazer Tarama Çizgisi */}
+            <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-red-500 to-transparent animate-pulse" />
+
+            <span className="text-xs font-mono font-bold text-[#ff4d00] uppercase tracking-[0.4em] block mb-1.5 flex items-center justify-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
               {t("bomb.whoseTurn")}
             </span>
             <motion.h2 
@@ -329,11 +307,9 @@ export function HostBombActive({ room, players, onExplode }: Props) {
               {targetPlayer.nickname}
             </motion.h2>
             
-            <div className="flex gap-2 justify-center mt-4">
+            <div className="flex gap-3 justify-center mt-3">
               {Array.from({ length: 3 }).map((_, i) => (
-                <span key={i} className="text-2xl">
-                  {i < currentLives ? "❤️" : "🖤"}
-                </span>
+                <CyberHeart key={i} active={i < currentLives} size="lg" />
               ))}
             </div>
           </CardSpotlight>

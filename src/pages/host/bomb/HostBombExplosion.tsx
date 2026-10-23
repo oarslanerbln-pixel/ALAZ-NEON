@@ -93,30 +93,38 @@ export function HostBombExplosion({ room, players, onComplete }: Props) {
               {targetPlayer?.nickname ?? "—"}
             </h1>
 
-            <div className="flex gap-6 justify-center mt-12">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <motion.div
-                  key={i}
-                  initial={i === currentLives ? { scale: 1, opacity: 1 } : false}
-                  animate={i === currentLives ? { scale: [1, 1.6, 0], opacity: [1, 1, 0] } : false}
-                  transition={{ delay: 1.5, duration: 0.9, ease: "easeOut" }}
-                >
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    width="56" 
-                    height="56" 
-                    viewBox="0 0 24 24" 
-                    fill={i < currentLives + (i === currentLives ? 1 : 0) ? "#ff003c" : "transparent"} 
-                    stroke={i < currentLives + (i === currentLives ? 1 : 0) ? "#ff003c" : "#333"} 
-                    strokeWidth="2" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round"
-                    className={i < currentLives ? "drop-shadow-[0_0_15px_rgba(255,0,60,1)]" : ""}
+            <div className="flex gap-8 justify-center mt-12">
+              {Array.from({ length: 3 }).map((_, i) => {
+                const wasLostThisRound = i === currentLives;
+                const isAlive = i < currentLives;
+                return (
+                  <motion.div
+                    key={i}
+                    initial={wasLostThisRound ? { scale: 1, opacity: 1 } : false}
+                    animate={wasLostThisRound ? { scale: [1, 1.4, 0.85], opacity: [1, 1, 0.4] } : false}
+                    transition={{ delay: 1.5, duration: 0.8, ease: "easeOut" }}
+                    className="relative flex items-center justify-center w-16 h-16"
                   >
-                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-                  </svg>
-                </motion.div>
-              ))}
+                    {isAlive ? (
+                      <svg viewBox="0 0 24 24" fill="#ff0055" className="w-14 h-14 filter drop-shadow-[0_0_20px_#ff0055]">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                      </svg>
+                    ) : wasLostThisRound ? (
+                      <div className="relative w-14 h-14 flex items-center justify-center">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#ff003c" strokeWidth="2.5" className="w-full h-full animate-pulse filter drop-shadow-[0_0_15px_#ff003c]">
+                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                          <line x1="3" y1="3" x2="21" y2="21" stroke="#ff003c" strokeWidth="3" />
+                        </svg>
+                      </div>
+                    ) : (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="2" className="w-14 h-14 opacity-30">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                        <line x1="3" y1="3" x2="21" y2="21" stroke="rgba(255,255,255,0.2)" strokeWidth="2" />
+                      </svg>
+                    )}
+                  </motion.div>
+                );
+              })}
             </div>
             
             {currentLives === 0 && (
