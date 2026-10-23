@@ -83,6 +83,22 @@ export function GameIntroCinematic({ eyebrow, title, subtitle, roster = [], step
 
   return (
     <div className="fixed inset-0 z-[100] bg-[#030307] text-white overflow-hidden flex items-center justify-center">
+      {/* Sinematik Tanıtım Arka Plan Videosu */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-25 mix-blend-screen -z-10">
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          poster="/media/tanitim/video-poster.webp"
+          className="w-full h-full object-cover scale-105 filter blur-[0.5px]"
+        >
+          <source src="/media/tanitim/hengame-tanitim-720.webm" type="video/webm" />
+          <source src="/media/tanitim/hengame-tanitim-1080.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#030307] via-transparent to-[#030307]/80" />
+      </div>
+
       <AuroraBackdrop colors={[primary, secondary, primary]} intensity={0.22} />
       <GridPattern />
 

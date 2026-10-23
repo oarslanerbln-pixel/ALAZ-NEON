@@ -1,0 +1,161 @@
+import { useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useLocale } from "../../../hooks/useLocale";
+import { haptics } from "../../../lib/haptics";
+import { SPRING, TWEEN } from "../../../lib/motion";
+import { Volume2, VolumeX, Radio, Sparkles } from "lucide-react";
+
+interface PlayerIntroVideoProps {
+  gameTitle?: string;
+  currentRound?: number;
+  totalRounds?: number;
+}
+
+/**
+ * Hengame Mobil Oyun Açılış Sinematiği (PlayerIntroVideo)
+ *
+ * Oyun başlarken (gameIntro / intro) misafirin telefonunda statik bekleme yazısı yerine,
+ * projenin yüksek çözünürlüklü tanıtım videosunu 60 FPS donanım hızlandırmalı
+ * siberpunk HUD katmanlarıyla oynatır.
+ */
+export function PlayerIntroVideo({
+  gameTitle = "HENGAME ARENA",
+  currentRound = 1,
+  totalRounds = 3,
+}: PlayerIntroVideoProps) {
+  const { t } = useLocale();
+  const [isMuted, setIsMuted] = useState(true);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  const toggleSound = () => {
+    if (!videoRef.current) return;
+    const nextMuted = !isMuted;
+    videoRef.current.muted = nextMuted;
+    setIsMuted(nextMuted);
+    haptics.tap();
+  };
+
+  return (
+    <motion.div
+      key="player-intro-video"
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 1.04 }}
+      transition={TWEEN.screen}
+      className="flex-1 flex flex-col justify-between py-2 px-1 max-w-md mx-auto w-full select-none"
+    >
+      {/* ═══════════════════════════════════════════════════════════════
+          ÜST HUD: CANLI YAYIN & TUR BİLGİSİ
+          ═══════════════════════════════════════════════════════════════ */}
+      <div className="flex items-center justify-between px-3 py-2 rounded-2xl bg-black/60 border border-white/10 backdrop-blur-xl mb-3 shadow-lg">
+        {/* Canlı Yayın Beacon */}
+        <div className="flex items-center gap-2">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+          </span>
+          <span className="text-[11px] font-mono font-black uppercase tracking-[0.2em] text-white">
+            {t("intro.liveBroadcast")}
+          </span>
+        </div>
+
+        {/* Tur Bilgisi & Ses Aç/Kapa */}
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-white/[0.06] text-white/70 border border-white/10">
+            TUR {currentRound} / {totalRounds}
+          </span>
+          <button
+            type="button"
+            onClick={toggleSound}
+            aria-label={isMuted ? "Sesi Aç" : "Sesi Kapat"}
+            className="w-7 h-7 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 flex items-center justify-center text-white/80 active:scale-90 transition-all"
+          >
+            {isMuted ? (
+              <VolumeX className="w-3.5 h-3.5 text-white/50" />
+            ) : (
+              <Volume2 className="w-3.5 h-3.5 text-emerald-400" />
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          ORTA ÇEKİRDEK: SİNEMATİK VİDEO OYNATICI & SİBER ÇERÇEVE
+          ═══════════════════════════════════════════════════════════════ */}
+      <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(255,85,0,0.15)] bg-black">
+        {/* Dış Ambient Parlama */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-gradient-to-tr from-alaz-orange/20 via-transparent to-cyan-400/20 pointer-events-none z-10 mix-blend-screen"
+        />
+
+        {/* Video Elemanı */}
+        <video
+          ref={videoRef}
+          autoPlay
+          muted
+          playsInline
+          loop
+          preload="auto"
+          poster="/media/tanitim/video-poster.webp"
+          className="w-full h-full object-cover will-change-transform"
+        >
+          <source src="/media/tanitim/hengame-tanitim-720.webm" type="video/webm" />
+          <source src="/media/tanitim/hengame-tanitim-1080.mp4" type="video/mp4" />
+        </video>
+
+        {/* Üst ve Alt Karartma Gradyanı */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/60 pointer-events-none" />
+
+        {/* Köşe Prizma Çentikleri (Blender / Cyber Aesthethic) */}
+        <div className="absolute top-3 left-3 w-3 h-3 border-t-2 border-l-2 border-alaz-orange pointer-events-none z-20" />
+        <div className="absolute top-3 right-3 w-3 h-3 border-t-2 border-r-2 border-cyan-400 pointer-events-none z-20" />
+        <div className="absolute bottom-3 left-3 w-3 h-3 border-b-2 border-l-2 border-cyan-400 pointer-events-none z-20" />
+        <div className="absolute bottom-3 right-3 w-3 h-3 border-b-2 border-r-2 border-alaz-orange pointer-events-none z-20" />
+
+        {/* Video Üstü Canlı Logo / Başlık Rozeti */}
+        <div className="absolute inset-x-0 bottom-4 px-4 flex flex-col items-center text-center z-20 pointer-events-none">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={SPRING.snappy}
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/70 border border-white/20 backdrop-blur-md mb-1 shadow-lg"
+          >
+            <Sparkles className="w-3 h-3 text-alaz-orange animate-spin-slow" />
+            <span className="text-[10px] font-mono font-black tracking-[0.25em] text-white uppercase">
+              {gameTitle}
+            </span>
+          </motion.div>
+          <p className="text-sm font-bold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
+            {t("intro.getReady")}
+          </p>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          ALT HUD: TAKTİK BRİFİNG & BÜYÜK EKRAN UYARISI
+          ═══════════════════════════════════════════════════════════════ */}
+      <div className="mt-4 flex flex-col gap-2.5">
+        {/* Hızlı Taktik Kartı */}
+        <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-xl flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-alaz-orange/20 border border-alaz-orange/40 flex items-center justify-center shrink-0">
+            <Radio className="w-4 h-4 text-alaz-orange animate-pulse" />
+          </div>
+          <p className="text-xs font-semibold text-white/80 leading-snug">
+            {t("intro.arenaTip")}
+          </p>
+        </div>
+
+        {/* Büyük Ekrana Odaklanma Rozeti */}
+        <motion.div
+          animate={{ opacity: [0.7, 1, 0.7] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          className="py-2.5 px-4 rounded-xl bg-cyan-500/10 border border-cyan-400/25 flex items-center justify-center gap-2 text-cyan-300 text-[11px] font-mono font-bold tracking-[0.2em] uppercase"
+        >
+          <span>👀</span>
+          <span>{t("playerReview.watchMainScreen")}</span>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+}

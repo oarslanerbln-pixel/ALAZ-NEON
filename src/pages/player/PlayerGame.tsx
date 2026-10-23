@@ -31,6 +31,7 @@ import { PlayerStandings } from "./views/PlayerStandings";
 import { BackgroundSlider } from "../../components/BackgroundSlider";
 import { PlayerTutorial } from "./components/PlayerTutorial";
 import { PlayerStageScreen } from "./components/PlayerStageScreen";
+import { PlayerIntroVideo } from "./components/PlayerIntroVideo";
 
 import { Suspense } from "react";
 import { PLAYER_GAME_CONTROLLERS } from "./gameControllers";
@@ -298,7 +299,15 @@ export function PlayerGame() {
         <AnimatePresence mode="wait">
           {(gameState === "lobby" || gameState === "night_lobby" || isRetiredGame(room.active_game)) && <PlayerLobby room={room} roomId={roomId} playerId={playerId} />}
 
-          {(gameState === "intro" || gameState === "gameIntro" || gameState === "countdown" || gameState === "ad_break") && (
+          {(gameState === "intro" || gameState === "gameIntro") && (
+            <PlayerIntroVideo
+              currentRound={currentRound || 1}
+              totalRounds={room?.total_rounds || 3}
+              gameTitle="HENGAME ARENA"
+            />
+          )}
+
+          {(gameState === "countdown" || gameState === "ad_break") && (
             <motion.div
               key="preparing"
               initial={{ opacity: 0, scale: 0.95 }}
@@ -310,7 +319,7 @@ export function PlayerGame() {
                 icon="⚡"
                 tone="orange"
                 eyebrow={t("game.roundHint", currentRound || 1, room?.total_rounds || 3)}
-                title={gameState === "countdown" ? t("game.determiningLetter") : gameState === "ad_break" ? t("game.adBreakTitle") : t("game.starting")}
+                title={gameState === "countdown" ? t("game.determiningLetter") : t("game.adBreakTitle")}
                 body={gameState === "ad_break" ? t("game.adBreakDesc") : t("game.watchMainScreen")}
                 waiting
               />

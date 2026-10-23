@@ -1595,6 +1595,13 @@ const translations = {
   // ═══════════════════════════════════════════
   "intro.howToPlay": { tr: "NASIL OYNANIR", de: "SO WIRD GESPIELT", en: "HOW TO PLAY" },
   "intro.phonesReady": { tr: "TELEFONLAR HAZIR", de: "HANDYS BEREIT", en: "PHONES READY" },
+  "intro.liveBroadcast": { tr: "CANLI YAYIN", de: "LIVE ÜBERTRAGUNG", en: "LIVE BROADCAST" },
+  "intro.getReady": { tr: "HAZIRLANIN // OYUN BAŞLIYOR!", de: "BEREIT MACHEN // SPIEL STARTET!", en: "GET READY // GAME STARTING!" },
+  "intro.arenaTip": {
+    tr: "Hedef harfle en hızlı ve özgün kelimeleri yaz, hız bonusunu kap!",
+    de: "Schreibe die schnellsten und einzigartigsten Wörter, hol dir den Speed-Bonus!",
+    en: "Type the fastest and most unique words, claim the speed bonus!",
+  },
   "intro.quiz.titleShort": { tr: "QUIZ", de: "QUIZ", en: "QUIZ" },
   "intro.quiz.step1": { tr: "Soru TV'de, şıklar telefonunda", de: "Frage auf dem TV, Antworten auf dem Handy", en: "Question on the TV, answers on your phone" },
   "intro.quiz.step2": { tr: "Hızlı cevap, daha çok puan", de: "Schnell antworten, mehr Punkte", en: "Answer fast, score more" },
