@@ -45,32 +45,66 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 relative overflow-hidden bg-black w-full h-full">
-      {/* Background Ambient Glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.15)_0%,rgba(0,0,0,1)_80%)] pointer-events-none" />
-      <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.3)_50%)] bg-[length:100%_4px] pointer-events-none opacity-40" />
+      {/* Background Volumetric Lighting */}
+      {gameState === "sensor_active" ? (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <div
+            className="absolute -top-32 left-[10%] w-[500px] h-[850px] opacity-30 blur-3xl"
+            style={{
+              background: "conic-gradient(from 180deg at 50% 0%, rgba(168,85,247,0.55) 0deg, rgba(147,51,234,0.18) 35deg, transparent 70deg)",
+              transform: "rotate(-12deg)",
+            }}
+          />
+          <div
+            className="absolute -top-32 right-[10%] w-[500px] h-[850px] opacity-30 blur-3xl"
+            style={{
+              background: "conic-gradient(from 180deg at 50% 0%, rgba(192,132,252,0.55) 0deg, rgba(168,85,247,0.18) 35deg, transparent 70deg)",
+              transform: "rotate(12deg)",
+            }}
+          />
+        </div>
+      ) : (
+        /* Emergency Rotating Siren Light for sensor_buzzed */
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <motion.div
+            animate={{ rotate: [0, 360] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+            className="absolute -top-40 left-1/2 -translate-x-1/2 w-[950px] h-[950px] opacity-35 blur-3xl"
+            style={{
+              background: "conic-gradient(from 0deg, rgba(239,68,68,0.7) 0deg, rgba(239,68,68,0.15) 35deg, transparent 80deg, rgba(239,68,68,0.7) 180deg, rgba(239,68,68,0.15) 215deg, transparent 260deg)",
+            }}
+          />
+        </div>
+      )}
 
-      {/* TOP HEADER: Category & Clue */}
-      <div className="absolute top-8 z-20 flex flex-col items-center">
-        <span className="px-5 py-1.5 rounded-full border border-purple-500/40 bg-purple-500/10 text-purple-400 font-mono tracking-widest text-xs uppercase font-bold mb-1">
+      {/* Subtle Scanlines & Vignette */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.15)_0%,rgba(0,0,0,0.95)_80%)] pointer-events-none z-0" />
+      <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.35)_50%)] bg-[length:100%_4px] pointer-events-none opacity-40 z-0" />
+
+      {/* TOP HEADER: Category & Recon Target */}
+      <div className="absolute top-6 z-20 flex flex-col items-center">
+        <motion.div
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="flex items-center gap-2 px-5 py-1.5 rounded-full border border-purple-500/50 bg-purple-950/40 text-purple-300 font-mono tracking-[0.25em] text-xs uppercase font-bold mb-2 shadow-[0_0_20px_rgba(168,85,247,0.3)] backdrop-blur-md"
+        >
+          <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
           {t("sensor.tvBadge")}
-        </span>
-        <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-wider drop-shadow-md">
+        </motion.div>
+        <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-wider drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
           {currentImage.category || t("sensor.tvPrompt")}
         </h2>
       </div>
 
       {/* Active unblurring image screen */}
       {gameState === "sensor_active" && (
-        <div className="relative w-full max-w-5xl aspect-video rounded-3xl overflow-hidden border-2 border-purple-500/40 shadow-[0_0_90px_rgba(168,85,247,0.3)] bg-black/60 backdrop-blur-xl mt-12 flex flex-col items-center justify-center">
+        <div className="relative w-full max-w-5xl aspect-video rounded-3xl overflow-hidden border-2 border-purple-500/50 shadow-[0_0_100px_rgba(168,85,247,0.35)] bg-black/80 backdrop-blur-2xl mt-12 flex flex-col items-center justify-center">
           
-          {/* Kademeli netleşme. Eskiden `filter: blur()` 25 sn boyunca her
-              karede değişiyordu: TV kutusunun GPU'su 1000×560'lık görseli her
-              karede yeniden bulanıklaştırıyordu (motion-system §1 yasağı).
-              Artık bulanıklığı SABİT üç kopya üst üste duruyor ve sırayla
-              sönüyor; yalnızca opacity + scale, yani compositor işi. */}
+          {/* Compositor-only blur layers (hardware-accelerated, 60 FPS APU friendly) */}
           <motion.div
             key={currentImage.url}
-            initial={{ scale: 1.15, opacity: 0 }}
+            initial={{ scale: 1.12, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ opacity: { duration: DURATION.slow }, scale: { duration: SENSOR_REVEAL_SEC, ease: "linear" } }}
             className="absolute inset-0"
@@ -90,71 +124,149 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
               />
             ))}
           </motion.div>
-          
-          {/* Active Buzzer Ready Badge */}
-          <div className="absolute top-6 right-6 bg-black/85 px-6 py-3 text-purple-400 font-mono font-bold uppercase tracking-[0.3em] text-xs rounded-xl border border-purple-500/50 shadow-lg animate-pulse backdrop-blur-md flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-purple-500 animate-ping" />
-            {t("sensor.buzzerActive")}
+
+          {/* 4 Precision Corner Reticles */}
+          <div className="absolute top-4 left-4 w-7 h-7 border-t-2 border-l-2 border-cyan-400 pointer-events-none z-20 drop-shadow-[0_0_6px_rgba(34,211,238,0.8)]" />
+          <div className="absolute top-4 right-4 w-7 h-7 border-t-2 border-r-2 border-cyan-400 pointer-events-none z-20 drop-shadow-[0_0_6px_rgba(34,211,238,0.8)]" />
+          <div className="absolute bottom-4 left-4 w-7 h-7 border-b-2 border-l-2 border-cyan-400 pointer-events-none z-20 drop-shadow-[0_0_6px_rgba(34,211,238,0.8)]" />
+          <div className="absolute bottom-4 right-4 w-7 h-7 border-b-2 border-r-2 border-cyan-400 pointer-events-none z-20 drop-shadow-[0_0_6px_rgba(34,211,238,0.8)]" />
+
+          {/* Center Optical Crosshair */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 opacity-35">
+            <div className="w-16 h-16 rounded-full border border-purple-400/60 flex items-center justify-center">
+              <div className="w-5 h-0.5 bg-cyan-300" />
+              <div className="w-0.5 h-5 bg-cyan-300 absolute" />
+            </div>
           </div>
 
-          {/* Progress / Reveal Bar at the bottom */}
-          <div className="absolute bottom-0 inset-x-0 h-2 bg-black/60">
+          {/* Vertical Laser Scanline */}
+          <motion.div
+            animate={{ y: ["0%", "530%", "0%"] }}
+            transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_14px_rgba(34,211,238,0.95)] pointer-events-none z-20"
+          />
+
+          {/* Top-Left Telemetry Badge */}
+          <div className="absolute top-5 left-5 bg-black/85 px-4 py-2 text-cyan-400 font-mono font-bold tracking-[0.2em] text-[11px] rounded-xl border border-cyan-500/40 shadow-lg backdrop-blur-md flex items-center gap-2 z-20">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+            <span>{t("sensor.scanActive")}</span>
+          </div>
+
+          {/* Top-Right Active Buzzer Badge with Equalizer */}
+          <div className="absolute top-5 right-5 bg-black/85 px-4 py-2 text-purple-300 font-mono font-bold tracking-[0.25em] text-[11px] rounded-xl border border-purple-500/50 shadow-lg backdrop-blur-md flex items-center gap-2.5 z-20">
+            <div className="flex items-center gap-0.5 h-3">
+              {[0.4, 0.9, 0.6, 1].map((h, i) => (
+                <motion.span
+                  key={i}
+                  animate={{ scaleY: [0.3, 1, 0.3] }}
+                  transition={{ duration: 0.5 + i * 0.15, repeat: Infinity, ease: "easeInOut" }}
+                  className="w-1 h-full bg-purple-400 rounded-full origin-bottom"
+                />
+              ))}
+            </div>
+            <span>{t("sensor.buzzerActive")}</span>
+          </div>
+
+          {/* Bottom Telemetry Metadata */}
+          <div className="absolute bottom-5 left-5 text-purple-300/80 font-mono text-[10px] tracking-widest uppercase bg-black/75 px-3 py-1.5 rounded-lg border border-purple-500/30 z-20">
+            OPTICAL SENSOR // 8K • ISO-3200
+          </div>
+          <div className="absolute bottom-5 right-5 text-cyan-300/80 font-mono text-[10px] tracking-widest uppercase bg-black/75 px-3 py-1.5 rounded-lg border border-cyan-500/30 z-20 flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+            <span>{t("sensor.analyzing")}</span>
+          </div>
+
+          {/* High-Tech Segmented Reveal Energy Rail */}
+          <div className="absolute bottom-0 inset-x-0 h-2 bg-black/80 z-20">
             <motion.div
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
               transition={{ duration: SENSOR_REVEAL_SEC, ease: "linear" }}
-              className="h-full origin-left bg-gradient-to-r from-purple-500 via-pink-500 to-amber-400 shadow-[0_0_15px_rgba(168,85,247,0.8)]"
+              className="h-full origin-left bg-gradient-to-r from-purple-500 via-cyan-400 to-amber-300 shadow-[0_0_20px_rgba(34,211,238,0.9)]"
             />
           </div>
         </div>
       )}
 
-      {/* Buzzed State */}
+      {/* Buzzed State: Tactical Intercept Mode */}
       {gameState === "sensor_buzzed" && (
-        <div className="relative w-full max-w-5xl aspect-video rounded-3xl overflow-hidden shadow-[0_0_120px_rgba(239,68,68,0.4)] border-2 border-red-500/60 mt-12">
+        <div className="relative w-full max-w-5xl aspect-video rounded-3xl overflow-hidden shadow-[0_0_140px_rgba(239,68,68,0.5)] border-2 border-red-500/70 mt-12">
+          {/* Blurred background image */}
           <img 
             src={currentImage.url}
-            className="w-full h-full object-cover grayscale opacity-30"
+            className="w-full h-full object-cover grayscale opacity-25"
             style={{ filter: "blur(25px)" }} 
+            alt=""
           />
           
-          <div className="absolute inset-0 bg-red-950/60 backdrop-blur-md flex flex-col items-center justify-center p-8">
+          {/* Diagonal Hazard Warning Stripes on Edges */}
+          <div
+            className="absolute top-0 inset-x-0 h-3 z-30 opacity-80"
+            style={{
+              background: "repeating-linear-gradient(45deg, #ef4444, #ef4444 12px, #000 12px, #000 24px)",
+            }}
+          />
+          <div
+            className="absolute bottom-0 inset-x-0 h-3 z-30 opacity-80"
+            style={{
+              background: "repeating-linear-gradient(45deg, #ef4444, #ef4444 12px, #000 12px, #000 24px)",
+            }}
+          />
+
+          <div className="absolute inset-0 bg-red-950/60 backdrop-blur-md flex flex-col items-center justify-center p-8 z-20">
             <motion.div 
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", bounce: 0.5 }}
-              className="bg-black/90 border-2 border-red-500 p-10 rounded-3xl shadow-2xl text-center max-w-2xl w-full backdrop-blur-2xl flex flex-col items-center"
+              initial={{ scale: 0.85, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              transition={{ type: "spring", bounce: 0.45, duration: 0.7 }}
+              className="bg-black/90 border-2 border-red-500 p-8 md:p-10 rounded-3xl shadow-[0_0_50px_rgba(239,68,68,0.4)] text-center max-w-2xl w-full backdrop-blur-2xl flex flex-col items-center relative overflow-hidden"
             >
+              {/* Corner Accents */}
+              <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-red-500" />
+              <div className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-red-500" />
+              <div className="absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 border-red-500" />
+              <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-red-500" />
+
               <div className="flex items-center gap-3 mb-2">
                 <span className="text-3xl animate-bounce">🚨</span>
-                <h2 className="text-3xl text-red-500 font-black tracking-widest uppercase">
+                <h2 className="text-3xl text-red-500 font-black tracking-widest uppercase drop-shadow-[0_0_15px_rgba(239,68,68,0.8)]">
                   {t("sensor.stop")}
                 </h2>
+                <span className="text-3xl animate-bounce">🚨</span>
               </div>
               
-              <p className="text-2xl text-white font-black mb-6 tracking-wide">
-                ⚡ <span className="text-red-400 uppercase">{buzzerPlayerName || t("sensor.someone")}</span> {t("sensor.buzzedSuffix")}
-              </p>
+              <div className="flex items-center gap-2 mb-6 px-6 py-2 rounded-2xl bg-red-500/10 border border-red-500/30">
+                <span className="text-amber-400 text-xl">⚡</span>
+                <p className="text-2xl text-white font-black tracking-wide">
+                  <span className="text-red-400 uppercase font-mono">{buzzerPlayerName || t("sensor.someone")}</span> {t("sensor.buzzedSuffix")}
+                </p>
+              </div>
               
               {room.sensor_player_answer ? (
                 <motion.div 
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="mb-8 bg-white/5 border border-white/15 rounded-2xl p-6 w-full"
+                  initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ type: "spring", bounce: 0.4 }}
+                  className="mb-8 bg-red-950/40 border-2 border-red-500/40 rounded-2xl p-6 w-full shadow-inner"
                 >
-                  <p className="text-red-400 text-xs mb-2 uppercase tracking-widest font-mono">
+                  <p className="text-red-400 text-xs mb-2 uppercase tracking-widest font-mono font-bold">
                     {t("sensor.playerGuess")}
                   </p>
-                  <p className="text-4xl md:text-5xl font-black text-white tracking-wide uppercase drop-shadow-[0_0_20px_rgba(255,255,255,0.7)]">
+                  <p className="text-4xl md:text-5xl font-black text-white tracking-wide uppercase drop-shadow-[0_0_25px_rgba(255,255,255,0.8)]">
                     "{safeForDisplay(room.sensor_player_answer)}"
                   </p>
                 </motion.div>
               ) : (
                 <div className="mb-8 flex flex-col items-center gap-4">
-                  <div className="flex items-center justify-center gap-3">
-                    <span className="w-4 h-4 rounded-full bg-red-500 animate-bounce shadow-[0_0_15px_rgba(239,68,68,0.8)]" />
-                    <span className="w-4 h-4 rounded-full bg-red-500 animate-bounce shadow-[0_0_15px_rgba(239,68,68,0.8)]" style={{ animationDelay: "0.2s" }} />
-                    <span className="w-4 h-4 rounded-full bg-red-500 animate-bounce shadow-[0_0_15px_rgba(239,68,68,0.8)]" style={{ animationDelay: "0.4s" }} />
+                  {/* Digital Equalizer Audio Waveform */}
+                  <div className="flex items-center justify-center gap-2 h-10 px-6 py-2 rounded-xl bg-red-950/30 border border-red-500/30">
+                    {[0.3, 0.7, 1, 0.5, 0.9, 0.4, 0.8, 0.6, 0.2].map((h, i) => (
+                      <motion.span
+                        key={i}
+                        animate={{ scaleY: [0.2, 1, 0.2] }}
+                        transition={{ duration: 0.5 + (i % 3) * 0.15, repeat: Infinity, ease: "easeInOut" }}
+                        className="w-1.5 h-full bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)] origin-center"
+                      />
+                    ))}
                   </div>
                   <span className="text-red-300 font-mono font-bold uppercase tracking-widest text-sm">
                     {t("sensor.waitingAnswer")}
@@ -162,29 +274,32 @@ export function HostSensorActive({ room, currentImage, buzzerPlayerName, onEvalu
                   
                   <button
                     onClick={() => onEvaluate(false)}
-                    className="mt-2 text-xs text-white/50 hover:text-white uppercase tracking-widest border border-white/20 hover:border-white/50 px-5 py-2 transition-all rounded-full"
+                    className="mt-2 text-xs text-white/50 hover:text-white uppercase tracking-widest border border-white/20 hover:border-white/50 px-5 py-2 transition-all rounded-full hover:bg-white/5"
                   >
                     {t("sensor.releaseBuzzer")}
                   </button>
                 </div>
               )}
 
-              {/* Host Evaluation Buttons */}
+              {/* Host Evaluation Buttons: 3D Arcade Pushers */}
               {room.sensor_player_answer && (
                 <div className="flex justify-center gap-4 w-full">
-                  <button 
+                  <motion.button 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.96 }}
                     onClick={() => onEvaluate(true)}
-                    className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 border border-emerald-400 text-white rounded-2xl font-black uppercase tracking-wider text-lg transition-all shadow-[0_0_30px_rgba(16,185,129,0.5)] transform active:scale-95 flex items-center justify-center gap-2"
+                    className="flex-1 py-4 bg-gradient-to-t from-emerald-700 to-emerald-500 hover:from-emerald-600 hover:to-emerald-400 border border-emerald-300 text-white rounded-2xl font-black uppercase tracking-wider text-lg transition-all shadow-[0_0_35px_rgba(16,185,129,0.55)] flex items-center justify-center gap-2"
                   >
-                    {/* HostSensorDisplay.handleEvaluate doğru cevaba +100 yazıyor; etiket +1000 diyordu. */}
-                    <span>✅</span> {t("sensor.correct")} (+100)
-                  </button>
-                  <button 
+                    <span className="text-xl">✅</span> {t("sensor.correct")} (+100)
+                  </motion.button>
+                  <motion.button 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.96 }}
                     onClick={() => onEvaluate(false)}
-                    className="flex-1 py-4 bg-red-950 hover:bg-red-900 border border-red-500 text-red-400 rounded-2xl font-black uppercase tracking-wider text-lg transition-all shadow-[0_0_20px_rgba(239,68,68,0.4)] transform active:scale-95 flex items-center justify-center gap-2"
+                    className="flex-1 py-4 bg-gradient-to-t from-red-950 to-red-900 hover:from-red-900 hover:to-red-800 border border-red-500 text-red-300 rounded-2xl font-black uppercase tracking-wider text-lg transition-all shadow-[0_0_25px_rgba(239,68,68,0.4)] flex items-center justify-center gap-2"
                   >
-                    <span>❌</span> {t("sensor.wrong")}
-                  </button>
+                    <span className="text-xl">❌</span> {t("sensor.wrong")}
+                  </motion.button>
                 </div>
               )}
             </motion.div>

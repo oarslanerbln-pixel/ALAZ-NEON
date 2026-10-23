@@ -1828,6 +1828,9 @@ const translations = {
     de: "Antwort konnte nicht gesendet werden!",
     en: "Couldn't send the answer!",
   },
+  "sensor.scanActive": { tr: "OPTİK RECON AKTİF", de: "OPTISCHER RECON AKTIV", en: "OPTICAL RECON ACTIVE" },
+  "sensor.analyzing": { tr: "ÇÖZÜMLENİYOR", de: "WIRD ENTSCHLÜSSELT", en: "DECRYPTING" },
+  "sensor.solved": { tr: "GÖRSEL ÇÖZÜLDÜ!", de: "BILD ENTSCHLÜSSELT!", en: "IMAGE RESOLVED!" },
 
   // ═══════════════════════════════════════════
   // PLAYER REVIEW (cevap gönderim/inceleme bekleme ekranı)

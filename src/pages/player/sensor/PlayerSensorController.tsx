@@ -112,25 +112,55 @@ export function PlayerSensorController({ room, player }: Props) {
     if (room.status === "sensor_active") {
       return (
         <div className="flex-1 flex flex-col items-center justify-center p-6 z-10 w-full max-w-sm mx-auto">
-          {/* Animated Pulsating Neon Buzzer */}
-          <div className="relative flex items-center justify-center my-6">
+          {/* Top Status Header */}
+          <div className="mb-6 flex items-center gap-2 px-4 py-1.5 rounded-full border border-purple-500/40 bg-purple-950/40 text-purple-300 font-mono tracking-widest text-xs uppercase font-bold shadow-lg">
+            <span className="w-2 h-2 rounded-full bg-purple-400 animate-ping" />
+            <span>SENSÖR BUZZER LIVE</span>
+          </div>
+
+          {/* 3D Physical Arcade Dome Buzzer Button */}
+          <div className="relative flex items-center justify-center my-4">
+            {/* Concentric Radar Waves */}
             <motion.div
-              animate={{ scale: [1, 1.35, 1], opacity: [0.6, 0, 0.6] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
-              className="absolute -inset-10 rounded-full border-2 border-red-500/60 pointer-events-none"
+              animate={{ scale: [1, 1.35], opacity: [0.65, 0] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: "easeOut" }}
+              className="absolute -inset-8 rounded-full border-2 border-red-500/60 pointer-events-none"
             />
-            
-            <motion.button
-              whileTap={{ scale: 0.92 }}
-              onClick={handleBuzz}
-              transition={SPRING.stiff}
-              className="w-64 h-64 max-w-[70vw] max-h-[70vw] rounded-full bg-gradient-to-b from-red-500 to-red-800 border-4 border-red-400 shadow-[0_0_60px_rgba(239,68,68,0.8)] flex flex-col items-center justify-center active:brightness-125"
-            >
-              <span className="text-5xl mb-2">🚨</span>
-              <span className="text-4xl font-black text-white uppercase tracking-widest drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)]">
-                BUZZER!
-              </span>
-            </motion.button>
+            <motion.div
+              animate={{ scale: [1, 1.55], opacity: [0.4, 0] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: "easeOut", delay: 0.5 }}
+              className="absolute -inset-14 rounded-full border border-red-400/40 pointer-events-none"
+            />
+
+            {/* Outer Knurled Metal Bezel Base */}
+            <div className="w-64 h-64 max-w-[72vw] max-h-[72vw] rounded-full p-3.5 bg-gradient-to-b from-neutral-700 via-neutral-900 to-black shadow-[0_20px_50px_rgba(0,0,0,0.9),0_0_50px_rgba(239,68,68,0.4)] border-4 border-neutral-600 flex items-center justify-center">
+              {/* Inset Housing Rim */}
+              <div className="w-full h-full rounded-full p-2 bg-gradient-to-t from-neutral-800 to-neutral-950 shadow-inner flex items-center justify-center">
+                {/* 3D Convex Dome Button */}
+                <motion.button
+                  whileTap={{ scale: 0.93, y: 6 }}
+                  onClick={handleBuzz}
+                  transition={SPRING.stiff}
+                  className="w-full h-full rounded-full relative overflow-hidden flex flex-col items-center justify-center shadow-[inset_0_-8px_16px_rgba(0,0,0,0.6),0_8px_25px_rgba(239,68,68,0.7)] active:brightness-110 select-none border-2 border-red-400/80"
+                  style={{
+                    background: "radial-gradient(circle at 50% 30%, #ff4d4d 0%, #dc2626 55%, #7f1d1d 100%)",
+                  }}
+                >
+                  {/* Glossy Top Specular Highlight Crescent */}
+                  <div
+                    className="absolute top-2 inset-x-8 h-1/3 rounded-full opacity-50 pointer-events-none"
+                    style={{
+                      background: "linear-gradient(180deg, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0) 100%)",
+                    }}
+                  />
+
+                  <span className="text-4xl md:text-5xl mb-1 drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]">🚨</span>
+                  <span className="text-3xl md:text-4xl font-black text-white uppercase tracking-widest drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
+                    BUZZER!
+                  </span>
+                </motion.button>
+              </div>
+            </div>
           </div>
           
           <p className="text-red-400 text-xs font-mono font-bold uppercase tracking-widest text-center mt-6 animate-pulse">
