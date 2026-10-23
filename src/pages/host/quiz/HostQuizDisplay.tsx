@@ -412,6 +412,16 @@ export function HostQuizDisplay({
       >
         <ParticleBackground speedMultiplier={gameState === "question_active" && timeLeft <= 5 ? 5 : 1} />
         
+        {/* Volumetrik Stüdyo Işıkları (Blender Lighting) */}
+        <div
+          aria-hidden="true"
+          className="absolute -top-32 left-1/4 w-96 h-[600px] bg-gradient-to-b from-blue-500/15 via-blue-500/5 to-transparent blur-3xl pointer-events-none -rotate-12 -z-10"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute -top-32 right-1/4 w-96 h-[600px] bg-gradient-to-b from-cyan-400/15 via-cyan-400/5 to-transparent blur-3xl pointer-events-none rotate-12 -z-10"
+        />
+
         {gameState === "question_active" && timeLeft <= 5 && (
           <div className="absolute inset-0 bg-red-600/20 animate-pulse pointer-events-none z-0" />
         )}
@@ -681,12 +691,12 @@ export function HostQuizDisplay({
                             key={opt}
                             // Doğru şık öne çıkıp yaylanır, diğerleri söner. Eskiden
                             // `transition-all` gölgeyi de 700ms boyunca boyuyordu.
-                            animate={{ scale: isCorrect ? 1.02 : 1, opacity: isDimmed ? 0.4 : 1 }}
-                            transition={isCorrect ? { ...SPRING.bouncy, delay: 0.2 } : { duration: DURATION.slow, ease: EASE.out }}
-                            className={`p-6 rounded-xl border-2 relative overflow-hidden flex flex-col justify-between transition-colors duration-500 ${
+                            animate={{ scale: isCorrect ? 1.04 : 1, opacity: isDimmed ? 0.35 : 1 }}
+                            transition={isCorrect ? { ...SPRING.bouncy, delay: 0.15 } : { duration: DURATION.slow, ease: EASE.out }}
+                            className={`p-6 rounded-2xl border-2 relative overflow-hidden flex flex-col justify-between transition-colors duration-500 ${
                               isCorrect
-                                ? "bg-green-500/25 border-green-500 shadow-[0_0_50px_rgba(34,197,94,0.7)]"
-                                : "bg-black/50 border-white/10"
+                                ? "bg-emerald-500/25 border-emerald-400 shadow-[0_0_60px_rgba(52,211,153,0.8)]"
+                                : "bg-black/60 border-white/10"
                             }`}
                           >
                             {/* Oy yüzdesi dolgusu: width yerine scaleX (yalnızca compositor). */}
@@ -694,7 +704,7 @@ export function HostQuizDisplay({
                               initial={{ scaleX: 0 }}
                               animate={{ scaleX: percentage / 100 }}
                               transition={{ duration: 1, ease: EASE.out }}
-                              className={`absolute inset-0 origin-left ${isCorrect ? "bg-green-500/20" : "bg-white/5"} pointer-events-none`}
+                              className={`absolute inset-0 origin-left ${isCorrect ? "bg-emerald-500/20" : "bg-white/5"} pointer-events-none`}
                             />
 
                             <div className="flex items-center gap-4 relative z-10">
