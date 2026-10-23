@@ -3,6 +3,7 @@ import { NeonIcon } from "../../../components/NeonIcon";
 import type { JulesAward } from "../../../lib/intelligence";
 import { QRCodeSVG } from "qrcode.react";
 import { useLocale } from "../../../hooks/useLocale";
+import { getJoinUrl } from "../../../lib/roomUrls";
 
 interface ShareableRecapCardProps {
   awards: { creative: JulesAward | null; funny: JulesAward | null };
@@ -11,7 +12,7 @@ interface ShareableRecapCardProps {
 
 export function ShareableRecapCard({ awards, roomCode }: ShareableRecapCardProps) {
   const { t } = useLocale();
-  const joinUrl = typeof window !== "undefined" ? `${window.location.origin}?code=${roomCode || ""}` : "";
+  const joinUrl = getJoinUrl(roomCode);
 
   return (
     <motion.div

@@ -31,6 +31,7 @@ import { nightStandings, rankDeltas } from "../../../lib/nightLeague";
 import { SHOWCASE_IDLE_MS } from "../../../lib/showcase";
 import { useIdle } from "../../../hooks/useIdle";
 import { HostShowcase } from "./HostShowcase";
+import { getJoinUrl } from "../../../lib/roomUrls";
 
 /** QR kartının altında 1080'lik tuvale kaydırmasız sığan misafir satırı. */
 const DASHBOARD_LIST_MAX = 6;
@@ -314,7 +315,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     await updateRoomStatus(initialStatus, extraUpdates);
   };
 
-  const joinUrl = `${window.location.protocol}//${window.location.host}/join?code=${room.code}`;
+  const joinUrl = getJoinUrl(room.code);
 
   // Gecenin liderleri: night_score F1 sıra puanlarıyla birikir (lib/nightLeague).
   // Eşitlikte ada göre — snapshot sırası değişince liste titremesin.

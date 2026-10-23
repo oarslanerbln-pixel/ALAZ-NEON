@@ -9,6 +9,7 @@ import { Users, QrCode, Play, Clock, X } from "lucide-react";
 import type { Player } from "../../../types/database";
 import { BeamBorder, CardSpotlight, KineticText, NumberTicker, ShimmerButton } from "../../../components/fx";
 import { playGermanVoiceover } from "../../../lib/germanVoiceover";
+import { getJoinUrl } from "../../../lib/roomUrls";
 
 const CAFE_IMAGES = [
   "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=1920",
@@ -17,8 +18,6 @@ const CAFE_IMAGES = [
   "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=1920",
   "https://images.unsplash.com/photo-1559925393-8be0ec4767c8?auto=format&fit=crop&q=80&w=1920"
 ];
-
-declare const __LOCAL_IP__: string | undefined;
 
 interface HostLobbyProps {
   room: {
@@ -205,7 +204,7 @@ export function HostLobby({
                 <div className="w-px h-16 bg-white/20" />
                 <div className="bg-white p-3 rounded-2xl shadow-xl">
                   <QRCodeSVG
-                    value={`${window.location.protocol}//${(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && typeof __LOCAL_IP__ !== 'undefined' ? __LOCAL_IP__ + (window.location.port ? ':' + window.location.port : '') : window.location.host}/join?code=${room?.code}`}
+                    value={getJoinUrl(room?.code)}
                     size={90}
                     bgColor="#ffffff"
                     fgColor="#000000"
@@ -294,7 +293,7 @@ export function HostLobby({
                   innerClassName="bg-white p-3.5 shadow-[0_0_30px_rgba(255,85,0,0.25)] flex items-center justify-center shrink-0"
                 >
                   <QRCodeSVG
-                    value={`${window.location.protocol}//${(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && typeof __LOCAL_IP__ !== 'undefined' ? __LOCAL_IP__ + (window.location.port ? ':' + window.location.port : '') : window.location.host}/join?code=${room.code}`}
+                    value={getJoinUrl(room.code)}
                     size={155}
                     bgColor="#ffffff"
                     fgColor="#000000"

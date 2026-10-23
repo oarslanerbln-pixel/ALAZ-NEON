@@ -21,7 +21,13 @@ export function PlayerJoin() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const urlCode = searchParams.get("code");
-  const [roomCode, setRoomCode] = useState(urlCode || "");
+  const [roomCode, setRoomCode] = useState(urlCode ? urlCode.toUpperCase() : "");
+
+  useEffect(() => {
+    if (urlCode) {
+      setRoomCode(urlCode.toUpperCase());
+    }
+  }, [urlCode]);
   const [nickname, setNickname] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
