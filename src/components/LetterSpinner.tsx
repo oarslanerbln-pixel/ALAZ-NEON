@@ -18,6 +18,8 @@ interface Particle3D {
   vx: number;
   vy: number;
   vz: number;
+  prevPx?: number;
+  prevPy?: number;
   size: number;
   color: string;
   alpha: number;
@@ -52,7 +54,7 @@ export function LetterSpinner({
   }, [onComplete]);
 
   // ═══════════════════════════════════════════════════════════════
-  // 60 FPS APU-DOSTU 3D VOLUMETRİK PARÇACIK VE IŞIK HÜZMESİ SİSTEMİ
+  // 60 FPS APU-DOSTU 3D YILDIZ KAYMASI (WARP SPEED NEBULA) SİSTEMİ
   // ═══════════════════════════════════════════════════════════════
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -72,24 +74,24 @@ export function LetterSpinner({
     resize();
 
     const particles: Particle3D[] = [];
-    const colors = ["#ff5500", "#ffaa00", "#00f3ff", "#ffffff"];
-    const maxParticles = 65;
+    const colors = ["#ff5500", "#ffaa00", "#00f3ff", "#ffffff", "#fed7aa"];
+    const maxParticles = 110;
 
     const createParticle = (): Particle3D => {
       const angle = Math.random() * Math.PI * 2;
-      const speed = 1.2 + Math.random() * 3.5;
-      const dist = 30 + Math.random() * 80;
+      const speed = 1.5 + Math.random() * 4.5;
+      const dist = 20 + Math.random() * 110;
       return {
         x: Math.cos(angle) * dist,
         y: Math.sin(angle) * dist,
-        z: Math.random() * 200 - 100,
+        z: Math.random() * 260 - 130,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
-        vz: (Math.random() - 0.5) * 2,
+        vz: (Math.random() - 0.5) * 3,
         size: 1.5 + Math.random() * 3.5,
         color: colors[Math.floor(Math.random() * colors.length)],
-        alpha: 0.1 + Math.random() * 0.7,
-        maxLife: 45 + Math.random() * 55,
+        alpha: 0.15 + Math.random() * 0.75,
+        maxLife: 40 + Math.random() * 55,
         life: 0,
       };
     };
@@ -103,7 +105,7 @@ export function LetterSpinner({
 
       ctx.clearRect(0, 0, rect.width, rect.height);
 
-      // Yeni parçacık üretimi
+      // Yeni yıldız parçacığı üretimi
       if (particles.length < maxParticles) {
         particles.push(createParticle());
       }
@@ -119,26 +121,41 @@ export function LetterSpinner({
         const currentAlpha = p.alpha * (1 - progress);
 
         // 3D Perspektif İzdüşümü
-        const fov = 300;
+        const fov = 320;
         const scale = fov / (fov + p.z);
         const px = cx + p.x * scale;
         const py = cy + p.y * scale;
         const pSize = p.size * scale;
 
-        if (progress >= 1 || px < 0 || px > rect.width || py < 0 || py > rect.height) {
+        if (progress >= 1 || px < -30 || px > rect.width + 30 || py < -30 || py > rect.height + 30) {
           particles.splice(i, 1);
           continue;
         }
 
         ctx.save();
         ctx.globalAlpha = currentAlpha;
+
+        // 3D Kinetik Yıldız Kayma Kuyruğu (Star Streak)
+        if (p.prevPx !== undefined && p.prevPy !== undefined) {
+          ctx.strokeStyle = p.color;
+          ctx.lineWidth = Math.max(0.6, pSize * 0.75);
+          ctx.beginPath();
+          ctx.moveTo(p.prevPx, p.prevPy);
+          ctx.lineTo(px, py);
+          ctx.stroke();
+        }
+
+        // Yıldız Çekirdeği
         ctx.fillStyle = p.color;
         ctx.shadowColor = p.color;
-        ctx.shadowBlur = 8 * scale;
+        ctx.shadowBlur = 10 * scale;
         ctx.beginPath();
-        ctx.arc(px, py, Math.max(0.5, pSize), 0, Math.PI * 2);
+        ctx.arc(px, py, Math.max(0.6, pSize), 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
+
+        p.prevPx = px;
+        p.prevPy = py;
       }
 
       animId = requestAnimationFrame(render);
@@ -190,7 +207,7 @@ export function LetterSpinner({
         // Kilitleme Evresi
         setRpmGauge(0);
         setPhase("locking");
-        SoundManager.getInstance().playSFX(sounds.CLICK, 0.6);
+        SoundManager.getInstance().playSFX(sounds.CLICK, 0.5);
 
         setTimeout(() => {
           setPhase("locked");
@@ -214,10 +231,10 @@ export function LetterSpinner({
 
   return (
     <div className="relative w-full h-[620px] flex flex-col items-center justify-center select-none overflow-hidden">
-      {/* 3D Hacimsel Parçacık Tuvali */}
+      {/* 3D Hacimsel Parçacık ve Kayan Yıldızlar Tuvali */}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-80"
+        className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-90"
       />
 
       {/* Üst HUD: Cyberpunk Protokol Rozeti */}
@@ -236,13 +253,14 @@ export function LetterSpinner({
       </motion.div>
 
       {/* ═══════════════════════════════════════════════════════════════
-          3D JİROSKOPİK HALKALAR & HOLOGRAFİK KRİSTAL MONOLİT
+          3D JİROSKOPİK HALKALAR & ŞEFFAF HOLOGRAFİK HARF SAHNESİ
+          (ÖNÜNDE ARKA PLANI KAPATAN HİÇBİR KUTU / KART YOKTUR)
           ═══════════════════════════════════════════════════════════════ */}
       <div className="relative z-10 w-[420px] h-[360px] flex items-center justify-center perspective-[1200px]">
         {/* Ortam Işık Aurası (Ambient Volumetric Glow) */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-tr from-alaz-orange/20 via-neon-blue/15 to-amber-400/20 blur-[90px] rounded-full pointer-events-none -z-10"
+          className="absolute inset-0 bg-gradient-to-tr from-alaz-orange/20 via-neon-blue/15 to-amber-400/20 blur-[100px] rounded-full pointer-events-none -z-10"
         />
 
         {/* 3D Jiroskop Halkası 1 (Dış — Plazma Cyan) */}
@@ -284,56 +302,73 @@ export function LetterSpinner({
         />
 
         {/* ═══════════════════════════════════════════════════════════
-            MERKEZİ HOLOGRAFİK CAM MONOLİT (HOLO-PRISM CORE)
+            3D HOLOGRAFİK HEDEFLEME RETİKÜLÜ (TAMAMEN ŞEFFAF / KARTSIZ)
             ═══════════════════════════════════════════════════════════ */}
         <motion.div
           animate={
             phase === "locked"
-              ? { scale: [1, 1.08, 0.98, 1], rotate: [0, -1, 1, 0] }
+              ? { scale: [1, 1.12, 0.96, 1], rotate: [0, -2, 2, 0] }
               : phase === "climax"
-              ? { scale: [1, 1.15, 1.08] }
+              ? { scale: [1, 1.2, 1.1] }
               : { scale: 1 }
           }
           transition={{ duration: 0.45, ease: EASE.out }}
-          className="relative w-52 h-52 md:w-60 md:h-60 rounded-3xl bg-black/40 backdrop-blur-2xl border border-white/25 shadow-[0_25px_60px_rgba(0,0,0,0.8),inset_0_0_35px_rgba(255,255,255,0.08)] flex items-center justify-center overflow-hidden"
+          style={{ transformStyle: "preserve-3d" }}
+          className="relative w-64 h-64 md:w-72 md:h-72 flex items-center justify-center pointer-events-none"
         >
-          {/* Fasetli Cam Yansımaları */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-white/5 pointer-events-none" />
-          <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-alaz-orange/20 to-transparent rotate-45 pointer-events-none" />
+          {/* Lazer Odaklama Köşebentleri (Optic Reticle) */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-cyan-400 rounded-tl-xl shadow-[0_0_15px_#00f3ff]" />
+            <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-alaz-orange rounded-tr-xl shadow-[0_0_15px_#ff5500]" />
+            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-alaz-orange rounded-bl-xl shadow-[0_0_15px_#ff5500]" />
+            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-cyan-400 rounded-br-xl shadow-[0_0_15px_#00f3ff]" />
 
-          {/* Dönen Harf veya Kilitlenen Hedef */}
-          <div className="relative z-10 w-full h-full flex items-center justify-center">
+            {/* İnce artı hedefleme çizgileri */}
+            <div className="absolute top-1/2 left-0 -translate-y-1/2 w-3 h-[1px] bg-cyan-400/80 shadow-[0_0_8px_#00f3ff]" />
+            <div className="absolute top-1/2 right-0 -translate-y-1/2 w-3 h-[1px] bg-cyan-400/80 shadow-[0_0_8px_#00f3ff]" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1px] h-3 bg-alaz-orange/80 shadow-[0_0_8px_#ff5500]" />
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1px] h-3 bg-alaz-orange/80 shadow-[0_0_8px_#ff5500]" />
+          </div>
+
+          {/* Kilitlenme Şok Dalgası (Expanding Shockwave Ring) */}
+          <AnimatePresence>
+            {(phase === "locked" || phase === "climax") && (
+              <motion.div
+                initial={{ scale: 0.2, opacity: 0.9 }}
+                animate={{ scale: 2.4, opacity: 0 }}
+                transition={{ duration: 0.9, ease: EASE.out }}
+                className="absolute inset-0 rounded-full border-2 border-alaz-orange pointer-events-none shadow-[0_0_40px_rgba(255,85,0,0.8)]"
+              />
+            )}
+          </AnimatePresence>
+
+          {/* Dönen Harf veya Kilitlenen Hedef (Arka Yıldızları Asla Kapatmayan 3D Tipografi) */}
+          <div className="relative z-10 w-full h-full flex items-center justify-center [transform-style:preserve-3d]">
             <AnimatePresence mode="popLayout">
               {phase === "spinning" ? (
                 <motion.div
                   key={`spin-${displayIndex}`}
-                  initial={{ opacity: 0, scale: 0.7, rotateX: 90 }}
-                  animate={{ opacity: 1, scale: 1, rotateX: 0 }}
-                  exit={{ opacity: 0, scale: 1.25, rotateX: -90 }}
-                  transition={{ duration: 0.12 }}
-                  className="text-8xl md:text-[8.5rem] font-black tracking-tight text-white font-sans select-none drop-shadow-[0_0_25px_rgba(255,255,255,0.5)]"
+                  initial={{ opacity: 0, scale: 0.65, rotateX: 90, z: -60 }}
+                  animate={{ opacity: 1, scale: 1, rotateX: 0, z: 0 }}
+                  exit={{ opacity: 0, scale: 1.25, rotateX: -90, z: 60 }}
+                  transition={{ duration: 0.11, ease: "linear" }}
+                  className="text-8xl md:text-[9.5rem] font-black tracking-tight text-white font-sans select-none drop-shadow-[0_0_35px_rgba(255,255,255,0.85)] drop-shadow-[0_0_65px_rgba(0,243,255,0.45)]"
                 >
                   {LETTERS[displayIndex]}
                 </motion.div>
               ) : (
                 <motion.div
                   key={`target-${effectiveLetter}`}
-                  initial={{ scale: 0.2, opacity: 0, rotate: -30 }}
-                  animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                  initial={{ scale: 0.15, opacity: 0, rotateY: -60, z: -120 }}
+                  animate={{ scale: [0.15, 1.25, 0.96, 1.05, 1], opacity: 1, rotateY: 0, z: 0 }}
                   transition={SPRING.bouncy}
-                  className="text-9xl md:text-[10.5rem] font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-amber-200 to-alaz-orange drop-shadow-[0_0_45px_rgba(255,85,0,0.9)] select-none"
+                  className="text-9xl md:text-[12.5rem] font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-amber-200 to-alaz-orange drop-shadow-[0_15px_35px_rgba(0,0,0,0.9)] drop-shadow-[0_0_55px_rgba(255,85,0,0.95)] drop-shadow-[0_0_100px_rgba(251,191,36,0.7)] select-none will-change-transform"
                 >
                   {effectiveLetter}
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
-
-          {/* Monolit Köşe Vurguları */}
-          <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-white/60 pointer-events-none" />
-          <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-white/60 pointer-events-none" />
-          <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-white/60 pointer-events-none" />
-          <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-white/60 pointer-events-none" />
         </motion.div>
       </div>
 

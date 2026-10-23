@@ -161,22 +161,20 @@ export function HostPlaying({
               className="absolute inset-[-22px] rounded-[3.2rem] border border-alaz-orange/45 shadow-[0_0_25px_rgba(255,85,0,0.3)] border-t-transparent border-b-transparent opacity-65 pointer-events-none"
             />
 
-            {/* Kristal Cam Harf Monoliti */}
-            <div className="w-56 h-56 md:w-64 md:h-64 rounded-[2.5rem] border border-white/25 flex items-center justify-center shadow-[0_25px_70px_rgba(0,0,0,0.7),inset_0_0_40px_rgba(255,255,255,0.08)] bg-black/40 backdrop-blur-3xl relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-tr from-white/[0.1] via-transparent to-white/[0.04] pointer-events-none" />
-              
+            {/* 3D Havada Süzülen Şeffaf Harf Çekirdeği */}
+            <div className="w-56 h-56 md:w-64 md:h-64 flex items-center justify-center relative group">
               {/* Köşe Prizma Çentikleri */}
-              <div className="absolute top-3 left-3 w-3 h-3 border-t-2 border-l-2 border-cyan-400/70" />
-              <div className="absolute top-3 right-3 w-3 h-3 border-t-2 border-r-2 border-alaz-orange/70" />
-              <div className="absolute bottom-3 left-3 w-3 h-3 border-b-2 border-l-2 border-alaz-orange/70" />
-              <div className="absolute bottom-3 right-3 w-3 h-3 border-b-2 border-r-2 border-cyan-400/70" />
+              <div className="absolute top-2 left-2 w-5 h-5 border-t-2 border-l-2 border-cyan-400/80 shadow-[0_0_12px_#00f3ff]" />
+              <div className="absolute top-2 right-2 w-5 h-5 border-t-2 border-r-2 border-alaz-orange/80 shadow-[0_0_12px_#ff5500]" />
+              <div className="absolute bottom-2 left-2 w-5 h-5 border-b-2 border-l-2 border-alaz-orange/80 shadow-[0_0_12px_#ff5500]" />
+              <div className="absolute bottom-2 right-2 w-5 h-5 border-b-2 border-r-2 border-cyan-400/80 shadow-[0_0_12px_#00f3ff]" />
 
               <motion.div
                 key={currentLetter}
                 initial={{ scale: 0.5, opacity: 0, rotateY: 90 }}
                 animate={{ scale: 1, opacity: 1, rotateY: 0 }}
                 transition={SPRING.bouncy}
-                className="text-[7rem] md:text-[9.5rem] font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white via-amber-100 to-alaz-orange leading-none drop-shadow-[0_0_45px_rgba(255,85,0,0.85)]"
+                className="text-[7.5rem] md:text-[10.5rem] font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white via-amber-100 to-alaz-orange leading-none drop-shadow-[0_15px_30px_rgba(0,0,0,0.9)] drop-shadow-[0_0_50px_rgba(255,85,0,0.95)] drop-shadow-[0_0_90px_rgba(251,191,36,0.65)] select-none will-change-transform"
               >
                 {currentLetter}
               </motion.div>
