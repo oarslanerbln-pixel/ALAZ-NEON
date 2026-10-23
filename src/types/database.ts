@@ -57,10 +57,16 @@ export type RoomStatus =
   | "ayna_survey"
   | "ayna_active"
   | "ayna_reveal"
-  | "ayna_final";
+  | "ayna_final"
+  | "sniper_intro"
+  | "sniper_active"
+  | "sniper_reveal"
+  | "slingshot_intro"
+  | "slingshot_active"
+  | "slingshot_reveal";
 
 export type GameMode = "individual" | "team";
-export type GameType = "scattegories" | "quiz" | "bomb" | "sensor" | "wheel" | "overload" | "echo" | "pulse" | "colors" | "vault" | "unity" | "bar" | "kablo" | "ayna";
+export type GameType = "scattegories" | "quiz" | "bomb" | "sensor" | "wheel" | "overload" | "echo" | "pulse" | "colors" | "vault" | "unity" | "bar" | "kablo" | "ayna" | "sniper" | "slingshot";
 
 export type QuizOption = "A" | "B" | "C" | "D";
 
@@ -218,6 +224,11 @@ export interface Room {
   // KOPYALANIR (canlı referans değil). Böylece bir mekana satış sonrası
   // marka değiştirilse bile geçmiş odaların/demoların markası değişmez.
   // Alanlar boşsa varsayılan HENGAME markası kullanılır.
+  // Sniper Game Fields
+  sniper_end_time?: number;
+  // Slingshot Game Fields
+  slingshot_end_time?: number;
+  slingshot_round?: number;
   venue_name?: string;
   venue_logo_url?: string;
   venue_primary_color?: string;
@@ -248,6 +259,10 @@ export interface Player {
   colors_clicks?: number;
   bar_score?: number;
   kablo_score?: number;
+  sniper_shot?: { x: number; y: number; timestamp: number } | null;
+  sniper_score?: number;
+  slingshot_shot?: { power: number; angle: number; curve: number; timestamp: number } | null;
+  slingshot_score?: number;
 }
 
 /**

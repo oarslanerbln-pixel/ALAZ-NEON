@@ -1114,6 +1114,16 @@ const translations = {
     de: "Wie gut kennst du die Welt? Schätze echte Daten und sieh dich im Spiegel des Raums.",
     en: "How well do you know the world? Guess real data and see yourself in the room's mirror.",
   },
+  "dashboard.modeSniperDesc": {
+    tr: "Telefonu havada TV'ye tut, jiroskopla nişan al! Kafe derbi ve hedef atış arenası.",
+    de: "Richte dein Handy auf den TV, ziele mit dem Gyroskop! Die Cyber-Zielscheiben-Arena.",
+    en: "Aim your phone at the TV with gyroscope controls! The cyber target shooting arena.",
+  },
+  "dashboard.modeSlingshotDesc": {
+    tr: "Dokunmatik sapanı ger, falsoyu ver ve 90'a as! 3D stadyum penaltı şöleni.",
+    de: "Zieh die Touch-Schleuder, gib Effet und triff in den Winkel! Das 3D-Stadion-Elfmeterschießen.",
+    en: "Pull the touch slingshot, add curve, and hit the top corner! 3D stadium shootout.",
+  },
 
   // ═══════════════════════════════════════════
   // OYUN MODLARI — misafir telefonu ve TV ekranı

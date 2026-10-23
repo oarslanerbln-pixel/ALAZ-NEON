@@ -11,7 +11,9 @@ interface NeonIconProps {
     | "dashboard"
     | "flame"
     | "lock"
-    | "unlock";
+    | "unlock"
+    | "target"
+    | "crosshair";
   color?:
     | "blue"
     | "pink"
@@ -196,6 +198,38 @@ export function NeonIcon({
           >
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
             <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+          </svg>
+        );
+      case "target":
+        return (
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <circle cx="12" cy="12" r="6" />
+            <circle cx="12" cy="12" r="2" />
+          </svg>
+        );
+      case "crosshair":
+        return (
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="22" y1="12" x2="18" y2="12" />
+            <line x1="6" y1="12" x2="2" y2="12" />
+            <line x1="12" y1="6" x2="12" y2="2" />
+            <line x1="12" y1="22" x2="12" y2="18" />
           </svg>
         );
     }

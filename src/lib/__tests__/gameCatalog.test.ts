@@ -21,7 +21,7 @@ const LOCALES: Locale[] = ["tr", "de", "en"];
  */
 const EXPECTED_GAME_IDS = [
   "scattegories", "quiz", "bomb", "sensor", "wheel", "overload", "echo",
-  "pulse", "colors", "vault", "unity", "bar", "kablo", "ayna",
+  "pulse", "colors", "vault", "unity", "bar", "kablo", "ayna", "sniper", "slingshot",
 ] as const;
 
 describe("oyun katalogu", () => {
@@ -56,10 +56,10 @@ describe("oyun katalogu", () => {
     }
   });
 
-  it("yalnizca 3 amiral gemisi mod aktif (Arena, Quiz, Bomb), kalan 11 mod kilitli", () => {
+  it("amiral gemisi ve yeni nesil 3D modlar aktif (Arena, Quiz, Bomb, Sniper, Slingshot), kalan 11 mod kilitli", () => {
     const active = GAME_CARDS.filter((g) => !g.isComingSoon).map((g) => g.id);
     const locked = GAME_CARDS.filter((g) => g.isComingSoon).map((g) => g.id);
-    expect(active.sort()).toEqual(["bomb", "quiz", "scattegories"]);
+    expect(active.sort()).toEqual(["bomb", "quiz", "scattegories", "slingshot", "sniper"]);
     expect(locked.length).toBe(11);
   });
 });
