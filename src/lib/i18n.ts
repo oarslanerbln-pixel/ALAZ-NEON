@@ -1608,6 +1608,20 @@ const translations = {
   "arena.spinnerProtocol": { tr: "HENGAME ARENA", de: "HENGAME ARENA", en: "HENGAME ARENA" },
   "arena.spinnerResolving": { tr: "KUANTUM ÇEKİRDEK KİLİTLENİYOR...", de: "QUANTUM-KERN WIRD GESPERRT...", en: "LOCKING QUANTUM CORE..." },
   "arena.spinnerLocked": { tr: "HEDEF HARF KİLİTLENDİ!", de: "ZIELBUCHSTABE ARRETIERT!", en: "TARGET LETTER LOCKED!" },
+  "arena.progress": {
+    tr: (c: string | number, total: string | number) => `${c} / ${total} Kategori Hazır`,
+    de: (c: string | number, total: string | number) => `${c} / ${total} Kategorien bereit`,
+    en: (c: string | number, total: string | number) => `${c} / ${total} Categories ready`,
+  },
+  "arena.allReady": { tr: "TÜM CEVAPLAR HAZIR! ⚡", de: "ALLE ANTWORTEN BEREIT! ⚡", en: "ALL ANSWERS READY! ⚡" },
+  "arena.speedBonusActive": { tr: "HIZ BONUSU İÇİN KİLİTLE! 🚀", de: "FÜR SPEED-BONUS ARRETIEREN! 🚀", en: "LOCK IN FOR SPEED BONUS! 🚀" },
+  "arena.letterMatch": { tr: "Harf Eşleşti", de: "Buchstabe passt", en: "Letter matches" },
+  "arena.letterMismatch": {
+    tr: (letter: string) => `"${letter}" ile başlamalı`,
+    de: (letter: string) => `Muss mit "${letter}" beginnen`,
+    en: (letter: string) => `Must start with "${letter}"`,
+  },
+  "arena.jokerActiveBadge": { tr: "2X JOKER AKTİF", de: "2X JOKER AKTIV", en: "2X JOKER ACTIVE" },
   "intro.quiz.title": { tr: "HENGAME QUIZ", de: "HENGAME QUIZ", en: "HENGAME QUIZ" },
   "intro.quiz.subtitle": { tr: "ZİHİNLER ÇARPIŞIYOR", de: "KÖPFE PRALLEN AUFEINANDER", en: "MINDS COLLIDE" },
 

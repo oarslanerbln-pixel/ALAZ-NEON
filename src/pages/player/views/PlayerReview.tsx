@@ -18,25 +18,33 @@ export function PlayerReview({ submitStatus }: PlayerReviewProps) {
       className="flex flex-col items-center justify-center text-center p-8 min-h-[60vh] relative z-10"
     >
       <PlayerBackground />
-      {/* Animated check box */}
+
+      {/* 3D Kilitli Kasa Rozeti (Cyber Vault Lock) */}
       <div className="relative mb-8">
         <motion.div
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ ...SPRING.snappy, delay: 0.1 }}
-          className="w-20 h-20 bg-zinc-900 border border-zinc-700 flex items-center justify-center relative"
+          className={`w-24 h-24 rounded-3xl flex items-center justify-center relative backdrop-blur-2xl border transition-all duration-500 ${
+            submitStatus === "success"
+              ? "bg-[#0b1c14]/90 border-emerald-400/60 shadow-[0_0_40px_rgba(16,185,129,0.35)]"
+              : "bg-[#12121e]/90 border-white/15 shadow-[0_10px_30px_rgba(0,0,0,0.6)]"
+          }`}
         >
-          <div className="absolute top-0 left-0 w-1.5 h-1.5 bg-white" />
-          <div className="absolute bottom-0 right-0 w-1.5 h-1.5 bg-white" />
+          {/* Köşe Prizma Çentikleri */}
+          <div className="absolute top-2 left-2 w-2.5 h-2.5 border-t-2 border-l-2 border-emerald-400/60" />
+          <div className="absolute top-2 right-2 w-2.5 h-2.5 border-t-2 border-r-2 border-emerald-400/60" />
+          <div className="absolute bottom-2 left-2 w-2.5 h-2.5 border-b-2 border-l-2 border-emerald-400/60" />
+          <div className="absolute bottom-2 right-2 w-2.5 h-2.5 border-b-2 border-r-2 border-emerald-400/60" />
 
           <AnimatePresence mode="wait">
             {submitStatus === "success" ? (
               <motion.div
                 key="check"
-                initial={{ scale: 0, rotate: -30 }}
+                initial={{ scale: 0, rotate: -45 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={SPRING.bouncy}
-                className="text-3xl"
+                className="text-4xl text-emerald-400 drop-shadow-[0_0_15px_#34d399]"
               >
                 ✓
               </motion.div>
@@ -44,19 +52,20 @@ export function PlayerReview({ submitStatus }: PlayerReviewProps) {
               <motion.div
                 key="loader"
                 animate={{ rotate: 360 }}
-                transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                className="w-8 h-8 border-2 border-zinc-700 border-t-white"
+                transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+                className="w-10 h-10 rounded-full border-2 border-white/15 border-t-alaz-orange shadow-[0_0_15px_rgba(255,85,0,0.5)]"
               />
             )}
           </AnimatePresence>
         </motion.div>
 
-        {/* Outer pulse ring */}
-        {submitStatus !== "success" && (
+        {/* Dış Nabız Halkası */}
+        {submitStatus === "success" && (
           <motion.div
-            animate={{ scale: [1, 1.4, 1], opacity: [0.3, 0, 0.3] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="absolute inset-0 border border-white/20 pointer-events-none"
+            initial={{ scale: 0.8, opacity: 0.8 }}
+            animate={{ scale: 1.5, opacity: 0 }}
+            transition={{ duration: 1.6, repeat: Infinity }}
+            className="absolute inset-0 rounded-3xl border border-emerald-400/40 pointer-events-none"
           />
         )}
       </div>
@@ -65,12 +74,12 @@ export function PlayerReview({ submitStatus }: PlayerReviewProps) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ ...TWEEN.enter, delay: 0.2 }}
-        className="text-xl font-light text-white tracking-[0.3em] mb-3 uppercase"
+        className="text-2xl font-black text-white tracking-[0.25em] mb-2 uppercase"
       >
         {t("playerReview.title")}
       </motion.h2>
 
-      {/* Rotating review messages */}
+      {/* Dönen Durum Mesajı */}
       <div className="h-8 flex items-center justify-center overflow-hidden mb-6">
         <AnimatePresence mode="wait">
           {submitStatus === "success" ? (
@@ -78,10 +87,10 @@ export function PlayerReview({ submitStatus }: PlayerReviewProps) {
               key="sent"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/30"
             >
-              <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-green-400 text-xs font-mono tracking-[0.3em] uppercase">
+              <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_#34d399]" />
+              <span className="text-emerald-300 text-xs font-mono font-bold tracking-[0.2em] uppercase">
                 {t("playerReview.answersSent")}
               </span>
             </motion.div>
@@ -93,9 +102,9 @@ export function PlayerReview({ submitStatus }: PlayerReviewProps) {
               exit={{ opacity: 0, y: -8 }}
             >
               <motion.p
-                animate={{ opacity: [0.4, 0.9, 0.4] }}
-                transition={{ duration: 2.5, repeat: Infinity }}
-                className="text-zinc-500 text-xs font-mono tracking-[0.2em] uppercase"
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="text-white/50 text-xs font-mono tracking-[0.2em] uppercase"
               >
                 {t("playerReview.reviewing")}
               </motion.p>
@@ -104,30 +113,16 @@ export function PlayerReview({ submitStatus }: PlayerReviewProps) {
         </AnimatePresence>
       </div>
 
-      {/* Submit status badge */}
-      <AnimatePresence>
-        {submitStatus === "success" && (
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={SPRING.snappy}
-            className="px-6 py-3 bg-zinc-900 border border-zinc-700 text-white font-mono text-xs tracking-[0.3em] flex items-center gap-3 relative overflow-hidden"
-          >
-            <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-green-500" />
-            <div className="w-1.5 h-1.5 bg-green-500 animate-pulse ml-1" />
-            {t("playerReview.dataTransferred")}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.6 }}
-        className="mt-8 text-zinc-700 text-[10px] font-light uppercase tracking-widest"
+      {/* Ek Bilgi Rozeti */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="px-6 py-3 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-xl text-white/70 font-mono text-xs tracking-[0.2em] flex items-center gap-3 relative shadow-lg"
       >
-        {t("playerReview.watchMainScreen")}
-      </motion.p>
+        <span className="text-alaz-orange animate-pulse">👀</span>
+        <span>{t("playerReview.watchMainScreen")}</span>
+      </motion.div>
     </motion.div>
   );
 }

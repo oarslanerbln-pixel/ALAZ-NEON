@@ -194,18 +194,17 @@ export function LetterSpinner({
 
         setTimeout(() => {
           setPhase("locked");
-          SoundManager.getInstance().playSFX(sounds.BURN, 0.8);
+          SoundManager.getInstance().playSFX(sounds.CLICK, 0.5);
 
           setTimeout(() => {
             setPhase("climax");
-            SoundManager.getInstance().playSFX(sounds.CINEMATIC_BOOM, 0.7);
 
-            // Patlama ve sinematik bitiş
+            // Sinematik bitiş
             setTimeout(() => {
               onCompleteRef.current();
-            }, 1600);
-          }, 800);
-        }, 600);
+            }, 1200);
+          }, 600);
+        }, 500);
       }
     };
 

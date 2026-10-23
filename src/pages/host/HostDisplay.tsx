@@ -176,7 +176,6 @@ function HostDisplayGame({
     } else if (gameState === "playing") {
       sound.stopSound(sounds.LOBBY_AMBIENT);
       sound.playMusic(sounds.GAME_PULSE, 0.3);
-      sound.startAmbientDrone(); // Keep drone running for consistency
     } else if (gameState === "countdown") {
       sound.stopSound(sounds.LOBBY_AMBIENT);
     } else if (gameState === "review") {
