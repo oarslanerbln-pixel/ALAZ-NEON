@@ -1667,6 +1667,16 @@ const translations = {
   },
   "quiz.getReady": { tr: "HAZIRLAN!", de: "MACH DICH BEREIT!", en: "GET READY!" },
   "quiz.answerSaved": { tr: "CEVAP KİLİTLENDİ 🔒", de: "ANTWORT GESPEICHERT 🔒", en: "ANSWER LOCKED 🔒" },
+  "quiz.lockedWait": {
+    tr: "Cevabın Kilitlendi · TV Ekranını Takip Et",
+    de: "Antwort eingeloggt · Schau auf den TV",
+    en: "Answer Locked · Watch the TV Screen",
+  },
+  "quiz.speedLockBadge": {
+    tr: (sec: string | number) => `⚡ ${sec}s İÇİNDE KİLİTLENDİ`,
+    de: (sec: string | number) => `⚡ IN ${sec}s EINGELOGGT`,
+    en: (sec: string | number) => `⚡ LOCKED IN ${sec}s`,
+  },
   "quiz.result": { tr: "TUR SONUCU", de: "RUNDENERGEBNIS", en: "ROUND RESULT" },
   "quiz.ranking": { tr: "SIRALAMA", de: "RANGLISTE", en: "RANKING" },
   "quiz.followRankingOnScreen": {

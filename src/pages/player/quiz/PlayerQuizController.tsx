@@ -11,9 +11,45 @@ import { revealedOption } from "../../../lib/quizReveal";
 import { useLocale } from "../../../hooks/useLocale";
 import { gameTitle } from "../../../lib/gameCatalog";
 import { PlayerStageScreen } from "../components/PlayerStageScreen";
+import { PlayerIntroVideo } from "../components/PlayerIntroVideo";
 import { QuizTimerBar } from "./QuizTimerBar";
 import { NumberTicker } from "../../../components/fx";
 import { SPRING, STAGGER } from "../../../lib/motion";
+
+const OPTION_THEMES = {
+  A: {
+    border: "border-cyan-400/50",
+    glow: "shadow-[0_0_25px_rgba(0,243,255,0.25)]",
+    badge: "bg-cyan-500/20 text-cyan-300 border-cyan-400/40",
+    activeGlow: "shadow-[0_0_35px_rgba(0,243,255,0.5)]",
+    accent: "text-cyan-400",
+    corner: "border-cyan-400",
+  },
+  B: {
+    border: "border-purple-400/50",
+    glow: "shadow-[0_0_25px_rgba(192,132,252,0.25)]",
+    badge: "bg-purple-500/20 text-purple-300 border-purple-400/40",
+    activeGlow: "shadow-[0_0_35px_rgba(192,132,252,0.5)]",
+    accent: "text-purple-400",
+    corner: "border-purple-400",
+  },
+  C: {
+    border: "border-alaz-orange/50",
+    glow: "shadow-[0_0_25px_rgba(255,85,0,0.25)]",
+    badge: "bg-alaz-orange/20 text-orange-300 border-alaz-orange/40",
+    activeGlow: "shadow-[0_0_35px_rgba(255,85,0,0.5)]",
+    accent: "text-alaz-orange",
+    corner: "border-alaz-orange",
+  },
+  D: {
+    border: "border-pink-400/50",
+    glow: "shadow-[0_0_25px_rgba(244,114,182,0.25)]",
+    badge: "bg-pink-500/20 text-pink-300 border-pink-400/40",
+    activeGlow: "shadow-[0_0_35px_rgba(244,114,182,0.5)]",
+    accent: "text-pink-400",
+    corner: "border-pink-400",
+  },
+} as const;
 
 interface PlayerQuizControllerProps {
   room: Room;
@@ -25,6 +61,8 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [gameState, setGameState] = useState(room.status);
+  const [responseSec, setResponseSec] = useState<string | null>(null);
+  const questionStartTimeRef = useRef(Date.now());
   const [urgent, setUrgent] = useState(false);
   void urgent;
   const [joinedMidQuestion] = useState(() => (room.status === "question_active" ? room.current_question_index ?? 0 : null));
@@ -32,16 +70,14 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
   // Synchronous double-tap submission lock
   const hasSubmittedRef = useRef(false);
 
-  // Soru değişince seçim sıfırlanır. Yalnızca durum geçişine bakmak yetmiyor:
-  // telefon kilitliyken (ya da wifi koparken) ara durumlar tek bir snapshot'ta
-  // birleşiyor; 1. sorunun "question_active"inden doğrudan 2. sorunun
-  // "question_active"ine uyanan telefon eski cevabıyla kilitli kalıyordu.
+  // Soru değişince seçim sıfırlanır.
   const questionIndex = room.current_question_index ?? 0;
   const [seenQuestionIndex, setSeenQuestionIndex] = useState(questionIndex);
   if (questionIndex !== seenQuestionIndex) {
     setSeenQuestionIndex(questionIndex);
     setSelectedOption(null);
     setHasSubmitted(false);
+    setResponseSec(null);
   }
 
   // Synchronize game state during render
@@ -65,6 +101,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
   useEffect(() => {
     const checkSubmission = async () => {
       if (room.status === "question_active" && !hasSubmitted) {
+        questionStartTimeRef.current = Date.now();
         const questionIndexStr = (room.current_question_index ?? 0).toString();
         const q = query(
           collection(db, "answers"),
@@ -84,11 +121,22 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
     checkSubmission();
   }, [room.status, room.id, player.id, room.current_question_index, hasSubmitted]);
 
+  // Reset timer on question_active
+  useEffect(() => {
+    if (gameState === "question_active") {
+      questionStartTimeRef.current = Date.now();
+      setResponseSec(null);
+    }
+  }, [gameState, questionIndex]);
+
   const handleSubmit = useCallback(async (option: string) => {
     if (hasSubmittedRef.current) return;
     hasSubmittedRef.current = true;
 
-    haptics.tap();
+    const elapsed = Math.max(0.2, (Date.now() - questionStartTimeRef.current) / 1000).toFixed(1);
+    setResponseSec(elapsed);
+
+    haptics.impact();
     SoundManager.getInstance().playSFX(sounds.CLICK);
     setSelectedOption(option);
     setHasSubmitted(true);
@@ -101,15 +149,13 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
         round_letter: questionIndexStr,
         data: {
           selectedOption: option,
+          responseTimeSec: Number(elapsed),
         },
         created_at: serverTimestamp(),
         expires_at: retentionExpiry(),
       });
       haptics.success();
     } catch (err) {
-      // Onay yolda kaybolup SDK yeniden gönderince "zaten var": cevap kayıtlı.
-      // Eskiden şıklar açılıp seçim siliniyordu; o arada basılan ikinci şık
-      // telefonda görünürken TV ilkini puanlıyordu.
       if (isAlreadyExists(err)) {
         haptics.success();
         return;
@@ -134,8 +180,6 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
   const totalRounds = room.total_rounds || 5;
 
   return (
-    // 100dvh: mobil tarayıcının adres çubuğu açıkken 100vh ekranı taşırıp
-    // kaydırma çubuğu çıkarıyordu. Üst/alt dolgu çentik ve home bar için.
     <div className="flex-1 flex flex-col items-center justify-between min-h-[100dvh] bg-[#07070d] text-white relative overflow-hidden select-none pt-[env(safe-area-inset-top)] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       {gameState === "question_active" && (
         <QuizTimerBar
@@ -155,7 +199,6 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
         </div>
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-alaz-orange/10 border border-alaz-orange/30 text-alaz-orange backdrop-blur-xl">
           <span className="text-xs">⚡</span>
-          {/* Açılışta sıfırdan saymasın; yalnızca puan arttığında saysın. */}
           <NumberTicker value={player.total_score} initial={player.total_score} className="text-xs font-black font-mono tabular-nums" />
           <span className="text-[11px] text-white/50 uppercase">{t("quiz.pts")}</span>
         </div>
@@ -163,11 +206,6 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
 
       {/* Content Area */}
       <div className="relative z-10 w-full max-w-md px-4 flex-1 flex flex-col justify-center min-h-0">
-        {/* Soru numarasıyla anahtarlı: host ekranları hızlı geçerken yavaş
-            telefonda bir çıkış animasyonu hiç bitmeyebiliyor ve "wait" kipi
-            yeni ekranı sonsuza dek bekletiyordu (telefon önceki sorunun
-            açıklamasında kalıp yeni soruyu kaçırıyordu). Yeni soru ağacı
-            baştan kurar. */}
         <AnimatePresence mode="wait" key={questionIndex}>
           
           {/* LOBBY */}
@@ -182,10 +220,16 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
             </motion.div>
           )}
 
-          {/* QUESTION INTRO */}
-          {(gameState === "question_intro" || gameState === "quiz_intro") && (
+          {/* INTRO VIDEO / GET READY */}
+          {(gameState === "quiz_intro" || (gameState === "question_intro" && questionIndex === 0)) ? (
+            <PlayerIntroVideo
+              gameTitle="HENGAME QUIZ"
+              currentRound={currentRound}
+              totalRounds={totalRounds}
+            />
+          ) : gameState === "question_intro" ? (
             <motion.div
-              key="intro"
+              key={`intro-${questionIndex}`}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.05 }}
@@ -200,23 +244,22 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
                 hint={null}
               />
             </motion.div>
-          )}
+          ) : null}
 
-          {/* ACTIVE QUESTION - 4 ULTRA-CLEAN TACTILE GLASS CARDS */}
+          {/* ACTIVE QUESTION - 4 TACTILE CYBER POWER BLOCKS */}
           {gameState === "question_active" && currentQ && (
             <motion.div
               key="active"
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              // Soru üstte, şıklar altta: tek elle oynarken başparmak ekranın
-              // alt yarısına rahat uzanıyor, üst köşelere değil.
               className="w-full flex-1 flex flex-col gap-3 py-2"
             >
               {/* Question Preview Box */}
-              <div className="w-full bg-[#0d0d18]/95 border border-white/[0.09] rounded-2xl p-4 sm:p-5 shadow-2xl backdrop-blur-xl text-center mb-auto">
+              <div className="w-full bg-[#0d0d18]/95 border border-white/[0.12] rounded-2xl p-4 sm:p-5 shadow-2xl backdrop-blur-xl text-center mb-auto relative overflow-hidden">
+                <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-cyan-400 via-purple-400 to-alaz-orange" />
                 {currentQ.category && (
-                  <span className="inline-block text-[10px] font-mono uppercase text-cyan-400 font-bold tracking-[0.2em] px-2.5 py-0.5 rounded-full bg-cyan-400/10 border border-cyan-400/20 mb-2">
+                  <span className="inline-block text-[10px] font-mono uppercase text-cyan-300 font-black tracking-[0.25em] px-3 py-0.5 rounded-full bg-cyan-400/10 border border-cyan-400/30 mb-2">
                     {currentQ.category}
                   </span>
                 )}
@@ -225,53 +268,74 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
                 </h3>
               </div>
 
-              {/* 4 Obsidian Glass Options */}
-              {(["A", "B", "C", "D"] as const).map((opt, i) => {
-                const isSelected = selectedOption === opt;
+              {/* 4 Tactile Cyber Power Blocks */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full">
+                {(["A", "B", "C", "D"] as const).map((opt, i) => {
+                  const isSelected = selectedOption === opt;
+                  const theme = OPTION_THEMES[opt];
 
-                return (
-                  <motion.button
-                    key={opt}
-                    data-testid={`quiz-option-${opt}`}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: hasSubmitted && !isSelected ? 0.25 : 1, y: 0, scale: isSelected ? 1.02 : 1 }}
-                    transition={{ ...SPRING.snappy, delay: hasSubmitted ? 0 : i * STAGGER.tight }}
-                    whileTap={hasSubmitted ? undefined : { scale: 0.96 }}
-                    onClick={() => !hasSubmitted && handleSubmit(opt)}
-                    disabled={hasSubmitted}
-                    className={`w-full min-h-[60px] p-4 rounded-2xl border transition-colors duration-200 flex items-center gap-3.5 text-left relative overflow-hidden select-none ${
-                      isSelected
-                        ? "bg-white text-black border-white shadow-[0_0_35px_rgba(255,255,255,0.35)]"
-                        : "bg-[#0c0c16]/90 border-white/[0.08] text-white hover:border-white/20"
-                    }`}
-                  >
-                    <div className={`w-10 h-10 rounded-xl border flex items-center justify-center text-sm font-black shrink-0 transition-colors ${
-                      isSelected
-                        ? "bg-black text-white border-black"
-                        : "bg-white/[0.05] border-white/10 text-white/80"
-                    }`}>
-                      {opt}
-                    </div>
-                    <div className="text-base sm:text-lg font-semibold flex-1 leading-snug">
-                      {currentQ.options[opt]}
-                    </div>
-                    {isSelected && (
-                      <span className="text-base shrink-0">🔒</span>
-                    )}
-                  </motion.button>
-                );
-              })}
+                  return (
+                    <motion.button
+                      key={opt}
+                      data-testid={`quiz-option-${opt}`}
+                      initial={{ opacity: 0, y: 14 }}
+                      animate={{
+                        opacity: hasSubmitted && !isSelected ? 0.25 : 1,
+                        y: 0,
+                        scale: isSelected ? 1.02 : 1,
+                      }}
+                      transition={{ ...SPRING.snappy, delay: hasSubmitted ? 0 : i * STAGGER.tight }}
+                      whileTap={hasSubmitted ? undefined : { scale: 0.94 }}
+                      onClick={() => !hasSubmitted && handleSubmit(opt)}
+                      disabled={hasSubmitted}
+                      className={`w-full min-h-[72px] sm:min-h-[80px] p-3.5 sm:p-4 rounded-2xl border-2 transition-all duration-200 flex items-center gap-3.5 text-left relative overflow-hidden select-none touch-manipulation ${
+                        isSelected
+                          ? "bg-white text-black border-white shadow-[0_0_40px_rgba(255,255,255,0.8)]"
+                          : `bg-[#0c0c16]/90 backdrop-blur-xl ${theme.border} ${theme.glow} text-white hover:border-white/40 active:scale-[0.98]`
+                      }`}
+                    >
+                      {/* Lazer Köşebentler */}
+                      <div className={`absolute top-1 left-1 w-2.5 h-2.5 border-t-2 border-l-2 ${isSelected ? "border-black" : theme.corner}`} />
+                      <div className={`absolute bottom-1 right-1 w-2.5 h-2.5 border-b-2 border-r-2 ${isSelected ? "border-black" : theme.corner}`} />
+
+                      <div className={`w-11 h-11 rounded-xl border flex items-center justify-center text-base font-black shrink-0 transition-colors ${
+                        isSelected
+                          ? "bg-black text-white border-black shadow-[0_0_15px_rgba(0,0,0,0.5)]"
+                          : theme.badge
+                      }`}>
+                        {opt}
+                      </div>
+                      <div className={`text-sm sm:text-base font-bold flex-1 leading-snug line-clamp-2 ${isSelected ? "text-black font-black" : "text-white"}`}>
+                        {currentQ.options[opt]}
+                      </div>
+                      {isSelected && (
+                        <div className="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center text-xs font-black shadow-md shrink-0">
+                          🔒
+                        </div>
+                      )}
+                    </motion.button>
+                  );
+                })}
+              </div>
 
               {hasSubmitted && (
                 <motion.div
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-center py-2.5 px-4 bg-white/[0.04] border border-white/10 rounded-xl mt-1"
+                  initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={SPRING.bouncy}
+                  className="w-full py-2.5 px-4 bg-black/80 border border-cyan-400/40 rounded-2xl flex items-center justify-between shadow-[0_0_30px_rgba(0,243,255,0.2)] backdrop-blur-xl mt-1"
                 >
-                  <p className="text-white/70 font-mono text-xs tracking-wider uppercase flex items-center justify-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                    {t("quiz.answerSaved", "Cevabın Kaydedildi · Gözün Ekranda Olsun")}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+                    <span className="text-white font-mono text-[11px] tracking-widest font-black uppercase">
+                      {t("quiz.answerSaved")}
+                    </span>
+                  </div>
+                  {responseSec && (
+                    <span className="text-[11px] font-mono font-black text-amber-300 px-2.5 py-0.5 rounded-full bg-amber-400/15 border border-amber-400/30">
+                      ⚡ {responseSec}s
+                    </span>
+                  )}
                 </motion.div>
               )}
             </motion.div>
@@ -299,31 +363,41 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
             return (
               <motion.div
                 key="reveal"
-                initial={isCorrect ? { opacity: 0, scale: 0.9 } : { opacity: 0, x: -12 }}
+                initial={isCorrect ? { opacity: 0, scale: 0.88 } : { opacity: 0, x: -12 }}
                 animate={isCorrect ? { opacity: 1, scale: 1 } : { opacity: 1, x: [0, -8, 8, -6, 6, 0] }}
                 transition={isCorrect ? SPRING.bouncy : { duration: 0.4 }}
                 exit={{ opacity: 0 }}
                 className="text-center w-full"
               >
                 <div
-                  className={`rounded-2xl border p-6 backdrop-blur-xl transition-all shadow-2xl mb-4 ${
+                  className={`rounded-3xl border-2 p-7 backdrop-blur-2xl transition-all shadow-2xl mb-4 relative overflow-hidden ${
                     isCorrect
-                      ? "bg-emerald-950/70 border-emerald-400/50 text-emerald-100 shadow-[0_0_40px_rgba(16,185,129,0.2)]"
-                      : "bg-rose-950/70 border-rose-500/50 text-rose-100 shadow-[0_0_40px_rgba(244,63,94,0.2)]"
+                      ? "bg-gradient-to-b from-emerald-950/90 to-black/95 border-emerald-400 text-emerald-100 shadow-[0_0_60px_rgba(52,211,153,0.35)]"
+                      : "bg-gradient-to-b from-rose-950/90 to-black/95 border-rose-500/60 text-rose-100 shadow-[0_0_60px_rgba(244,63,94,0.3)]"
                   }`}
                 >
-                  <div className="text-4xl mb-2">{isCorrect ? "🎯" : "💀"}</div>
-                  <h2 className={`text-xl font-black uppercase tracking-wider mb-2 ${
-                    isCorrect ? "text-emerald-300" : "text-rose-300"
+                  {/* Aura */}
+                  <div className={`absolute -inset-10 ${isCorrect ? "bg-emerald-500/15" : "bg-rose-500/10"} blur-3xl pointer-events-none -z-10`} />
+
+                  <div className="text-5xl mb-3">{isCorrect ? "🎯" : "💀"}</div>
+                  <h2 className={`text-2xl font-black uppercase tracking-wider mb-2 ${
+                    isCorrect ? "text-emerald-300 drop-shadow-[0_0_15px_rgba(52,211,153,0.8)]" : "text-rose-300"
                   }`}>
                     {isCorrect ? t("quiz.playerCorrect") : t("quiz.playerWrong")}
                   </h2>
-                  <p className="text-sm text-white/80 font-medium">
-                    {t("quiz.correctAnswer")}: <strong className="text-white font-bold">{revealed} — {currentQ.options[revealed]}</strong>
+
+                  {isCorrect && (
+                    <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-mono font-black text-xs mb-3">
+                      <span>⚡ +100 {t("quiz.pts")}</span>
+                    </div>
+                  )}
+
+                  <p className="text-sm text-white/90 font-medium">
+                    {t("quiz.correctAnswer")}: <strong className="text-white font-bold ml-1">{revealed} — {currentQ.options[revealed]}</strong>
                   </p>
                 </div>
 
-                <p className="text-white/40 text-xs font-mono uppercase tracking-wider">
+                <p className="text-white/50 text-xs font-mono uppercase tracking-widest">
                   {t("quiz.followRankingOnScreen")}
                 </p>
               </motion.div>

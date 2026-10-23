@@ -397,11 +397,40 @@ export function HostQuizDisplay({
   };
 
   // Color scheme mappings for options
+  // Themed optic laser color schemes for 4 options
   const optionStyles = {
-    A: { border: "border-cyan-500", text: "text-cyan-400", bg: "bg-cyan-500/20", glow: "shadow-[0_0_25px_rgba(6,182,212,0.4)]" },
-    B: { border: "border-pink-500", text: "text-pink-400", bg: "bg-pink-500/20", glow: "shadow-[0_0_25px_rgba(236,72,153,0.4)]" },
-    C: { border: "border-amber-400", text: "text-amber-400", bg: "bg-amber-500/20", glow: "shadow-[0_0_25px_rgba(251,191,36,0.4)]" },
-    D: { border: "border-emerald-500", text: "text-emerald-400", bg: "bg-emerald-500/20", glow: "shadow-[0_0_25px_rgba(16,185,129,0.4)]" },
+    A: {
+      border: "border-cyan-400/60",
+      text: "text-cyan-300",
+      bg: "bg-cyan-500/15",
+      glow: "shadow-[0_0_35px_rgba(0,243,255,0.3)]",
+      corner: "border-cyan-400",
+      dot: "bg-cyan-400 shadow-[0_0_8px_#00f3ff]",
+    },
+    B: {
+      border: "border-purple-400/60",
+      text: "text-purple-300",
+      bg: "bg-purple-500/15",
+      glow: "shadow-[0_0_35px_rgba(192,132,252,0.3)]",
+      corner: "border-purple-400",
+      dot: "bg-purple-400 shadow-[0_0_8px_#c084fc]",
+    },
+    C: {
+      border: "border-alaz-orange/60",
+      text: "text-orange-300",
+      bg: "bg-alaz-orange/15",
+      glow: "shadow-[0_0_35px_rgba(255,85,0,0.3)]",
+      corner: "border-alaz-orange",
+      dot: "bg-alaz-orange shadow-[0_0_8px_#ff5500]",
+    },
+    D: {
+      border: "border-pink-400/60",
+      text: "text-pink-300",
+      bg: "bg-pink-500/15",
+      glow: "shadow-[0_0_35px_rgba(244,114,182,0.3)]",
+      corner: "border-pink-400",
+      dot: "bg-pink-400 shadow-[0_0_8px_#f472b6]",
+    },
   };
 
   return (
@@ -412,18 +441,26 @@ export function HostQuizDisplay({
       >
         <ParticleBackground speedMultiplier={gameState === "question_active" && timeLeft <= 5 ? 5 : 1} />
         
-        {/* Volumetrik Stüdyo Işıkları (Blender Lighting) */}
+        {/* Volumetrik Stüdyo Işıkları (Blender Lighting & Scenography) */}
         <div
           aria-hidden="true"
-          className="absolute -top-32 left-1/4 w-96 h-[600px] bg-gradient-to-b from-blue-500/15 via-blue-500/5 to-transparent blur-3xl pointer-events-none -rotate-12 -z-10"
+          className="absolute -top-36 left-1/4 w-[460px] h-[720px] bg-gradient-to-b from-cyan-400/20 via-cyan-400/5 to-transparent blur-3xl pointer-events-none -rotate-12 -z-10"
         />
         <div
           aria-hidden="true"
-          className="absolute -top-32 right-1/4 w-96 h-[600px] bg-gradient-to-b from-cyan-400/15 via-cyan-400/5 to-transparent blur-3xl pointer-events-none rotate-12 -z-10"
+          className="absolute -top-36 right-1/4 w-[460px] h-[720px] bg-gradient-to-b from-alaz-orange/20 via-alaz-orange/5 to-transparent blur-3xl pointer-events-none rotate-12 -z-10"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-white/[0.03] to-transparent pointer-events-none -z-10"
         />
 
+        {/* Gerilim Vinyeti: Son 5 saniyede nabız atan reaktör kriz halkası */}
         {gameState === "question_active" && timeLeft <= 5 && (
-          <div className="absolute inset-0 bg-red-600/20 animate-pulse pointer-events-none z-0" />
+          <>
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(255,0,40,0.45)_100%)] pointer-events-none z-0" />
+            <div aria-hidden="true" className="absolute inset-0 pointer-events-none z-0 tension-heartbeat-glow" />
+          </>
         )}
 
         <HostHeader 
@@ -596,11 +633,10 @@ export function HostQuizDisplay({
                       </div>
                     </BeamBorder>
 
-                    {/* 4 Options Grid with CardSpotlight */}
+                    {/* 4 Optic Laser Options Grid */}
                     <div className="grid grid-cols-2 gap-6 w-full mb-6">
                       {(["A", "B", "C", "D"] as const).map((opt, i) => {
                         const style = optionStyles[opt];
-                        const spotColor = opt === "A" ? "blue" : opt === "B" ? "purple" : opt === "C" ? "orange" : "pink";
                         return (
                           <motion.div
                             key={opt}
@@ -609,20 +645,20 @@ export function HostQuizDisplay({
                             transition={{ delay: 0.1 + i * 0.08 }}
                             className="w-full"
                           >
-                            <CardSpotlight
-                              color={spotColor}
-                              ambient={true}
-                              radius="1rem"
-                              className={`bg-black/70 border-2 ${style.border} ${style.glow} backdrop-blur-sm`}
-                              innerClassName="p-6 flex items-center gap-5"
+                            <div
+                              className={`relative p-6 rounded-2xl border-2 ${style.border} ${style.glow} bg-black/75 backdrop-blur-xl flex items-center gap-5 overflow-hidden group`}
                             >
-                              <div className={`w-14 h-14 ${style.bg} border-2 ${style.border} rounded-lg flex items-center justify-center text-3xl font-black ${style.text}`}>
+                              {/* Optic Laser Corners */}
+                              <div className={`absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 ${style.corner}`} />
+                              <div className={`absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 ${style.corner}`} />
+
+                              <div className={`w-16 h-16 ${style.bg} border-2 ${style.border} rounded-xl flex items-center justify-center text-3xl font-black ${style.text} shrink-0`}>
                                 {opt}
                               </div>
-                              <div className="text-2xl md:text-3xl font-bold text-white text-left flex-1 leading-tight">
+                              <div className="text-2xl md:text-3xl font-bold text-white text-left flex-1 leading-snug">
                                 {currentQuestion.options[opt]}
                               </div>
-                            </CardSpotlight>
+                            </div>
                           </motion.div>
                         );
                       })}
@@ -632,9 +668,9 @@ export function HostQuizDisplay({
                     <div className="mt-4">
                       <button
                         onClick={endQuestion}
-                        className="px-8 py-2.5 bg-red-950/60 hover:bg-red-900 border border-red-500/50 hover:border-red-500 text-red-400 font-bold uppercase tracking-widest text-sm transition-all rounded-full flex items-center gap-3"
+                        className="px-8 py-2.5 bg-red-950/60 hover:bg-red-900 border border-red-500/50 hover:border-red-500 text-red-400 font-bold uppercase tracking-widest text-sm transition-all rounded-full flex items-center gap-3 shadow-[0_0_20px_rgba(239,68,68,0.3)] active:scale-95"
                       >
-                        <span className="w-2 h-2 rounded-full bg-red-500" />
+                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                         {t("quiz.endTimer")}
                       </button>
                     </div>
@@ -657,29 +693,29 @@ export function HostQuizDisplay({
                 ) : (
                   <>
                     <div className="flex items-center justify-between w-full mb-6">
-                      <span className="text-2xl font-black text-green-400 uppercase tracking-widest flex items-center gap-2">
-                        <span>🎯</span> {t("quiz.correctAnswer")}
+                      <span className="text-2xl font-black text-emerald-400 uppercase tracking-widest flex items-center gap-3 drop-shadow-[0_0_15px_rgba(52,211,153,0.8)]">
+                        <span className="text-3xl">🎯</span> {t("quiz.correctAnswer")}
                       </span>
 
-                      {/* Speed Demon Spotlight */}
+                      {/* Speed Demon Spotlight - 24K Gold Badge */}
                       {fastestWinner && (
                         <motion.div 
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          className="bg-yellow-500/20 border border-yellow-400 px-6 py-2 rounded-full flex items-center gap-3 shadow-[0_0_20px_rgba(250,204,21,0.5)]"
+                          initial={{ opacity: 0, x: 20, scale: 0.9 }}
+                          animate={{ opacity: 1, x: 0, scale: 1 }}
+                          transition={SPRING.bouncy}
+                          className="bg-gradient-to-r from-amber-500/25 via-yellow-400/20 to-amber-500/25 border-2 border-amber-400/80 px-6 py-2 rounded-full flex items-center gap-3 shadow-[0_0_30px_rgba(251,191,36,0.6)] backdrop-blur-xl"
                         >
-                          <span className="text-xl">⚡</span>
-                          <span className="text-yellow-400 font-black uppercase text-sm tracking-wider">
-                            {t("quiz.fastestPlayer")}: <strong className="text-white font-bold">{fastestWinner.nickname}</strong> ({fastestWinner.timeTakenSec}s)
+                          <span className="text-2xl">⚡</span>
+                          <span className="text-amber-300 font-black uppercase text-sm tracking-wider">
+                            {t("quiz.fastestPlayer")}: <strong className="text-white font-bold ml-1">{fastestWinner.nickname}</strong> ({fastestWinner.timeTakenSec}s)
                           </span>
                         </motion.div>
                       )}
                     </div>
 
-                    {/* Options with Vote Breakdown Bars */}
+                    {/* Options with Supernova Highlight & Vote Breakdown Bars */}
                     <div className="grid grid-cols-2 gap-6 w-full mb-8">
                       {(["A", "B", "C", "D"] as const).map(opt => {
-                        // Cevaplar kilitlenene kadar şıklar nötr; sonra doğru öne çıkar.
                         const revealed = revealedOption(room, currentQIndex);
                         const isCorrect = revealed === opt;
                         const isDimmed = revealed !== null && !isCorrect;
@@ -689,41 +725,47 @@ export function HostQuizDisplay({
                         return (
                           <motion.div
                             key={opt}
-                            // Doğru şık öne çıkıp yaylanır, diğerleri söner. Eskiden
-                            // `transition-all` gölgeyi de 700ms boyunca boyuyordu.
-                            animate={{ scale: isCorrect ? 1.04 : 1, opacity: isDimmed ? 0.35 : 1 }}
+                            animate={{ scale: isCorrect ? 1.04 : 1, opacity: isDimmed ? 0.3 : 1 }}
                             transition={isCorrect ? { ...SPRING.bouncy, delay: 0.15 } : { duration: DURATION.slow, ease: EASE.out }}
-                            className={`p-6 rounded-2xl border-2 relative overflow-hidden flex flex-col justify-between transition-colors duration-500 ${
+                            className={`p-6 rounded-2xl border-2 relative overflow-hidden flex flex-col justify-between transition-all duration-500 ${
                               isCorrect
-                                ? "bg-emerald-500/25 border-emerald-400 shadow-[0_0_60px_rgba(52,211,153,0.8)]"
+                                ? "bg-gradient-to-br from-emerald-950/90 via-emerald-900/60 to-black/90 border-emerald-400 shadow-[0_0_75px_rgba(52,211,153,0.85)]"
                                 : "bg-black/60 border-white/10"
                             }`}
                           >
-                            {/* Oy yüzdesi dolgusu: width yerine scaleX (yalnızca compositor). */}
+                            {/* Optic Laser Corners for Correct Option */}
+                            {isCorrect && (
+                              <>
+                                <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-emerald-400 shadow-[0_0_10px_#34d399]" />
+                                <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-emerald-400 shadow-[0_0_10px_#34d399]" />
+                              </>
+                            )}
+
+                            {/* Oy yüzdesi dolgusu */}
                             <motion.div
                               initial={{ scaleX: 0 }}
                               animate={{ scaleX: percentage / 100 }}
                               transition={{ duration: 1, ease: EASE.out }}
-                              className={`absolute inset-0 origin-left ${isCorrect ? "bg-emerald-500/20" : "bg-white/5"} pointer-events-none`}
+                              className={`absolute inset-0 origin-left ${isCorrect ? "bg-emerald-500/25" : "bg-white/5"} pointer-events-none`}
                             />
 
                             <div className="flex items-center gap-4 relative z-10">
-                              <div className={`w-14 h-14 rounded-lg flex items-center justify-center text-3xl font-black ${
-                                isCorrect ? "bg-green-500 text-black shadow-[0_0_20px_rgba(34,197,94,0.8)]" : "border border-white/20 text-gray-400"
+                              <div className={`w-16 h-16 rounded-xl flex items-center justify-center text-3xl font-black shrink-0 ${
+                                isCorrect ? "bg-emerald-400 text-black shadow-[0_0_25px_rgba(52,211,153,0.9)]" : "border-2 border-white/20 text-gray-400"
                               }`}>
                                 {opt}
                               </div>
-                              <div className={`text-2xl font-bold flex-1 text-left ${isCorrect ? "text-green-300 font-black" : "text-gray-400"}`}>
+                              <div className={`text-2xl md:text-3xl font-bold flex-1 text-left ${isCorrect ? "text-emerald-200 font-black drop-shadow-[0_0_12px_rgba(52,211,153,0.6)]" : "text-gray-400"}`}>
                                 {currentQuestion.options[opt]}
                               </div>
                             </div>
 
                             {/* Vote stats footer */}
                             <div className="flex justify-between items-center mt-4 pt-3 border-t border-white/10 relative z-10 text-sm font-mono">
-                              <span className={`text-lg ${isCorrect ? "text-green-400 font-bold" : "text-gray-400"}`}>
+                              <span className={`text-lg ${isCorrect ? "text-emerald-300 font-bold" : "text-gray-400"}`}>
                                 {t("quiz.voteCount", count)}
                               </span>
-                              <span className={`font-black text-xl tabular-nums ${isCorrect ? "text-green-400" : "text-gray-400"}`}>
+                              <span className={`font-black text-xl tabular-nums ${isCorrect ? "text-emerald-300" : "text-gray-400"}`}>
                                 %{percentage}
                               </span>
                             </div>
