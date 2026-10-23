@@ -13,6 +13,8 @@ import { TVScaleFrame } from "../components/TVScaleFrame";
 import { HOST_GAME_DISPLAYS } from "../pages/host/gameDisplays";
 import { PLAYER_GAME_CONTROLLERS } from "../pages/player/gameControllers";
 import { PlayerGameShell } from "../pages/player/components/PlayerGameShell";
+import { LetterSpinner } from "../components/LetterSpinner";
+import { HostPlaying } from "../pages/host/views/HostPlaying";
 
 /**
  * Yalnızca geliştirmede açılan ekran önizlemesi: host ve oyuncu ekranlarını
@@ -120,7 +122,31 @@ export function ScreenPreview() {
     if (game === "dashboard") {
       return <HostDashboard room={room} players={players} updateRoomStatus={noop} />;
     }
-    const Display = HOST_GAME_DISPLAYS[game];
+    if ((game as string) === "arena" || (game as string) === "scattegories") {
+      if (status === "countdown") {
+        return (
+          <TVScaleFrame>
+            <div className="w-full h-full flex items-center justify-center bg-black">
+              <LetterSpinner targetLetter={params.get("letter") ?? "A"} onComplete={noop} />
+            </div>
+          </TVScaleFrame>
+        );
+      }
+      return (
+        <TVScaleFrame>
+          <HostPlaying
+            currentLetter={params.get("letter") ?? "A"}
+            timeLeft={left}
+            maxTime={room.timer_setting}
+            categories={["ŞEHİR", "HAYVAN", "MEYVE / SEBZE", "ÜNLÜ KİŞİ"]}
+            submittedPlayerIds={players.slice(0, Math.min(3, players.length)).map((p) => p.id)}
+            playersCount={players.length}
+            currentRound={room.current_round}
+          />
+        </TVScaleFrame>
+      );
+    }
+    const Display = HOST_GAME_DISPLAYS[game as RoutedGame];
     return (
       <Suspense fallback={null}>
         <Display room={room} players={players} updateRoomStatus={noop} updatePlayerScore={noop} />

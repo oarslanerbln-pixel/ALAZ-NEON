@@ -1605,6 +1605,9 @@ const translations = {
   "intro.arena.step3": { tr: "Kimsenin yazmadığı cevap daha çok puan getirir", de: "Einzigartige Antworten bringen mehr Punkte", en: "Unique answers score more" },
   "intro.arena.title": { tr: "HENGAME ARENA", de: "HENGAME ARENA", en: "HENGAME ARENA" },
   "intro.arena.subtitle": { tr: "ATEŞ SERBEST", de: "FEUER FREI", en: "FIRE AT WILL" },
+  "arena.spinnerProtocol": { tr: "HEDEF HARF PROTOKOLÜ // AKTİF", de: "ZIELBUCHSTABEN-PROTOKOLL // AKTIV", en: "TARGET LETTER PROTOCOL // ACTIVE" },
+  "arena.spinnerResolving": { tr: "KUANTUM ÇEKİRDEK KİLİTLENİYOR...", de: "QUANTUM-KERN WIRD GESPERRT...", en: "LOCKING QUANTUM CORE..." },
+  "arena.spinnerLocked": { tr: "HEDEF HARF KİLİTLENDİ!", de: "ZIELBUCHSTABE ARRETIERT!", en: "TARGET LETTER LOCKED!" },
   "intro.quiz.title": { tr: "HENGAME QUIZ", de: "HENGAME QUIZ", en: "HENGAME QUIZ" },
   "intro.quiz.subtitle": { tr: "ZİHİNLER ÇARPIŞIYOR", de: "KÖPFE PRALLEN AUFEINANDER", en: "MINDS COLLIDE" },
 
