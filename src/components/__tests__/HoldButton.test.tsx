@@ -75,4 +75,19 @@ describe("HoldButton", () => {
     act(() => { driver.flush(16, 100); });
     expect(onComplete).not.toHaveBeenCalled();
   });
+
+  it("starts hold on Space/Enter key down and stops on key up", () => {
+    const onComplete = vi.fn();
+    const { getByRole } = render(
+      <HoldButton onComplete={onComplete} text="SUBMIT" holdDuration={1000} />
+    );
+    const button = getByRole("button");
+
+    act(() => { fireEvent.keyDown(button, { key: " " }); });
+    act(() => { driver.flush(16, 20); });
+    expect(onComplete).not.toHaveBeenCalled();
+
+    act(() => { driver.flush(16, 50); });
+    expect(onComplete).toHaveBeenCalled();
+  });
 });
