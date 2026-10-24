@@ -85,10 +85,22 @@ export function HoldButton({
       onPointerUp={resetHold}
       onPointerLeave={resetHold}
       onPointerCancel={resetHold}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          startHold();
+        }
+      }}
+      onKeyUp={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          resetHold();
+        }
+      }}
       onContextMenu={(e) => e.preventDefault()}
       disabled={disabled}
       style={{ touchAction: "none", WebkitUserSelect: "none" }}
-      className={`relative overflow-hidden w-full py-5 rounded-sm font-black font-mono text-lg tracking-widest transition-[transform,opacity,background-color,border-color,box-shadow,color] duration-200 border-2 select-none
+      className={`relative overflow-hidden w-full py-5 rounded-sm font-black font-mono text-lg tracking-widest transition-[transform,opacity,background-color,border-color,box-shadow,color] duration-200 border-2 select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white
         ${
           disabled
             ? "bg-black/50 border-gray-800 text-gray-500 cursor-not-allowed scale-95 opacity-50"
