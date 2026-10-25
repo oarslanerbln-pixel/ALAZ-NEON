@@ -285,7 +285,10 @@ export const GAME_CARDS = [
     hoverBgAccent: "group-hover:bg-cyan-500/40",
     iconAccent: "bg-cyan-500/10 border-cyan-400/40",
     borderAccent: "hover:border-cyan-400/60",
-    isComingSoon: false,
+    // Kilitli: telefonun nişanı TV'ye yalnızca ateşte gidiyor (canlı nişangah
+    // yok) ve vuruş tespiti/puanlama yazılmadı. Canlı nişan akışı Firestore
+    // yazma kotasını dakikalar içinde bitirir; tasarım kararı bekliyor.
+    isComingSoon: true,
   },
   {
     id: "slingshot",

@@ -56,10 +56,10 @@ describe("oyun katalogu", () => {
     }
   });
 
-  it("amiral gemisi ve yeni nesil 3D modlar aktif (Arena, Quiz, Bomb, Sniper, Slingshot), kalan 11 mod kilitli", () => {
+  it("amiral gemisi modlar ve Yörünge Sapanı aktif (Arena, Quiz, Bomb, Slingshot), kalan 12 mod kilitli", () => {
     const active = GAME_CARDS.filter((g) => !g.isComingSoon).map((g) => g.id);
     const locked = GAME_CARDS.filter((g) => g.isComingSoon).map((g) => g.id);
-    expect(active.sort()).toEqual(["bomb", "quiz", "scattegories", "slingshot", "sniper"]);
-    expect(locked.length).toBe(11);
+    expect(active.sort()).toEqual(["bomb", "quiz", "scattegories", "slingshot"]);
+    expect(locked.length).toBe(12);
   });
 });

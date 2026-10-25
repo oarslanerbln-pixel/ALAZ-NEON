@@ -4,12 +4,11 @@ import type { PlayerGameProps } from "../gameControllers";
 import { AirPointerController } from "../../../components/gyro/AirPointerController";
 import { db } from "../../../lib/firebase";
 import { doc, updateDoc } from "firebase/firestore";
-import { useLocale } from "../../../hooks/useLocale";
 
 const PLAYER_COLORS = ["cyan", "orange", "pink", "green"] as const;
 
+/** Taslak — bkz. HostSniperDisplay; mod katalogda kilitli. */
 export function PlayerSniperController({ room, player }: PlayerGameProps) {
-  const { t } = useLocale();
 
   const colorIndex = Math.abs(player.id.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0)) % PLAYER_COLORS.length;
   const assignedColor = PLAYER_COLORS[colorIndex];

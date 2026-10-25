@@ -4,7 +4,6 @@ import type { HostGameProps } from "../gameDisplays";
 import type { PlayerCrosshair } from "../../../components/gyro/CyberTargetArena";
 import { CyberTargetArena } from "../../../components/gyro/CyberTargetArena";
 import { SoundManager, sounds } from "../../../lib/audio";
-import { useLocale } from "../../../hooks/useLocale";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { finishNightRound } from "../../../lib/nightAwards";
 import { placementPointsByScore } from "../../../lib/nightLeague";
@@ -14,15 +13,19 @@ const ROUND_DURATION_SEC = 30;
 
 const PLAYER_COLORS = ["#00f3ff", "#ff5500", "#f43f5e", "#10b981", "#a855f7", "#eab308"];
 
+/**
+ * SİBER NİŞANCI — taslak, katalogda kilitli (gameCatalog). Yayına almadan önce:
+ * vuruş tespiti ve puanlama (`onTargetHit` hiç çağrılmıyor), şutun `answers`
+ * yerine oyuncu belgesine yazılması (kural reddediyor), tr/de/en metinler ve
+ * canlı nişangahın yazma kotasına etkisi çözülmeli.
+ */
 export function HostSniperDisplay({
   room,
   players,
   updateRoomStatus,
   updatePlayerScore,
 }: HostGameProps) {
-  const { t } = useLocale();
   const [timeLeft, setTimeLeft] = useState(ROUND_DURATION_SEC);
-  const processedShotsRef = useRef<Record<string, number>>({});
   const latestPlayers = useRef(players);
   latestPlayers.current = players;
 

@@ -2,7 +2,8 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { haptics } from "../../lib/haptics";
 import { SoundManager, sounds } from "../../lib/audio";
-import { DURATION, EASE, SPRING } from "../../lib/motion";
+import { EASE } from "../../lib/motion";
+import { useLocale } from "../../hooks/useLocale";
 
 export interface SlingshotLaunchData {
   power: number; // 0..100
@@ -20,8 +21,9 @@ interface SlingshotControllerProps {
 export function SlingshotController({
   onLaunch,
   disabled = false,
-  roundHint = "PENALTI ŞUTU",
+  roundHint,
 }: SlingshotControllerProps) {
+  const { t } = useLocale();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -240,17 +242,17 @@ export function SlingshotController({
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-full bg-alaz-orange animate-pulse" />
           <span className="font-mono text-xs tracking-widest font-black uppercase text-white/90">
-            {roundHint}
+            {roundHint ?? t("slingshot.penaltyShot")}
           </span>
         </div>
 
         {/* Gerilim & Açı Göstergesi */}
         <div className="flex items-center gap-3 font-mono text-xs font-bold">
           <div className="text-cyan-400">
-            AÇI: <span className="text-white">{pullAngle > 0 ? `+${pullAngle}°` : `${pullAngle}°`}</span>
+            {t("slingshot.angle")}: <span className="text-white">{pullAngle > 0 ? `+${pullAngle}°` : `${pullAngle}°`}</span>
           </div>
           <div className="text-alaz-orange">
-            GÜÇ: <span className="text-white">%{pullPower}</span>
+            {t("slingshot.power")}: <span className="text-white">%{pullPower}</span>
           </div>
         </div>
       </div>
@@ -267,11 +269,11 @@ export function SlingshotController({
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
 
         {/* Başlangıç Yönergesi */}
-        {!isPulling && !hasLaunched && (
+        {!isPulling && (disabled || !hasLaunched) && (
           <div className="absolute inset-x-0 bottom-8 flex flex-col items-center pointer-events-none text-center">
             <span className="text-3xl animate-bounce mb-2">👇</span>
             <span className="font-mono text-xs font-bold uppercase tracking-wider text-white/80 bg-black/60 px-4 py-1.5 rounded-full border border-white/15">
-              Topu Geriye Çek & Bırak
+              {disabled ? t("slingshot.reloading") : t("slingshot.pullHint")}
             </span>
           </div>
         )}
@@ -280,9 +282,9 @@ export function SlingshotController({
       {/* Alt Alan: Falso / Spin Kontrol Barı */}
       <div className="relative z-10 w-full flex flex-col gap-2 bg-white/5 border border-white/10 rounded-2xl p-3">
         <div className="flex justify-between items-center text-[10px] font-mono tracking-widest uppercase text-white/60">
-          <span>⤹ SOL FALSO</span>
-          <span className="text-cyan-300 font-bold">SPIN: {curveFactor}</span>
-          <span>SAĞ FALSO ⤸</span>
+          <span>⤹ {t("slingshot.curveLeft")}</span>
+          <span className="text-cyan-300 font-bold">{t("slingshot.spin")}: {curveFactor}</span>
+          <span>{t("slingshot.curveRight")} ⤸</span>
         </div>
 
         <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden relative">

@@ -226,9 +226,9 @@ export interface Room {
   // Alanlar boşsa varsayılan HENGAME markası kullanılır.
   // Sniper Game Fields
   sniper_end_time?: number;
-  // Slingshot Game Fields
+  // Slingshot: turun bitiş zamanı; aynı zamanda turun şutlarını ayıran
+  // anahtar (lib/slingshot.slingshotRoundKey). Şutlar `answers`'ta.
   slingshot_end_time?: number;
-  slingshot_round?: number;
   venue_name?: string;
   venue_logo_url?: string;
   venue_primary_color?: string;
@@ -261,8 +261,6 @@ export interface Player {
   kablo_score?: number;
   sniper_shot?: { x: number; y: number; timestamp: number } | null;
   sniper_score?: number;
-  slingshot_shot?: { power: number; angle: number; curve: number; timestamp: number } | null;
-  slingshot_score?: number;
 }
 
 /**

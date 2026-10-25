@@ -175,14 +175,9 @@ export function ScreenPreview() {
               id: p.id,
               nickname: p.nickname,
               color: ["#00f3ff", "#ff5500", "#f43f5e", "#10b981"][i % 4],
-              score: Math.floor(p.total_score / 200),
+              score: Math.floor(p.total_score / 100),
             }))}
-            currentShooter={{
-              id: players[0].id,
-              nickname: players[0].nickname,
-              color: "#00f3ff",
-              score: 2,
-            }}
+            shot={null}
           />
         </TVScaleFrame>
       );
