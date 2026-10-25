@@ -15,12 +15,15 @@ function getLocalIP() {
   return 'localhost';
 }
 
-const localIp = getLocalIP();
-
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   define: {
-    __LOCAL_IP__: JSON.stringify(localIp)
+    // Yalnızca `npm run dev --host` için: laptop'ta localhost'tan açılan TV,
+    // QR'da telefonun ulaşabileceği LAN IP'sini göstersin. Derlemeye
+    // yazılmıyor: hem derleme makinesinin IP'si pakete sızıyordu (denetim
+    // D7), hem de 127.0.0.1'e bağlı `vite preview` (E2E) QR'ı erişilemeyen
+    // LAN adresine yönlendirip bütün katılımları düşürüyordu.
+    __LOCAL_IP__: JSON.stringify(command === 'serve' ? getLocalIP() : ''),
   },
   plugins: [
     react(),
@@ -47,4 +50,4 @@ export default defineConfig({
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: ['node_modules', 'dist', '.idea', '.git', '.cache'],
   },
-})
+}))
