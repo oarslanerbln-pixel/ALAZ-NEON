@@ -120,7 +120,7 @@ export function PlayerPlaying({
           {/* İlerleme Puanları / Sayaç */}
           <div className="flex items-center gap-2">
             <div className="flex gap-1">
-              {categories.map((cat, i) => {
+              {categories.map((cat) => {
                 const isCatFilled = (answers[cat] || "").trim().length > 0;
                 return (
                   <motion.div
