@@ -5,3 +5,7 @@
 ## 2024-10-04 - Language Switcher Focus Visibility
 **Learning:** Found that custom stylized buttons (like the `LanguageSwitcher` gradient buttons) often lack built-in browser focus rings because `outline-none` or custom borders override them. Keyboard users relying on `Tab` to navigate were losing their place.
 **Action:** Always append explicit `focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white` utility classes to custom interactive components to guarantee an accessible focus state without impacting pointer/mouse interactions.
+
+## 2024-10-26 - Form Input and Label Associations
+**Learning:** In React components like `PlayerJoin`, standard `<label>` elements were being styled as text wrappers without the `htmlFor` attribute, meaning screen readers and click-to-focus behaviors were broken. Although the visual UI looks identical, not having this explicit connection harms accessibility and mobile usability.
+**Action:** Always verify that every `<label>` has an `htmlFor` property matching its target `<input>`'s `id` attribute in form components.
