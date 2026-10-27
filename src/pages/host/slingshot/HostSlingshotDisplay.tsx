@@ -1,141 +1,226 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { collection, doc, onSnapshot, query, updateDoc, where } from "firebase/firestore";
 import type { HostGameProps } from "../gameDisplays";
-import type { SlingshotLaunchData } from "../../../components/slingshot/SlingshotController";
-import type { SlingshotPlayer } from "../../../components/slingshot/Slingshot3DArena";
+import type { SlingshotPlayer, ArenaShot } from "../../../components/slingshot/Slingshot3DArena";
 import { Slingshot3DArena } from "../../../components/slingshot/Slingshot3DArena";
 import { SoundManager, sounds } from "../../../lib/audio";
+import { db } from "../../../lib/firebase";
 import { useLocale } from "../../../hooks/useLocale";
+import { useVenue } from "../../../contexts/VenueContextCore";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
-import { finishNightRound } from "../../../lib/nightAwards";
-import { placementPointsByScore } from "../../../lib/nightLeague";
+import { finishNightRound, NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
+import { nightPointsForPlayers } from "../../../lib/nightLeague";
+import { grantGameRewards } from "../../../lib/rewards";
+import { clearRoomAnswers, resetPlayersForNewGame } from "../../../lib/gameReset";
+import { pointsFields } from "../../../lib/scoreWrites";
+import { gameTitle } from "../../../lib/gameCatalog";
+import {
+  SLINGSHOT_DRAIN_MS,
+  SLINGSHOT_GOAL_POINTS,
+  SLINGSHOT_INTRO_MS,
+  SLINGSHOT_ROUND_SEC,
+  goalsFromScore,
+  parseShot,
+  slingshotRoundKey,
+  type ShotResult,
+} from "../../../lib/slingshot";
 import { ShimmerButton } from "../../../components/fx";
+import type { Player } from "../../../types/database";
 
-const ROUND_DURATION_SEC = 45;
 const PLAYER_COLORS = ["#00f3ff", "#ff5500", "#f43f5e", "#10b981", "#a855f7", "#eab308"];
+/** Sonuç yazısı ekranda kalsın, sonra sıradaki şut. */
+const RESULT_HOLD_MS = 2200;
+/** Top hiç sonuçlanmazsa (ör. sekme arka planda) kuyruk kilitlenmesin. */
+const SHOT_TIMEOUT_MS = 6000;
+/** TV üst şeridine sığan oyuncu sayısı. */
+const HUD_PLAYERS = 6;
 
-export function HostSlingshotDisplay({
-  room,
-  players,
-  updateRoomStatus,
-  updatePlayerScore,
-}: HostGameProps) {
+function colorOf(players: readonly Player[], playerId: string): string {
+  const i = players.findIndex((p) => p.id === playerId);
+  return PLAYER_COLORS[(i < 0 ? 0 : i) % PLAYER_COLORS.length];
+}
+
+export function HostSlingshotDisplay({ room, players, updateRoomStatus }: HostGameProps) {
   const { t } = useLocale();
-  const [timeLeft, setTimeLeft] = useState(ROUND_DURATION_SEC);
-  const [incomingShot, setIncomingShot] = useState<SlingshotLaunchData | null>(null);
-  const [currentShooter, setCurrentShooter] = useState<SlingshotPlayer | undefined>();
-
-  const lastProcessedTimestamps = useRef<Record<string, number>>({});
-  const latestPlayers = useRef(players);
-  latestPlayers.current = players;
-
+  const { venue } = useVenue();
   const currentStatus = room.status;
+  const roundKey = slingshotRoundKey(room.slingshot_end_time);
 
-  // Lobi veya ilk açılışta intro durumunu başlat
-  useEffect(() => {
-    if (currentStatus === "lobby" || (room.active_game === "slingshot" && !currentStatus.startsWith("slingshot_"))) {
-      updateRoomStatus("slingshot_intro");
-    }
-  }, [currentStatus, room.active_game, updateRoomStatus]);
+  const [timeLeft, setTimeLeft] = useState(SLINGSHOT_ROUND_SEC);
+  const [currentShot, setCurrentShot] = useState<ArenaShot | null>(null);
 
-  // Intro -> Active geçişi
+  const latestPlayers = useRef(players);
   useEffect(() => {
-    if (currentStatus === "slingshot_intro") {
-      SoundManager.getInstance().playSFX(sounds.FANFARE, 0.6);
-      const timer = setTimeout(() => {
-        const endTime = Date.now() + ROUND_DURATION_SEC * 1000;
-        updateRoomStatus("slingshot_active", { slingshot_end_time: endTime });
-      }, 4500);
-      return () => clearTimeout(timer);
-    }
+    latestPlayers.current = players;
+  }, [players]);
+
+  // Şut kuyruğu: TV tek top fırlatıyor, şutlar geliş sırasıyla bekler.
+  const queueRef = useRef<ArenaShot[]>([]);
+  const seenRef = useRef<Set<string>>(new Set());
+  const inFlightRef = useRef(false);
+  const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+  const finishedRef = useRef(false);
+
+  const later = useCallback((fn: () => void, ms: number) => {
+    const id = setTimeout(() => {
+      timersRef.current.delete(id);
+      fn();
+    }, ms);
+    timersRef.current.add(id);
+    return id;
+  }, []);
+
+  const pump = useCallback(() => {
+    if (inFlightRef.current) return;
+    const next = queueRef.current.shift();
+    if (!next) return;
+    inFlightRef.current = true;
+    setCurrentShot(next);
+    later(() => {
+      // Sonuç gelmedi: bu şutu bırak, kuyruk ilerlesin.
+      if (inFlightRef.current) {
+        inFlightRef.current = false;
+        pump();
+      }
+    }, SHOT_TIMEOUT_MS);
+  }, [later]);
+
+  const handleShotResult = useCallback(
+    (shot: ArenaShot, result: ShotResult) => {
+      if (result === "goal") {
+        updateDoc(doc(db, "players", shot.playerId), pointsFields(SLINGSHOT_GOAL_POINTS)).catch((err) =>
+          console.error("[HostSlingshot] Gol puanı yazılamadı:", err),
+        );
+      }
+      later(() => {
+        inFlightRef.current = false;
+        pump();
+      }, RESULT_HOLD_MS);
+    },
+    [later, pump],
+  );
+
+  // Sayfa kapanırken bekleyen zamanlayıcılar boşa çalışmasın.
+  useEffect(() => {
+    const timers = timersRef.current;
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  const finishGame = useCallback(() => {
+    if (finishedRef.current) return;
+    finishedRef.current = true;
+    const finalPlayers = latestPlayers.current;
+    grantGameRewards("individual", finalPlayers, venue).catch((err) =>
+      console.error("[HostSlingshot] Ödül dağıtımı başarısız:", err),
+    );
+    finishNightRound(room.id, nightPointsForPlayers("individual", finalPlayers));
+    SoundManager.getInstance().playSFX(sounds.FANFARE, 0.8);
+    updateRoomStatus("slingshot_reveal");
+  }, [room.id, updateRoomStatus, venue]);
+
+  // Dashboard'dan "lobby" ile açılan eski odalar için.
+  useEffect(() => {
+    if (currentStatus === "lobby") updateRoomStatus("slingshot_intro");
   }, [currentStatus, updateRoomStatus]);
 
-  // Aktif oyun sayacı
+  // Intro -> Active
+  useEffect(() => {
+    if (currentStatus !== "slingshot_intro") return;
+    queueRef.current = [];
+    seenRef.current = new Set();
+    inFlightRef.current = false;
+    finishedRef.current = false;
+    SoundManager.getInstance().playSFX(sounds.FANFARE, 0.6);
+    const timer = setTimeout(() => {
+      updateRoomStatus("slingshot_active", { slingshot_end_time: Date.now() + SLINGSHOT_ROUND_SEC * 1000 });
+    }, SLINGSHOT_INTRO_MS);
+    return () => clearTimeout(timer);
+  }, [currentStatus, updateRoomStatus]);
+
+  // Telefonların şutları: yalnızca bu turun cevapları.
+  useEffect(() => {
+    if (currentStatus !== "slingshot_active" || !roundKey) return;
+    const q = query(collection(db, "answers"), where("room_id", "==", room.id), where("round_letter", "==", roundKey));
+    // TV sayfası tur ortasında yenilenirse önceki şutlar yeniden fırlatılıp
+    // gol puanı ikinci kez yazılmasın: ilk anlık görüntüde zaten var olanlar
+    // "görüldü" sayılır.
+    let initial = true;
+    return onSnapshot(
+      q,
+      (snap) => {
+        if (initial) {
+          snap.docs.forEach((d) => seenRef.current.add(d.id));
+          // Önbellekten gelen ilk görüntü boş olabilir; sunucunun ilk cevabı
+          // da "önceden var olan" sayılır.
+          if (!snap.metadata.fromCache) initial = false;
+          return;
+        }
+        let added = false;
+        for (const change of snap.docChanges()) {
+          if (change.type !== "added" || seenRef.current.has(change.doc.id)) continue;
+          seenRef.current.add(change.doc.id);
+          const answer = change.doc.data();
+          const shot = parseShot(answer.data);
+          const shooter = latestPlayers.current.find((p) => p.id === answer.player_id);
+          if (!shot || !shooter) continue;
+          queueRef.current.push({
+            ...shot,
+            id: change.doc.id,
+            playerId: shooter.id,
+            shooterName: shooter.nickname,
+            color: colorOf(latestPlayers.current, shooter.id),
+          });
+          added = true;
+        }
+        if (added) pump();
+      },
+      (err) => console.error("[HostSlingshot] Şutlar dinlenemedi:", err),
+    );
+  }, [currentStatus, roundKey, room.id, pump]);
+
+  // Süre sayacı. Süre bitince kuyruktaki şutlar en fazla SLINGSHOT_DRAIN_MS
+  // daha fırlatılır: son saniyede çekilen şut da sayılsın.
   useEffect(() => {
     if (currentStatus !== "slingshot_active") return;
     SoundManager.getInstance().playMusic(sounds.GAME_PULSE, 0.4);
+    const endTime = room.slingshot_end_time || Date.now() + SLINGSHOT_ROUND_SEC * 1000;
 
     const interval = setInterval(() => {
-      const endTime = room.slingshot_end_time || Date.now() + ROUND_DURATION_SEC * 1000;
-      const remaining = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
-      setTimeLeft(remaining);
-
-      if (remaining <= 0) {
+      const now = Date.now();
+      setTimeLeft(Math.max(0, Math.ceil((endTime - now) / 1000)));
+      if (now < endTime) return;
+      const drained = !inFlightRef.current && queueRef.current.length === 0;
+      if (drained || now >= endTime + SLINGSHOT_DRAIN_MS) {
         clearInterval(interval);
-        updateRoomStatus("slingshot_reveal");
+        finishGame();
       }
     }, 250);
-
     return () => clearInterval(interval);
-  }, [currentStatus, room.slingshot_end_time, updateRoomStatus]);
+  }, [currentStatus, room.slingshot_end_time, finishGame]);
 
-  // Yeni gelen şutları yakala
-  useEffect(() => {
-    if (currentStatus !== "slingshot_active") return;
-
-    for (let i = 0; i < players.length; i++) {
-      const p = players[i];
-      const shot = p.slingshot_shot;
-      if (shot && shot.timestamp) {
-        const lastTime = lastProcessedTimestamps.current[p.id] || 0;
-        if (shot.timestamp > lastTime) {
-          lastProcessedTimestamps.current[p.id] = shot.timestamp;
-
-          const shooter: SlingshotPlayer = {
-            id: p.id,
-            nickname: p.nickname,
-            color: PLAYER_COLORS[i % PLAYER_COLORS.length],
-            score: p.slingshot_score || 0,
-          };
-          setCurrentShooter(shooter);
-          setIncomingShot(shot);
-          break;
-        }
-      }
-    }
-  }, [players, currentStatus]);
-
-  // Gol olduğunda skoru artır
-  const handleGoal = useCallback(
-    (playerId: string, points: number) => {
-      const targetPlayer = latestPlayers.current.find((p) => p.id === playerId);
-      if (!targetPlayer) return;
-
-      SoundManager.getInstance().playSFX(sounds.FANFARE, 0.9);
-      const newTotal = (targetPlayer.total_score || 0) + points;
-      updatePlayerScore(playerId, newTotal);
-    },
-    [updatePlayerScore],
+  const hudPlayers: SlingshotPlayer[] = useMemo(
+    () =>
+      players
+        .map((p) => ({ id: p.id, nickname: p.nickname, color: colorOf(players, p.id), score: goalsFromScore(p.total_score) }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, HUD_PLAYERS),
+    [players],
   );
 
-  // Sonuç ekranına geçildiğinde gecelik lig puanlarını dağıt
-  useEffect(() => {
-    if (currentStatus !== "slingshot_reveal") return;
-    SoundManager.getInstance().playSFX(sounds.FANFARE, 0.8);
-
-    const scores = latestPlayers.current.map((p) => ({
-      id: p.id,
-      score: p.slingshot_score || p.total_score || 0,
-    }));
-    finishNightRound(room.id, placementPointsByScore(scores));
-  }, [currentStatus, room.id]);
-
-  const slingshotPlayers: SlingshotPlayer[] = useMemo(() => {
-    return players.map((p, idx) => ({
-      id: p.id,
-      nickname: p.nickname,
-      color: PLAYER_COLORS[idx % PLAYER_COLORS.length],
-      score: Math.floor((p.total_score || 0) / 200),
-    }));
-  }, [players]);
-
   const handleReturnToLobby = () => {
-    updateRoomStatus("lobby", { active_game: "none" });
+    updateRoomStatus("night_lobby", { active_game: "none" });
   };
 
   const handleRestart = () => {
-    updateRoomStatus("slingshot_intro");
+    const failed = (err: unknown) => console.error("[HostSlingshot] Yeniden başlatma sıfırlaması başarısız:", err);
+    resetPlayersForNewGame(players.map((p) => p.id)).catch(failed);
+    clearRoomAnswers(room.id).catch(failed);
+    setCurrentShot(null);
+    updateRoomStatus("slingshot_intro", { slingshot_end_time: 0, ...NIGHT_ROUND_OPEN });
   };
+
+  const title = gameTitle("slingshot");
 
   return (
     <TVScaleFrame>
@@ -154,23 +239,23 @@ export function HostSlingshotDisplay({
                 ⚽
               </div>
               <h2 className="text-xl font-mono tracking-[0.4em] uppercase text-emerald-400 font-black mb-2">
-                HENGAME STADYUM DÜELLOSU
+                {t("slingshot.introEyebrow")}
               </h2>
               <h1 className="text-6xl font-black text-white tracking-tight mb-6 drop-shadow-[0_0_30px_rgba(16,185,129,0.6)]">
-                YÖRÜNGE SAPANI
+                {title}
               </h1>
               <p className="text-2xl text-gray-300 max-w-2xl text-center font-light leading-relaxed mb-8">
-                Telefonunuzdaki sapanı parmağınızla geriye doğru çekin, falso açısını verin ve TV kalesine fırlatın! 90'a asan maçın yıldızı olur!
+                {t("slingshot.introBody")}
               </p>
               <div className="flex items-center gap-4 text-emerald-300 font-mono text-lg animate-pulse">
                 <span className="w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_10px_#10b981]" />
-                <span>Stadyum ışıkları açılıyor... ŞUTLARINIZI HAZIRLAYIN!</span>
+                <span>{t("slingshot.introReady")}</span>
               </div>
             </motion.div>
           )}
 
           {/* 2. AKTİF STADYUM ARENASI */}
-          {(currentStatus === "slingshot_active" || currentStatus === "playing") && (
+          {currentStatus === "slingshot_active" && (
             <motion.div
               key="active"
               initial={{ opacity: 0 }}
@@ -178,12 +263,10 @@ export function HostSlingshotDisplay({
               exit={{ opacity: 0 }}
               className="relative w-full h-full flex-1"
             >
-              <Slingshot3DArena
-                players={slingshotPlayers}
-                currentShooter={currentShooter}
-                incomingShot={incomingShot}
-                onGoal={handleGoal}
-              />
+              <Slingshot3DArena players={hudPlayers} shot={currentShot} onShotResult={handleShotResult} />
+              <div className="absolute top-28 left-1/2 -translate-x-1/2 z-40 px-6 py-2 rounded-2xl bg-black/70 border border-white/15 backdrop-blur-md font-mono text-4xl font-black text-alaz-orange tabular-nums drop-shadow-[0_0_20px_rgba(255,85,0,0.8)]">
+                {timeLeft}s
+              </div>
             </motion.div>
           )}
 
@@ -197,10 +280,10 @@ export function HostSlingshotDisplay({
               className="absolute inset-0 z-30 flex flex-col items-center justify-center p-12 bg-black/95 backdrop-blur-2xl"
             >
               <div className="text-sm font-mono tracking-[0.4em] uppercase text-emerald-400 font-bold mb-2">
-                DÜELLO TAMAMLANDI
+                {t("slingshot.revealEyebrow")}
               </div>
               <h1 className="text-5xl font-black text-white tracking-tight mb-8 drop-shadow-[0_0_25px_rgba(16,185,129,0.5)]">
-                ALTIN AYAK SIRALAMASI
+                {t("slingshot.revealTitle")}
               </h1>
 
               {/* Podyum Kartları */}
@@ -224,7 +307,7 @@ export function HostSlingshotDisplay({
                       <div className="text-3xl mb-2">{rank === 0 ? "🏆" : rank === 1 ? "🥈" : "🥉"}</div>
                       <div className="text-xl font-bold text-white mb-1">{p.nickname}</div>
                       <div className="font-mono text-2xl font-black text-emerald-300">
-                        {p.total_score || 0} Puan
+                        {t("slingshot.goals", goalsFromScore(p.total_score))}
                       </div>
                     </motion.div>
                   ))}
@@ -236,13 +319,13 @@ export function HostSlingshotDisplay({
                   onClick={handleRestart}
                   className="px-8 py-4 rounded-2xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 font-bold text-lg hover:bg-emerald-500/30 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)]"
                 >
-                  ⚽ Tekrar Penaltı At
+                  {t("slingshot.playAgain")}
                 </ShimmerButton>
                 <button
                   onClick={handleReturnToLobby}
                   className="px-8 py-4 rounded-2xl bg-white/10 text-white font-bold text-lg hover:bg-white/20 transition-all border border-white/15"
                 >
-                  🏠 Lobiye Dön
+                  {t("slingshot.backToLobby")}
                 </button>
               </div>
             </motion.div>

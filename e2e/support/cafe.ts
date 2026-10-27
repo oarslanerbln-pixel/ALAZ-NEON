@@ -117,19 +117,21 @@ async function dismissShowcaseOnAction(tv: Page): Promise<void> {
  */
 export async function startGameFromDashboard(
   tv: Page,
-  game: "QUIZ" | "ARENA" | "BOMB",
+  game: "QUIZ" | "ARENA" | "BOMB" | "YÖRÜNGE SAPANI",
   configure?: (modal: Page) => Promise<void>,
 ): Promise<void> {
+  // Amiral gemisi modlar "HENGAME <AD>", diğerleri kendi iki kelimelik adıyla.
+  const [prefix, highlight] = game.includes(" ") ? game.split(" ") : ["HENGAME", game];
   // TV 90 sn dokunulmazsa tanıtım döngüsüne geçer (HostShowcase, tam ekran).
   // Bir kez bakıp kapatmak yetmiyordu: döngü bu adımlar sırasında da açılıp
   // tıklamanın önüne geçebiliyor. Playwright her TV eyleminden önce açıksa
   // personel gibi bir dokunuşla kapatır.
   await dismissShowcaseOnAction(tv);
   // Karusel noktaları oyun adını aria-label olarak taşıyor ("HENGAME QUIZ").
-  await tv.getByRole("button", { name: `HENGAME ${game}`, exact: true }).click();
+  await tv.getByRole("button", { name: `${prefix} ${highlight}`, exact: true }).click();
   const card = tv
     .locator("button:not([disabled])")
-    .filter({ hasText: new RegExp(`HENGAME[\\s\\S]{0,40}${game}`) })
+    .filter({ hasText: new RegExp(`${prefix}[\\s\\S]{0,40}${highlight}`) })
     .filter({ hasText: /SESSION STARTEN/i })
     .first();
   await expect(card).toBeVisible();

@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { SoundManager, sounds } from "../../lib/audio";
-import type { SlingshotLaunchData } from "./SlingshotController";
+import { useLocale } from "../../hooks/useLocale";
+import { GOAL_HEIGHT, GOAL_WIDTH, SLINGSHOT_GOAL_POINTS, judgeShot, type ShotResult, type SlingshotShot } from "../../lib/slingshot";
 
 export interface SlingshotPlayer {
   id: string;
@@ -10,33 +11,37 @@ export interface SlingshotPlayer {
   score: number;
 }
 
-interface Slingshot3DArenaProps {
-  players: SlingshotPlayer[];
-  currentShooter?: SlingshotPlayer;
-  incomingShot?: SlingshotLaunchData | null;
-  onGoal?: (playerId: string, points: number) => void;
-  onSave?: (playerId: string) => void;
+/** TV'nin sıradaki şutu: `id` değişince top fırlatılır. */
+export interface ArenaShot extends SlingshotShot {
+  id: string;
+  playerId: string;
+  shooterName: string;
+  color: string;
 }
 
-export function Slingshot3DArena({
-  players,
-  currentShooter,
-  incomingShot,
-  onGoal,
-  onSave,
-}: Slingshot3DArenaProps) {
+interface Slingshot3DArenaProps {
+  players: SlingshotPlayer[];
+  shot: ArenaShot | null;
+  /** Top kale çizgisine ulaşınca bir kez çağrılır. */
+  onShotResult?: (shot: ArenaShot, result: ShotResult) => void;
+}
+
+/** Sabit yan rüzgar (m/s); topu her karede biraz sağa iter. */
+const WIND = 1.2;
+
+export function Slingshot3DArena({ players, shot, onShotResult }: Slingshot3DArenaProps) {
+  const { t } = useLocale();
   const mountRef = useRef<HTMLDivElement | null>(null);
-  const [shotResult, setShotResult] = useState<"goal" | "saved" | "crossbar" | "out" | null>(null);
-  const [wind, setWind] = useState<number>(1.2); // m/s rüzgar
+  const [shotResult, setShotResult] = useState<ShotResult | null>(null);
 
-  // Atışı fırlatma ref'i
-  const fireShotRef = useRef<((shot: SlingshotLaunchData) => void) | null>(null);
-
+  // Sahne yalnızca bir kez kurulur. Eskiden atıcı ve geri çağırmalar efektin
+  // bağımlılığındaydı: her yeni atıcıda WebGL sahnesi yıkılıp kuruluyor, şut
+  // da yıkılan sahneye fırlatılıp kayboluyordu.
+  const fireShotRef = useRef<((shot: ArenaShot) => void) | null>(null);
+  const onShotResultRef = useRef(onShotResult);
   useEffect(() => {
-    if (incomingShot && fireShotRef.current) {
-      fireShotRef.current(incomingShot);
-    }
-  }, [incomingShot]);
+    onShotResultRef.current = onShotResult;
+  }, [onShotResult]);
 
   useEffect(() => {
     const container = mountRef.current;
@@ -99,8 +104,8 @@ export function Slingshot3DArena({
     });
 
     const postRadius = 0.35;
-    const goalW = 16;
-    const goalH = 7.5;
+    const goalW = GOAL_WIDTH;
+    const goalH = GOAL_HEIGHT;
 
     // Sol Direk
     const leftPostGeom = new THREE.CylinderGeometry(postRadius, postRadius, goalH);
@@ -182,8 +187,14 @@ export function Slingshot3DArena({
     let ballVy = 0;
     let ballVz = 0;
     let ballSpin = 0;
+    let activeShot: ArenaShot | null = null;
+    const timers = new Set<ReturnType<typeof setTimeout>>();
 
-    fireShotRef.current = (shot: SlingshotLaunchData) => {
+    fireShotRef.current = (shot: ArenaShot) => {
+      activeShot = shot;
+      // Önceki topun gizlenme zamanlayıcısı yeni topu söndürmesin.
+      timers.forEach(clearTimeout);
+      timers.clear();
       ball.position.set(0, 0.5, 16);
       ball.visible = true;
       ballActive = true;
@@ -216,7 +227,7 @@ export function Slingshot3DArena({
 
       // Top Fiziği Simülasyonu
       if (ballActive) {
-        ball.position.x += ballVx + ballSpin;
+        ball.position.x += ballVx + ballSpin + WIND * 0.01;
         ball.position.y += ballVy;
         ball.position.z += ballVz;
         ballVy -= 0.016; // Yerçekimi
@@ -228,42 +239,20 @@ export function Slingshot3DArena({
         if (ball.position.z <= -21.5) {
           ballActive = false;
 
-          const bx = ball.position.x;
-          const by = ball.position.y;
-          const kx = keeperGroup.position.x;
-
-          // Kaleci Kurtardı mı?
-          if (Math.abs(bx - kx) < 2.5 && by >= 0 && by <= 5.5) {
-            setShotResult("saved");
-            SoundManager.getInstance().playSFX(sounds.FAILURE, 0.8);
-            if (onSave && currentShooter) onSave(currentShooter.id);
-          }
-          // Gol mü?
-          else if (Math.abs(bx) < goalW / 2 - 0.5 && by > 0 && by < goalH - 1) {
-            setShotResult("goal");
-            SoundManager.getInstance().playSFX(sounds.FANFARE, 1.0);
-            if (onGoal && currentShooter) {
-              onGoal(currentShooter.id, 100);
-            }
-          }
-          // Direkten mi Döndü?
-          else if (
-            (Math.abs(Math.abs(bx) - goalW / 2) < 0.8 && by <= goalH) ||
-            (Math.abs(by - (goalH - 1)) < 0.8 && Math.abs(bx) <= goalW / 2)
-          ) {
-            setShotResult("crossbar");
-            SoundManager.getInstance().playSFX(sounds.CLICK, 1.0);
-          }
-          // Dışarı mı Gitti?
-          else {
-            setShotResult("out");
-            SoundManager.getInstance().playSFX(sounds.FAILURE, 0.5);
-          }
+          const result = judgeShot(ball.position.x, ball.position.y, keeperGroup.position.x);
+          setShotResult(result);
+          if (result === "goal") SoundManager.getInstance().playSFX(sounds.FANFARE, 1.0);
+          else if (result === "crossbar") SoundManager.getInstance().playSFX(sounds.CLICK, 1.0);
+          else SoundManager.getInstance().playSFX(sounds.FAILURE, result === "saved" ? 0.8 : 0.5);
+          if (activeShot) onShotResultRef.current?.(activeShot, result);
+          activeShot = null;
 
           // 2 saniye sonra topu sıfırla
-          setTimeout(() => {
+          const hide = setTimeout(() => {
+            timers.delete(hide);
             ball.visible = false;
           }, 2000);
+          timers.add(hide);
         }
       }
 
@@ -276,12 +265,22 @@ export function Slingshot3DArena({
     return () => {
       running = false;
       cancelAnimationFrame(animId);
+      timers.forEach(clearTimeout);
+      fireShotRef.current = null;
       renderer.dispose();
       if (renderer.domElement.parentNode) {
         renderer.domElement.parentNode.removeChild(renderer.domElement);
       }
     };
-  }, [currentShooter, onGoal, onSave]);
+  }, []);
+
+  // Sahne efektinden SONRA: ilk karede gelen şut da kurulmuş sahneye düşsün.
+  const shotId = shot?.id;
+  useEffect(() => {
+    if (shot && fireShotRef.current) fireShotRef.current(shot);
+    // Yalnızca yeni şutta fırlat; aynı şutun nesnesi yenilense de tekrar etme.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shotId]);
 
   return (
     <div className="relative w-full h-full min-h-[640px] flex flex-col justify-between select-none overflow-hidden bg-black text-white">
@@ -296,10 +295,10 @@ export function Slingshot3DArena({
           </div>
           <div>
             <div className="text-xs font-mono tracking-[0.3em] uppercase text-alaz-orange font-bold">
-              HENGAME MAÇ ÖNÜ DÜELLOSU
+              {t("slingshot.arenaEyebrow")}
             </div>
             <h1 className="text-2xl font-black tracking-tight text-white drop-shadow-md">
-              YÖRÜNGE SAPANI
+              {shot ? t("slingshot.shooter", shot.shooterName) : t("slingshot.title")}
             </h1>
           </div>
         </div>
@@ -308,8 +307,8 @@ export function Slingshot3DArena({
         <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-black/60 border border-white/15 backdrop-blur-md">
           <span className="text-lg">🌬️</span>
           <div className="font-mono text-xs">
-            <span className="text-white/60">RÜZGAR: </span>
-            <span className="text-cyan-300 font-bold">+{wind} m/s SAĞ</span>
+            <span className="text-white/60">{t("slingshot.wind")}: </span>
+            <span className="text-cyan-300 font-bold">{t("slingshot.windRight", WIND)}</span>
           </div>
         </div>
 
@@ -322,7 +321,7 @@ export function Slingshot3DArena({
             >
               <span className="font-mono text-xs font-bold">{p.nickname}</span>
               <span className="font-mono text-sm font-black text-alaz-orange ml-1">
-                {p.score} GOL
+                {t("slingshot.goals", p.score)}
               </span>
             </div>
           ))}
@@ -334,10 +333,10 @@ export function Slingshot3DArena({
         {shotResult === "goal" && (
           <div className="flex flex-col items-center animate-bounce">
             <h1 className="text-8xl md:text-9xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-amber-200 to-alaz-orange drop-shadow-[0_0_50px_rgba(255,85,0,0.9)]">
-              GOOOOOL! ⚽
+              {t("slingshot.goal")}
             </h1>
             <span className="font-mono text-xl tracking-[0.4em] uppercase text-amber-300 font-black mt-2">
-              +100 PUAN KAZANILDI
+              {t("slingshot.goalPoints", SLINGSHOT_GOAL_POINTS)}
             </span>
           </div>
         )}
@@ -345,7 +344,7 @@ export function Slingshot3DArena({
         {shotResult === "saved" && (
           <div className="flex flex-col items-center">
             <h1 className="text-7xl md:text-8xl font-black italic tracking-tight text-rose-500 drop-shadow-[0_0_40px_rgba(244,63,94,0.9)]">
-              KALECİ UZANDI! 🧤
+              {t("slingshot.saved")}
             </h1>
           </div>
         )}
@@ -353,7 +352,7 @@ export function Slingshot3DArena({
         {shotResult === "crossbar" && (
           <div className="flex flex-col items-center">
             <h1 className="text-7xl md:text-8xl font-black italic tracking-tight text-amber-400 drop-shadow-[0_0_40px_rgba(251,191,36,0.9)]">
-              DİREKTEN DÖNDÜ! 💥
+              {t("slingshot.crossbar")}
             </h1>
           </div>
         )}
@@ -361,7 +360,7 @@ export function Slingshot3DArena({
         {shotResult === "out" && (
           <div className="flex flex-col items-center">
             <h1 className="text-6xl md:text-7xl font-black tracking-tight text-white/50">
-              AUTA GİTTİ 💨
+              {t("slingshot.out")}
             </h1>
           </div>
         )}
@@ -371,7 +370,7 @@ export function Slingshot3DArena({
       <div className="relative z-20 flex items-center justify-center p-4 bg-gradient-to-t from-black/80 to-transparent">
         <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-white/70">
           <span className="w-2 h-2 rounded-full bg-alaz-orange animate-ping" />
-          <span>Telefonda topu geriye doğru çek, rüzgarı ve falsoyu hesaplayıp fırlat!</span>
+          <span>{t("slingshot.arenaHint")}</span>
         </div>
       </div>
     </div>

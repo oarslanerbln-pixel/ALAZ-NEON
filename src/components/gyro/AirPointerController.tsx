@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useDeviceAirPointer } from "./useDeviceAirPointer";
 import { haptics } from "../../lib/haptics";
 import { SoundManager, sounds } from "../../lib/audio";
-import { DURATION, EASE, SPRING } from "../../lib/motion";
+import { EASE } from "../../lib/motion";
 
 interface AirPointerControllerProps {
   playerColor?: "cyan" | "orange" | "pink" | "green";
@@ -49,7 +49,7 @@ export function AirPointerController({
   onFire,
   disabled = false,
 }: AirPointerControllerProps) {
-  const { x, y, isSupported, permissionState, recalibrate, requestPermission } = useDeviceAirPointer();
+  const { x, y, permissionState, recalibrate, requestPermission } = useDeviceAirPointer();
   const [isRecoil, setIsRecoil] = useState(false);
   const [touchCoords, setTouchCoords] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const touchAreaRef = useRef<HTMLDivElement | null>(null);

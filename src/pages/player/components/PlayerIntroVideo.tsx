@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useLocale } from "../../../hooks/useLocale";
 import { haptics } from "../../../lib/haptics";
 import { SPRING, TWEEN } from "../../../lib/motion";

@@ -18,7 +18,7 @@ import { HostQuizIntro } from "./views/HostQuizIntro";
 import { QuizLeaderboard, type PreviousRanking } from "./QuizLeaderboard";
 import { TimerRing } from "../../../components/TimerRing";
 import { BeamBorder } from "../../../components/fx/BeamBorder";
-import { CardSpotlight, KineticText, NumberTicker, ShimmerButton } from "../../../components/fx";
+import { KineticText, NumberTicker, ShimmerButton } from "../../../components/fx";
 import { HostHeader } from "../components/HostHeader";
 import { HostLobby } from "../views/HostLobby";
 import { HostTutorial } from "../components/HostTutorial";

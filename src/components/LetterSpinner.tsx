@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SoundManager, sounds } from "../lib/audio";
 import { DURATION, EASE, SPRING } from "../lib/motion";

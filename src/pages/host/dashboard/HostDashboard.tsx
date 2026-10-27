@@ -257,6 +257,11 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       };
     }
 
+    if (game === "slingshot") {
+      initialStatus = "slingshot_intro";
+      extraUpdates = { ...extraUpdates, slingshot_end_time: 0 };
+    }
+
     if (game === "kablo") {
       initialStatus = "kablo_intro";
       extraUpdates = {

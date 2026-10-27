@@ -1,7 +1,5 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { SoundManager, sounds } from "../../lib/audio";
-import { DURATION, EASE } from "../../lib/motion";
 
 export interface TargetEntity {
   id: string;
@@ -38,15 +36,13 @@ interface CyberTargetArenaProps {
 export function CyberTargetArena({
   players,
   timeLeft = 30,
-  onTargetHit,
-  onRoundComplete,
 }: CyberTargetArenaProps) {
+  // TODO(sniper): onTargetHit/onRoundComplete henüz bağlı değil — vuruş
+  // tespiti yok, bu yüzden mod katalogda kilitli (bkz. gameCatalog).
   const mountRef = useRef<HTMLDivElement | null>(null);
-  const playersRef = useRef(players);
-  playersRef.current = players;
 
   const [scoreList, setScoreList] = useState(players);
-  const [floatingHits, setFloatingHits] = useState<
+  const [floatingHits] = useState<
     Array<{ id: number; x: number; y: number; text: string; color: string }>
   >([]);
 

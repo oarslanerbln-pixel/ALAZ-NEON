@@ -1,6 +1,6 @@
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { EASE, SPRING } from "../../../lib/motion";
+import { SPRING } from "../../../lib/motion";
 
 interface Cyber3DBombProps {
   timeLeft: number;

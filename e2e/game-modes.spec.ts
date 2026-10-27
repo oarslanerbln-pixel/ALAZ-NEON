@@ -11,11 +11,11 @@ import {
   type Phone,
 } from "./support/cafe";
 import { playQuiz, returnToNightLobby, skipHostTutorial, wrongOption } from "./support/games";
-import { adminGet, adminQuery, clearAuth, clearFirestore } from "./support/emulator";
+import { adminGet, adminQuery, adminUpdate, clearAuth, clearFirestore } from "./support/emulator";
 
 /**
  * Katalogda açık olan her mod en az bir tur: HENGAME ARENA (klasik isim-şehir),
- * HENGAME QUIZ, HENGAME BOMB. Diğer 11 mod "BALD VERFÜGBAR" kilitli; TV
+ * HENGAME QUIZ, HENGAME BOMB, YÖRÜNGE SAPANI. Diğer 12 mod "BALD VERFÜGBAR" kilitli; TV
  * onları başlatmayı reddeder (son test).
  */
 test.beforeEach(async () => {
@@ -169,11 +169,56 @@ test("aynı gece ikinci quiz: eski cevaplar yeni oyunu bozmaz", async ({ browser
   }
 });
 
+test("YÖRÜNGE SAPANI: telefonun şutu TV'ye ulaşır, sonuçlanır, gol puanlanır, gecelik puan dağıtılır", async ({ browser }) => {
+  test.setTimeout(4 * 60_000);
+  const { tv, phones } = await night(browser, 2);
+  try {
+    await startGameFromDashboard(tv.page, "YÖRÜNGE SAPANI");
+    await expect.poll(async () => (await roomOf(tv.roomId))?.status, { timeout: 30_000 }).toBe("slingshot_active");
+    const roundKey = `slingshot-${(await roomOf(tv.roomId))?.slingshot_end_time}`;
+
+    // SPIELER1 sapanı ortadan aşağı çekip bırakır.
+    const pad = phones[0].page.locator(".cursor-grab");
+    await expect(pad).toBeVisible({ timeout: 20_000 });
+    const box = (await pad.boundingBox())!;
+    const x = box.x + box.width / 2;
+    const y = box.y + box.height * 0.4;
+    await phones[0].page.mouse.move(x, y);
+    await phones[0].page.mouse.down();
+    await phones[0].page.mouse.move(x, y + 140, { steps: 8 });
+    await phones[0].page.mouse.up();
+    // Eskiden şut oyuncu belgesine yazılıyor, kural reddediyordu.
+    await expect(phones[0].page.getByText("Ball wird geladen…")).toBeVisible();
+    await expect
+      .poll(async () => (await adminQuery("answers", "room_id", tv.roomId)).filter((a) => a.round_letter === roundKey).length, { timeout: 15_000 })
+      .toBe(1);
+
+    // TV şutu fırlatır ve sonucunu gösterir; gol olduysa puan yazılır.
+    const result = tv.page.getByText(/^(TOOOOOR! ⚽|GEHALTEN! 🧤|AN DEN PFOSTEN! 💥|DANEBEN 💨)$/);
+    await expect(result).toBeVisible({ timeout: 15_000 });
+    const goal = (await result.textContent())?.startsWith("TOOOOOR") ?? false;
+    await expect
+      .poll(async () => Number((await adminGet(`players/${phones[0].playerId}`))?.total_score ?? 0), { timeout: 15_000 })
+      .toBe(goal ? 100 : 0);
+
+    // Süreyi bitir: sonuç ekranı ve gecelik lig puanı (katılım puanı dahil).
+    await adminUpdate(`rooms/${tv.roomId}`, { slingshot_end_time: Date.now() - 1_000 });
+    await expect.poll(async () => (await roomOf(tv.roomId))?.status, { timeout: 30_000 }).toBe("slingshot_reveal");
+    await expect.poll(async () => (await roomOf(tv.roomId))?.night_awarded, { timeout: 15_000 }).toBe(true);
+    for (const p of phones) {
+      await expect.poll(async () => Number((await adminGet(`players/${p.playerId}`))?.night_score ?? 0), { timeout: 15_000 }).toBeGreaterThan(0);
+    }
+    for (const p of [tv, ...phones]) expect(realErrors(p), p.page.url()).toEqual([]);
+  } finally {
+    await closeAll(tv, ...phones);
+  }
+});
+
 test("kilitli modlar (BALD VERFÜGBAR) TV'den başlatılamaz", async ({ browser }) => {
   const tv = await openNight(browser);
   try {
     const locked = tv.page.getByRole("button", { name: /\(Locked\)$/ });
-    await expect(locked).toHaveCount(11);
+    await expect(locked).toHaveCount(12);
     await locked.first().click();
     await expect(tv.page.getByRole("button", { name: "SPIEL STARTEN" })).toHaveCount(0);
     expect((await roomOf(tv.roomId))?.status).toBe("night_lobby");

@@ -62,7 +62,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [gameState, setGameState] = useState(room.status);
   const [responseSec, setResponseSec] = useState<string | null>(null);
-  const questionStartTimeRef = useRef(Date.now());
+  const questionStartTimeRef = useRef(0);
   const [urgent, setUrgent] = useState(false);
   void urgent;
   const [joinedMidQuestion] = useState(() => (room.status === "question_active" ? room.current_question_index ?? 0 : null));
@@ -70,7 +70,10 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
   // Synchronous double-tap submission lock
   const hasSubmittedRef = useRef(false);
 
-  // Soru değişince seçim sıfırlanır.
+  // Soru değişince seçim sıfırlanır. Yalnızca durum geçişine bakmak yetmiyor:
+  // telefon kilitliyken (ya da wifi koparken) ara durumlar tek bir snapshot'ta
+  // birleşiyor; 1. sorunun "question_active"inden doğrudan 2. sorunun
+  // "question_active"ine uyanan telefon eski cevabıyla kilitli kalıyordu.
   const questionIndex = room.current_question_index ?? 0;
   const [seenQuestionIndex, setSeenQuestionIndex] = useState(questionIndex);
   if (questionIndex !== seenQuestionIndex) {
@@ -101,7 +104,6 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
   useEffect(() => {
     const checkSubmission = async () => {
       if (room.status === "question_active" && !hasSubmitted) {
-        questionStartTimeRef.current = Date.now();
         const questionIndexStr = (room.current_question_index ?? 0).toString();
         const q = query(
           collection(db, "answers"),
@@ -156,6 +158,9 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
       });
       haptics.success();
     } catch (err) {
+      // Onay yolda kaybolup SDK yeniden gönderince "zaten var": cevap kayıtlı.
+      // Eskiden şıklar açılıp seçim siliniyordu; o arada basılan ikinci şık
+      // telefonda görünürken TV ilkini puanlıyordu.
       if (isAlreadyExists(err)) {
         haptics.success();
         return;
@@ -206,6 +211,11 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
 
       {/* Content Area */}
       <div className="relative z-10 w-full max-w-md px-4 flex-1 flex flex-col justify-center min-h-0">
+        {/* Soru numarasıyla anahtarlı: host ekranları hızlı geçerken yavaş
+            telefonda bir çıkış animasyonu hiç bitmeyebiliyor ve "wait" kipi
+            yeni ekranı sonsuza dek bekletiyordu (telefon önceki sorunun
+            açıklamasında kalıp yeni soruyu kaçırıyordu). Yeni soru ağacı
+            baştan kurar. */}
         <AnimatePresence mode="wait" key={questionIndex}>
           
           {/* LOBBY */}
@@ -385,12 +395,6 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
                   }`}>
                     {isCorrect ? t("quiz.playerCorrect") : t("quiz.playerWrong")}
                   </h2>
-
-                  {isCorrect && (
-                    <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-mono font-black text-xs mb-3">
-                      <span>⚡ +100 {t("quiz.pts")}</span>
-                    </div>
-                  )}
 
                   <p className="text-sm text-white/90 font-medium">
                     {t("quiz.correctAnswer")}: <strong className="text-white font-bold ml-1">{revealed} — {currentQ.options[revealed]}</strong>

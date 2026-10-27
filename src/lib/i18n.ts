@@ -1125,6 +1125,81 @@ const translations = {
     en: "Pull the touch slingshot, add curve, and hit the top corner! 3D stadium shootout.",
   },
 
+  // YÖRÜNGE SAPANI — TV ve misafir telefonu
+  "slingshot.title": { tr: "YÖRÜNGE SAPANI", de: "YÖRÜNGE SAPANI", en: "YÖRÜNGE SAPANI" },
+  "slingshot.introEyebrow": { tr: "HENGAME STADYUM DÜELLOSU", de: "HENGAME STADION-DUELL", en: "HENGAME STADIUM DUEL" },
+  "slingshot.introBody": {
+    tr: "Telefonunuzdaki sapanı parmağınızla geriye doğru çekin, falso açısını verin ve TV kalesine fırlatın! 90'a asan maçın yıldızı olur!",
+    de: "Zieh die Schleuder auf deinem Handy mit dem Finger zurück, gib Effet und schieß aufs TV-Tor! Wer in den Winkel trifft, ist der Star des Abends!",
+    en: "Pull back the slingshot on your phone, add curve and fire at the TV goal! Hit the top corner and you're the star of the night!",
+  },
+  "slingshot.introReady": {
+    tr: "Stadyum ışıkları açılıyor... ŞUTLARINIZI HAZIRLAYIN!",
+    de: "Flutlicht an... MACHT EUCH BEREIT!",
+    en: "Floodlights on... GET YOUR SHOTS READY!",
+  },
+  "slingshot.arenaEyebrow": { tr: "HENGAME MAÇ ÖNÜ DÜELLOSU", de: "HENGAME DUELL VOR DEM ANPFIFF", en: "HENGAME PRE-MATCH DUEL" },
+  "slingshot.shooter": {
+    tr: (name: string) => `${name} ŞUT ÇEKİYOR`,
+    de: (name: string) => `${name} SCHIESST`,
+    en: (name: string) => `${name} SHOOTS`,
+  },
+  "slingshot.wind": { tr: "RÜZGAR", de: "WIND", en: "WIND" },
+  "slingshot.windRight": {
+    tr: (speed: number) => `+${speed} m/s SAĞ`,
+    de: (speed: number) => `+${speed} m/s RECHTS`,
+    en: (speed: number) => `+${speed} m/s RIGHT`,
+  },
+  "slingshot.goals": {
+    tr: (n: number) => `${n} GOL`,
+    de: (n: number) => (n === 1 ? "1 TOR" : `${n} TORE`),
+    en: (n: number) => (n === 1 ? "1 GOAL" : `${n} GOALS`),
+  },
+  "slingshot.goal": { tr: "GOOOOOL! ⚽", de: "TOOOOOR! ⚽", en: "GOOOOAL! ⚽" },
+  "slingshot.goalPoints": {
+    tr: (n: number) => `+${n} PUAN KAZANILDI`,
+    de: (n: number) => `+${n} PUNKTE`,
+    en: (n: number) => `+${n} POINTS`,
+  },
+  "slingshot.saved": { tr: "KALECİ UZANDI! 🧤", de: "GEHALTEN! 🧤", en: "SAVED! 🧤" },
+  "slingshot.crossbar": { tr: "DİREKTEN DÖNDÜ! 💥", de: "AN DEN PFOSTEN! 💥", en: "OFF THE POST! 💥" },
+  "slingshot.out": { tr: "AUTA GİTTİ 💨", de: "DANEBEN 💨", en: "WIDE 💨" },
+  "slingshot.arenaHint": {
+    tr: "Telefonda topu geriye doğru çek, rüzgarı ve falsoyu hesaplayıp fırlat!",
+    de: "Zieh den Ball am Handy zurück, rechne Wind und Effet ein und schieß!",
+    en: "Pull the ball back on your phone, factor in wind and curve, and shoot!",
+  },
+  "slingshot.revealEyebrow": { tr: "DÜELLO TAMAMLANDI", de: "DUELL BEENDET", en: "DUEL COMPLETE" },
+  "slingshot.revealTitle": { tr: "ALTIN AYAK SIRALAMASI", de: "RANGLISTE GOLDENER SCHUH", en: "GOLDEN BOOT STANDINGS" },
+  "slingshot.playAgain": { tr: "⚽ Tekrar Penaltı At", de: "⚽ Nochmal schießen", en: "⚽ Shoot again" },
+  "slingshot.backToLobby": { tr: "🏠 Lobiye Dön", de: "🏠 Zur Lobby", en: "🏠 Back to lobby" },
+  "slingshot.playerIntroBody": {
+    tr: "Ekrana dokun, sapanı geriye doğru çek ve falsoyu vererek TV kalesine fırlat!",
+    de: "Tippe aufs Display, zieh die Schleuder zurück, gib Effet und schieß aufs TV-Tor!",
+    en: "Tap the screen, pull the slingshot back, add curve and fire at the TV goal!",
+  },
+  "slingshot.watchTv": {
+    tr: "TV Ekranına Bakın — Maç Başlıyor...",
+    de: "Schau auf den TV — gleich geht's los...",
+    en: "Watch the TV — kick-off soon...",
+  },
+  "slingshot.penaltyShot": { tr: "PENALTI ŞUTU", de: "ELFMETER", en: "PENALTY SHOT" },
+  "slingshot.angle": { tr: "AÇI", de: "WINKEL", en: "ANGLE" },
+  "slingshot.power": { tr: "GÜÇ", de: "KRAFT", en: "POWER" },
+  "slingshot.pullHint": { tr: "Topu Geriye Çek & Bırak", de: "Ball zurückziehen & loslassen", en: "Pull the ball back & release" },
+  "slingshot.reloading": { tr: "Top hazırlanıyor…", de: "Ball wird geladen…", en: "Reloading…" },
+  "slingshot.curveLeft": { tr: "SOL FALSO", de: "EFFET LINKS", en: "LEFT CURVE" },
+  "slingshot.curveRight": { tr: "SAĞ FALSO", de: "EFFET RECHTS", en: "RIGHT CURVE" },
+  "slingshot.spin": { tr: "FALSO", de: "EFFET", en: "SPIN" },
+  "slingshot.playerRevealEyebrow": { tr: "PENALTI DÜELLOSU BİTTİ", de: "ELFMETERSCHIESSEN VORBEI", en: "SHOOTOUT OVER" },
+  "slingshot.playerRevealTitle": { tr: "MÜKEMMEL ŞUTLAR!", de: "STARKE SCHÜSSE!", en: "GREAT SHOTS!" },
+  "slingshot.yourScore": { tr: "Toplam Puanın", de: "Deine Punkte", en: "Your score" },
+  "slingshot.rankingOnTv": {
+    tr: "Sıralama TV ekranında gösteriliyor.",
+    de: "Die Rangliste läuft auf dem TV.",
+    en: "Standings are on the TV.",
+  },
+
   // ═══════════════════════════════════════════
   // OYUN MODLARI — misafir telefonu ve TV ekranı
   //
