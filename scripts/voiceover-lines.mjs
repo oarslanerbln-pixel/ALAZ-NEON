@@ -10,7 +10,6 @@ export const LINES = [
   { id: "game_start", tags: "[excited]", text: "Alle bereit? Dann los!" },
   { id: "quiz_intro", tags: "[excited]", text: "Quizzeit! Wer schneller antwortet, holt mehr Punkte." },
   { id: "bomb_intro", tags: "[excited]", text: "Achtung, die Bombe ist scharf! Richtig antworten und schnell weitergeben." },
-  { id: "sensor_intro", tags: "[excited]", text: "Reflex-Duell! Wer zuerst drückt, gewinnt." },
   { id: "final_question", tags: "[excited]", text: "Letzte Frage – jetzt wird alles entschieden!" },
   { id: "last_seconds", tags: "[excited]", text: "Noch fünf Sekunden!" },
   { id: "reveal", text: "Zeit ist um! Und die richtige Antwort ist …" },

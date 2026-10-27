@@ -32,7 +32,7 @@ Projenin estetiği, nargile kafeler ve gece kulüpleri gibi loş ve hareketli me
   * Arka planda dinamik, dikkat çekici ama göz yormayan animasyonlar (örneğin Particle Background, Kinetic Spark).
 * **Mobil Oyuncu Ekranı (PlayerGame):**
   * Kullanıcı dostu, büyük dokunmatik butonlar (iOS/Android uyumlu).
-  * Titreşim geri bildirimi (`window.navigator.vibrate`) ve Emoji tepkileri gibi etkileşimi artıran mikro-etkileşimler.
+  * Titreşim geri bildirimi (`window.navigator.vibrate`) gibi etkileşimi artıran mikro-etkileşimler.
 
 ### Görsel dil v2 (Ekim 2026) — önce bunu oku
 

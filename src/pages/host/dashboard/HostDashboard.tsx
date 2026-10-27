@@ -8,12 +8,8 @@ import { HostHeader } from "../components/HostHeader";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import type { Room, Player, GameType } from "../../../types/database";
 
-import { doc, writeBatch } from "firebase/firestore";
-import { db } from "../../../lib/firebase";
-
-import { getRandomSensorImage } from "../../../data/sensorImages";
 import { GameSettingsModal } from "../components/GameSettingsModal";
-import { GAME_CARDS as GAMES, GAME_CATEGORY_KEY } from "../../../lib/gameCatalog";
+import { GAME_CARDS, GAME_CATEGORY_KEY } from "../../../lib/gameCatalog";
 import { activePlayers as activePlayersOf } from "../../../lib/liveness";
 import { useLocale } from "../../../hooks/useLocale";
 import { useIsStaff } from "../../../hooks/useIsStaff";
@@ -36,8 +32,12 @@ import { getJoinUrl } from "../../../lib/roomUrls";
 /** QR kartının altında 1080'lik tuvale kaydırmasız sığan misafir satırı. */
 const DASHBOARD_LIST_MAX = 6;
 
-
-
+/**
+ * Karusel sırası: oynanabilir modlar önce, kilitliler sonda (sıralama
+ * kararlı; grup içinde katalog sırası korunur). Personel ilk kaydırmada
+ * kilitli bir karta düşmesin.
+ */
+const GAMES = [...GAME_CARDS].sort((a, b) => Number(Boolean(a.isComingSoon)) - Number(Boolean(b.isComingSoon)));
 
 interface HostDashboardProps {
   room: Room;
@@ -54,15 +54,13 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
   // oyun bittikten sonra değil, burada görsün.
   const { isStaff } = useIsStaff();
   const rewardsBlocked = venue.rewards_enabled && Boolean(venue.reward_title?.trim()) && isStaff === false;
-  const [isKioskMode, setIsKioskMode] = useState(false);
 
   // Game Setup State
   const [setupGameMode, setSetupGameMode] = useState<GameType | null>(null);
   const [showFinale, setShowFinale] = useState(false);
   // Gece lobisi bir süre boş kalınca TV tanıtım döngüsüne geçer; kurulum
   // penceresi ya da finale açıkken geçmez. İlk dokunuşta kapanır.
-  const idle = useIdle(SHOWCASE_IDLE_MS, room.status === "night_lobby" && !setupGameMode && !showFinale && !isKioskMode);
-  const showShowcase = isKioskMode || idle;
+  const showShowcase = useIdle(SHOWCASE_IDLE_MS, room.status === "night_lobby" && !setupGameMode && !showFinale);
 
   // Carousel State
   const [carouselIndex, setCarouselIndex] = useState(0);
@@ -125,7 +123,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     // odaya ait bir durum değil. Yerel animasyon bitip gameState "lobby"ye
     // geçince senkron efekti odadan hâlâ "intro" okuyup geri çeviriyor, bu da
     // sonsuz döngü kurup lobiye hiç ulaşılamamasına yol açıyordu.
-    // Quiz/bomba/sensör kendi intro DURUMLARINI ekranlarında yönettiği için
+    // Quiz/bomba/sapan kendi intro DURUMLARINI ekranlarında yönettiği için
     // onlarda böyle bir sorun yok.
     let initialStatus: Room["status"] = "lobby";
     let extraUpdates: Partial<Room> = { active_game: game, current_round: 0, ...settings, ...NIGHT_ROUND_OPEN };
@@ -166,7 +164,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       // Canlar yukarıda dolduruldu: yalnızca hâlâ sinyal gönderenlere bak.
       const activePlayers = activePlayersOf(players);
       const randomPlayer = activePlayers.length > 0 ? activePlayers[Math.floor(Math.random() * activePlayers.length)] : null;
-      const { category, used } = nextBombCategory(settings?.categories || room.categories, []);
+      const { category, used } = nextBombCategory(settings?.categories || room.categories, [], room.locale);
 
       initialStatus = "tutorial";
       extraUpdates = {
@@ -183,138 +181,9 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       };
     }
 
-    if (game === "sensor") {
-      const firstImg = getRandomSensorImage([]);
-      initialStatus = "sensor_intro";
-      extraUpdates = {
-        active_game: game,
-        current_round: 0,
-        used_sensor_images: [firstImg.id],
-        sensor_current_media: firstImg.url,
-        sensor_media_answer: firstImg.answer,
-        sensor_buzzer_player_id: null,
-        sensor_buzzer_timestamp: null,
-        sensor_player_answer: null
-      };
-    }
-    if (game === "wheel") {
-      initialStatus = "wheel_active";
-      extraUpdates = {
-        active_game: game,
-        wheel_spinner_id: null,
-        wheel_result_index: null
-      };
-    }
-    if (game === "overload") {
-      initialStatus = "playing";
-      extraUpdates = {
-        active_game: game,
-        overload_target_id: null,
-        overload_time_allowed: 10,
-        overload_start_time: 0,
-        overload_eliminated_ids: []
-      };
-    }
-    if (game === "colors") {
-      initialStatus = "colors_intro";
-      extraUpdates = {
-        active_game: game,
-      };
-    }
-
-    // Echo / Pulse ekranlari kurulumlarini kendileri yapiyor, ama
-    // bunu yalnizca ilgili alan BOSKEN yapiyorlar: alanlar burada
-    // temizlenmezse ikinci tur onceki turun sorusu/oylari ve kadrosuyla
-    // aciliyor. Ayrica dogrudan *_intro ile basliyoruz — "lobby" uzerinden
-    // gecmek, oyuncu telefonlarinda hicbir dala uymayan kisa bir bos kare
-    // birakiyordu (bu ekranlarin hepsi *_intro durumunu tanıyor).
-    if (game === "echo") {
-      initialStatus = "echo_intro";
-      extraUpdates = {
-        ...extraUpdates,
-        echo_question: null,
-        echo_votes: {},
-      };
-    }
-
-    if (game === "pulse") {
-      initialStatus = "pulse_intro";
-      extraUpdates = {
-        ...extraUpdates,
-        pulse_clicks: {},
-      };
-    }
-
-    // Bar ve Kablo, Echo'nun aksine "lobby"den kendini baslatmiyor:
-    // ekranlari dogrudan *_intro durumunu bekliyor. Lobby ile acilirlarsa
-    // hicbir dala girmeyip bos ekranda kaliyorlar.
-    if (game === "bar") {
-      initialStatus = "bar_intro";
-      extraUpdates = {
-        ...extraUpdates,
-        bar_active_recipe: [],
-        bar_end_time: 0,
-      };
-    }
-
     if (game === "slingshot") {
       initialStatus = "slingshot_intro";
       extraUpdates = { ...extraUpdates, slingshot_end_time: 0 };
-    }
-
-    if (game === "kablo") {
-      initialStatus = "kablo_intro";
-      extraUpdates = {
-        ...extraUpdates,
-        kablo_winner_id: null,
-      };
-    }
-
-    // AYNA: soru sirasi baslangicta bir kez secilip odaya KIMLIK olarak
-    // yaziliyor (metin degil — her misafir kendi dilinde okusun). Havuz ve
-    // gecmis dinamik yukleniyor; dashboard paketini sisirmesin.
-    if (game === "ayna") {
-      const [{ pickQuestionIds }, { AYNA_QUESTIONS }, salon, { recentQuestionIds, rememberQuestions }] = await Promise.all([
-        import("../../../lib/ayna"),
-        import("../../../lib/aynaQuestions"),
-        import("../../../lib/aynaSalon"),
-        import("../../../lib/questionHistory"),
-      ]);
-      // Dünya soruları + salon soruları. Fazladan seçilen dünya soruları
-      // YEDEK: anket yeterli cevap toplamazsa salon sorusunun yerine geçer.
-      const total = settings?.total_rounds || 7;
-      const recent = recentQuestionIds();
-      const salonIds = pickQuestionIds(salon.SALON_QUESTIONS.map((q) => q.id), salon.salonQuestionCount(total), recent);
-      const worldIds = pickQuestionIds(AYNA_QUESTIONS.map((q) => q.id), total, recent);
-      const { order, reserves } = salon.buildQuestionOrder(worldIds, salonIds, total);
-      rememberQuestions(order);
-      initialStatus = "ayna_intro";
-      extraUpdates = {
-        ...extraUpdates,
-        ayna_question_ids: order,
-        ayna_survey_ids: salonIds,
-        ayna_reserve_ids: reserves,
-        ayna_round_truth: null,
-        ayna_round_sample: null,
-        ayna_index: 0,
-        ayna_scored_through: -1,
-        ayna_round_guesses: {},
-        ayna_round_points: {},
-        ayna_totals: {},
-        round_end_time: 0,
-      };
-    }
-
-    // Bar ve Kablo skorlari oyuncu dokumaninda birikiyor ve hicbir yerde
-    // sifirlanmiyordu: ikinci Kablo turu, onceki turun toplami zaten hedefin
-    // ustunde oldugu icin aninca "kazanildi" ekranina duserdi.
-    if (game === "bar" || game === "kablo") {
-      const resetField = game === "bar" ? "bar_score" : "kablo_score";
-      const batch = writeBatch(db);
-      players.forEach((p) => {
-        batch.update(doc(db, "players", p.id), { [resetField]: 0 });
-      });
-      await batch.commit();
     }
 
     await updateRoomStatus(initialStatus, extraUpdates);
@@ -348,6 +217,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
         <HostHeader
           room={room}
           exitConfirmKey="common.confirmEndNight"
+          exitLabelKey="common.endNight"
           onExitToHome={endNight}
         />
 
@@ -398,14 +268,6 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                   </p>
                 )}
 
-                {venue.promo_images && venue.promo_images.length > 0 && (
-                  <button
-                    onClick={() => setIsKioskMode(true)}
-                    className="mt-8 w-full py-3 bg-white/5 hover:bg-white/15 border border-white/20 rounded-xl text-white font-bold uppercase tracking-widest text-[10px] transition-colors"
-                  >
-                    {t("dashboard.kioskStart")}
-                  </button>
-                )}
               </div>
             </div>
 
@@ -621,7 +483,6 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
               </div>
               
               {/* Carousel Indicators */}
-              {/* 14 mod var: tek satira sigmazsa alt satira sarsin. */}
               <div className="flex flex-wrap justify-center items-center gap-2 mt-8 max-w-md">
                 {GAMES.map((g, idx) => (
                   <button
@@ -655,7 +516,6 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
             joinUrl={joinUrl}
             roomCode={room.code}
             venuePromos={venue.promo_images}
-            onClose={() => setIsKioskMode(false)}
           />
         )}
       </AnimatePresence>

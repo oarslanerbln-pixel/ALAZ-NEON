@@ -6,7 +6,6 @@ import { retentionExpiry } from "../../lib/retention";
 import { allocateRoomCode } from "../../lib/roomQueries";
 import { motion } from "framer-motion";
 import { NeonIcon } from "../../components/NeonIcon";
-import { GameAnimatedLogo } from "../../components/fx";
 import { LanguageSwitcher } from "../../components/LanguageSwitcher";
 import { useLocale } from "../../hooks/useLocale";
 import { useToast } from "../../contexts/ToastContextCore";
@@ -66,9 +65,6 @@ export function HostSetup() {
     if (isCreatingRef.current) return;
     isCreatingRef.current = true;
     setIsCreating(true);
-    // Defaults for the room, to be overridden by individual games
-    localStorage.setItem("cafe_game_timer", "60");
-    localStorage.setItem("cafe_game_mode", "individual");
 
     try {
       const roomCode = await allocateRoomCode();
@@ -93,7 +89,6 @@ export function HostSetup() {
           // bkz. types/database.ts Room.venue_* alanlarındaki not.
           venue_name: venue.name,
           venue_logo_url: venue.logo_url || null,
-          venue_primary_color: venue.primary_color || null,
         });
         
         navigate(`/host/display?roomId=${docRef.id}`);
@@ -132,9 +127,9 @@ export function HostSetup() {
             <span className="text-xl">←</span> {t("common.back", "ANA SAYFA")}
           </button>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 auto-rows-[minmax(220px,auto)]">
+          <div className="grid grid-cols-1 gap-8 auto-rows-[minmax(220px,auto)]">
             {/* Main Settings Panel */}
-            <GlassPanel className="md:col-span-3 md:row-span-2" neonColor="rgba(255,85,0,1)">
+            <GlassPanel neonColor="rgba(255,85,0,1)">
               <div className="p-8 sm:p-12 flex flex-col h-full relative">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-alaz-orange/10 blur-[100px] -mr-32 -mt-32 pointer-events-none group-hover:bg-alaz-orange/20 transition-colors" />
                 <div className="absolute bottom-0 left-0 w-64 h-64 bg-neon-blue/10 blur-[100px] -ml-32 -mb-32 pointer-events-none group-hover:bg-neon-blue/20 transition-colors" />
@@ -195,92 +190,6 @@ export function HostSetup() {
             </div>
             </GlassPanel>
 
-            {/* Status Bento */}
-            <GlassPanel neonColor="rgba(255,0,60,1)" delay="-1s">
-              <div className="p-8 flex flex-col justify-center h-full relative">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#ff003c]/10 blur-[50px] pointer-events-none group-hover:bg-[#ff003c]/20 transition-colors" />
-                <div className="absolute -bottom-4 -right-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <NeonIcon type="crown" color="pink" className="w-24 h-24" />
-                </div>
-              <div className="flex items-center gap-3 mb-6 relative z-10">
-                <span className="text-[#ff003c] text-[10px] font-black tracking-[0.2em] uppercase flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-[#ff003c] rounded-none animate-pulse" />
-                  {t("setup.statusTitle")}
-                </span>
-              </div>
-              <h3 className="text-2xl font-sans font-black mb-3 text-white tracking-widest uppercase">
-                {t("setup.statusWaiting")}
-              </h3>
-              <p className="text-gray-400 text-xs leading-relaxed font-medium">
-                {t("setup.statusDesc")}
-              </p>
-              </div>
-            </GlassPanel>
-
-            {/* Games Info Bento */}
-            <GlassPanel neonColor="rgba(0,243,255,1)" delay="-2s">
-              <div className="p-8 flex flex-col h-full relative">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-neon-blue/10 blur-[50px] pointer-events-none group-hover:bg-neon-blue/20 transition-colors" />
-              <h3 className="text-[10px] font-black mb-5 text-neon-blue uppercase tracking-[0.2em] relative z-10 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-neon-blue rounded-none animate-pulse" />
-                {t("setup.gamesTitle", "OYUN KATALOĞU")}
-              </h3>
-              <div className="space-y-3.5 relative z-10">
-                <div className="flex items-center justify-between text-[11px] group/item">
-                  <div className="flex items-center gap-2.5">
-                    <GameAnimatedLogo game="quiz" size="sm" className="w-5 h-5" />
-                    <span className="text-white font-bold tracking-wider group-hover/item:text-neon-blue transition-colors">HENGAME <span className="opacity-70 text-cyan-400">QUIZ</span></span>
-                  </div>
-                  <span className="text-neon-blue font-black border border-neon-blue/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(0,243,255,0.2)]">BİLGİ</span>
-                </div>
-                <div className="flex items-center justify-between text-[11px] group/item">
-                  <div className="flex items-center gap-2.5">
-                    <GameAnimatedLogo game="bomb" size="sm" className="w-5 h-5" />
-                    <span className="text-white font-bold tracking-wider group-hover/item:text-red-500 transition-colors">HENGAME <span className="opacity-70 text-orange-500">BOMB</span></span>
-                  </div>
-                  <span className="text-red-500 font-black border border-red-500/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(255,0,0,0.2)]">ZAMAN</span>
-                </div>
-                <div className="flex items-center justify-between text-[11px] group/item">
-                  <div className="flex items-center gap-2.5">
-                    <GameAnimatedLogo game="sensor" size="sm" className="w-5 h-5" />
-                    <span className="text-white font-bold tracking-wider group-hover/item:text-neon-pink transition-colors">HENGAME <span className="opacity-70 text-purple-400">SENSÖR</span></span>
-                  </div>
-                  <span className="text-neon-pink font-black border border-neon-pink/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(255,0,255,0.2)]">HAREKET</span>
-                </div>
-                <div className="flex items-center justify-between text-[11px] group/item">
-                  <div className="flex items-center gap-2.5">
-                    <GameAnimatedLogo game="wheel" size="sm" className="w-5 h-5" />
-                    <span className="text-white font-bold tracking-wider group-hover/item:text-cyber-yellow transition-colors">HENGAME <span className="opacity-70 text-yellow-500">ÇARK</span></span>
-                  </div>
-                  <span className="text-cyber-yellow font-black border border-cyber-yellow/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(255,215,0,0.2)]">ŞANS</span>
-                </div>
-                <div className="flex items-center justify-between text-[11px] group/item">
-                  <div className="flex items-center gap-2.5">
-                    <GameAnimatedLogo game="colors" size="sm" className="w-5 h-5" />
-                    <span className="text-white font-bold tracking-wider group-hover/item:text-purple-400 transition-colors">NEON <span className="opacity-70 text-pink-500">SAVAŞLARI</span></span>
-                  </div>
-                  <span className="text-purple-400 font-black border border-purple-400/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(168,85,247,0.2)]">TAKIM</span>
-                </div>
-              </div>
-                <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-neon-blue/5 blur-3xl rounded-full" />
-              </div>
-            </GlassPanel>
-
-            {/* History Bento */}
-            <GlassPanel className="md:col-span-1" neonColor="rgba(255,0,60,0.8)" delay="-3s">
-              <div className="p-6 flex items-center justify-between h-full opacity-60 hover:opacity-100 transition-opacity">
-                <div className="flex items-center gap-5">
-                  <div>
-                    <h3 className="text-xs font-sans font-semibold text-gray-500 uppercase tracking-widest mb-1">
-                      {t("setup.historyTitle")}
-                    </h3>
-                    <p className="text-[10px] text-gray-600">
-                      {t("setup.historyEmpty")}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </GlassPanel>
           </div>
         </motion.div>
       </div>

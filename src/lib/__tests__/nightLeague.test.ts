@@ -4,7 +4,6 @@ import {
   PARTICIPATION_POINTS,
   TEAM_WIN_POINTS,
   nightPointsForPlayers,
-  placementPointsByOrder,
   placementPointsByScore,
   nightRankOf,
   nightStandings,
@@ -43,12 +42,6 @@ describe("placementPointsByScore", () => {
     expect(pts.p9).toBe(1);
     expect(pts.p10).toBe(PARTICIPATION_POINTS);
     expect(pts.p11).toBe(PARTICIPATION_POINTS);
-  });
-});
-
-describe("placementPointsByOrder", () => {
-  it("açık sırayı puanlar, listede olmayanlar katılım alır", () => {
-    expect(placementPointsByOrder(["x", "y"], ["x", "y", "z"])).toEqual({ x: 25, y: 18, z: PARTICIPATION_POINTS });
   });
 });
 

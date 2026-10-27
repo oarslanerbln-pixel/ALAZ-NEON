@@ -7,6 +7,10 @@ ekranını, misafirler QR ile telefondan **player** ekranını açar. Backend yo
 
 Yığın: React 19 + TypeScript + Vite 7 + Tailwind 4 + Firebase 12 + Framer Motion.
 
+Oyun kataloğu bilerek dar: oynanabilir modlar HENGAME ARENA (`scattegories`),
+QUIZ ve BOMB; YÖRÜNGE SAPANI (`slingshot`) kodda ama kilitli (`isComingSoon`).
+Kaldırılan modlar ve gerekçesi: `docs/game-design-review.md` §1.
+
 ## Komutlar
 
 ```bash
@@ -27,7 +31,7 @@ Değişiklikten sonra en az `npm run typecheck && npm run lint && npm run test:r
 **Host tek yazardır, player aptal terminaldir.** Host `rooms/{id}.status` ve
 `active_game` alanlarını güncelleyerek oyunu ilerletir; player yalnızca bu
 alanları dinler ve `answers` koleksiyonuna yazar. Player asla oda state'ini
-değiştirmez (buzz gibi yarışlı işlemler `runTransaction` ile).
+değiştirmez; tek istisna bomba paslama (`firestore.rules` → `isBombPass`).
 
 Firestore koleksiyonları: `rooms` (durum makinesi), `players` (skorlar),
 `answers` (cevaplar), `presence/{uid}` (oyuncu nabzı; yalnızca TV dinler —
@@ -41,7 +45,7 @@ mekan/ödül/rapor koleksiyonları.
 | `src/App.tsx` | Rotalar; Landing hariç hepsi `lazy` |
 | `src/pages/host/HostDisplay.tsx` | TV durum makinesi yönlendiricisi |
 | `src/pages/player/PlayerGame.tsx` | Telefon durum makinesi yönlendiricisi |
-| `src/pages/{host,player}/<oyun>/` | Oyun başına ekran çiftleri (quiz, bomb, sensor, wheel, overload, echo, pulse, colors, vault, unity, bar, kablo, ayna) |
+| `src/pages/{host,player}/<oyun>/` | Oyun başına ekran çiftleri (quiz, bomb, slingshot); Arena klasik akışta (`HostDisplay`/`PlayerGame` + `views/`) |
 | `src/pages/{host,player}/views/` | Oyun bağımsız ekranlar (lobby, playing, review, podium) |
 | `src/hooks/` | `useHostRoom`, `useRoom`, `usePlayer`, `useAuth`, `useLocale`, `useSound` … |
 | `src/lib/` | Saf mantık: `scoring`, `fuzzyMatch`, `wordValidation`, `league`, `retention`, `rewards`, `roomCodes`, `liveness`, `gameRouting` |
@@ -52,9 +56,9 @@ mekan/ödül/rapor koleksiyonları.
 
 Bunları baştan sona okuma, hedefli `grep` ile gir:
 
-- `src/lib/quizQuestions.ts` (~2100 satır) — quiz havuzu
-- `src/lib/i18n.ts` (~1700 satır) — tr/de/en çeviri sözlüğü
-- `src/pages/host/HostDisplay.tsx`, `src/pages/host/quiz/HostQuizDisplay.tsx` (~840'ar satır)
+- `src/lib/quiz/questions.{tr,de,en}.ts` (560–820 satır) — quiz havuzu
+- `src/lib/i18n.ts` (~1600 satır) — tr/de/en çeviri sözlüğü
+- `src/pages/host/HostDisplay.tsx` (~710), `src/pages/host/quiz/HostQuizDisplay.tsx` (~950 satır)
 
 ## Konvansiyonlar
 

@@ -32,14 +32,8 @@ const ScreenPreview = import.meta.env.DEV
 const HostDisplay = lazy(() =>
   import("./pages/host/HostDisplay").then((m) => ({ default: m.HostDisplay }))
 );
-const Leaderboard = lazy(() =>
-  import("./pages/Leaderboard").then((m) => ({ default: m.Leaderboard }))
-);
 const LoginPage = lazy(() =>
   import("./pages/auth/LoginPage").then((m) => ({ default: m.LoginPage }))
-);
-const RegisterPage = lazy(() =>
-  import("./pages/auth/RegisterPage").then((m) => ({ default: m.RegisterPage }))
 );
 const VenueSettings = lazy(() =>
   import("./pages/admin/VenueSettings").then((m) => ({ default: m.VenueSettings }))
@@ -98,10 +92,8 @@ function App() {
                 {/* Host Routes (TV/iPad) */}
                 <Route path="/host/setup" element={<HostSetup />} />
                 <Route path="/host/display" element={<HostDisplay />} />
-                {/* New Feature Routes */}
-                <Route path="/leaderboard" element={<Leaderboard />} />
+                {/* Personel girişi (mekan/işletme hesabı) */}
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
                 {/* Satıcı/işletme: aktif mekan markasını değiştirme ekranı */}
                 <Route path="/admin/venue" element={<VenueSettings />} />
                 {/* Personel: barda ödül kodu doğrulama ekranı */}

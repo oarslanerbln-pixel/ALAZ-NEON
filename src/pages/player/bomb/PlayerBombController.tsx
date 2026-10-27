@@ -145,14 +145,10 @@ export function PlayerBombController({ room, player }: Props) {
     );
   }
 
+  // Tur rozeti yok: bomba son kişi kalana kadar sürüyor, "TUR n / 3"
+  // hiçbir zaman doğru değildi.
   if (room.status === "bomb_intro") {
-    return (
-      <PlayerIntroVideo
-        gameTitle="HENGAME BOMB"
-        currentRound={room.current_round || 1}
-        totalRounds={room.total_rounds || 3}
-      />
-    );
+    return <PlayerIntroVideo gameTitle="HENGAME BOMB" />;
   }
 
   if (room.status === "bomb_explosion") {

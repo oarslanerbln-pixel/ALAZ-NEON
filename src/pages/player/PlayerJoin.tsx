@@ -10,7 +10,6 @@ import { findJoinableRoomByCode, findPlayerResume } from "../../lib/roomQueries"
 import { readPlayerSession, savePlayerSession, type SessionPlayer } from "../../lib/roomSession";
 import { useLocale } from "../../hooks/useLocale";
 import { errorMessage } from "../../lib/errors";
-import { PhoneAuth } from "../../components/PhoneAuth";
 import { LanguageSwitcher } from "../../components/LanguageSwitcher";
 import { PlayerProfileCard } from "./components/PlayerProfileCard";
 import { PlayerRewards } from "./components/PlayerRewards";
@@ -38,6 +37,7 @@ export function PlayerJoin() {
   const { profile, updateNickname } = useUserProfile();
   const { t } = useLocale();
   const [nicknamePrefilledFrom, setNicknamePrefilledFrom] = useState<string | null>(null);
+  const [nicknameTouched, setNicknameTouched] = useState(false);
   // QR ile gelen ve bu odada zaten kaydı olan misafiri formu hiç göstermeden
   // eski kaydına geri götürüyoruz (bkz. lib/roomSession.ts). Kontrol bitene
   // kadar form yerine bekleme ekranı: yoksa form bir an görünüp kayboluyor.
@@ -50,7 +50,10 @@ export function PlayerJoin() {
   // vb. aynı desen) — effect içinde yapmak fazladan bir render turu
   // doğuruyordu. nicknamePrefilledFrom, kullanıcı alanı sonradan elle
   // değiştirse bile aynı profile için tekrar üzerine yazmamayı sağlıyor.
-  if (profile?.nickname && nicknamePrefilledFrom !== profile.nickname && !nickname) {
+  // Misafir alana bir kez dokunduysa hiç doldurma: alanı silip yazmaya
+  // başladığı anda profil gelirse boş alan "PLAYER_xxxx" ile doluyor, yazılan
+  // ad onun arkasına ekleniyordu ("PLAYER_Oi4GGAST", E2E'de yakalandı).
+  if (profile?.nickname && !nicknameTouched && nicknamePrefilledFrom !== profile.nickname && !nickname) {
     setNickname(profile.nickname);
     setNicknamePrefilledFrom(profile.nickname);
   }
@@ -259,12 +262,12 @@ export function PlayerJoin() {
                   {t("join.resuming")}
                 </span>
               </motion.div>
-            ) : authChecking || resumeCheckPending ? (
+            ) : authChecking || resumeCheckPending || !currentUser ? (
+              // Anonim oturum açılana kadar bekleme ekranı (useAuth her
+              // ziyaretçiye anonim oturum açıyor; telefonla giriş kaldırıldı).
               <div className="flex justify-center items-center py-10">
                 <span className="text-alaz-orange font-bold uppercase tracking-widest animate-pulse">CONNECTING...</span>
               </div>
-            ) : !currentUser ? (
-              <PhoneAuth onSuccess={() => {}} />
             ) : (
               <>
                 <div className="mb-4">
@@ -316,7 +319,10 @@ export function PlayerJoin() {
                     autoFocus={!!urlCode}
                     autoCapitalize="characters"
                     value={nickname}
-                    onChange={(e) => setNickname(e.target.value)}
+                    onChange={(e) => {
+                      setNicknameTouched(true);
+                      setNickname(e.target.value);
+                    }}
                     placeholder={t("join.nicknamePlaceholderShort")}
                     maxLength={15}
                     className="w-full px-6 py-5 text-center text-xl tracking-[0.3em] uppercase font-black focus:outline-none bg-transparent text-white placeholder:text-white/20"

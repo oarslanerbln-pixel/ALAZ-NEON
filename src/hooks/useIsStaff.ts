@@ -16,7 +16,8 @@ export interface StaffState {
  *
  * Önceden her yönetim ekranı bunu kendi başına `providerData` içinde
  * "password" sağlayıcısı arayarak karar veriyordu. Ama /register herkese
- * açık bir oyuncu kayıt ekranı ve orada da e-posta/şifre hesabı açılıyor —
+ * açık bir oyuncu kayıt ekranıydı (sayfa kalktı; Auth API'si hâlâ herkese
+ * açık) ve orada da e-posta/şifre hesabı açılıyordu —
  * yani o kontrol "kayıt olan herkes personeldir" demekti. Yetkinin kaynağı
  * artık Firestore'daki staff/{uid} dokümanı; bu doküman hiçbir istemciden
  * yazılamıyor (bkz. firestore.rules), yalnızca Firebase Console'dan ya da

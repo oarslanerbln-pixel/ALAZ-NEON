@@ -208,7 +208,7 @@ export function HostPodium({
 
       // html2canvas + jsPDF sadece bu butona basılınca lazım oluyor ama
       // eskiden dosyanın en tepesinde statik import edilmişlerdi. HostPodium
-      // üç farklı oyun modu (Klasik/Bomba/Sensör) tarafından paylaşıldığı
+      // birden fazla oyun modu (Klasik/Quiz/Bomba) tarafından paylaşıldığı
       // için bu, üçünün de tek bir ~600KB'lık paylaşılan pakete (yalnızca bu
       // iki kütüphane yüzünden) bağımlı kalmasına yol açıyordu — podyum
       // ekranını sadece GÖRMEK için bile o paket indiriliyordu. Dinamik

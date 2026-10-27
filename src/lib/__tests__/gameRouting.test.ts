@@ -21,7 +21,7 @@ describe("resolveActiveGame", () => {
   });
 
   it("active_game hiç yazılmamış eski odada game_type'a düşer", () => {
-    expect(resolveActiveGame({ game_type: "sensor" })).toBe("sensor");
+    expect(resolveActiveGame({ game_type: "bomb" })).toBe("bomb");
     expect(resolveActiveGame({})).toBeNull();
   });
 });
@@ -32,7 +32,7 @@ describe("resolveRoutedGame", () => {
   });
 
   it("ekran çifti olan modu döner", () => {
-    expect(resolveRoutedGame({ active_game: "kablo" })).toBe("kablo");
+    expect(resolveRoutedGame({ active_game: "bomb" })).toBe("bomb");
   });
 });
 
@@ -53,6 +53,16 @@ describe("kaldırılmış modlar", () => {
     expect(isRetiredGame("spectrum")).toBe(true);
     expect(resolveActiveGame(room)).toBeNull();
     expect(resolveRoutedGame(room)).toBeNull();
+  });
+
+  it("bu sadeleştirmede kaldırılan modlar (sensör, kablo, nişancı…) da emekli sayılır", () => {
+    for (const game of ["sensor", "overload", "colors", "wheel", "vault", "unity", "echo", "pulse", "bar", "kablo", "ayna", "sniper"]) {
+      const room = { active_game: game } as unknown as Parameters<typeof resolveActiveGame>[0];
+      expect(isRetiredGame(game), game).toBe(true);
+      expect(resolveRoutedGame(room), game).toBeNull();
+    }
+    const legacy = { game_type: "sensor" } as unknown as Parameters<typeof resolveActiveGame>[0];
+    expect(resolveActiveGame(legacy)).toBeNull();
   });
 
   it("bilinen modlar ve 'none' kaldırılmış sayılmaz", () => {

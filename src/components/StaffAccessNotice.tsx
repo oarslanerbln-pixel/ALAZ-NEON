@@ -16,7 +16,8 @@ interface Props {
  *
  * Üç ekran da aynı kontrolü kendi içinde tekrarlıyordu ve üçü de yanlış
  * soruyu soruyordu: "e-posta/şifre ile mi girdin?". /register herkese açık
- * olduğu için bu pratikte "kayıt oldun mu?" demekti. Kontrol artık
+ * olduğu (sayfa kalktı ama Auth API'si hâlâ açık) için bu pratikte "kayıt
+ * oldun mu?" demekti. Kontrol artık
  * useIsStaff() içinde tek yerde ve doğru soruyu soruyor: "staff/{uid}
  * kaydın var mı?".
  *

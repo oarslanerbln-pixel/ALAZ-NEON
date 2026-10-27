@@ -3,10 +3,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { useLocale } from "../../../hooks/useLocale";
 import { getCategoryPresets } from "../../../lib/categoryPresets";
+import { GAME_CARDS, GAME_CATEGORY_KEY, gameTitle } from "../../../lib/gameCatalog";
 import type { GameType, Room } from "../../../types/database";
-import type { TranslationKey } from "../../../lib/i18n";
-import { X, Play, Check, Clock, RotateCcw, HelpCircle, Heart, Eye, Users } from "lucide-react";
-import { ShimmerButton, GameAnimatedLogo } from "../../../components/fx";
+import { X, Play, Check, Clock, RotateCcw, HelpCircle } from "lucide-react";
+import { ShimmerButton, GameAnimatedLogo, type ShimmerColor } from "../../../components/fx";
 
 interface Props {
   isOpen: boolean;
@@ -16,131 +16,15 @@ interface Props {
   onStart: (game: GameType, settings: Partial<Room>) => Promise<void>;
 }
 
-interface GameMeta {
-  title: string;
-  badge: string;
-  color: string;
-  glow: string;
-  icon: "flame" | "lightbulb" | "rocket" | "dashboard" | "users" | "crown" | "settings";
-  description: string;
-  /** Varsa açıklama bu anahtardan, host'un dilinde gösterilir. */
-  descKey?: TranslationKey;
-}
-
-const GAME_METAS: Record<string, GameMeta> = {
-  scattegories: {
-    title: "HENGAME ARENA",
-    badge: "WORT & TEMPO",
-    color: "#ff5500",
-    glow: "rgba(255,85,0,0.5)",
-    icon: "flame",
-    description: "Klassische Wort-Arena: Finde die kreativsten Begriffe mit dem vorgegebenen Buchstaben schneller als die anderen Tische."
-  },
-  quiz: {
-    title: "HENGAME QUIZ",
-    badge: "TRIVIA & KULTUR",
-    color: "#00e5ff",
-    glow: "rgba(0,229,255,0.5)",
-    icon: "lightbulb",
-    description: "Nachtleben, Musik, Film und Popkultur: 4 Antwortmöglichkeiten, rasante Runden und 2X Finale."
-  },
-  bomb: {
-    title: "HENGAME BOMB",
-    badge: "REFLEX & DRUCK",
-    color: "#ff003c",
-    glow: "rgba(255,0,60,0.5)",
-    icon: "rocket",
-    description: "Die tickende Wort-Bombe: Gib schnell ein passendes Wort ein und passe die Bombe weiter, bevor sie explodiert!"
-  },
-  sensor: {
-    title: "HENGAME SENSOR",
-    badge: "BILD & BUZZER",
-    color: "#ff007f",
-    glow: "rgba(255,0,128,0.5)",
-    icon: "dashboard",
-    description: "Das Bild wird schrittweise schärfer: Wer den Buzzer zuerst drückt und das Bild errät, holt die Punkte."
-  },
-  overload: {
-    title: "NEON OVERLOAD",
-    badge: "REAKTOR-UEBERLASTUNG",
-    color: "#06b6d4",
-    glow: "rgba(6,182,212,0.5)",
-    icon: "flame",
-    description: "Jeder Pass erhöht die Hochspannung: Halte die Reaktorspannung stabil und wehre die Ladung sofort ab!"
-  },
-  colors: {
-    title: "NEON WARS",
-    badge: "TEAM-TAUDRÜCKEN",
-    color: "#a855f7",
-    glow: "rgba(168,85,247,0.5)",
-    icon: "users",
-    description: "Team Rot gegen Team Blau: Schnelligkeit entscheidet, wer die Vorherrschaft auf dem Hauptbildschirm erobert."
-  },
-  bar: {
-    title: "NEON MIXOLOGY",
-    badge: "BAR-MEISTER",
-    color: "#ec4899",
-    glow: "rgba(236,72,153,0.5)",
-    icon: "crown",
-    description: "Cocktail-Rezepte in Rekordzeit: Gieße die richtigen Zutaten in der exakten Reihenfolge ein."
-  },
-  wheel: {
-    title: "HENGAME GLÜCKSRAD",
-    badge: "PREISE & SHOTS",
-    color: "#eab308",
-    glow: "rgba(234,179,8,0.5)",
-    icon: "crown",
-    description: "Belohne deine Gäste mit Shots, Drinks und Specials über das interaktive Neon-Glücksrad."
-  },
-  kablo: {
-    title: "CYBER WIRE",
-    badge: "SCHALTKREIS",
-    color: "#f59e0b",
-    glow: "rgba(245,158,11,0.5)",
-    icon: "flame",
-    description: "Verbinde die Leitungen, um den Hauptgenerator des Clubs im Teamplay aufzuladen."
-  },
-  vault: {
-    title: "NEON TRESOR",
-    badge: "CODE-KNACKER",
-    color: "#10b981",
-    glow: "rgba(16,185,129,0.5)",
-    icon: "dashboard",
-    description: "Knacke die 4-stellige Tresor-Kombination durch logische Hinweise vor allen anderen."
-  },
-  unity: {
-    title: "NEON EINHEIT",
-    badge: "GEMEINSAME ENERGIE",
-    color: "#f97316",
-    glow: "rgba(249,115,22,0.5)",
-    icon: "users",
-    description: "Alle Spieler klicken im Takt, um die Club-Batterie zur maximalen Entladung zu bringen."
-  },
-  ayna: {
-    title: "HENGAME AYNA",
-    badge: "WELT & EMPATHIE",
-    color: "#22d3ee",
-    glow: "rgba(34,211,238,0.5)",
-    icon: "lightbulb",
-    description: "",
-    descKey: "dashboard.modeAynaDesc",
-  },
-  echo: {
-    title: "HENGAME ECHO",
-    badge: "CLUB-VOTING",
-    color: "#6366f1",
-    glow: "rgba(99,102,241,0.5)",
-    icon: "users",
-    description: "Das soziale Voting: Wer ist der lustigste, verrückteste oder aktivste Tisch des Abends?"
-  },
-  pulse: {
-    title: "NEON PULSE",
-    badge: "TIMING-REFLEX",
-    color: "#3b82f6",
-    glow: "rgba(59,130,246,0.5)",
-    icon: "flame",
-    description: "Erwische den perfekten Moment, wenn der Herzschlag-Impuls auf dem TV-Bildschirm den Peak erreicht."
-  }
+/**
+ * Pencerenin renkleri. Başlık, açıklama ve rozet katalogdan (lib/gameCatalog)
+ * ve host'un dilinde geliyor; eskiden burada sabit Almanca metinler vardı.
+ */
+const GAME_STYLE: Record<GameType, { color: string; glow: string; button: ShimmerColor }> = {
+  scattegories: { color: "#ff5500", glow: "rgba(255,85,0,0.5)", button: "orange" },
+  quiz: { color: "#00e5ff", glow: "rgba(0,229,255,0.5)", button: "blue" },
+  bomb: { color: "#ff003c", glow: "rgba(255,0,60,0.5)", button: "pink" },
+  slingshot: { color: "#10b981", glow: "rgba(16,185,129,0.5)", button: "green" },
 };
 
 const QUIZ_CATEGORIES = [
@@ -152,42 +36,33 @@ const QUIZ_CATEGORIES = [
   { id: "bilim", label: "🚀 TECH & TRENDS", icon: "🚀" }
 ];
 
+/**
+ * Oyun kurulum penceresi. Yalnızca gerçekten uygulanan ayarlar burada:
+ * Arena kategori/süre/tur, Quiz konu/soru sayısı/süre. Bomba ve Yörünge
+ * Sapanı'nın ayarı yok; pencere yalnızca açıklama ve "SPIEL STARTEN" gösterir
+ * (her oyun aynı onay adımından başlar, TV'de yanlışlıkla dokunma oyunu açmaz).
+ *
+ * Kaldırılanlar ve sebebi: takım/bireysel seçimi (puanlama, ödül ve gecelik
+ * lig bireysel; oda hep `individual`), quiz "2X final" anahtarı (son soru zaten
+ * her zaman çift puan), bomba fitil/can/tur/hız seçimleri (hiçbiri oyuna
+ * uygulanmıyordu).
+ */
 export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
   const { t, locale } = useLocale();
   const presets = getCategoryPresets(locale);
 
-  // Common States
+  // Arena
   const [totalRounds, setTotalRounds] = useState("3");
   const [timerValue, setTimerValue] = useState("60");
-  const [gameMode, setGameMode] = useState<"individual" | "team">("individual");
-  
-  // Scattegories Specific
   const [categories, setCategories] = useState(t("categories.default"));
   const [activePreset, setActivePreset] = useState<string | null>(null);
 
-  // Quiz Specific
+  // Quiz
   const [quizQuestionsCount, setQuizQuestionsCount] = useState("8");
   const [quizTimePerQuestion, setQuizTimePerQuestion] = useState("20");
-  const [quizDoubleFinal, setQuizDoubleFinal] = useState(true);
   const [selectedQuizCategories, setSelectedQuizCategories] = useState<string[]>([
     "gece", "muzik", "sinema", "zeka", "kultur", "bilim"
   ]);
-
-  // Bomb Specific
-  const [bombFuseTime, setBombFuseTime] = useState("30");
-  const [bombLives, setBombLives] = useState("3");
-  const [bombSpeedMultiplier] = useState(1.0);
-
-  // Sensor Specific
-  const [sensorUnblurDuration, setSensorUnblurDuration] = useState("25");
-  const [sensorPointReward] = useState("1000");
-
-  // Bar Specific
-  const [barTime, setBarTime] = useState("60");
-  const [barRecipeSpeed, setBarRecipeSpeed] = useState("4.5");
-
-  // Colors Specific
-  const [colorsWinCondition, setColorsWinCondition] = useState<"domination" | "timed">("domination");
 
   // Track previous game to sync defaults during render
   const [prevGame, setPrevGame] = useState<GameType | null>(null);
@@ -197,27 +72,21 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
       setTimerValue("60");
       setTotalRounds("3");
     } else if (game === "quiz") {
-      setTotalRounds("5");
       setQuizTimePerQuestion("20");
       setQuizQuestionsCount("8");
-    } else if (game === "bomb") {
-      setBombFuseTime("30");
-      setBombLives("3");
-      setTotalRounds("3");
-    } else if (game === "sensor") {
-      setTotalRounds("5");
-      setSensorUnblurDuration("25");
-    } else if (game === "bar") {
-      setBarTime("60");
-    } else if (game === "ayna") {
-      setTotalRounds("7");
-      setTimerValue("25");
     }
   }
 
   if (!isOpen || !game) return null;
 
-  const meta = GAME_METAS[game] || GAME_METAS.scattegories;
+  const card = GAME_CARDS.find((c) => c.id === game);
+  const style = GAME_STYLE[game];
+  const meta = {
+    ...style,
+    title: gameTitle(game),
+    badge: card ? t(GAME_CATEGORY_KEY[card.category]) : "",
+    description: card ? t(card.descKey) : "",
+  };
 
   const handleApplyPreset = (name: string) => {
     setCategories(presets[name].join(", "));
@@ -227,9 +96,9 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
 
   const toggleQuizCategory = (catId: string) => {
     SoundManager.getInstance().playSFX(sounds.CLICK);
-    setSelectedQuizCategories(prev => 
-      prev.includes(catId) 
-        ? (prev.length > 1 ? prev.filter(id => id !== catId) : prev) 
+    setSelectedQuizCategories(prev =>
+      prev.includes(catId)
+        ? (prev.length > 1 ? prev.filter(id => id !== catId) : prev)
         : [...prev, catId]
     );
   };
@@ -237,32 +106,23 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
   const handleStartGame = async () => {
     SoundManager.getInstance().playSFX(sounds.START);
 
-    const baseSettings: Partial<Room> = {
-      game_mode: gameMode,
-      total_rounds: parseInt(totalRounds, 10),
-      timer_setting: parseInt(timerValue, 10)
-    };
+    // Oda hep bireysel; eski bir sürümün takım moduna aldığı oda da düzelir.
+    const settings: Partial<Room> = { game_mode: "individual" };
 
     if (game === "scattegories") {
       const parsed = categories.split(",").map(c => c.trim()).filter(Boolean);
-      baseSettings.categories = parsed.length > 0 ? parsed : ["Stadt", "Land", "Name", "Tier"];
-      baseSettings.timer_setting = parseInt(timerValue, 10);
+      settings.categories = parsed.length > 0 ? parsed : ["Stadt", "Land", "Name", "Tier"];
+      settings.total_rounds = parseInt(totalRounds, 10);
+      settings.timer_setting = parseInt(timerValue, 10);
     } else if (game === "quiz") {
-      baseSettings.total_rounds = parseInt(quizQuestionsCount, 10);
-      baseSettings.timer_setting = parseInt(quizTimePerQuestion, 10);
+      settings.total_rounds = parseInt(quizQuestionsCount, 10);
+      settings.timer_setting = parseInt(quizTimePerQuestion, 10);
       // Secim onceden yalnizca ekranda isaretli gorunuyordu; hicbir yere
       // gecmiyordu. Artik odaya yaziliyor ve soru secimi bunu uyguluyor.
-      baseSettings.quiz_topics = selectedQuizCategories;
-    } else if (game === "bomb") {
-      baseSettings.timer_setting = parseInt(bombFuseTime, 10);
-      baseSettings.bomb_speed_multiplier = bombSpeedMultiplier;
-    } else if (game === "sensor") {
-      baseSettings.timer_setting = parseInt(sensorUnblurDuration, 10);
-    } else if (game === "bar") {
-      baseSettings.timer_setting = parseInt(barTime, 10);
+      settings.quiz_topics = selectedQuizCategories;
     }
 
-    await onStart(game, baseSettings);
+    await onStart(game, settings);
     onClose();
   };
 
@@ -339,7 +199,7 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
             
             {/* Description Banner */}
             <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.05] border border-white/15 text-gray-200 text-sm sm:text-base font-semibold leading-relaxed shadow-inner">
-              {meta.descKey ? t(meta.descKey) : meta.description}
+              {meta.description}
             </div>
 
             {/* ════════════════ SCATTEGORIES SETTINGS ════════════════ */}
@@ -503,333 +363,8 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
                     </div>
                   </div>
                 </div>
-
-                {/* 2X Double Final Toggle */}
-                <div className="flex items-center justify-between p-4 sm:p-5 rounded-2xl bg-white/[0.05] border border-white/15">
-                  <div>
-                    <h4 className="text-sm sm:text-base font-black text-white uppercase tracking-wider">
-                      {t("gameSettings.quizDoubleFinalTitle")}
-                    </h4>
-                    <p className="text-xs sm:text-sm text-gray-300 mt-0.5">
-                      {t("gameSettings.quizDoubleFinalDesc")}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setQuizDoubleFinal(!quizDoubleFinal)}
-                    className={`w-14 h-8 rounded-full transition-colors relative p-1 cursor-pointer shrink-0 ml-4 ${
-                      quizDoubleFinal ? "bg-cyan-400 shadow-[0_0_15px_rgba(0,229,255,0.6)]" : "bg-white/20"
-                    }`}
-                  >
-                    <motion.div
-                      animate={{ x: quizDoubleFinal ? 24 : 0 }}
-                      className="w-6 h-6 rounded-full bg-black shadow-md"
-                    />
-                  </button>
-                </div>
               </div>
             )}
-
-            {/* ════════════════ AYNA SETTINGS ════════════════ */}
-            {game === "ayna" && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-gray-300 font-black flex items-center gap-1.5 mb-2.5">
-                    <HelpCircle className="w-4 h-4 text-cyan-400" />
-                    <span>{t("gameSettings.quizQuestionsCount")}</span>
-                  </label>
-                  <div className="grid grid-cols-3 gap-2.5">
-                    {["5", "7", "10"].map(qVal => (
-                      <button
-                        key={qVal}
-                        type="button"
-                        aria-pressed={totalRounds === qVal}
-                        onClick={() => setTotalRounds(qVal)}
-                        className={`py-3.5 rounded-xl font-mono font-black text-sm transition-all border-2 cursor-pointer ${
-                          totalRounds === qVal
-                            ? "bg-cyan-400 text-black border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.5)] scale-105"
-                            : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
-                        }`}
-                      >
-                        {qVal} {t("gameSettings.quizQuestionsSuffix")}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-gray-300 font-black flex items-center gap-1.5 mb-2.5">
-                    <Clock className="w-4 h-4 text-cyan-400" />
-                    <span>{t("gameSettings.quizTimePerQuestion")}</span>
-                  </label>
-                  <div className="grid grid-cols-3 gap-2.5">
-                    {["20", "25", "35"].map(tVal => (
-                      <button
-                        key={tVal}
-                        type="button"
-                        aria-pressed={timerValue === tVal}
-                        onClick={() => setTimerValue(tVal)}
-                        className={`py-3.5 rounded-xl font-mono font-black text-sm transition-all border-2 cursor-pointer ${
-                          timerValue === tVal
-                            ? "bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.5)] scale-105"
-                            : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
-                        }`}
-                      >
-                        {tVal} {t("gameSettings.secondsSuffix")}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ════════════════ BOMB SETTINGS ════════════════ */}
-            {game === "bomb" && (
-              <div className="space-y-6">
-                <div>
-                  <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-red-400 font-black block mb-2.5">
-                    {t("gameSettings.bombFuseTime")}
-                  </label>
-                  <div className="grid grid-cols-4 gap-2.5">
-                    {["15", "20", "30", "45"].map(fVal => (
-                      <button
-                        key={fVal}
-                        onClick={() => setBombFuseTime(fVal)}
-                        className={`py-3.5 rounded-xl font-mono font-black text-xs sm:text-sm transition-all border-2 cursor-pointer ${
-                          bombFuseTime === fVal
-                            ? "bg-red-500 text-white border-red-500 shadow-[0_0_20px_rgba(255,0,0,0.6)] scale-105"
-                            : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
-                        }`}
-                      >
-                        {fVal} {t("gameSettings.secondsSuffix")}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-gray-300 font-black flex items-center gap-1.5 mb-2.5">
-                      <Heart className="w-4 h-4 text-red-400" />
-                      <span>{t("gameSettings.bombLives")}</span>
-                    </label>
-                    <div className="grid grid-cols-3 gap-2.5">
-                      {["1", "2", "3"].map(lVal => (
-                        <button
-                          key={lVal}
-                          onClick={() => setBombLives(lVal)}
-                          className={`py-3.5 rounded-xl font-mono font-black text-xs sm:text-sm transition-all border-2 cursor-pointer ${
-                            bombLives === lVal
-                              ? "bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.5)] scale-105"
-                              : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
-                          }`}
-                        >
-                          {lVal} {t("gameSettings.livesSuffix")}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-gray-300 font-black flex items-center gap-1.5 mb-2.5">
-                      <RotateCcw className="w-4 h-4 text-red-400" />
-                      <span>{t("gameSettings.totalRounds")}</span>
-                    </label>
-                    <div className="grid grid-cols-3 gap-2.5">
-                      {["3", "5", "7"].map(rVal => (
-                        <button
-                          key={rVal}
-                          onClick={() => setTotalRounds(rVal)}
-                          className={`py-3.5 rounded-xl font-mono font-black text-xs sm:text-sm transition-all border-2 cursor-pointer ${
-                            totalRounds === rVal
-                              ? "bg-red-500 text-white border-red-500 shadow-[0_0_20px_rgba(255,0,0,0.5)] scale-105"
-                              : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
-                          }`}
-                        >
-                          {rVal} {t("gameSettings.roundsSuffix")}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ════════════════ SENSOR SETTINGS ════════════════ */}
-            {game === "sensor" && (
-              <div className="space-y-6">
-                <div>
-                  <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-pink-400 font-black flex items-center gap-1.5 mb-2.5">
-                    <Eye className="w-4 h-4 text-pink-400" />
-                    <span>{t("gameSettings.sensorUnblur")}</span>
-                  </label>
-                  <div className="grid grid-cols-3 gap-2.5">
-                    {["15", "25", "35"].map(uVal => (
-                      <button
-                        key={uVal}
-                        onClick={() => setSensorUnblurDuration(uVal)}
-                        className={`py-3.5 rounded-xl font-mono font-black text-sm transition-all border-2 cursor-pointer ${
-                          sensorUnblurDuration === uVal
-                            ? "bg-pink-500 text-white border-pink-500 shadow-[0_0_20px_rgba(255,0,128,0.5)] scale-105"
-                            : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
-                        }`}
-                      >
-                        {uVal} {t("gameSettings.secondsSuffix")}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-gray-300 font-black block mb-2.5">
-                      {t("gameSettings.sensorImagesCount")}
-                    </label>
-                    <div className="grid grid-cols-3 gap-2.5">
-                      {["3", "5", "7"].map(rVal => (
-                        <button
-                          key={rVal}
-                          onClick={() => setTotalRounds(rVal)}
-                          className={`py-3.5 rounded-xl font-mono font-black text-sm transition-all border-2 cursor-pointer ${
-                            totalRounds === rVal
-                              ? "bg-pink-500 text-white border-pink-500 shadow-[0_0_20px_rgba(255,0,128,0.5)] scale-105"
-                              : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
-                          }`}
-                        >
-                          {rVal} {t("gameSettings.imagesSuffix")}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-gray-300 font-black block mb-2.5">
-                      {t("gameSettings.sensorReward")}
-                    </label>
-                    <div className="py-3.5 px-4 rounded-xl font-mono font-black text-base bg-pink-500/20 border-2 border-pink-500/50 text-pink-300 text-center shadow-[0_0_15px_rgba(255,0,128,0.2)]">
-                      +{sensorPointReward} XP
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ════════════════ BAR (MIXOLOGY) SETTINGS ════════════════ */}
-            {game === "bar" && (
-              <div className="space-y-6">
-                <div>
-                  <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-pink-400 font-black block mb-2.5">
-                    ⏱️ COCKTAIL-SERVIERZEIT
-                  </label>
-                  <div className="grid grid-cols-3 gap-2.5">
-                    {["45", "60", "90"].map(bVal => (
-                      <button
-                        key={bVal}
-                        onClick={() => setBarTime(bVal)}
-                        className={`py-3.5 rounded-xl font-mono font-black text-sm transition-all border-2 cursor-pointer ${
-                          barTime === bVal
-                            ? "bg-pink-500 text-white border-pink-500 shadow-[0_0_20px_rgba(236,72,153,0.5)] scale-105"
-                            : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
-                        }`}
-                      >
-                        {bVal} {t("gameSettings.secondsSuffix")}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-gray-300 font-black block mb-2.5">
-                    ⚡ REZEPT-GESCHWINDIGKEIT
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {[
-                      { val: "4.5", label: "Normal (4.5s)" },
-                      { val: "3.0", label: "Turbo Barmen (3.0s)" }
-                    ].map(item => (
-                      <button
-                        key={item.val}
-                        onClick={() => setBarRecipeSpeed(item.val)}
-                        className={`py-3.5 rounded-xl font-mono font-black text-sm transition-all border-2 cursor-pointer ${
-                          barRecipeSpeed === item.val
-                            ? "bg-white text-black border-white shadow-md scale-105"
-                            : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ════════════════ COLORS (NEON WARS) SETTINGS ════════════════ */}
-            {game === "colors" && (
-              <div className="space-y-6">
-                <div>
-                  <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-purple-400 font-black block mb-2.5">
-                    🏆 SIEGBEDINGUNG
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <button
-                      onClick={() => setColorsWinCondition("domination")}
-                      className={`p-4 sm:p-5 rounded-2xl border-2 text-left transition-all cursor-pointer ${
-                        colorsWinCondition === "domination"
-                          ? "bg-purple-500/25 border-purple-400 text-white shadow-[0_0_20px_rgba(168,85,247,0.4)] font-black"
-                          : "bg-white/5 border-white/15 text-gray-300 hover:bg-white/10 hover:text-white"
-                      }`}
-                    >
-                      <div className="font-black text-base text-white mb-1">100% DOMINANZ</div>
-                      <div className="text-xs text-gray-300">Das Team, das die Mittellinie vollständig schiebt, gewinnt sofort.</div>
-                    </button>
-
-                    <button
-                      onClick={() => setColorsWinCondition("timed")}
-                      className={`p-4 sm:p-5 rounded-2xl border-2 text-left transition-all cursor-pointer ${
-                        colorsWinCondition === "timed"
-                          ? "bg-purple-500/25 border-purple-400 text-white shadow-[0_0_20px_rgba(168,85,247,0.4)] font-black"
-                          : "bg-white/5 border-white/15 text-gray-300 hover:bg-white/10 hover:text-white"
-                      }`}
-                    >
-                      <div className="font-black text-base text-white mb-1">45s ZEIT-DUELL</div>
-                      <div className="text-xs text-gray-300">Nach Ablauf der Zeit siegt das Team mit der größeren Fläche.</div>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Common Game Mode (Solo vs Team) */}
-            {["scattegories", "quiz"].includes(game) && (
-              <div>
-                <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-gray-300 font-black flex items-center gap-1.5 mb-3">
-                  <Users className="w-4 h-4 text-amber-400" />
-                  <span>{t("gameSettings.gameMode")}</span>
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <button
-                    onClick={() => setGameMode("individual")}
-                    className={`py-4 px-5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all border-2 flex items-center justify-center gap-2.5 cursor-pointer ${
-                      gameMode === "individual"
-                        ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.5)] scale-102"
-                        : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
-                    }`}
-                  >
-                    <span>{t("gameSettings.individual")}</span>
-                  </button>
-                  <button
-                    onClick={() => setGameMode("team")}
-                    className={`py-4 px-5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all border-2 flex items-center justify-center gap-2.5 cursor-pointer ${
-                      gameMode === "team"
-                        ? "bg-alaz-orange text-black border-alaz-orange shadow-[0_0_25px_rgba(255,85,0,0.5)] scale-102"
-                        : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
-                    }`}
-                  >
-                    <span>{t("gameSettings.team")}</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
           </div>
 
           {/* ════════════════ FOOTER ACTION BUTTONS ════════════════ */}
@@ -841,7 +376,7 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
               {t("gameSettings.cancel")}
             </button>
             <ShimmerButton
-              color={meta.color === "#ff5500" ? "orange" : meta.color === "#00e5ff" ? "blue" : meta.color === "#ff003c" ? "pink" : "purple"}
+              color={meta.button}
               onClick={handleStartGame}
               className="flex-[2] rounded-2xl"
               innerClassName="!bg-white !text-black font-black text-sm sm:text-base uppercase tracking-widest py-4 sm:py-4.5 px-8 flex items-center justify-center gap-3 shadow-2xl"

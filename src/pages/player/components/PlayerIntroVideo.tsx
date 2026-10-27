@@ -7,6 +7,7 @@ import { Volume2, VolumeX, Radio, Sparkles } from "lucide-react";
 
 interface PlayerIntroVideoProps {
   gameTitle?: string;
+  /** İkisi de verilirse tur rozeti görünür (bomba turları sabit sayıda değil). */
   currentRound?: number;
   totalRounds?: number;
 }
@@ -20,8 +21,8 @@ interface PlayerIntroVideoProps {
  */
 export function PlayerIntroVideo({
   gameTitle = "HENGAME ARENA",
-  currentRound = 1,
-  totalRounds = 3,
+  currentRound,
+  totalRounds,
 }: PlayerIntroVideoProps) {
   const { t } = useLocale();
   const [isMuted, setIsMuted] = useState(true);
@@ -61,9 +62,11 @@ export function PlayerIntroVideo({
 
         {/* Tur Bilgisi & Ses Aç/Kapa */}
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-white/[0.06] text-white/70 border border-white/10">
-            TUR {currentRound} / {totalRounds}
-          </span>
+          {currentRound !== undefined && totalRounds !== undefined && (
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-white/[0.06] text-white/70 border border-white/10">
+              {t("hostHeader.roundLabel", currentRound, totalRounds)}
+            </span>
+          )}
           <button
             type="button"
             onClick={toggleSound}

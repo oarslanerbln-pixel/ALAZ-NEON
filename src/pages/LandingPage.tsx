@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { KineticSpark } from "../components/KineticSpark";
 import { SoundManager, sounds } from "../lib/audio";
 import { useLocale } from "../hooks/useLocale";
 import { useVenue } from "../contexts/VenueContextCore";
-import { AttractMode } from "../components/AttractMode";
-import { Smartphone, Tv, Trophy, LogIn, ArrowRight, RotateCcw } from "lucide-react";
+import { Smartphone, Tv, LogIn, ArrowRight, RotateCcw } from "lucide-react";
 import { AuroraBackdrop, BeamBorder, GridPattern, ShimmerButton } from "../components/fx";
 import { useAuth } from "../hooks/useAuth";
 import { fetchRoomById } from "../lib/roomQueries";
@@ -16,7 +15,6 @@ export function LandingPage() {
   const navigate = useNavigate();
   const { t } = useLocale();
   const { venue } = useVenue();
-  const [isIdle, setIsIdle] = useState(false);
   const { user, loading: authLoading } = useAuth();
   const [resumableRoom, setResumableRoom] = useState<{ id: string; code: string } | null>(null);
 
@@ -40,34 +38,6 @@ export function LandingPage() {
     };
   }, [authLoading, user?.uid]);
 
-  // Idle Timer logic for Nightclub Attract Screen
-  useEffect(() => {
-    let idleTimeout: number;
-
-    const resetIdleTimer = () => {
-      if (isIdle) setIsIdle(false);
-      clearTimeout(idleTimeout);
-      idleTimeout = window.setTimeout(() => {
-        setIsIdle(true);
-      }, 35000); 
-    };
-
-    window.addEventListener("mousemove", resetIdleTimer);
-    window.addEventListener("keydown", resetIdleTimer);
-    window.addEventListener("touchstart", resetIdleTimer);
-    window.addEventListener("click", resetIdleTimer);
-
-    resetIdleTimer();
-
-    return () => {
-      clearTimeout(idleTimeout);
-      window.removeEventListener("mousemove", resetIdleTimer);
-      window.removeEventListener("keydown", resetIdleTimer);
-      window.removeEventListener("touchstart", resetIdleTimer);
-      window.removeEventListener("click", resetIdleTimer);
-    };
-  }, [isIdle]);
-
   return (
     <div className="w-full h-screen max-h-screen bg-[#030307] text-white overflow-hidden relative select-none flex flex-col justify-between p-4 sm:p-8 font-sans">
       
@@ -82,23 +52,7 @@ export function LandingPage() {
       </div>
 
       {/* ════════════════ TOP HEADER BAR ════════════════ */}
-      <header className="w-full max-w-6xl mx-auto flex justify-between items-center relative z-30 shrink-0 mt-8 sm:mt-0">
-        <ShimmerButton
-          color="yellow"
-          thickness={1.5}
-          radius="1rem"
-          onClick={() => {
-            SoundManager.getInstance().playSFX(sounds.CLICK);
-            navigate("/leaderboard");
-          }}
-          innerClassName="flex items-center gap-2.5 px-4 sm:px-6 py-2.5 bg-[#0e0e18]/85 text-white backdrop-blur-2xl"
-        >
-          <Trophy className="w-4 h-4 text-yellow-400" />
-          <span className="text-[10px] sm:text-xs font-mono font-black uppercase tracking-[0.2em]">
-            {t("leaderboard.title")}
-          </span>
-        </ShimmerButton>
-
+      <header className="w-full max-w-6xl mx-auto flex justify-end items-center relative z-30 shrink-0 mt-8 sm:mt-0">
         <ShimmerButton
           color="blue"
           thickness={1.5}
@@ -229,10 +183,6 @@ export function LandingPage() {
         </div>
       </footer>
 
-      {/* Attract Mode Overlay */}
-      <AnimatePresence>
-        {isIdle && <AttractMode onClose={() => setIsIdle(false)} />}
-      </AnimatePresence>
     </div>
   );
 }

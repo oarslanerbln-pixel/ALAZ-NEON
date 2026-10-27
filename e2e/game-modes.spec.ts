@@ -15,8 +15,9 @@ import { adminGet, adminQuery, adminUpdate, clearAuth, clearFirestore } from "./
 
 /**
  * Katalogda açık olan her mod en az bir tur: HENGAME ARENA (klasik isim-şehir),
- * HENGAME QUIZ, HENGAME BOMB, YÖRÜNGE SAPANI. Diğer 12 mod "BALD VERFÜGBAR" kilitli; TV
- * onları başlatmayı reddeder (son test).
+ * HENGAME QUIZ, HENGAME BOMB. YÖRÜNGE SAPANI kodda duruyor ama "BALD
+ * VERFÜGBAR" kilitli; TV onu başlatmayı reddeder (son test). Sapanın tur
+ * testi kilit açılınca yeniden etkinleştirilecek.
  */
 test.beforeEach(async () => {
   await clearFirestore();
@@ -169,7 +170,8 @@ test("aynı gece ikinci quiz: eski cevaplar yeni oyunu bozmaz", async ({ browser
   }
 });
 
-test("YÖRÜNGE SAPANI: telefonun şutu TV'ye ulaşır, sonuçlanır, gol puanlanır, gecelik puan dağıtılır", async ({ browser }) => {
+// Kilitli (gameCatalog: isComingSoon). Kilidi açarken bu testi de açın.
+test.skip("YÖRÜNGE SAPANI: telefonun şutu TV'ye ulaşır, sonuçlanır, gol puanlanır, gecelik puan dağıtılır", async ({ browser }) => {
   test.setTimeout(4 * 60_000);
   const { tv, phones } = await night(browser, 2);
   try {
@@ -214,11 +216,16 @@ test("YÖRÜNGE SAPANI: telefonun şutu TV'ye ulaşır, sonuçlanır, gol puanla
   }
 });
 
-test("kilitli modlar (BALD VERFÜGBAR) TV'den başlatılamaz", async ({ browser }) => {
+test("kilitli mod (BALD VERFÜGBAR) TV'den başlatılamaz; karuselde yalnız 3 oynanabilir mod var", async ({ browser }) => {
   const tv = await openNight(browser);
   try {
+    // Karusel noktaları: üç oynanabilir mod, sonda tek kilitli mod.
+    for (const name of ["HENGAME ARENA", "HENGAME QUIZ", "HENGAME BOMB"]) {
+      await expect(tv.page.getByRole("button", { name, exact: true })).toHaveCount(1);
+    }
     const locked = tv.page.getByRole("button", { name: /\(Locked\)$/ });
-    await expect(locked).toHaveCount(12);
+    await expect(locked).toHaveCount(1);
+    await expect(locked).toHaveAccessibleName("YÖRÜNGE SAPANI (Locked)");
     await locked.first().click();
     await expect(tv.page.getByRole("button", { name: "SPIEL STARTEN" })).toHaveCount(0);
     expect((await roomOf(tv.roomId))?.status).toBe("night_lobby");

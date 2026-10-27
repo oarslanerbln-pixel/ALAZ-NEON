@@ -1,7 +1,6 @@
 import { Suspense, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 
-import { SENSOR_IMAGES } from "../data/sensorImages";
 import { poolFor } from "../lib/quizQuestions";
 import { isScreenPreview } from "../lib/firebase";
 import { getLocale } from "../lib/i18n";
@@ -15,8 +14,6 @@ import { PLAYER_GAME_CONTROLLERS } from "../pages/player/gameControllers";
 import { PlayerGameShell } from "../pages/player/components/PlayerGameShell";
 import { LetterSpinner } from "../components/LetterSpinner";
 import { HostPlaying } from "../pages/host/views/HostPlaying";
-import { CyberTargetArena } from "../components/gyro/CyberTargetArena";
-import { AirPointerController } from "../components/gyro/AirPointerController";
 import { Slingshot3DArena } from "../components/slingshot/Slingshot3DArena";
 import { SlingshotController } from "../components/slingshot/SlingshotController";
 
@@ -68,7 +65,6 @@ function mockRoom(game: RoutedGame | "dashboard" | "showcase", status: RoomStatu
   const questions = poolFor(getLocale())
     .slice(0, 5)
     .map((q) => ({ id: q.id, text: q.text, category: q.category, options: q.options, difficulty: q.difficulty, funFact: q.funFact }));
-  const sensor = SENSOR_IMAGES[0];
   return {
     id: "preview",
     code: "4821",
@@ -90,11 +86,6 @@ function mockRoom(game: RoutedGame | "dashboard" | "showcase", status: RoomStatu
     used_words: ["elma", "armut"],
     bomb_speed_multiplier: 1.2,
     used_bomb_categories: [],
-    sensor_current_media: sensor?.url,
-    sensor_media_answer: sensor?.answer,
-    sensor_buzzer_player_id: status === "sensor_buzzed" || status === "sensor_reveal" ? players[1]?.id ?? null : null,
-    sensor_buzzer_timestamp: null,
-    sensor_player_answer: status === "sensor_buzzed" ? "Eyfel Kulesi" : null,
   };
 }
 
@@ -145,24 +136,6 @@ export function ScreenPreview() {
             categories={["ŞEHİR", "HAYVAN", "MEYVE / SEBZE", "ÜNLÜ KİŞİ"]}
             submittedPlayerIds={players.slice(0, Math.min(3, players.length)).map((p) => p.id)}
             playersCount={players.length}
-            currentRound={room.current_round}
-          />
-        </TVScaleFrame>
-      );
-    }
-    if ((game as string) === "sniper" || (game as string) === "air_pointer") {
-      return (
-        <TVScaleFrame>
-          <CyberTargetArena
-            players={players.map((p, i) => ({
-              id: p.id,
-              nickname: p.nickname,
-              color: ["#00f3ff", "#ff5500", "#f43f5e", "#10b981"][i % 4],
-              x: i % 2 === 0 ? -0.35 : 0.35,
-              y: i > 1 ? 0.25 : -0.25,
-              score: p.total_score,
-            }))}
-            timeLeft={left}
           />
         </TVScaleFrame>
       );
@@ -191,17 +164,6 @@ export function ScreenPreview() {
   }
 
   const player = players[me] ?? players[0];
-
-  if ((game as string) === "sniper" || (game as string) === "air_pointer") {
-    return (
-      <PlayerGameShell>
-        <AirPointerController
-          playerColor="cyan"
-          playerNickname={player.nickname}
-        />
-      </PlayerGameShell>
-    );
-  }
 
   if ((game as string) === "slingshot" || (game as string) === "penalti") {
     return (

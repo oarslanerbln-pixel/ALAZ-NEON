@@ -4,12 +4,11 @@ import { GAME_CARDS } from "../gameCatalog";
 import { setLocale, t, type Locale } from "../i18n";
 
 /**
- * Bu paketin var olma sebebi somut: Echo, Pulse, Bar ve Kablo
- * modlarinin host ekrani, oyuncu kumandasi ve ceviri metinleri tamamen
- * yazilmisti — ama dashboard katalogunda kartlari olmadigi icin uygulamada
- * hicbir sekilde baslatilamiyorlardi. Kimse fark etmeden 5 oyun olu kod
- * olarak durdu. Derleme zamani kontrolu gameCatalog.ts'in sonunda; buradaki
- * testler kartlarin icerigini (benzersizlik, gercek ceviri anahtari) tutuyor.
+ * Bir zamanlar bazi modlarin host ekrani, oyuncu kumandasi ve ceviri metinleri
+ * tamamen yazilmisti ama dashboard katalogunda kartlari olmadigi icin hicbir
+ * sekilde baslatilamiyorlardi. Derleme zamani kontrolu gameCatalog.ts'in
+ * sonunda; buradaki testler kartlarin icerigini (benzersizlik, gercek ceviri
+ * anahtari, siralama) tutuyor.
  */
 
 const LOCALES: Locale[] = ["tr", "de", "en"];
@@ -19,10 +18,7 @@ const LOCALES: Locale[] = ["tr", "de", "en"];
  * silindigi icin calisma zamaninda ayrica listelenmek zorunda; gercek koruma
  * gameCatalog.ts'teki exhaustiveness kontrolu, bu liste onun ikinci kordonu.
  */
-const EXPECTED_GAME_IDS = [
-  "scattegories", "quiz", "bomb", "sensor", "wheel", "overload", "echo",
-  "pulse", "colors", "vault", "unity", "bar", "kablo", "ayna", "sniper", "slingshot",
-] as const;
+const EXPECTED_GAME_IDS = ["scattegories", "quiz", "bomb", "slingshot"] as const;
 
 describe("oyun katalogu", () => {
   it("her oyun modunun bir dashboard karti var", () => {
@@ -56,10 +52,16 @@ describe("oyun katalogu", () => {
     }
   });
 
-  it("amiral gemisi modlar ve Yörünge Sapanı aktif (Arena, Quiz, Bomb, Slingshot), kalan 12 mod kilitli", () => {
+  it("yalnızca Arena, Quiz ve Bomb oynanabilir; Yörünge Sapanı kilitli", () => {
     const active = GAME_CARDS.filter((g) => !g.isComingSoon).map((g) => g.id);
     const locked = GAME_CARDS.filter((g) => g.isComingSoon).map((g) => g.id);
-    expect(active.sort()).toEqual(["bomb", "quiz", "scattegories", "slingshot"]);
-    expect(locked.length).toBe(12);
+    expect(active.sort()).toEqual(["bomb", "quiz", "scattegories"]);
+    expect(locked).toEqual(["slingshot"]);
+  });
+
+  it("karuselde oynanabilir modlar kilitlilerden önce gelir", () => {
+    const firstLocked = GAME_CARDS.findIndex((g) => g.isComingSoon);
+    const lastPlayable = GAME_CARDS.map((g) => !g.isComingSoon).lastIndexOf(true);
+    expect(lastPlayable).toBeLessThan(firstLocked);
   });
 });

@@ -20,7 +20,7 @@ export async function canGrantRewards(): Promise<boolean> {
 /**
  * Belirtilen kazananlara mekan şablonundan bir Reward dokümanı yazar.
  * Kazananı NASIL belirlediği çağırana bağlı — puan bazlı oyunlar (arena,
- * quiz, sensör) `grantGameRewards`'ı kullanır; bomba gibi "son ayakta
+ * quiz, sapan) `grantGameRewards`'ı kullanır; bomba gibi "son ayakta
  * kalan" modeliyle çalışan oyunlar kazananı kendi mantığıyla bulup
  * doğrudan bu fonksiyonu çağırır.
  *

@@ -27,7 +27,7 @@ function computeScale() {
  *
  * Not: transform içeren bir ata, içindeki `position: fixed` elemanlar için
  * yeni bir konumlama bağlamı oluşturur (CSS spesifikasyonu) — bu yüzden
- * ParticleBackground/EmojiRain/DatabaseStatus gibi `fixed` bileşenler artık
+ * ParticleBackground/DatabaseStatus gibi `fixed` bileşenler artık
  * gerçek tarayıcı penceresine değil, bu TV tuvaline göre konumlanıp onunla
  * birlikte ölçekleniyor. İstenen tam olarak bu: taşan kısımlar (letterbox
  * şeritleri) düz siyah kalıyor, hiçbir öğe ekranın dışına sarkmıyor.

@@ -19,7 +19,7 @@ export interface Winner {
  *
  * Bireysel modda en yüksek puanlı oyuncu(lar), takım modunda kazanan
  * takımın TÜM üyeleri — bir oyun modu takım skorunu izlemiyorsa (quiz/
- * bomb/sensör) çağıran taraf zaten "individual" geçiyor, bu yüzden bu
+ * bomb/sapan) çağıran taraf zaten "individual" geçiyor, bu yüzden bu
  * fonksiyon değişiklik yapmadan her oyun tipinde kullanılabiliyor.
  *
  * Beraberlik durumunda (aynı en yüksek puana sahip birden fazla oyuncu/

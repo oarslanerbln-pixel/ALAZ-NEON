@@ -14,18 +14,6 @@ const GAME_LABEL: Record<GameType, string> = {
   scattegories: "Hengame Klasik",
   quiz: "Quiz",
   bomb: "Bomba",
-  sensor: "Hengame Sensör",
-  wheel: "Çarkıfelek",
-  overload: "Neon Overload",
-  echo: "Hengame Yankı",
-  pulse: "Neon Nabız",
-  colors: "Colors (Neon Savaşları)",
-  vault: "Neon Şifre",
-  unity: "Neon Birlik",
-  bar: "Neon Bar",
-  kablo: "Neon Kablo",
-  ayna: "Ayna",
-  sniper: "Siber Nişancı",
   slingshot: "Yörünge Sapanı",
 };
 

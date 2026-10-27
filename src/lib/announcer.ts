@@ -19,7 +19,6 @@ export const ANNOUNCER_CUES = [
   "game_start",
   "quiz_intro",
   "bomb_intro",
-  "sensor_intro",
   "final_question",
   "last_seconds",
   "reveal",
@@ -46,7 +45,6 @@ export const CUE_RULES: Record<AnnouncerCue, CueRule> = {
   game_start: { priority: 2, perGame: 1 },
   quiz_intro: { priority: 3, perGame: 1 },
   bomb_intro: { priority: 3, perGame: 1 },
-  sensor_intro: { priority: 3, perGame: 1 },
   final_question: { priority: 3, perGame: 1 },
   last_seconds: { priority: 2, perGame: 2 },
   reveal: { priority: 2, perGame: 2 },
@@ -148,7 +146,7 @@ export interface RoomSnapshot {
   totalQuestions: number;
 }
 
-const GAME_START_STATUSES = new Set(["quiz_intro", "bomb_intro", "sensor_intro", "quiz_lobby"]);
+const GAME_START_STATUSES = new Set(["quiz_intro", "bomb_intro", "quiz_lobby"]);
 
 /** Bu durum yeni bir oyunun başlangıcı mı (oyun başı sınırlar sıfırlanır)? */
 export function isNewGameStatus(prev: RoomSnapshot | null, next: RoomSnapshot): boolean {
@@ -175,8 +173,6 @@ export function cueForTransition(prev: RoomSnapshot | null, next: RoomSnapshot):
       return "quiz_intro";
     case "bomb_intro":
       return "bomb_intro";
-    case "sensor_intro":
-      return "sensor_intro";
     case "question_intro":
       return next.totalQuestions > 1 && next.questionIndex === next.totalQuestions - 1 ? "final_question" : null;
     case "question_reveal":
@@ -218,7 +214,6 @@ const LEGACY_CUES: Record<GermanVoiceoverId, AnnouncerCue | null> = {
   quiz_correct: null,
   quiz_wrong: null,
   quiz_streak: null,
-  sensor_duel: "sensor_intro",
   podium_reveal: "podium",
   champion_announce: "champion",
   free_drink_reward: null,

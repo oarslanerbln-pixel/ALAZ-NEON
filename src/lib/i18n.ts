@@ -3,8 +3,6 @@
  * Supports: German (de), Turkish (tr), English (en)
  */
 
-import { trPossessiveSuffix } from "./trSuffix";
-
 export type Locale = "tr" | "de" | "en";
 
 const translations = {
@@ -12,6 +10,8 @@ const translations = {
   // LANDING PAGE
   // ═══════════════════════════════════════════
   "common.back": { tr: "ANA SAYFA", de: "STARTSEITE", en: "HOME" },
+  // Dashboard'daki çıkış düğmesi odayı kapatıyor: "ana sayfa" demek yanıltıyordu.
+  "common.endNight": { tr: "GECEYİ BİTİR", de: "NACHT BEENDEN", en: "END NIGHT" },
   "common.returnToLobby": { tr: "LOBİYE DÖN", de: "ZUR LOBBY", en: "LOBBY" },
   "common.confirmReturnLobby": { tr: "Mevcut oyunu bitirip lobiye dönmek istiyor musunuz?", de: "Möchtest du das aktuelle Spiel beenden und zur Lobby zurückkehren?", en: "Do you want to end the game and return to lobby?" },
   "common.confirmExitHome": {
@@ -55,22 +55,12 @@ const translations = {
     de: "Tritt mit deinem Handy bei und zeig was du drauf hast!",
     en: "Jump in with your phone, show off your mind!",
   },
-  "landing.tagline": {
-    tr: "ZEKANIN YENİ STATÜ SEMBOLÜ",
-    de: "DAS NEUE STATUSSYMBOL DER INTELLIGENZ",
-    en: "THE NEW STATUS SYMBOL OF INTELLIGENCE",
-  },
   "landing.subtitle": {
     tr: "Ready for the ultimate mythical challenge?",
     de: "Bereit für die ultimative Herausforderung?",
     en: "Ready for the ultimate mythical challenge?",
   },
-  "attract.joinNow": { tr: "OYUNA KATIL", de: "JETZT BEITRETEN", en: "JOIN NOW" },
   "attract.scanToJoin": { tr: "QR KODU OKUT", de: "QR-CODE SCANNEN", en: "SCAN QR CODE" },
-  "attract.howToPlay": { tr: "NASIL OYNANIR?", de: "SPIELANLEITUNG", en: "HOW TO PLAY?" },
-  "attract.step1": { tr: "1. ODAYA GİR", de: "1. RAUM BEITRETEN", en: "1. JOIN ROOM" },
-  "attract.step2": { tr: "2. KELİME BUL", de: "2. WÖRTER FINDEN", en: "2. FIND WORDS" },
-  "attract.step3": { tr: "3. ATEŞLE!", de: "3. FEUER!", en: "3. FIRE!" },
 
   // ═══════════════════════════════════════════
   // HOST SETUP
@@ -81,7 +71,6 @@ const translations = {
     de: "Lege die Standardzeit und Rundenanzahl für alle Spiele fest.",
     en: "Set the default time and round count for all games.",
   },
-  "setup.gamesTitle": { tr: "OYUN KATALOĞU", de: "SPIELEKATALOG", en: "GAMES CATALOG" },
   "setup.premiumMode": { tr: "Premium Mode", de: "Premium Modus", en: "Premium Mode" },
   "setup.timerLabel": { tr: "Süre / Tempo", de: "Zeit / Tempo", en: "Time / Pace" },
   "setup.timerAriaLabel": {
@@ -149,13 +138,6 @@ const translations = {
   },
   "setup.starting": { tr: "BAŞLATILIYOR...", de: "WIRD GESTARTET...", en: "STARTING..." },
   "setup.startNight": { tr: "GECEYİ BAŞLAT →", de: "SITZUNG STARTEN →", en: "START NIGHT →" },
-  "setup.statusTitle": { tr: "Sistem Durumu", de: "Systemstatus", en: "System Status" },
-  "setup.statusWaiting": { tr: "BEKLEMEDE", de: "WARTEND", en: "STANDBY" },
-  "setup.statusDesc": {
-    tr: "Oyun henüz başlatılmadı. Lobi oluşturmak için ana paneli kullanın.",
-    de: "Das Spiel wurde noch nicht gestartet. Nutze das Hauptpanel um die Lobby zu erstellen.",
-    en: "The game hasn't started yet. Use the main panel to create the lobby.",
-  },
   "setup.scoringTitle": { tr: "Puanlama", de: "Punktevergabe", en: "Scoring" },
   "setup.scoreUnique": { tr: "Benzersiz cevap", de: "Einzigartige Antwort", en: "Unique answer" },
   "setup.scoreShared": { tr: "Paylaşılan cevap", de: "Geteilte Antwort", en: "Shared answer" },
@@ -163,12 +145,6 @@ const translations = {
     tr: "Erken teslim bonusu",
     de: "Frühzeitiger Abgabe-Bonus",
     en: "Early submit bonus",
-  },
-  "setup.historyTitle": { tr: "Son Oyunlar", de: "Letzte Spiele", en: "Recent Games" },
-  "setup.historyEmpty": {
-    tr: "Geçmiş bulunamadı",
-    de: "Kein Verlauf gefunden",
-    en: "No history found",
   },
   "setup.errorNoCategory": {
     tr: "Lütfen en az bir kategori girin.",
@@ -411,15 +387,8 @@ const translations = {
   // AUTH & LEADERBOARD
   // ═══════════════════════════════════════════
   "auth.login": { tr: "Giriş Yap", de: "Anmelden", en: "Log In" },
-  "auth.register": { tr: "Kayıt Ol", de: "Registrieren", en: "Register" },
   "auth.email": { tr: "E-posta", de: "E-Mail", en: "Email" },
   "auth.password": { tr: "Şifre", de: "Passwort", en: "Password" },
-  "auth.noAccount": { tr: "Hesabın yok mu?", de: "Noch kein Konto?", en: "Don't have an account?" },
-  "auth.haveAccount": {
-    tr: "Zaten hesabın var mı?",
-    de: "Hast du bereits ein Konto?",
-    en: "Already have an account?",
-  },
   "auth.welcomeBack": {
     tr: "Hoş Geldin, Savaşçı",
     de: "Willkommen zurück, Krieger",
@@ -431,18 +400,8 @@ const translations = {
     en: "Join the Legends League",
   },
   // ═══════════════════════════════════════════
-  // LEADERBOARD / CHAMPIONS (SERIOUS & PRESTIGIOUS)
+  // GİRİŞ SAYFASI DÖNÜŞÜ & PODYUM
   // ═══════════════════════════════════════════
-  "leaderboard.title": { tr: "HAFTALIK ŞAMPİYONLAR", de: "BESTENLISTE & CHAMPIONS", en: "WEEKLY CHAMPIONS" },
-  "leaderboard.subtitle": { tr: "EN YÜKSEK SKORLU OYUNCULARIN RESMİ SIRALAMASI", de: "OFFIZIELLE RANGLISTE DER TOP-SPIELER", en: "OFFICIAL RANKING OF TOP PLAYERS" },
-  "leaderboard.league": { tr: "HENGAME PREMİER LİG", de: "HENGAME PREMIER LIGA", en: "HENGAME PREMIER LEAGUE" },
-  "leaderboard.thisWeek": { tr: "BU HAFTA", de: "DIESE WOCHE", en: "THIS WEEK" },
-  "leaderboard.allTime": { tr: "TÜM ZAMANLAR", de: "EWIGE BESTENLISTE", en: "ALL-TIME" },
-  "leaderboard.rank": { tr: "SIRA", de: "RANG", en: "RANK" },
-  "leaderboard.player": { tr: "OYUNCU", de: "SPIELER", en: "PLAYER" },
-  "leaderboard.score": { tr: "TOPLAM XP", de: "GESAMT-XP", en: "TOTAL XP" },
-  "leaderboard.tier": { tr: "LİG DERECESİ", de: "LIGA-RANG", en: "TIER" },
-  "leaderboard.empty": { tr: "Bu dönem için henüz skor kaydı bulunmuyor.", de: "Noch keine Einträge für diesen Zeitraum vorhanden.", en: "No records found for this period." },
   "leaderboard.back": { tr: "ANA SAYFAYA DÖN", de: "ZUR STARTSEITE", en: "BACK TO HOME" },
   "podium.individual": { tr: "Bireysel", de: "Einzelspieler", en: "Solo" },
 
@@ -506,54 +465,6 @@ const translations = {
   },
 
   // ═══════════════════════════════════════════
-  // PHONE AUTH — eskiden bu bileşenin metinleri hiç t() kullanmıyordu, sabit
-  // İngilizce'ydi (dil TR/DE seçili olsa bile değişmiyordu).
-  // ═══════════════════════════════════════════
-  "phoneAuth.title": { tr: "Telefon Doğrulama", de: "Telefonverifizierung", en: "Phone Verification" },
-  "phoneAuth.subtitleEnterPhone": {
-    tr: "Devam etmek için numaranı doğrula",
-    de: "Bestätige deine Nummer, um fortzufahren",
-    en: "Verify your number to continue",
-  },
-  "phoneAuth.subtitleAwaiting": {
-    tr: "Kod gönderildi, onay bekleniyor",
-    de: "Code gesendet, Bestätigung ausstehend",
-    en: "Code sent, awaiting confirmation",
-  },
-  "phoneAuth.phoneLabel": { tr: "Telefon Numarası", de: "Telefonnummer", en: "Phone Number" },
-  "phoneAuth.sendSms": { tr: "Kod Gönder", de: "Code senden", en: "Send Code" },
-  "phoneAuth.sending": { tr: "Gönderiliyor...", de: "Wird gesendet...", en: "Sending..." },
-  "phoneAuth.codeLabel": { tr: "6 Haneli Kod", de: "6-stelliger Code", en: "6-Digit Code" },
-  "phoneAuth.verify": { tr: "Doğrula", de: "Bestätigen", en: "Verify" },
-  "phoneAuth.verifying": { tr: "Doğrulanıyor...", de: "Wird bestätigt...", en: "Verifying..." },
-  "phoneAuth.reenterNumber": { tr: "Numarayı değiştir", de: "Nummer ändern", en: "Change number" },
-  "phoneAuth.cancel": { tr: "Vazgeç", de: "Abbrechen", en: "Cancel" },
-  // "+" bilerek çeviri dışında, JSX tarafında: değer `+90` gibi bir
-  // önektir, çeviren kişinin metin sonundaki artıyı korumasına
-  // bel bağlamak istemiyoruz.
-  "phoneAuth.countryPrefix": { tr: "Ülke kodu", de: "Ländervorwahl", en: "Country code" },
-  "phoneAuth.errRecaptcha": {
-    tr: "Doğrulama hazır değil, tekrar deneyin.",
-    de: "Verifizierung nicht bereit, bitte erneut versuchen.",
-    en: "Verification not ready, please try again.",
-  },
-  "phoneAuth.errSendFailed": {
-    tr: "SMS gönderilemedi. Numarayı kontrol edin.",
-    de: "SMS konnte nicht gesendet werden. Nummer überprüfen.",
-    en: "Couldn't send SMS. Please check the number.",
-  },
-  "phoneAuth.errInvalidCode": {
-    tr: "Kod hatalı, tekrar deneyin.",
-    de: "Falscher Code, bitte erneut versuchen.",
-    en: "Incorrect code, please try again.",
-  },
-  "phoneAuth.errRecaptchaExpired": {
-    tr: "Doğrulama süresi doldu, tekrar deneyin.",
-    de: "Verifizierung abgelaufen, bitte erneut versuchen.",
-    en: "Verification expired, please try again.",
-  },
-
-  // ═══════════════════════════════════════════
   // PLAYER GAME
   // ═══════════════════════════════════════════
   "game.roomClosed": { tr: "ODA KAPALI", de: "RAUM GESCHLOSSEN", en: "ROOM CLOSED" },
@@ -594,132 +505,6 @@ const translations = {
   // COMMON / SHELL
   // ═══════════════════════════════════════════
   "common.loading": { tr: "YÜKLENİYOR...", de: "WIRD GELADEN...", en: "LOADING..." },
-  "wheel.spin": { tr: "ÇEVİR", de: "DREHEN", en: "SPIN" },
-  "pulse.connectionError": { tr: "Bağlantı hatası!", de: "Verbindungsfehler!", en: "Connection error!" },
-  "pulse.waiting": { tr: "BEKLENİYOR", de: "WARTEN", en: "WAITING" },
-
-
-  // ═══════════════════════════════════════════
-  // AYNA (dünyayı ve salonu tahmin et — bkz. lib/ayna.ts)
-  // ═══════════════════════════════════════════
-  "ayna.title": { tr: "AYNA", de: "SPIEGEL", en: "MIRROR" },
-  "ayna.tagline": {
-    tr: "Dünyayı ne kadar tanıyorsun? Peki bu salonu?",
-    de: "Wie gut kennst du die Welt? Und diesen Raum?",
-    en: "How well do you know the world? And this room?",
-  },
-  "ayna.step1": { tr: "Soruyu oku", de: "Lies die Frage", en: "Read the question" },
-  "ayna.step2": { tr: "Telefonunda kaydır ve kilitle", de: "Schieb am Handy und leg dich fest", en: "Slide on your phone and lock in" },
-  "ayna.step3": { tr: "Gerçek ekrana düşsün", de: "Sieh die Wahrheit fallen", en: "Watch the truth drop" },
-  "ayna.questionOf": {
-    tr: (n: number, total: number) => `SORU ${n} / ${total}`,
-    de: (n: number, total: number) => `FRAGE ${n} / ${total}`,
-    en: (n: number, total: number) => `QUESTION ${n} / ${total}`,
-  },
-  "ayna.lockedCount": {
-    tr: (n: number, total: number) => `${n} / ${total} kilitledi`,
-    de: (n: number, total: number) => `${n} / ${total} festgelegt`,
-    en: (n: number, total: number) => `${n} / ${total} locked in`,
-  },
-  "ayna.truth": { tr: "GERÇEK", de: "WAHRHEIT", en: "TRUTH" },
-  "ayna.roomMedian": {
-    tr: (v: string) => `Salonun ortancası: ${v}`,
-    de: (v: string) => `Median des Raums: ${v}`,
-    en: (v: string) => `Room median: ${v}`,
-  },
-  "ayna.verdictUnder": {
-    tr: (p: number) => `Salonun %${p}'${trPossessiveSuffix(p)} gerçeği olduğundan DÜŞÜK tahmin etti`,
-    de: (p: number) => `${p} % des Raums haben zu NIEDRIG geschätzt`,
-    en: (p: number) => `${p}% of the room guessed too LOW`,
-  },
-  "ayna.verdictOver": {
-    tr: (p: number) => `Salonun %${p}'${trPossessiveSuffix(p)} gerçeği olduğundan YÜKSEK tahmin etti`,
-    de: (p: number) => `${p} % des Raums haben zu HOCH geschätzt`,
-    en: (p: number) => `${p}% of the room guessed too HIGH`,
-  },
-  "ayna.verdictSplit": { tr: "Salon ikiye bölündü", de: "Der Raum ist gespalten", en: "The room is split" },
-  "ayna.source": {
-    tr: (src: string) => `Kaynak: ${src}`,
-    de: (src: string) => `Quelle: ${src}`,
-    en: (src: string) => `Source: ${src}`,
-  },
-  "ayna.closest": { tr: "EN YAKINLAR", de: "AM NÄCHSTEN DRAN", en: "CLOSEST" },
-  "ayna.exact": { tr: "TAM İSABET", de: "VOLLTREFFER", en: "BULLSEYE" },
-  "ayna.finalTitle": { tr: "GECENİN AYNASI", de: "SPIEGEL DES ABENDS", en: "MIRROR OF THE NIGHT" },
-  "ayna.bestReader": { tr: "Dünyayı en iyi okuyan", de: "Liest die Welt am besten", en: "Reads the world best" },
-  "ayna.backToLobby": { tr: "LOBİYE DÖN", de: "ZURÜCK ZUR LOBBY", en: "BACK TO LOBBY" },
-  "ayna.next": { tr: "SONRAKİ SORU", de: "NÄCHSTE FRAGE", en: "NEXT QUESTION" },
-  "ayna.seeResults": { tr: "SONUÇLAR", de: "ERGEBNISSE", en: "RESULTS" },
-  "ayna.revealNow": { tr: "ŞİMDİ AÇIKLA", de: "JETZT AUFDECKEN", en: "REVEAL NOW" },
-  "ayna.lockIn": { tr: "TAHMİNİ KİLİTLE", de: "TIPP FESTLEGEN", en: "LOCK IN GUESS" },
-  "ayna.lockedWait": {
-    tr: "Kilitlendi. Gerçek TV'de açıklanacak.",
-    de: "Festgelegt. Die Wahrheit erscheint auf dem TV.",
-    en: "Locked in. The truth drops on the TV.",
-  },
-  "ayna.yourGuess": { tr: "SENİN TAHMİNİN", de: "DEIN TIPP", en: "YOUR GUESS" },
-  "ayna.diff": {
-    tr: (v: string) => `Fark: ${v}`,
-    de: (v: string) => `Abstand: ${v}`,
-    en: (v: string) => `Off by ${v}`,
-  },
-  "ayna.noPoints": {
-    tr: "Bu tur puan yok — bir sonrakinde!",
-    de: "Diese Runde keine Punkte – nächstes Mal!",
-    en: "No points this round – get the next one!",
-  },
-  "ayna.timeUp": { tr: "Süre doldu", de: "Zeit abgelaufen", en: "Time's up" },
-  "ayna.noGuess": { tr: "Bu tur tahmin gelmedi", de: "Kein Tipp in dieser Runde", en: "No guess this round" },
-  "ayna.watchTv": {
-    tr: "Soru TV'de. Tahminini buradan kilitle.",
-    de: "Die Frage läuft auf dem TV. Leg deinen Tipp hier fest.",
-    en: "The question is on the TV. Lock in your guess here.",
-  },
-  "ayna.decrease": { tr: "Azalt", de: "Verringern", en: "Decrease" },
-  "ayna.increase": { tr: "Artır", de: "Erhöhen", en: "Increase" },
-  "ayna.sliderLabel": { tr: "Tahminin", de: "Dein Tipp", en: "Your guess" },
-  "ayna.yourRank": {
-    tr: (rank: number, total: number) => `${total} kişi arasında ${rank}. sıradasın`,
-    de: (rank: number, total: number) => `Platz ${rank} von ${total}`,
-    en: (rank: number, total: number) => `You placed ${rank} of ${total}`,
-  },
-  "ayna.totalPoints": {
-    tr: (p: number) => `${p} AYNA puanı`,
-    de: (p: number) => `${p} SPIEGEL-Punkte`,
-    en: (p: number) => `${p} MIRROR points`,
-  },
-  "ayna.category.health": { tr: "SAĞLIK", de: "GESUNDHEIT", en: "HEALTH" },
-  "ayna.category.society": { tr: "TOPLUM", de: "GESELLSCHAFT", en: "SOCIETY" },
-  "ayna.category.environment": { tr: "ÇEVRE", de: "UMWELT", en: "ENVIRONMENT" },
-  "ayna.category.science": { tr: "BİLİM", de: "WISSENSCHAFT", en: "SCIENCE" },
-  "ayna.category.history": { tr: "TARİH", de: "GESCHICHTE", en: "HISTORY" },
-  "ayna.category.salon": { tr: "BU SALON", de: "DIESER RAUM", en: "THIS ROOM" },
-  "ayna.surveyTitle": { tr: "SALON ANKETİ", de: "RAUM-UMFRAGE", en: "ROOM SURVEY" },
-  "ayna.surveyLead": {
-    tr: "Telefonuna gelen kısa soruları yanıtla. Birazdan bu salonu tahmin edeceksiniz.",
-    de: "Beantworte die kurzen Fragen auf deinem Handy. Gleich schätzt ihr diesen Raum.",
-    en: "Answer the short questions on your phone. Soon you'll be guessing this room.",
-  },
-  // Bilerek "anonim" değil "gizli": diğer misafirler cevabı göremez, ama
-  // toplamı hesaplayan TV (host hesabı) kuralları gereği okuyabilir.
-  "ayna.surveyPrivacy": {
-    tr: "Gizli: diğer misafirler cevabını göremez, ekranda yalnızca toplam görünür.",
-    de: "Privat: Andere Gäste sehen deine Antwort nicht, auf dem Bildschirm erscheint nur die Summe.",
-    en: "Private: other guests can't see your answer, only the total appears on screen.",
-  },
-  "ayna.surveyDone": {
-    tr: (n: number, total: number) => `${n} / ${total} yanıtladı`,
-    de: (n: number, total: number) => `${n} / ${total} haben geantwortet`,
-    en: (n: number, total: number) => `${n} / ${total} answered`,
-  },
-  "ayna.yes": { tr: "EVET", de: "JA", en: "YES" },
-  "ayna.no": { tr: "HAYIR", de: "NEIN", en: "NO" },
-  "ayna.skip": { tr: "Geç", de: "Überspringen", en: "Skip" },
-  "ayna.surveyThanks": {
-    tr: "Teşekkürler! Salonun geri kalanını bekliyoruz.",
-    de: "Danke! Wir warten auf den Rest des Raums.",
-    en: "Thanks! Waiting for the rest of the room.",
-  },
 
   // ═══════════════════════════════════════════
   // ROOM STATUS (siyah ekran yerine oda yükleme/hata durumları)
@@ -773,7 +558,6 @@ const translations = {
   // MISC CHROME (XP bar, emoji toolbar, hold button, player header)
   // ═══════════════════════════════════════════
   "xpBar.roundProgress": { tr: "TUR İLERLEMESİ", de: "RUNDENFORTSCHRITT", en: "ROUND PROGRESS" },
-  "emoji.sendReaction": { tr: "TEPKİ GÖNDER", de: "REAKTION SENDEN", en: "SEND REACTION" },
   "playerHeader.critical": { tr: "⚡ KRİTİK", de: "⚡ KRITISCH", en: "⚡ CRITICAL" },
   "playerHeader.active": { tr: "◉ AKTİF", de: "◉ AKTIV", en: "◉ ACTIVE" },
   "playerHeader.points": { tr: "PUAN", de: "PUNKTE", en: "POINTS" },
@@ -793,16 +577,6 @@ const translations = {
     de: "Antworten werden gesendet...",
     en: "Sending answers...",
   },
-
-  // ═══════════════════════════════════════════
-  // INTELLIGENCE WIDGET (AI stratejik analiz paneli)
-  // ═══════════════════════════════════════════
-  "intelligence.title": { tr: "STRATEJİK ANALİZ (AI)", de: "STRATEGISCHE ANALYSE (KI)", en: "STRATEGIC ANALYSIS (AI)" },
-  "intelligence.roundDifficulty": { tr: "Tur Zorluğu", de: "Rundenschwierigkeit", en: "Round Difficulty" },
-  "intelligence.expectedAvg": { tr: "Tahminî Ort.", de: "Erwart. Ø", en: "Expected Avg." },
-  "intelligence.pointsPerPlayer": { tr: "Puan / Oyuncu", de: "Punkte / Spieler", en: "Points / Player" },
-  "intelligence.marketStatus": { tr: "Piyasa Durumu", de: "Marktlage", en: "Market Status" },
-  "intelligence.operationalTip": { tr: "Operasyonel İpucu", de: "Praxistipp", en: "Operational Tip" },
 
   // ═══════════════════════════════════════════
   // SHAREABLE RECAP CARD (paylaşılabilir gece özeti)
@@ -1019,11 +793,6 @@ const translations = {
     de: "Finde das Wort, bevor dir die Bombe in der Hand hochgeht!",
     en: "Find the word before the bomb goes off in your hand!",
   },
-  "landing.modeSensorDesc": {
-    tr: "Gizemli görseli ilk sen bil, devasa butonla yarış.",
-    de: "Errate das mysteriöse Bild als Erster, hau auf den riesigen Buzzer.",
-    en: "Be the first to guess the mystery image, race for the giant buzzer.",
-  },
 
   // ═══════════════════════════════════════════
   // HOST DASHBOARD — mod seçim kartları (Landing'den biraz daha uzun metin)
@@ -1059,66 +828,6 @@ const translations = {
   "dashboard.startSession": { tr: "Oturumu Başlat", de: "Session starten", en: "Start Session" },
   "dashboard.comingSoon": { tr: "ÇOK YAKINDA", de: "BALD VERFÜGBAR", en: "COMING SOON" },
   "dashboard.comingSoonBadge": { tr: "🔒 ÇOK YAKINDA", de: "🔒 BALD VERFÜGBAR", en: "🔒 COMING SOON" },
-  "dashboard.modeSensorDesc": {
-    tr: "Hızlı olan kazanır! Gizemli görseli ilk sen bil, devasa neon butonla yarış.",
-    de: "Wer schnell ist, gewinnt! Errate das mysteriöse Bild als Erster, hau auf den riesigen Neon-Buzzer.",
-    en: "Fast wins! Be the first to guess the mystery image, race for the giant neon buzzer.",
-  },
-  "dashboard.modeOverloadDesc": {
-    tr: "Refleks oyunu: yük patlamadan telefonu salla ya da butona bas, sırayı devret.",
-    de: "Reflexspiel: Schüttle das Handy oder tippe den Buzzer und gib weiter, bevor die Ladung hochgeht.",
-    en: "A reflex game: shake your phone or hit the buzzer to pass the charge before it blows.",
-  },
-  "dashboard.modeColorsDesc": {
-    tr: "Kırmızı ve Mavi takımların ekranı ele geçirmek için kapıştığı dev halat çekme şovu.",
-    de: "Die große Tauzieh-Show: Team Rot gegen Team Blau um die Herrschaft über den Bildschirm.",
-    en: "A giant tug-of-war show: Team Red versus Team Blue for control of the screen.",
-  },
-  "dashboard.modeWheelDesc": {
-    tr: "Oyun aralarında misafirlerinize sürpriz ödüller dağıtın. Rastgele seçilen misafir çarkı çevirir.",
-    de: "Verteile zwischen den Spielen Überraschungspreise. Ein zufällig gewählter Gast dreht das Rad.",
-    en: "Hand out surprise prizes between games. A randomly picked guest spins the wheel.",
-  },
-  "dashboard.modeVaultDesc": {
-    tr: "Gizli neon kasanın şifresini ipuçlarıyla ilk çözen kazanır.",
-    de: "Wer den Code des geheimen Neon-Tresors zuerst knackt, gewinnt.",
-    en: "First to crack the secret neon vault's code from the clues wins.",
-  },
-  "dashboard.modeUnityDesc": {
-    tr: "Tüm masalar aynı anda basıyor: dev neon bataryayı birlikte doldurun.",
-    de: "Alle Tische tippen gleichzeitig: Ladet die riesige Neon-Batterie gemeinsam auf.",
-    en: "Every table taps together: charge the giant neon battery as one.",
-  },
-  "dashboard.modeEchoDesc": {
-    tr: "Masa anketi: soruyu okuyun, herkes gizlice oy versin, sonuçlar ekranda patlasın.",
-    de: "Die Tischumfrage: Frage vorlesen, alle stimmen heimlich ab, das Ergebnis knallt auf den Bildschirm.",
-    en: "The table poll: read the question, everyone votes in secret, results explode on screen.",
-  },
-  "dashboard.modePulseDesc": {
-    tr: "Ortak ritim testi: çekirdek patladığı an herkes aynı anda butona bassın.",
-    de: "Der gemeinsame Rhythmus-Test: Alle tippen genau in dem Moment, in dem der Kern explodiert.",
-    en: "A shared rhythm test: everyone taps at the exact moment the core bursts.",
-  },
-  "dashboard.modeBarDesc": {
-    tr: "Tarifi ezberle, malzemeleri doğru sırayla dök. En çok tamamlayan barista kazanır.",
-    de: "Rezept merken, Zutaten in der richtigen Reihenfolge eingießen. Wer am meisten schafft, gewinnt.",
-    en: "Memorize the recipe, pour the ingredients in order. Most drinks completed wins.",
-  },
-  "dashboard.modeKabloDesc": {
-    tr: "Takım işi: kabloları doğru uçlara bağlayıp mekanın jeneratörünü birlikte ateşleyin.",
-    de: "Teamarbeit: Verbindet die Kabel richtig und startet gemeinsam den Generator des Ladens.",
-    en: "Teamwork: connect the wires correctly and fire up the venue's generator together.",
-  },
-  "dashboard.modeAynaDesc": {
-    tr: "Dünyayı ne kadar tanıyorsun? Gerçek verilerle tahmin et, salonun aynasında kendini gör.",
-    de: "Wie gut kennst du die Welt? Schätze echte Daten und sieh dich im Spiegel des Raums.",
-    en: "How well do you know the world? Guess real data and see yourself in the room's mirror.",
-  },
-  "dashboard.modeSniperDesc": {
-    tr: "Telefonu havada TV'ye tut, jiroskopla nişan al! Kafe derbi ve hedef atış arenası.",
-    de: "Richte dein Handy auf den TV, ziele mit dem Gyroskop! Die Cyber-Zielscheiben-Arena.",
-    en: "Aim your phone at the TV with gyroscope controls! The cyber target shooting arena.",
-  },
   "dashboard.modeSlingshotDesc": {
     tr: "Dokunmatik sapanı ger, falsoyu ver ve 90'a as! 3D stadyum penaltı şöleni.",
     de: "Zieh die Touch-Schleuder, gib Effet und triff in den Winkel! Das 3D-Stadion-Elfmeterschießen.",
@@ -1201,184 +910,14 @@ const translations = {
   },
 
   // ═══════════════════════════════════════════
-  // OYUN MODLARI — misafir telefonu ve TV ekranı
-  //
-  // Bu modlar (çarkıfelek, overload, echo, pulse, unity, kasa, bar,
-  // kablo) sonradan eklenirken metinleri doğrudan bileşenlerin
-  // içine sabit Türkçe olarak yazılmıştı. Varsayılan dil "de" ve asıl pazar
-  // Berlin olduğu için Alman misafir kendi telefonunda Türkçe metin
-  // görüyordu. İlk modlar (quiz/sensör/bomba) baştan çevrilmişti; bu blok
-  // geri kalanını aynı hizaya getiriyor.
+  // OYUN EKRANLARI — ortak
   // ═══════════════════════════════════════════
-
-  // ── Çarkıfelek ──
-  "wheel.title": { tr: "ÇARKIFELEK", de: "GLÜCKSRAD", en: "WHEEL OF FORTUNE" },
-  "wheel.hostTitle": { tr: "ŞANS ÇARKI • GECE ÖDÜLLERİ", de: "GLÜCKSRAD • PREISE DES ABENDS", en: "WHEEL OF FORTUNE • TONIGHT'S PRIZES" },
-  "wheel.pickRandom": { tr: "RASTGELE ŞANSLI SEÇ", de: "ZUFÄLLIG AUSWÄHLEN", en: "PICK A RANDOM GUEST" },
-  "wheel.waitingForPick": { tr: "Şanslı masa seçilmeyi bekliyor...", de: "Der Glückstisch wird gleich ausgelost...", en: "Waiting for the lucky table to be picked..." },
-  "wheel.luckyPlayer": { tr: "ŞANSLI OYUNCU:", de: "GLÜCKSPILZ:", en: "LUCKY GUEST:" },
-  "wheel.prizeWon": { tr: "KAZANILAN ÖDÜL", de: "GEWONNENER PREIS", en: "PRIZE WON" },
-  "wheel.prizeWonColon": { tr: "KAZANILAN ÖDÜL:", de: "GEWONNENER PREIS:", en: "PRIZE WON:" },
-  "wheel.youWereChosen": { tr: "ŞANSLI SEÇİLDİN!", de: "DU WURDEST AUSGEWÄHLT!", en: "YOU WERE CHOSEN!" },
-  "wheel.tapToSpin": { tr: "Dokun ve çarkı tüm gücünle döndür!", de: "Tippe und dreh das Rad mit voller Kraft!", en: "Tap and spin the wheel with all you've got!" },
-  "wheel.spinning": { tr: "ÇARK DÖNÜYOR...", de: "DAS RAD DREHT SICH...", en: "SPINNING..." },
-  "wheel.watchOnTV": { tr: "Çarkın dönüşünü TV ekranından izle!", de: "Verfolge die Drehung auf dem TV-Bildschirm!", en: "Watch the spin on the TV screen!" },
-  "wheel.otherTable": { tr: "Sıra Başka Masada!", de: "Ein anderer Tisch ist dran!", en: "Another table's turn!" },
-  "wheel.waitingRoom": { tr: "Oyunun başlamasını bekliyoruz. Ana ekranı takip edin.", de: "Wir warten auf den Spielstart. Achte auf den Hauptbildschirm.", en: "Waiting for the game to start. Watch the main screen." },
-  "wheel.watchTVSoon": { tr: "TV ekranına bak! Şanslı masa birazdan seçilecek...", de: "Schau auf den TV! Der Glückstisch wird gleich ausgelost...", en: "Look at the TV! The lucky table is about to be picked..." },
-  "wheel.heldBreath": { tr: "Nefesler tutuldu!", de: "Alle halten den Atem an!", en: "Everyone's holding their breath!" },
-
-  // ── Overload ──
-  "overload.title": { tr: "AŞIRI YÜKLEME", de: "ÜBERLASTUNG", en: "OVERLOAD" },
-  "overload.whoHasVoltage": { tr: "VOLTAJ KİMDE:", de: "WER HAT DIE SPANNUNG:", en: "WHO HOLDS THE CHARGE:" },
-  "overload.transferring": { tr: "AKTARILIYOR…", de: "WIRD ÜBERTRAGEN…", en: "TRANSFERRING…" },
-  "overload.reflexTime": {
-    tr: (s: string) => `Refleks süresi: ${s} sn`,
-    de: (s: string) => `Reaktionszeit: ${s} s`,
-    en: (s: string) => `Reflex time: ${s}s`,
-  },
-  "overload.overloaded": { tr: "AŞIRI YÜKLENDİ!", de: "ÜBERLASTET!", en: "OVERLOADED!" },
-  "overload.youOverloaded": { tr: "AŞIRI YÜKLENDİN!", de: "DU BIST ÜBERLASTET!", en: "YOU OVERLOADED!" },
-  "overload.survivor": { tr: "HAYATTA KALAN ŞAMPİYON", de: "ÜBERLEBENDER CHAMPION", en: "SURVIVING CHAMPION" },
-  "overload.endGame": { tr: "OYUNU BİTİR", de: "SPIEL BEENDEN", en: "END GAME" },
-  "overload.deflect": { tr: "SAVUŞTUR!", de: "ABWEHREN!", en: "DEFLECT!" },
-  "overload.safe": { tr: "GÜVENDESİN", de: "DU BIST SICHER", en: "YOU'RE SAFE" },
-  "overload.focusNext": { tr: "Sıradaki kurbana odaklan", de: "Konzentrier dich auf das nächste Opfer", en: "Focus on the next victim" },
-  "overload.watchSurvivors": { tr: "Hayatta kalanları izle", de: "Beobachte die Überlebenden", en: "Watch the survivors" },
-  "overload.gameOver": { tr: "OYUN BİTTİ", de: "SPIEL VORBEI", en: "GAME OVER" },
-  "overload.resultsOnScreen": { tr: "Sonuçlar ekranda!", de: "Die Ergebnisse sind auf dem Bildschirm!", en: "Results are on the screen!" },
-  "overload.champion": { tr: "ŞAMPİYON!", de: "CHAMPION!", en: "CHAMPION!" },
-  "pulse.early": { tr: "ERKEN!", de: "ZU FRÜH!", en: "EARLY!" },
-  "overload.tapAndPass": { tr: "DOKUN VE HEMEN PASLA!", de: "TIPPEN UND SOFORT WEITERGEBEN!", en: "TAP AND PASS IT ON!" },
-
-  // ── Echo (masa anketi) ──
-  "echo.prepare": { tr: "Telefonlarınızı Hazırlayın", de: "Macht eure Handys bereit", en: "Get your phones ready" },
-  "echo.votesUsed": { tr: "Kullanılan Oy", de: "Abgegebene Stimmen", en: "Votes cast" },
-  "echo.scapegoat": { tr: "GÜNAH KEÇİSİ", de: "DER SÜNDENBOCK", en: "THE SCAPEGOAT" },
-  "echo.calculating": { tr: "Hesaplanıyor...", de: "Wird berechnet...", en: "Calculating..." },
-  "echo.noVotes": { tr: "Hiç Oy Verilmedi", de: "Keine Stimmen abgegeben", en: "No votes cast" },
-  "echo.backToLobby": { tr: "Lobiye Dön", de: "Zurück zur Lobby", en: "Back to lobby" },
-  "echo.questionComing": { tr: "Soru Geliyor", de: "Die Frage kommt", en: "Question incoming" },
-  "echo.voteSaved": { tr: "Oy Kaydedildi", de: "Stimme gespeichert", en: "Vote saved" },
-  "echo.noOthers": {
-    tr: "Oylanacak başka oyuncu yok.",
-    de: "Keine anderen Spieler zum Abstimmen.",
-    en: "No other players to vote for.",
-  },
-  "echo.pickSomeone": { tr: "Birini Seç", de: "Wähle jemanden", en: "Pick someone" },
-  "echo.waitingOthers": { tr: "Diğerlerinin oyları bekleniyor...", de: "Warte auf die anderen Stimmen...", en: "Waiting for the other votes..." },
-  "echo.resultsOnScreen": { tr: "Sonuçlar Ekranda", de: "Ergebnisse auf dem Bildschirm", en: "Results on screen" },
-  "echo.lookUp": { tr: "Yukarıya Bak!", de: "Schau nach oben!", en: "Look up!" },
-  "echo.voteFailed": { tr: "Oy gönderilemedi!", de: "Stimme konnte nicht gesendet werden!", en: "Could not send your vote!" },
-  // Echo soruları — bileşenin içine gömülüydü, bu yüzden yalnızca Türkçeydi.
-  "echo.q1": { tr: "Bir zombi istilasında ilk kim yem olur?", de: "Wer wird bei einer Zombie-Apokalypse zuerst gefressen?", en: "Who gets eaten first in a zombie apocalypse?" },
-  "echo.q2": { tr: "En kötü eski sevgiliye sahip olan kim?", de: "Wer hat den schlimmsten Ex?", en: "Who has the worst ex?" },
-  "echo.q3": { tr: "En çok 'Yarın diyete başlıyorum' diyen kim?", de: "Wer sagt am häufigsten \"Morgen fange ich mit der Diät an\"?", en: "Who says \"I'll start my diet tomorrow\" the most?" },
-  "echo.q4": { tr: "Mekandaki en iyi giyinen kişi kim?", de: "Wer ist hier am besten angezogen?", en: "Who's the best dressed in the room?" },
-  "echo.q5": { tr: "Gizli bir ajan olma ihtimali en yüksek kim?", de: "Wer könnte am ehesten ein Geheimagent sein?", en: "Who's most likely to be a secret agent?" },
-  "echo.q6": { tr: "Issız adaya düşse ilk kimi yer?", de: "Wen würde man auf einer einsamen Insel zuerst essen?", en: "Who'd get eaten first on a desert island?" },
-
-  // ── Pulse ──
-  "pulse.hostTitle": { tr: "PULSE: SENKRONİZASYON", de: "PULSE: SYNCHRONISATION", en: "PULSE: SYNC" },
-  "pulse.hostHint": { tr: "Çekirdek patladığı an butona basın!", de: "Drückt genau dann, wenn der Kern explodiert!", en: "Tap the moment the core bursts!" },
-  "pulse.perfectSync": { tr: "KUSURSUZ!", de: "PERFEKT!", en: "FLAWLESS!" },
-  "pulse.perfectSyncDesc": { tr: "Mükemmel Uyum Sağlandı", de: "Perfekter Gleichklang erreicht", en: "Perfect harmony achieved" },
-  "pulse.cracked": { tr: "ÇATLADI!", de: "ZERSPRUNGEN!", en: "CRACKED!" },
-  "pulse.crackedDesc": { tr: "Senkronizasyon Başarısız", de: "Synchronisation fehlgeschlagen", en: "Sync failed" },
-  "pulse.avgError": { tr: "Ortalama Hata", de: "Durchschnittlicher Fehler", en: "Average error" },
-  "pulse.participation": { tr: "Katılım", de: "Beteiligung", en: "Participation" },
-  "pulse.none": { tr: "Yok", de: "Keine", en: "None" },
-  "pulse.tapAtBurst": { tr: "Tam Patlama Anında Dokun!", de: "Tippe genau im Moment der Explosion!", en: "Tap at the exact moment it bursts!" },
-  "pulse.eyesOnScreen": { tr: "Gözünü Ekrana Dik", de: "Augen auf den Bildschirm", en: "Eyes on the screen" },
-  "pulse.yourResult": { tr: "BİREYSEL SONUÇ", de: "DEIN ERGEBNIS", en: "YOUR RESULT" },
-  "pulse.perfect": { tr: "MÜKEMMEL!", de: "PERFEKT!", en: "PERFECT!" },
-  "pulse.tooEarly": { tr: "ÇOK ERKEN!", de: "ZU FRÜH!", en: "TOO EARLY!" },
-  "pulse.tooLate": { tr: "ÇOK GEÇ!", de: "ZU SPÄT!", en: "TOO LATE!" },
-  "pulse.missed": { tr: "GEÇ!", de: "VERPASST!", en: "MISSED!" },
-
-  // ── Unity (birlik) ──
-  "unity.title": { tr: "NEON BİRLİK", de: "NEON EINHEIT", en: "NEON UNITY" },
-  "unity.hostHint": { tr: "MEKANIN TÜM ENERJİSİNİ KULLANARAK BATARYAYI PATLATIN!", de: "NUTZT DIE GESAMTE ENERGIE DES LADENS UND SPRENGT DIE BATTERIE!", en: "USE THE WHOLE VENUE'S ENERGY AND BLOW THE BATTERY!" },
-  "unity.tapLikeCrazy": { tr: "TELEFONA DELİ GİBİ BAS!", de: "HAU WIE VERRÜCKT AUFS HANDY!", en: "TAP YOUR PHONE LIKE CRAZY!" },
-  "unity.success": { tr: "BAŞARILI!", de: "GESCHAFFT!", en: "SUCCESS!" },
-  "unity.successDesc": { tr: "MEKAN ENERJİ PATLAMASI YAŞADI!", de: "DER LADEN HAT EINEN ENERGIESCHUB ERLEBT!", en: "THE VENUE JUST HAD AN ENERGY SURGE!" },
-  "unity.failed": { tr: "BAŞARISIZ", de: "FEHLGESCHLAGEN", en: "FAILED" },
-  "unity.failedDesc": { tr: "ENERJİ YETERSİZ KALDI", de: "DIE ENERGIE HAT NICHT GEREICHT", en: "NOT ENOUGH ENERGY" },
-  "unity.surgeHappened": { tr: "Enerji patlaması gerçekleşti.", de: "Der Energieschub ist gelungen.", en: "The energy surge went off." },
-  "unity.notEnough": { tr: "Yeterli enerji toplanamadı.", de: "Es wurde nicht genug Energie gesammelt.", en: "Not enough energy was gathered." },
-  "unity.tap": { tr: "BAS!", de: "DRÜCK!", en: "TAP!" },
-  "unity.yourTaps": {
-    tr: (n: number) => `Senin katkın: ${n}`,
-    de: (n: number) => `Dein Beitrag: ${n}`,
-    en: (n: number) => `Your taps: ${n}`,
-  },
-  "unity.watchTimer": { tr: "TV Ekranına Bakarak Süreyi Takip Et", de: "Verfolge die Zeit auf dem TV-Bildschirm", en: "Watch the timer on the TV screen" },
-
-  // ── Kasa (vault) ──
-  "vault.title": { tr: "NEON ŞİFRE", de: "NEON-TRESOR", en: "NEON VAULT" },
-  "vault.hostHint": { tr: "KASAYI İLK AÇAN KAZANIR", de: "WER DEN TRESOR ZUERST KNACKT, GEWINNT", en: "FIRST TO CRACK THE VAULT WINS" },
-  "vault.opened": { tr: "KASA AÇILDI!", de: "TRESOR GEÖFFNET!", en: "VAULT OPENED!" },
-  "vault.crackIt": { tr: "ŞİFREYİ ÇÖZ", de: "KNACK DEN CODE", en: "CRACK THE CODE" },
-  "vault.crackItBang": { tr: "ŞİFREYİ ÇÖZ!", de: "KNACK DEN CODE!", en: "CRACK THE CODE!" },
-  "vault.delete": { tr: "SİL", de: "LÖSCHEN", en: "DELETE" },
-  "vault.success": { tr: "BAŞARILI!", de: "GESCHAFFT!", en: "CRACKED!" },
-  "vault.successDesc": { tr: "Kasa kırıldı. TV ekranına bak!", de: "Der Tresor ist geknackt. Schau auf den TV!", en: "The vault is open. Look at the TV!" },
-
-  // ── Bar (kafe barista modu) ──
-  "bar.hostRecipe": { tr: "İSTENEN TARİF (4 KATMAN)", de: "GEWÜNSCHTES REZEPT (4 SCHICHTEN)", en: "REQUESTED RECIPE (4 LAYERS)" },
-  "bar.serviceTime": { tr: "SERVİS SÜRESİ:", de: "SERVIERZEIT:", en: "SERVING TIME:" },
-  "bar.topBarista": { tr: "GECENİN BAŞ BARİSTASI!", de: "BARISTA DES ABENDS!", en: "BARISTA OF THE NIGHT!" },
-  "bar.unknown": { tr: "BİLİNMİYOR", de: "UNBEKANNT", en: "UNKNOWN" },
-  "bar.yourDrink": { tr: "SENİN İÇECEĞİN", de: "DEIN GETRÄNK", en: "YOUR DRINK" },
-  "bar.tagline": { tr: "HENGAME BARİSTA • DOĞRU SIRAYLA DÖK", de: "HENGAME BARISTA • IN DER RICHTIGEN REIHENFOLGE EINGIESSEN", en: "HENGAME BARISTA • POUR IN THE RIGHT ORDER" },
-  "bar.hint": { tr: "TV'deki tarife bak ve doğru sırayla dök!", de: "Schau aufs Rezept im TV und gieß in der richtigen Reihenfolge ein!", en: "Check the recipe on the TV and pour in order!" },
-  "bar.served": { tr: "SERVİS EDİLDİ! +1", de: "SERVIERT! +1", en: "SERVED! +1" },
-  "bar.nice": { tr: "HARİKA!", de: "SUPER!", en: "NICE!" },
-  "bar.wrongPour": { tr: "YANLIŞ MALZEME!", de: "FALSCHE ZUTAT!", en: "WRONG INGREDIENT!" },
-  "bar.nextOrder": { tr: "Sıradaki sipariş hazırlanıyor...", de: "Die nächste Bestellung kommt...", en: "Next order coming up..." },
-  // Malzemeler — kafe konumlandırması gereği alkolsüz (bkz. commit c688924,
-  // "remove alcohol references"; bar modu o temizlikte atlanmıştı).
-  "bar.ing.strawberry": { tr: "ÇİLEK ŞURUBU", de: "ERDBEERSIRUP", en: "STRAWBERRY SYRUP" },
-  "bar.ing.blue": { tr: "MAVİ LİMONATA", de: "BLAUE LIMONADE", en: "BLUE LEMONADE" },
-  "bar.ing.lime": { tr: "LİME & NANE", de: "LIMETTE & MINZE", en: "LIME & MINT" },
-  "bar.ing.orange": { tr: "PORTAKAL SUYU", de: "ORANGENSAFT", en: "ORANGE JUICE" },
-  "bar.ing.violet": { tr: "MENEKŞE ŞURUBU", de: "VEILCHENSIRUP", en: "VIOLET SYRUP" },
-  "bar.ing.strawberryShort": { tr: "ÇİLEK", de: "ERDBEERE", en: "STRAWBERRY" },
-  "bar.ing.blueShort": { tr: "LİMONATA", de: "LIMONADE", en: "LEMONADE" },
-  "bar.ing.violetShort": { tr: "MENEKŞE", de: "VEILCHEN", en: "VIOLET" },
-  "bar.completed": { tr: "TAMAMLANDI", de: "FERTIG", en: "COMPLETED" },
-  "bar.layer": { tr: "KATMAN", de: "SCHICHT", en: "LAYER" },
-  "bar.servedToast": { tr: "SERVİS EDİLDİ! +1", de: "SERVIERT! +1", en: "SERVED! +1" },
-  "bar.wrongDrink": { tr: "YANLIŞ İÇECEK!", de: "FALSCHES GETRÄNK!", en: "WRONG DRINK!" },
-  "colors.yourTapCount": { tr: "SENİN TIK SAYIN", de: "DEINE TIPPS", en: "YOUR TAPS" },
-  "overload.youAreSafe": { tr: "GÜVENDESİN", de: "DU BIST SICHER", en: "YOU'RE SAFE" },
-  "bar.ing.limeShort": { tr: "LİME", de: "LIMETTE", en: "LIME" },
-  "bar.ing.orangeShort": { tr: "PORTAKAL", de: "ORANGE", en: "ORANGE" },
-
-  // ── Neon Savaşları (Colors) ──
-  "colors.teamAssigned": { tr: "TAKIMIN BELİRLENDİ", de: "DEIN TEAM WURDE ZUGETEILT", en: "YOUR TEAM IS ASSIGNED" },
-  "colors.tapFast": { tr: "Tüm parmaklarınla olabildiğince hızlı tıkla!", de: "Tippe mit allen Fingern so schnell du kannst!", en: "Tap as fast as you can with every finger!" },
-  "colors.hostHint": { tr: "TAKIMIN İÇİN EN HIZLI SEN TIKLA!", de: "TIPP AM SCHNELLSTEN FÜR DEIN TEAM!", en: "TAP FASTEST FOR YOUR TEAM!" },
-  "colors.battleOver": { tr: "SAVAŞ TAMAMLANDI!", de: "DER KAMPF IST VORBEI!", en: "THE BATTLE IS OVER!" },
-  "colors.yourTaps": { tr: "SENİN TIK SAYIN", de: "DEINE TIPPS", en: "YOUR TAPS" },
-  "colors.resultsOnTV": { tr: "Sonuçlar TV Ekranında!", de: "Die Ergebnisse sind auf dem TV!", en: "Results are on the TV!" },
-  "colors.championTeam": { tr: "Tebrikler Şampiyon Takım! (+150 Puan)", de: "Glückwunsch, Siegerteam! (+150 Punkte)", en: "Congratulations, champion team! (+150 points)" },
-
-  // ── Kablo ──
-  "kablo.gridConnected": { tr: "ENERJİ ŞEBEKESİ BAĞLANDI!", de: "STROMNETZ VERBUNDEN!", en: "POWER GRID CONNECTED!" },
-  "kablo.leadTechnician": { tr: "BAŞ TEKNİSYEN:", de: "CHEFTECHNIKER:", en: "LEAD TECHNICIAN:" },
-  "kablo.connecting": { tr: "DEVRE BAĞLANTILARI TAMAMLANIYOR", de: "SCHALTKREISE WERDEN VERBUNDEN", en: "CONNECTING THE CIRCUITS" },
-
-  // ── Ortak ──
-  "common.loadingDots": { tr: "Yükleniyor...", de: "Wird geladen...", en: "Loading..." },
   "common.followMainScreen": { tr: "Ana Ekranı Takip Et", de: "Achte auf den Hauptbildschirm", en: "Watch the main screen" },
-  "common.backToLobby": { tr: "Lobiye Dön", de: "Zurück zur Lobby", en: "Back to lobby" },
 
   // ═══════════════════════════════════════════
   // AUTH — sayfa başlıkları
   // ═══════════════════════════════════════════
   "auth.loginHeading": { tr: "SİSTEME GİRİŞ", de: "SYSTEM-ANMELDUNG", en: "SYSTEM LOGIN" },
-  "auth.registerHeading": { tr: "YENİ KAYIT", de: "NEUE REGISTRIERUNG", en: "NEW REGISTRATION" },
 
   // ═══════════════════════════════════════════
   // PLAYER GAME — harf/tur geçiş ekranı
@@ -1502,22 +1041,6 @@ const translations = {
     de: "Ein bereits genanntes Wort zählt nicht! Wer die Bombe beim Ablauf der Zeit hält, verliert ein Leben.",
     en: "A word already used doesn't count! Whoever holds the bomb when time runs out loses a life.",
   },
-  "tutorial.host.sensor.1.title": {
-    tr: "GÖRSELİ/SESİ İLK BULAN KAZANIR",
-    de: "WER BILD/TON ZUERST ERRÄT, GEWINNT",
-    en: "FIRST TO NAME THE IMAGE/SOUND WINS",
-  },
-  "tutorial.host.sensor.1.desc": {
-    tr: "Ekranda beliren nesneyi, sesi veya logoyu ilk kim bilirse dev butona o bassın!",
-    de: "Wer das Objekt, den Ton oder das Logo auf dem Bildschirm zuerst erkennt, haut auf den Riesen-Buzzer!",
-    en: "Whoever recognizes the object, sound, or logo on screen first hits the giant buzzer!",
-  },
-  "tutorial.host.sensor.2.title": { tr: "HOST ONAYI ŞART", de: "HOST MUSS BESTÄTIGEN", en: "HOST APPROVAL REQUIRED" },
-  "tutorial.host.sensor.2.desc": {
-    tr: "Butona ilk basan oyuncunun cevabı doğruysa Host 'Doğru' der, yanlışsa oyun devam eder.",
-    de: "Ist die Antwort des Buzzer-Ersten richtig, bestätigt der Host mit 'Richtig'; sonst geht das Spiel weiter.",
-    en: "If the first buzzer's answer is right, the host marks it 'Correct'; otherwise play continues.",
-  },
 
   // ═══════════════════════════════════════════
   // TUTORIAL — PLAYER (telefon ekranı)
@@ -1572,18 +1095,6 @@ const translations = {
     de: "Tippe ein passendes, NOCH NICHT GENANNTES Wort und drück auf BOMBE WEITERGEBEN, um dich zu retten!",
     en: "Type a matching word that hasn't been used yet, then hit PASS THE BOMB to save yourself!",
   },
-  "tutorial.player.sensor.1.title": { tr: "REFLEKSLERİNİ TEST ET", de: "TESTE DEINE REFLEXE", en: "TEST YOUR REFLEXES" },
-  "tutorial.player.sensor.1.desc": {
-    tr: "Ekranda beliren görseli/sesi herkesten önce bulmalısın. Telefonundaki devasa DEV BUTON'a ilk basan cevap hakkı kazanır!",
-    de: "Erkenne Bild oder Ton vor allen anderen. Wer den RIESEN-BUZZER auf dem Handy zuerst drückt, darf antworten!",
-    en: "Recognize the image or sound before anyone else. First to hit the GIANT BUZZER on their phone gets to answer!",
-  },
-  "tutorial.player.sensor.2.title": { tr: "HIZLI OLAN KAZANIR", de: "WER SCHNELL IST, GEWINNT", en: "FAST WINS" },
-  "tutorial.player.sensor.2.desc": {
-    tr: "Butona bastıktan sonra kelimeyi TV ekranında veya Host'a söyle, puanı kap!",
-    de: "Nach dem Buzzern sagst du die Antwort laut in Richtung TV bzw. dem Host — und kassierst die Punkte!",
-    en: "After buzzing, say the answer out loud to the TV or the host, and grab the points!",
-  },
 
   // ═══════════════════════════════════════════
   // BOMB PARTY
@@ -1615,7 +1126,6 @@ const translations = {
   },
   "bomb.gameOver": { tr: "OYUN BİTTİ", de: "SPIEL VORBEI", en: "GAME OVER" },
   "bomb.resultsOnScreen": { tr: "Sonuçlar ekranda!", de: "Ergebnisse auf dem Bildschirm!", en: "Results are on screen!" },
-  "sensor.resultsOnScreen": { tr: "Sonuçlar ekranda!", de: "Ergebnisse auf dem Bildschirm!", en: "Results are on screen!" },
   "bomb.categoryLabel": {
     tr: (letter: string) => `Kategori: ${letter}`,
     de: (letter: string) => `Kategorie: ${letter}`,
@@ -1630,7 +1140,6 @@ const translations = {
   },
   "bomb.atAnotherTable": { tr: "Bomba başka masada!", de: "Die Bombe ist an einem anderen Tisch!", en: "The bomb is at another table!" },
   "bomb.lastWord": { tr: "SON SÖYLENEN KELİME", de: "ZULETZT GESAGTES WORT", en: "LAST WORD SAID" },
-  "sensor.title": { tr: "SENSÖR", de: "SENSOR", en: "SENSOR" },
   "bomb.throwing": { tr: "ATIYOR...", de: "WIRD GEWORFEN...", en: "THROWING..." },
   "bomb.throwBomb": { tr: "BOMBAYI AT!", de: "BOMBE WERFEN!", en: "THROW THE BOMB!" },
   "bomb.elsewhereLabel": { tr: "BOMBA", de: "BOMBE", en: "BOMB" },
@@ -1818,11 +1327,9 @@ const translations = {
   "quiz.waitingForTimer": { tr: "Soru TV ekranında gösteriliyor, süre başlamak üzere...", de: "Frage wird auf dem TV gezeigt, Timer startet gleich...", en: "Question is shown on TV, timer starting soon..." },
 
   "host.champion": { tr: "ŞAMPİYON", de: "CHAMPION", en: "CHAMPION" },
-  "host.totalVotes": { tr: "Kullanılan Oy", de: "Stimmen", en: "Votes Cast" },
   "host.winnerPrize": { tr: "KAZANAN ÖDÜL", de: "GEWINN", en: "WINNER PRIZE" },
   "host.redTeam": { tr: "Kırmızı Takım", de: "Team Rot", en: "Red Team" },
   "host.blueTeam": { tr: "Mavi Takım", de: "Team Blau", en: "Blue Team" },
-  "host.participation": { tr: "Katılım", de: "Teilnahme", en: "Participation" },
   "gameCategory.knowledge": { tr: "Bilgi", de: "Wissen", en: "Knowledge" },
   "gameCategory.reflex": { tr: "Refleks", de: "Reflex", en: "Reflex" },
   "gameCategory.team": { tr: "Takım", de: "Team", en: "Team" },
@@ -1845,7 +1352,6 @@ const translations = {
     de: "Scanne den QR-Code mit deiner Handykamera oder gib den Raum-Code ein.",
     en: "Scan the QR code with your phone camera or enter the room code.",
   },
-  "dashboard.kioskStart": { tr: "Kiosk modunu başlat", de: "Kiosk-Modus starten", en: "Start kiosk mode" },
   "dashboard.rewardsNeedStaff": {
     tr: "Ödüller kapalı: bu TV mekan hesabıyla giriş yapmadı",
     de: "Prämien aus: Dieser TV ist nicht mit dem Betriebskonto angemeldet",
@@ -1860,93 +1366,6 @@ const translations = {
   "host.luck": { tr: "ŞANS", de: "GLÜCK", en: "LUCK" },
   "host.red": { tr: "KIRMIZI", de: "ROT", en: "RED" },
   "host.blue": { tr: "MAVİ", de: "BLAU", en: "BLUE" },
-
-  // ═══════════════════════════════════════════
-  // SENSOR (HostSensorDisplay + PlayerSensorController)
-  // ═══════════════════════════════════════════
-  "sensor.roundLabel": {
-    tr: (n: number) => `Tur ${n}`,
-    de: (n: number) => `Runde ${n}`,
-    en: (n: number) => `Round ${n}`,
-  },
-  "sensor.categoryLabel": { tr: "Kategori:", de: "Kategorie:", en: "Category:" },
-  "sensor.openImage": { tr: "Görseli Aç", de: "Bild öffnen", en: "Reveal Image" },
-  "sensor.buzzerActive": { tr: "Buzzer Aktif", de: "Buzzer aktiv", en: "Buzzer Active" },
-  "sensor.stop": { tr: "STOP!", de: "STOPP!", en: "STOP!" },
-  "sensor.pressedBuzzer": {
-    tr: (name: string) => `${name} butona bastı!`,
-    de: (name: string) => `${name} hat gebuzzert!`,
-    en: (name: string) => `${name} hit the buzzer!`,
-  },
-  "sensor.answerLabel": { tr: "Cevabı:", de: "Antwort:", en: "Answer:" },
-  "sensor.waitingAnswer": { tr: "Cevap Bekleniyor...", de: "Warte auf Antwort...", en: "Waiting for answer..." },
-  "sensor.releaseBuzzer": {
-    tr: "Yanıt yok — buzzer'ı serbest bırak",
-    de: "Keine Antwort — Buzzer freigeben",
-    en: "No response — release buzzer",
-  },
-  "sensor.correct": { tr: "DOĞRU", de: "RICHTIG", en: "CORRECT" },
-  "sensor.wrong": { tr: "YANLIŞ", de: "FALSCH", en: "WRONG" },
-  "sensor.wonPoints": {
-    tr: (name: string) => `${name} bildi ve +100 puan kazandı!`,
-    de: (name: string) => `${name} hat's erraten und +100 Punkte kassiert!`,
-    en: (name: string) => `${name} got it and won +100 points!`,
-  },
-  "sensor.nextRound": { tr: "Sıradaki Tur", de: "Nächste Runde", en: "Next Round" },
-  "sensor.gameOver": { tr: "Oyun Bitti!", de: "Spiel vorbei!", en: "Game Over!" },
-  "sensor.seeResults": { tr: "Sonuçları Gör", de: "Ergebnisse ansehen", en: "See Results" },
-  "sensor.getReady": { tr: "HAZIR OL", de: "MACH DICH BEREIT", en: "GET READY" },
-  "sensor.beFirst": {
-    tr: "Görsel açıldığında butona ilk basan sen ol!",
-    de: "Sei der Erste, der den Buzzer drückt, wenn das Bild erscheint!",
-    en: "Be the first to hit the button when the image appears!",
-  },
-  "sensor.buzz": { tr: "BUZZ!", de: "BUZZ!", en: "BUZZ!" },
-  "sensor.pressIfYouKnow": {
-    tr: "Cevabı biliyorsan bas!",
-    de: "Drück, wenn du die Antwort weißt!",
-    en: "Press it if you know the answer!",
-  },
-  "sensor.yourTurn": { tr: "Sende!", de: "Du bist dran!", en: "It's you!" },
-  "sensor.writeAndSend": {
-    tr: "Hemen cevabını yaz ve gönder.",
-    de: "Schreib jetzt deine Antwort und schick sie ab.",
-    en: "Type your answer now and send it.",
-  },
-  "sensor.answerPlaceholder": { tr: "Cevabın nedir?", de: "Was ist deine Antwort?", en: "What's your answer?" },
-  "sensor.send": { tr: "Gönder", de: "Senden", en: "Send" },
-  "sensor.locked": { tr: "KİLİTLİ", de: "GESPERRT", en: "LOCKED" },
-  "sensor.someoneElseBuzzed": {
-    tr: "Başka bir oyuncu butona bastı. Cevap vermesi bekleniyor...",
-    de: "Ein anderer Spieler hat gebuzzert. Warte auf seine Antwort...",
-    en: "Another player hit the buzzer. Waiting for their answer...",
-  },
-  "sensor.congrats": { tr: "TEBRİKLER!", de: "GLÜCKWUNSCH!", en: "CONGRATS!" },
-  "sensor.correctWonPoints": {
-    tr: "Doğru bildin ve +100 puan kazandın!",
-    de: "Richtig geraten, +100 Punkte für dich!",
-    en: "You got it right and won +100 points!",
-  },
-  "sensor.imageRevealed": { tr: "Görsel Açıldı", de: "Bild aufgedeckt", en: "Image Revealed" },
-  "sensor.getReadyNextRound": {
-    tr: "Doğru cevap ekranda. Sıradaki tura hazırlan!",
-    de: "Die richtige Antwort steht auf dem Bildschirm. Mach dich für die nächste Runde bereit!",
-    en: "The correct answer is on screen. Get ready for the next round!",
-  },
-  "sensor.toastError": { tr: "Bir hata oluştu!", de: "Ein Fehler ist aufgetreten!", en: "An error occurred!" },
-  "sensor.tvBadge": { tr: "👁️ HENGAME SENSÖR 👁️", de: "👁️ HENGAME SENSOR 👁️", en: "👁️ HENGAME SENSOR 👁️" },
-  "sensor.tvPrompt": { tr: "BU GÖRSELİ İLK KİM BİLECEK?", de: "WER ERRÄT DAS BILD ZUERST?", en: "WHO GUESSES THIS PICTURE FIRST?" },
-  "sensor.someone": { tr: "BİRİ", de: "JEMAND", en: "SOMEONE" },
-  "sensor.buzzedSuffix": { tr: "BASTI!", de: "HAT GEDRÜCKT!", en: "BUZZED!" },
-  "sensor.playerGuess": { tr: "OYUNCUNUN TAHMİNİ:", de: "TIPP DES SPIELERS:", en: "PLAYER'S GUESS:" },
-  "sensor.toastSubmitFailed": {
-    tr: "Cevap gönderilemedi!",
-    de: "Antwort konnte nicht gesendet werden!",
-    en: "Couldn't send the answer!",
-  },
-  "sensor.scanActive": { tr: "OPTİK RECON AKTİF", de: "OPTISCHER RECON AKTIV", en: "OPTICAL RECON ACTIVE" },
-  "sensor.analyzing": { tr: "ÇÖZÜMLENİYOR", de: "WIRD ENTSCHLÜSSELT", en: "DECRYPTING" },
-  "sensor.solved": { tr: "GÖRSEL ÇÖZÜLDÜ!", de: "BILD ENTSCHLÜSSELT!", en: "IMAGE RESOLVED!" },
 
   // ═══════════════════════════════════════════
   // PLAYER REVIEW (cevap gönderim/inceleme bekleme ekranı)
@@ -2027,40 +1446,6 @@ const translations = {
   },
 
   // ═══════════════════════════════════════════
-  // NEON ŞİFRE & NEON BİRLİK (Vault & Unity)
-  // ═══════════════════════════════════════════
-  "host.unityIntroTitle": { tr: "NEON BİRLİK", de: "NEON EINHEIT", en: "NEON UNITY" },
-  "host.unityIntroDesc": { tr: "MEKANIN TÜM ENERJİSİNİ KULLANARAK BATARYAYI PATLATIN!", de: "NUTZE DIE GESAMTE ENERGIE DES RAUMES, UM DIE BATTERIE ZU SPRENGEN!", en: "USE ALL THE ENERGY OF THE VENUE TO OVERCHARGE THE BATTERY!" },
-  "host.vaultIntroTitle": { tr: "NEON ŞİFRE", de: "NEON CODE", en: "NEON VAULT" },
-  "host.vaultIntroDesc": { tr: "KASAYI İLK AÇAN KAZANIR", de: "DER ERSTE, DER DEN TRESOR ÖFFNET, GEWINNT", en: "THE FIRST TO OPEN THE VAULT WINS" },
-  "host.barIntroTitle": { tr: "NEON BAR", de: "NEON BAR", en: "NEON BAR" },
-  "host.barIntroDesc": { tr: "EN HIZLI KOKTEYLİ KİM YAPACAK?", de: "WER MACHT DEN SCHNELLSTEN COCKTAIL?", en: "WHO WILL MAKE THE FASTEST COCKTAIL?" },
-  "host.kabloIntroTitle": { tr: "NEON KABLO", de: "NEON KABEL", en: "NEON WIRE" },
-  "host.kabloIntroDesc": { tr: "SİSTEMİ YENİDEN BAŞLATMAK İÇİN KABLOLARI BAĞLA", de: "VERBINDE DIE KABEL, UM DAS SYSTEM NEU ZU STARTEN", en: "CONNECT THE WIRES TO REBOOT THE SYSTEM" },
-  "player.unityTitle": { tr: "NEON BİRLİK", de: "NEON EINHEIT", en: "NEON UNITY" },
-  "player.vaultTitle": { tr: "ŞİFREYİ ÇÖZ", de: "KNACKE DEN CODE", en: "CRACK THE VAULT" },
-  "player.vaultSubmit": { tr: "ONAYLA", de: "BESTÄTIGEN", en: "SUBMIT" },
-  "player.barTitle": { tr: "KOKTEYLİ HAZIRLA", de: "COCKTAIL ZUBEREITEN", en: "MIX THE DRINK" },
-  "player.kabloTitle": { tr: "DEVREYİ TAMAMLA", de: "SCHALTKREIS SCHLIESSEN", en: "COMPLETE THE CIRCUIT" },
-  
-  // KABLO
-  "kablo.connectCircuit": { tr: "DEVREYİ BAĞLA", de: "SCHALTKREIS VERBINDEN", en: "CONNECT CIRCUIT" },
-  "kablo.powerTransferred": { tr: "GÜÇ AKTARILDI", de: "ENERGIE ÜBERTRAGEN", en: "POWER TRANSFERRED" },
-  "kablo.totalSolved": { tr: "Toplam Çözülen:", de: "Gesamt gelöst:", en: "Total Solved:" },
-  "kablo.lookAtTV": { tr: "TV'ye bak!", de: "Schau auf den TV!", en: "Look at the TV!" },
-  
-  // COLORS
-  "colors.title": { tr: "NEON SAVAŞLARI", de: "NEON KRIEGE", en: "NEON WARS" },
-  "colors.red": { tr: "KIRMIZI", de: "ROT", en: "RED" },
-  "colors.blue": { tr: "MAVİ", de: "BLAU", en: "BLUE" },
-  "colors.startGame": { tr: "SAVAŞI BAŞLAT", de: "KRIEG STARTEN", en: "START WAR" },
-  "colors.endGame": { tr: "OYUNU BİTİR VE LOBİYE DÖN", de: "SPIEL BEENDEN & ZUR LOBBY", en: "END GAME & RETURN TO LOBBY" },
-  
-  // Takım adları (Colors ve takım modları ortak)
-  "team.red": { tr: "KIRMIZI TAKIM", de: "TEAM ROT", en: "RED TEAM" },
-  "team.blue": { tr: "MAVİ TAKIM", de: "TEAM BLAU", en: "BLUE TEAM" },
-
-  // ═══════════════════════════════════════════
   // GAME SETTINGS MODAL (HIGH READABILITY & CLARITY)
   // ═══════════════════════════════════════════
   "gameSettings.presets": { tr: "📁 HIZLI KATEGORİ ŞABLONLARI", de: "📁 KATEGORIE-VORLAGEN", en: "📁 CATEGORY PRESETS" },
@@ -2073,18 +1458,6 @@ const translations = {
   "gameSettings.quizQuestionsCount": { tr: "❓ SORU SAYISI", de: "❓ ANZAHL DER FRAGEN", en: "❓ NUMBER OF QUESTIONS" },
   "gameSettings.quizQuestionsSuffix": { tr: "Soru", de: "Fragen", en: "Questions" },
   "gameSettings.quizTimePerQuestion": { tr: "⏱️ CEVAP SÜRESİ", de: "⏱️ ANTWORTZEIT PRO FRAGE", en: "⏱️ TIME PER QUESTION" },
-  "gameSettings.quizDoubleFinalTitle": { tr: "🔥 2X FİNAL ÇİFTE PUAN ÇARPANI", de: "🔥 2X FINAL-PUNKTE-DOPPLER", en: "🔥 2X FINAL DOUBLE POINTS" },
-  "gameSettings.quizDoubleFinalDesc": { tr: "Son soruya 2 kat puan vererek masalar arasındaki heyecanı zirveye taşır.", de: "Verdoppelt die Punkte der letzten Frage für maximale Spannung.", en: "Doubles points for the final question for maximum tension." },
-  "gameSettings.bombFuseTime": { tr: "💣 BOMBA FİTİL SÜRESİ (TEMPO)", de: "💣 BOMBEN-TIMER (TEMPO)", en: "💣 BOMB FUSE TIMER" },
-  "gameSettings.bombLives": { tr: "❤️ BAŞLANGIÇ CANI", de: "❤️ START-LEBEN", en: "❤️ STARTING LIVES" },
-  "gameSettings.livesSuffix": { tr: "Can", de: "Leben", en: "Lives" },
-  "gameSettings.sensorUnblur": { tr: "👁️ GÖRSEL NETLEŞME (UNBLUR) SÜRESİ", de: "👁️ BILD-AUFLÖSUNGSZEIT (UNBLUR)", en: "👁️ IMAGE UNBLUR DURATION" },
-  "gameSettings.sensorImagesCount": { tr: "🖼️ GÖRSEL SAYISI", de: "🖼️ ANZAHL DER BILDER", en: "🖼️ NUMBER OF IMAGES" },
-  "gameSettings.imagesSuffix": { tr: "Görsel", de: "Bilder", en: "Images" },
-  "gameSettings.sensorReward": { tr: "🏆 DOĞRU CEVAP PUANI", de: "🏆 PUNKTE BEI RICHTIGER ANTWORT", en: "🏆 POINTS FOR CORRECT ANSWER" },
-  "gameSettings.gameMode": { tr: "👥 OYUN REKABET ŞEKLİ", de: "👥 WETTKAMPF-MODUS", en: "👥 COMPETITION MODE" },
-  "gameSettings.individual": { tr: "👤 BİREYSEL REKABET", de: "👤 EINZELSPIELER", en: "👤 INDIVIDUAL SOLO" },
-  "gameSettings.team": { tr: "🔥 TAKIM & MASA MODU", de: "🔥 TEAM- & TISCH-MODUS", en: "🔥 TEAM & TABLE MODE" },
   "gameSettings.startSession": { tr: "OYUNU BAŞLAT", de: "SPIEL STARTEN", en: "START GAME" },
   "gameSettings.cancel": { tr: "İPTAL", de: "ABBRECHEN", en: "CANCEL" },
 
