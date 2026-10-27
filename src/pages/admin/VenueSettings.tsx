@@ -7,7 +7,7 @@ import { auth, db } from "../../lib/firebase";
 import { useIsStaff } from "../../hooks/useIsStaff";
 import { StaffAccessNotice } from "../../components/StaffAccessNotice";
 import { useVenue } from "../../contexts/VenueContextCore";
-import { DEFAULT_VENUE_CONFIG, type Reward, type SponsorAd, type WheelSlice } from "../../types/database";
+import { DEFAULT_VENUE_CONFIG, type Reward, type SponsorAd } from "../../types/database";
 import { errorMessage } from "../../lib/errors";
 
 const REWARD_TYPE_OPTIONS: { value: Reward["type"]; label: string }[] = [
@@ -47,11 +47,6 @@ export function VenueSettings() {
   const [newAdDuration, setNewAdDuration] = useState(10);
   const [newAdType, setNewAdType] = useState<"image" | "video">("image");
 
-  const [wheelSlices, setWheelSlices] = useState<WheelSlice[]>([]);
-  const [newSliceText, setNewSliceText] = useState("");
-  const [newSliceColor, setNewSliceColor] = useState("#ffffff");
-  const [newSliceWeight, setNewSliceWeight] = useState(1);
-  
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -73,7 +68,6 @@ export function VenueSettings() {
     setRewardValidityDays(venue.reward_validity_days ?? DEFAULT_VENUE_CONFIG.reward_validity_days!);
     setPromoImages(venue.promo_images || []);
     setSponsorAds(venue.sponsor_ads || []);
-    setWheelSlices(venue.wheel_slices || DEFAULT_VENUE_CONFIG.wheel_slices || []);
   }
 
   const addPromoImage = () => {
@@ -104,22 +98,6 @@ export function VenueSettings() {
     setSponsorAds(prev => prev.filter(ad => ad.id !== id));
   };
 
-  const addWheelSlice = () => {
-    if (!newSliceText.trim()) return;
-    setWheelSlices(prev => [...prev, {
-      id: crypto.randomUUID(),
-      text: newSliceText.trim(),
-      color: newSliceColor,
-      weight: newSliceWeight
-    }]);
-    setNewSliceText("");
-    setNewSliceWeight(1);
-  };
-
-  const removeWheelSlice = (id: string) => {
-    setWheelSlices(prev => prev.filter(s => s.id !== id));
-  };
-
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,7 +116,6 @@ export function VenueSettings() {
         reward_validity_days: Math.max(1, Math.round(rewardValidityDays) || 30),
         promo_images: promoImages,
         sponsor_ads: sponsorAds,
-        wheel_slices: wheelSlices,
         updated_at: Date.now(),
       });
       setSavedAt(Date.now());
@@ -237,7 +214,7 @@ export function VenueSettings() {
               />
             </div>
             <p className="text-white/30 text-[11px]">
-              Uygulama genelindeki turuncu vurgu rengini değiştirir (bomba/quiz/sensör kendi neon renklerini korur).
+              Uygulama genelindeki turuncu vurgu rengini değiştirir (bomba/quiz kendi neon renklerini korur).
             </p>
           </div>
 
@@ -372,75 +349,6 @@ export function VenueSettings() {
                     <button
                       type="button"
                       onClick={() => removeSponsorAd(ad.id)}
-                      className="text-white/40 hover:text-[#ff003c] transition-colors shrink-0 text-lg leading-none px-2"
-                    >
-                      ×
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          {/* Wheel Slices Panel */}
-          <div className="space-y-4 bg-white/5 border border-white/10 rounded-2xl px-6 py-6">
-            <div>
-              <div className="text-sm font-bold uppercase tracking-widest text-alaz-orange">Çarkıfelek Ayarları</div>
-              <p className="text-white/40 text-[11px] mt-1">
-                Çarkıfelek mini-oyununda yer alacak dilimleri ve olasılıklarını (Ağırlık) belirleyin.
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-4 gap-3 items-center">
-              <input
-                type="text"
-                value={newSliceText}
-                onChange={(e) => setNewSliceText(e.target.value)}
-                placeholder="Ödül (Örn: %10 İndirim)"
-                className="col-span-2 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-alaz-orange text-sm"
-              />
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={newSliceColor}
-                  onChange={(e) => setNewSliceColor(e.target.value)}
-                  className="w-8 h-8 rounded-lg cursor-pointer"
-                  title="Dilim Rengi"
-                />
-                <input
-                  type="number"
-                  min={1}
-                  value={newSliceWeight}
-                  onChange={(e) => setNewSliceWeight(Number(e.target.value))}
-                  placeholder="Ağırlık"
-                  title="Olasılık Ağırlığı (Yüksek olan daha çok çıkar)"
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-2 py-3 text-white focus:outline-none focus:border-alaz-orange text-sm text-center"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={addWheelSlice}
-                className="px-2 py-3 bg-white/10 hover:bg-alaz-orange hover:text-black text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-colors"
-              >
-                Dilim Ekle
-              </button>
-            </div>
-
-            {wheelSlices.length > 0 && (
-              <ul className="space-y-2 mt-4 grid grid-cols-2 gap-2">
-                {wheelSlices.map((slice) => (
-                  <li
-                    key={slice.id}
-                    className="flex items-center gap-3 bg-black/40 border border-white/10 rounded-xl px-3 py-2"
-                  >
-                    <div className="w-4 h-4 rounded-full shrink-0" style={{ backgroundColor: slice.color }} />
-                    <div className="flex-1 overflow-hidden">
-                      <div className="text-white text-xs font-bold truncate">{slice.text}</div>
-                      <div className="text-white/40 text-[10px] truncate">Ağırlık: {slice.weight}</div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeWheelSlice(slice.id)}
                       className="text-white/40 hover:text-[#ff003c] transition-colors shrink-0 text-lg leading-none px-2"
                     >
                       ×

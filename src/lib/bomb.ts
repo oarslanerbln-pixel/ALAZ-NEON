@@ -1,4 +1,5 @@
 import type { Player } from "../types/database";
+import type { Locale } from "./i18n";
 
 /** Can alanı hiç yazılmamış oyuncu tam canlı sayılır. */
 export function bombLives(p: Pick<Player, "lives">): number {
@@ -21,21 +22,35 @@ export function pickBombHolder(
 }
 
 /**
+ * Odada kategori yokken bombanın kullandığı hazır liste: geniş, kafede
+ * herkesin birkaç kelime bulabileceği konular. Kategori odaya metin olarak
+ * yazılıyor, bu yüzden odanın dilinde (`room.locale`).
+ */
+export const BOMB_DEFAULT_CATEGORIES: Record<Locale, readonly string[]> = {
+  de: ["Tiere", "Städte", "Länder", "Berufe", "Essen & Trinken", "Marken", "Sportarten", "Filme & Serien", "Obst & Gemüse", "Musiker & Bands"],
+  tr: ["Hayvanlar", "Şehirler", "Ülkeler", "Meslekler", "Yiyecek & İçecek", "Markalar", "Spor Dalları", "Filmler & Diziler", "Meyve & Sebze", "Şarkıcılar & Gruplar"],
+  en: ["Animals", "Cities", "Countries", "Jobs", "Food & Drinks", "Brands", "Sports", "Films & TV Shows", "Fruit & Vegetables", "Singers & Bands"],
+};
+
+/**
  * Bombanın sıradaki kategorisi ve güncel "kullanılmış" listesi.
  *
  * Gece lobisinden doğrudan açılan bombada odanın kategori listesi boş
  * (`categories: []`). Eskiden ikinci tur `availableCategories[NaN]` ile
  * `active_letter: undefined` yazmaya çalışıyor, Firestore bunu reddediyor ve
- * TV patlama ekranında kalıyordu. Liste boşsa "" (genel kategori) döner;
- * ekranlar boş değeri `bomb.generalCategory` ile mekân dilinde gösteriyor.
+ * TV patlama ekranında kalıyordu; sonra boş liste "" (genel kategori) oldu,
+ * ama "ALLGEMEIN" oyunu yönsüz bırakıyordu. Artık liste boşsa odanın
+ * dilindeki hazır listeden (BOMB_DEFAULT_CATEGORIES) seçiliyor; dil
+ * bilinmiyorsa Almanca (uygulamanın varsayılanı).
  */
 export function nextBombCategory(
   categories: readonly string[] | undefined,
   used: readonly string[] | undefined,
+  locale: Locale | undefined,
   random: () => number = Math.random,
 ): { category: string; used: string[] } {
-  const all = (categories ?? []).filter((c) => typeof c === "string" && c.trim() !== "");
-  if (all.length === 0) return { category: "", used: [""] };
+  const own = (categories ?? []).filter((c) => typeof c === "string" && c.trim() !== "");
+  const all = own.length > 0 ? own : [...BOMB_DEFAULT_CATEGORIES[locale ?? "de"]];
   const usedList = (used ?? []).filter((c) => all.includes(c));
   const fresh = all.filter((c) => !usedList.includes(c));
   const pool = fresh.length > 0 ? fresh : all;

@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { IntelligenceWidget } from "../../../components/IntelligenceWidget";
 import { TimerRing, type TimerTone } from "../../../components/TimerRing";
 import { useLocale } from "../../../hooks/useLocale";
 import { SoundManager, sounds } from "../../../lib/audio";
@@ -14,7 +13,6 @@ interface HostPlayingProps {
   categories: string[];
   submittedPlayerIds: string[];
   playersCount: number;
-  currentRound?: number;
 }
 
 function toneFor(timeLeft: number): TimerTone {
@@ -41,7 +39,6 @@ export function HostPlaying({
   categories,
   submittedPlayerIds,
   playersCount,
-  currentRound = 1,
 }: HostPlayingProps) {
   const { t } = useLocale();
   const tone = toneFor(timeLeft);
@@ -111,15 +108,6 @@ export function HostPlaying({
           />
         )}
       </AnimatePresence>
-
-      {/* Üst Yapay Zeka & Durum Çubuğu */}
-      <IntelligenceWidget
-        currentLetter={currentLetter}
-        categories={categories}
-        playerCount={playersCount}
-        timeLeft={timeLeft}
-        currentRound={currentRound}
-      />
 
       {/* ═══════════════════════════════════════════════════════════════
           ANA ÇEKİRDEK: 3D HOLOGRAFİK MONOLİT + FÜZYON REAKTÖRÜ

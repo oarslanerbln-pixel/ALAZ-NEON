@@ -12,7 +12,8 @@ service cloud.firestore {
      *
      * Onceden bu yetki "e-posta/sifre ile giris yapmis olmak"
      * (sign_in_provider == 'password') demekti. Ama /register herkese acik
-     * bir oyuncu kayit ekrani ve orada da e-posta/sifre hesabi aciliyor:
+     * bir oyuncu kayit ekraniydi ve orada da e-posta/sifre hesabi aciliyordu
+     * (sayfa kalkti, ama Auth API'si herkese acik — hesap yine acilabilir):
      * yani HERHANGI bir ziyaretci kayit olup mekan markasini degistirebilir,
      * butun odul kuponlarini okuyabilir ve istedigini "kullanildi"
      * isaretleyebilirdi. Giris YONTEMI bir rol degil.
@@ -252,7 +253,8 @@ service cloud.firestore {
       // bakıyor), ama yalnızca personel listesindeki hesap değiştirebilir.
       //
       // Bu kural bir kez zaten "yalnızca e-posta/şifre ile giriş yapmış
-      // hesap" diye yazılmıştı; /register herkese açık olduğu için o,
+      // hesap" diye yazılmıştı; /register herkese açık olduğu (ve Auth API'si
+      // hâlâ öyle olduğu) için o,
       // pratikte "kayıt olan herkes" demekti. Yetkinin giriş yöntemine
       // değil açık bir listeye bağlanması tam olarak bu yüzden (isStaff).
       allow read: if true;

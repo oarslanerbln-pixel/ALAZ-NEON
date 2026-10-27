@@ -10,6 +10,8 @@ const translations = {
   // LANDING PAGE
   // ═══════════════════════════════════════════
   "common.back": { tr: "ANA SAYFA", de: "STARTSEITE", en: "HOME" },
+  // Dashboard'daki çıkış düğmesi odayı kapatıyor: "ana sayfa" demek yanıltıyordu.
+  "common.endNight": { tr: "GECEYİ BİTİR", de: "NACHT BEENDEN", en: "END NIGHT" },
   "common.returnToLobby": { tr: "LOBİYE DÖN", de: "ZUR LOBBY", en: "LOBBY" },
   "common.confirmReturnLobby": { tr: "Mevcut oyunu bitirip lobiye dönmek istiyor musunuz?", de: "Möchtest du das aktuelle Spiel beenden und zur Lobby zurückkehren?", en: "Do you want to end the game and return to lobby?" },
   "common.confirmExitHome": {
@@ -53,22 +55,12 @@ const translations = {
     de: "Tritt mit deinem Handy bei und zeig was du drauf hast!",
     en: "Jump in with your phone, show off your mind!",
   },
-  "landing.tagline": {
-    tr: "ZEKANIN YENİ STATÜ SEMBOLÜ",
-    de: "DAS NEUE STATUSSYMBOL DER INTELLIGENZ",
-    en: "THE NEW STATUS SYMBOL OF INTELLIGENCE",
-  },
   "landing.subtitle": {
     tr: "Ready for the ultimate mythical challenge?",
     de: "Bereit für die ultimative Herausforderung?",
     en: "Ready for the ultimate mythical challenge?",
   },
-  "attract.joinNow": { tr: "OYUNA KATIL", de: "JETZT BEITRETEN", en: "JOIN NOW" },
   "attract.scanToJoin": { tr: "QR KODU OKUT", de: "QR-CODE SCANNEN", en: "SCAN QR CODE" },
-  "attract.howToPlay": { tr: "NASIL OYNANIR?", de: "SPIELANLEITUNG", en: "HOW TO PLAY?" },
-  "attract.step1": { tr: "1. ODAYA GİR", de: "1. RAUM BEITRETEN", en: "1. JOIN ROOM" },
-  "attract.step2": { tr: "2. KELİME BUL", de: "2. WÖRTER FINDEN", en: "2. FIND WORDS" },
-  "attract.step3": { tr: "3. ATEŞLE!", de: "3. FEUER!", en: "3. FIRE!" },
 
   // ═══════════════════════════════════════════
   // HOST SETUP
@@ -79,7 +71,6 @@ const translations = {
     de: "Lege die Standardzeit und Rundenanzahl für alle Spiele fest.",
     en: "Set the default time and round count for all games.",
   },
-  "setup.gamesTitle": { tr: "OYUN KATALOĞU", de: "SPIELEKATALOG", en: "GAMES CATALOG" },
   "setup.premiumMode": { tr: "Premium Mode", de: "Premium Modus", en: "Premium Mode" },
   "setup.timerLabel": { tr: "Süre / Tempo", de: "Zeit / Tempo", en: "Time / Pace" },
   "setup.timerAriaLabel": {
@@ -147,13 +138,6 @@ const translations = {
   },
   "setup.starting": { tr: "BAŞLATILIYOR...", de: "WIRD GESTARTET...", en: "STARTING..." },
   "setup.startNight": { tr: "GECEYİ BAŞLAT →", de: "SITZUNG STARTEN →", en: "START NIGHT →" },
-  "setup.statusTitle": { tr: "Sistem Durumu", de: "Systemstatus", en: "System Status" },
-  "setup.statusWaiting": { tr: "BEKLEMEDE", de: "WARTEND", en: "STANDBY" },
-  "setup.statusDesc": {
-    tr: "Oyun henüz başlatılmadı. Lobi oluşturmak için ana paneli kullanın.",
-    de: "Das Spiel wurde noch nicht gestartet. Nutze das Hauptpanel um die Lobby zu erstellen.",
-    en: "The game hasn't started yet. Use the main panel to create the lobby.",
-  },
   "setup.scoringTitle": { tr: "Puanlama", de: "Punktevergabe", en: "Scoring" },
   "setup.scoreUnique": { tr: "Benzersiz cevap", de: "Einzigartige Antwort", en: "Unique answer" },
   "setup.scoreShared": { tr: "Paylaşılan cevap", de: "Geteilte Antwort", en: "Shared answer" },
@@ -161,12 +145,6 @@ const translations = {
     tr: "Erken teslim bonusu",
     de: "Frühzeitiger Abgabe-Bonus",
     en: "Early submit bonus",
-  },
-  "setup.historyTitle": { tr: "Son Oyunlar", de: "Letzte Spiele", en: "Recent Games" },
-  "setup.historyEmpty": {
-    tr: "Geçmiş bulunamadı",
-    de: "Kein Verlauf gefunden",
-    en: "No history found",
   },
   "setup.errorNoCategory": {
     tr: "Lütfen en az bir kategori girin.",
@@ -409,15 +387,8 @@ const translations = {
   // AUTH & LEADERBOARD
   // ═══════════════════════════════════════════
   "auth.login": { tr: "Giriş Yap", de: "Anmelden", en: "Log In" },
-  "auth.register": { tr: "Kayıt Ol", de: "Registrieren", en: "Register" },
   "auth.email": { tr: "E-posta", de: "E-Mail", en: "Email" },
   "auth.password": { tr: "Şifre", de: "Passwort", en: "Password" },
-  "auth.noAccount": { tr: "Hesabın yok mu?", de: "Noch kein Konto?", en: "Don't have an account?" },
-  "auth.haveAccount": {
-    tr: "Zaten hesabın var mı?",
-    de: "Hast du bereits ein Konto?",
-    en: "Already have an account?",
-  },
   "auth.welcomeBack": {
     tr: "Hoş Geldin, Savaşçı",
     de: "Willkommen zurück, Krieger",
@@ -429,18 +400,8 @@ const translations = {
     en: "Join the Legends League",
   },
   // ═══════════════════════════════════════════
-  // LEADERBOARD / CHAMPIONS (SERIOUS & PRESTIGIOUS)
+  // GİRİŞ SAYFASI DÖNÜŞÜ & PODYUM
   // ═══════════════════════════════════════════
-  "leaderboard.title": { tr: "HAFTALIK ŞAMPİYONLAR", de: "BESTENLISTE & CHAMPIONS", en: "WEEKLY CHAMPIONS" },
-  "leaderboard.subtitle": { tr: "EN YÜKSEK SKORLU OYUNCULARIN RESMİ SIRALAMASI", de: "OFFIZIELLE RANGLISTE DER TOP-SPIELER", en: "OFFICIAL RANKING OF TOP PLAYERS" },
-  "leaderboard.league": { tr: "HENGAME PREMİER LİG", de: "HENGAME PREMIER LIGA", en: "HENGAME PREMIER LEAGUE" },
-  "leaderboard.thisWeek": { tr: "BU HAFTA", de: "DIESE WOCHE", en: "THIS WEEK" },
-  "leaderboard.allTime": { tr: "TÜM ZAMANLAR", de: "EWIGE BESTENLISTE", en: "ALL-TIME" },
-  "leaderboard.rank": { tr: "SIRA", de: "RANG", en: "RANK" },
-  "leaderboard.player": { tr: "OYUNCU", de: "SPIELER", en: "PLAYER" },
-  "leaderboard.score": { tr: "TOPLAM XP", de: "GESAMT-XP", en: "TOTAL XP" },
-  "leaderboard.tier": { tr: "LİG DERECESİ", de: "LIGA-RANG", en: "TIER" },
-  "leaderboard.empty": { tr: "Bu dönem için henüz skor kaydı bulunmuyor.", de: "Noch keine Einträge für diesen Zeitraum vorhanden.", en: "No records found for this period." },
   "leaderboard.back": { tr: "ANA SAYFAYA DÖN", de: "ZUR STARTSEITE", en: "BACK TO HOME" },
   "podium.individual": { tr: "Bireysel", de: "Einzelspieler", en: "Solo" },
 
@@ -501,54 +462,6 @@ const translations = {
     tr: "Bu takma ad kullanılamaz. Lütfen başka bir ad seçin.",
     de: "Dieser Spitzname ist nicht zulässig. Bitte einen anderen wählen.",
     en: "This nickname isn't allowed. Please choose another one.",
-  },
-
-  // ═══════════════════════════════════════════
-  // PHONE AUTH — eskiden bu bileşenin metinleri hiç t() kullanmıyordu, sabit
-  // İngilizce'ydi (dil TR/DE seçili olsa bile değişmiyordu).
-  // ═══════════════════════════════════════════
-  "phoneAuth.title": { tr: "Telefon Doğrulama", de: "Telefonverifizierung", en: "Phone Verification" },
-  "phoneAuth.subtitleEnterPhone": {
-    tr: "Devam etmek için numaranı doğrula",
-    de: "Bestätige deine Nummer, um fortzufahren",
-    en: "Verify your number to continue",
-  },
-  "phoneAuth.subtitleAwaiting": {
-    tr: "Kod gönderildi, onay bekleniyor",
-    de: "Code gesendet, Bestätigung ausstehend",
-    en: "Code sent, awaiting confirmation",
-  },
-  "phoneAuth.phoneLabel": { tr: "Telefon Numarası", de: "Telefonnummer", en: "Phone Number" },
-  "phoneAuth.sendSms": { tr: "Kod Gönder", de: "Code senden", en: "Send Code" },
-  "phoneAuth.sending": { tr: "Gönderiliyor...", de: "Wird gesendet...", en: "Sending..." },
-  "phoneAuth.codeLabel": { tr: "6 Haneli Kod", de: "6-stelliger Code", en: "6-Digit Code" },
-  "phoneAuth.verify": { tr: "Doğrula", de: "Bestätigen", en: "Verify" },
-  "phoneAuth.verifying": { tr: "Doğrulanıyor...", de: "Wird bestätigt...", en: "Verifying..." },
-  "phoneAuth.reenterNumber": { tr: "Numarayı değiştir", de: "Nummer ändern", en: "Change number" },
-  "phoneAuth.cancel": { tr: "Vazgeç", de: "Abbrechen", en: "Cancel" },
-  // "+" bilerek çeviri dışında, JSX tarafında: değer `+90` gibi bir
-  // önektir, çeviren kişinin metin sonundaki artıyı korumasına
-  // bel bağlamak istemiyoruz.
-  "phoneAuth.countryPrefix": { tr: "Ülke kodu", de: "Ländervorwahl", en: "Country code" },
-  "phoneAuth.errRecaptcha": {
-    tr: "Doğrulama hazır değil, tekrar deneyin.",
-    de: "Verifizierung nicht bereit, bitte erneut versuchen.",
-    en: "Verification not ready, please try again.",
-  },
-  "phoneAuth.errSendFailed": {
-    tr: "SMS gönderilemedi. Numarayı kontrol edin.",
-    de: "SMS konnte nicht gesendet werden. Nummer überprüfen.",
-    en: "Couldn't send SMS. Please check the number.",
-  },
-  "phoneAuth.errInvalidCode": {
-    tr: "Kod hatalı, tekrar deneyin.",
-    de: "Falscher Code, bitte erneut versuchen.",
-    en: "Incorrect code, please try again.",
-  },
-  "phoneAuth.errRecaptchaExpired": {
-    tr: "Doğrulama süresi doldu, tekrar deneyin.",
-    de: "Verifizierung abgelaufen, bitte erneut versuchen.",
-    en: "Verification expired, please try again.",
   },
 
   // ═══════════════════════════════════════════
@@ -645,7 +558,6 @@ const translations = {
   // MISC CHROME (XP bar, emoji toolbar, hold button, player header)
   // ═══════════════════════════════════════════
   "xpBar.roundProgress": { tr: "TUR İLERLEMESİ", de: "RUNDENFORTSCHRITT", en: "ROUND PROGRESS" },
-  "emoji.sendReaction": { tr: "TEPKİ GÖNDER", de: "REAKTION SENDEN", en: "SEND REACTION" },
   "playerHeader.critical": { tr: "⚡ KRİTİK", de: "⚡ KRITISCH", en: "⚡ CRITICAL" },
   "playerHeader.active": { tr: "◉ AKTİF", de: "◉ AKTIV", en: "◉ ACTIVE" },
   "playerHeader.points": { tr: "PUAN", de: "PUNKTE", en: "POINTS" },
@@ -665,16 +577,6 @@ const translations = {
     de: "Antworten werden gesendet...",
     en: "Sending answers...",
   },
-
-  // ═══════════════════════════════════════════
-  // INTELLIGENCE WIDGET (AI stratejik analiz paneli)
-  // ═══════════════════════════════════════════
-  "intelligence.title": { tr: "STRATEJİK ANALİZ (AI)", de: "STRATEGISCHE ANALYSE (KI)", en: "STRATEGIC ANALYSIS (AI)" },
-  "intelligence.roundDifficulty": { tr: "Tur Zorluğu", de: "Rundenschwierigkeit", en: "Round Difficulty" },
-  "intelligence.expectedAvg": { tr: "Tahminî Ort.", de: "Erwart. Ø", en: "Expected Avg." },
-  "intelligence.pointsPerPlayer": { tr: "Puan / Oyuncu", de: "Punkte / Spieler", en: "Points / Player" },
-  "intelligence.marketStatus": { tr: "Piyasa Durumu", de: "Marktlage", en: "Market Status" },
-  "intelligence.operationalTip": { tr: "Operasyonel İpucu", de: "Praxistipp", en: "Operational Tip" },
 
   // ═══════════════════════════════════════════
   // SHAREABLE RECAP CARD (paylaşılabilir gece özeti)
@@ -891,11 +793,6 @@ const translations = {
     de: "Finde das Wort, bevor dir die Bombe in der Hand hochgeht!",
     en: "Find the word before the bomb goes off in your hand!",
   },
-  "landing.modeSensorDesc": {
-    tr: "Gizemli görseli ilk sen bil, devasa butonla yarış.",
-    de: "Errate das mysteriöse Bild als Erster, hau auf den riesigen Buzzer.",
-    en: "Be the first to guess the mystery image, race for the giant buzzer.",
-  },
 
   // ═══════════════════════════════════════════
   // HOST DASHBOARD — mod seçim kartları (Landing'den biraz daha uzun metin)
@@ -1021,7 +918,6 @@ const translations = {
   // AUTH — sayfa başlıkları
   // ═══════════════════════════════════════════
   "auth.loginHeading": { tr: "SİSTEME GİRİŞ", de: "SYSTEM-ANMELDUNG", en: "SYSTEM LOGIN" },
-  "auth.registerHeading": { tr: "YENİ KAYIT", de: "NEUE REGISTRIERUNG", en: "NEW REGISTRATION" },
 
   // ═══════════════════════════════════════════
   // PLAYER GAME — harf/tur geçiş ekranı
@@ -1456,7 +1352,6 @@ const translations = {
     de: "Scanne den QR-Code mit deiner Handykamera oder gib den Raum-Code ein.",
     en: "Scan the QR code with your phone camera or enter the room code.",
   },
-  "dashboard.kioskStart": { tr: "Kiosk modunu başlat", de: "Kiosk-Modus starten", en: "Start kiosk mode" },
   "dashboard.rewardsNeedStaff": {
     tr: "Ödüller kapalı: bu TV mekan hesabıyla giriş yapmadı",
     de: "Prämien aus: Dieser TV ist nicht mit dem Betriebskonto angemeldet",
@@ -1563,14 +1458,6 @@ const translations = {
   "gameSettings.quizQuestionsCount": { tr: "❓ SORU SAYISI", de: "❓ ANZAHL DER FRAGEN", en: "❓ NUMBER OF QUESTIONS" },
   "gameSettings.quizQuestionsSuffix": { tr: "Soru", de: "Fragen", en: "Questions" },
   "gameSettings.quizTimePerQuestion": { tr: "⏱️ CEVAP SÜRESİ", de: "⏱️ ANTWORTZEIT PRO FRAGE", en: "⏱️ TIME PER QUESTION" },
-  "gameSettings.quizDoubleFinalTitle": { tr: "🔥 2X FİNAL ÇİFTE PUAN ÇARPANI", de: "🔥 2X FINAL-PUNKTE-DOPPLER", en: "🔥 2X FINAL DOUBLE POINTS" },
-  "gameSettings.quizDoubleFinalDesc": { tr: "Son soruya 2 kat puan vererek masalar arasındaki heyecanı zirveye taşır.", de: "Verdoppelt die Punkte der letzten Frage für maximale Spannung.", en: "Doubles points for the final question for maximum tension." },
-  "gameSettings.bombFuseTime": { tr: "💣 BOMBA FİTİL SÜRESİ (TEMPO)", de: "💣 BOMBEN-TIMER (TEMPO)", en: "💣 BOMB FUSE TIMER" },
-  "gameSettings.bombLives": { tr: "❤️ BAŞLANGIÇ CANI", de: "❤️ START-LEBEN", en: "❤️ STARTING LIVES" },
-  "gameSettings.livesSuffix": { tr: "Can", de: "Leben", en: "Lives" },
-  "gameSettings.gameMode": { tr: "👥 OYUN REKABET ŞEKLİ", de: "👥 WETTKAMPF-MODUS", en: "👥 COMPETITION MODE" },
-  "gameSettings.individual": { tr: "👤 BİREYSEL REKABET", de: "👤 EINZELSPIELER", en: "👤 INDIVIDUAL SOLO" },
-  "gameSettings.team": { tr: "🔥 TAKIM & MASA MODU", de: "🔥 TEAM- & TISCH-MODUS", en: "🔥 TEAM & TABLE MODE" },
   "gameSettings.startSession": { tr: "OYUNU BAŞLAT", de: "SPIEL STARTEN", en: "START GAME" },
   "gameSettings.cancel": { tr: "İPTAL", de: "ABBRECHEN", en: "CANCEL" },
 

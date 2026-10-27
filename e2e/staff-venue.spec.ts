@@ -20,7 +20,6 @@ const SEEDED_VENUE = {
   reward_validity_days: 14,
   promo_images: ["http://127.0.0.1:4173/hero-3.png"],
   sponsor_ads: [{ id: "ad1", sponsor: "Club Mate", url: "http://127.0.0.1:4173/hero-3.png", type: "image", duration: 10 }],
-  wheel_slices: [{ id: "s1", text: "Shot", color: "#ff0000", weight: 1 }],
   updated_at: 1,
 };
 
@@ -56,7 +55,7 @@ test("personel girişi → mekân ayarları kaydı → TV yeni adı gösterir", 
 
     const saved = await adminGet("app_config/active_venue");
     expect(saved?.name).toBe("LUNA Rooftop Berlin");
-    // Formun dokunmadığı alanlar korunmalı (sponsor, promo, çark).
+    // Formun dokunmadığı alanlar korunmalı (sponsor, promo, ödül).
     expect(saved?.promo_images).toEqual(SEEDED_VENUE.promo_images);
     expect((saved?.sponsor_ads as unknown[]).length).toBe(1);
     expect(saved?.reward_title).toBe("Gratis Espresso");

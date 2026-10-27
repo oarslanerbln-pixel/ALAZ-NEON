@@ -126,7 +126,6 @@ export interface Room {
   // Alanlar boşsa varsayılan HENGAME markası kullanılır.
   venue_name?: string;
   venue_logo_url?: string;
-  venue_primary_color?: string;
 }
 
 export interface Player {
@@ -238,33 +237,12 @@ export interface RoundResultInfo {
   persona?: PlayerPersona;
 }
 
-export interface RoundLog {
-  id?: string;
-  room_id: string;
-  round_number: number;
-  letter: string;
-  categories: string[];
-  player_count: number;
-  complexity_score: number;
-  predicted_avg_score: number;
-  actual_avg_score: number;
-  prediction_error: number;
-  created_at?: string;
-}
-
 export interface SponsorAd {
   id: string;
   type: "image" | "video";
   url: string;
   duration_seconds: number;
   sponsor_name: string;
-}
-
-export interface WheelSlice {
-  id: string;
-  text: string;
-  color: string;
-  weight: number;
 }
 
 /**
@@ -298,7 +276,7 @@ export interface VenueConfig {
    */
   reward_validity_days?: number;
   /**
-   * Boşta ekranı (AttractMode) döngüsüne eklenen tanıtım görselleri —
+   * TV tanıtım döngüsüne (HostShowcase) eklenen tanıtım görselleri —
    * mekanın kendi kampanyası/menüsü/etkinliği. Firebase Storage
    * kullanılmıyor bilerek: proje Spark (ücretsiz) planda ve Storage artık
    * yalnızca Blaze planında çalışıyor (Google, Eylül 2024'te duyurup
@@ -311,10 +289,6 @@ export interface VenueConfig {
    * Sponsor reklamları - Ad Network için
    */
   sponsor_ads?: SponsorAd[];
-  /**
-   * Çarkıfelek dilimleri
-   */
-  wheel_slices?: WheelSlice[];
   updated_at?: number;
 }
 
@@ -328,14 +302,6 @@ export const DEFAULT_VENUE_CONFIG: VenueConfig = {
   reward_validity_days: 30,
   promo_images: [],
   sponsor_ads: [],
-  wheel_slices: [
-    { id: "1", text: "%10 İndirim", color: "#ff5500", weight: 3 },
-    { id: "2", text: "Pas", color: "#333333", weight: 5 },
-    { id: "3", text: "Bedava Çay", color: "#00f3ff", weight: 2 },
-    { id: "4", text: "Pas", color: "#333333", weight: 5 },
-    { id: "5", text: "Tatlı İkramı", color: "#ff00e5", weight: 1 },
-    { id: "6", text: "Pas", color: "#333333", weight: 5 },
-  ],
 };
 
 export type LeagueTier = "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "NEON" | "LEGEND";

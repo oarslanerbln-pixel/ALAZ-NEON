@@ -152,14 +152,10 @@ const NOISE = /ERR_BLOCKED_BY_CLIENT|net::ERR_FAILED|Failed to load resource|fav
 /**
  * Denetimde doğrulanmış ve rapora yazılmış hatalar (docs/audit-2026-10.md).
  * Düzeltilene kadar testi kırmasınlar diye ayrı sayılıyorlar; düzeltilince
- * buradan silinmeli.
+ * buradan silinmeli. Şu an boş: O5 (emoji transient) ve O6 (round_logs)
+ * özellikleriyle birlikte kaldırıldı.
  */
-export const KNOWN_ERRORS: Array<{ id: string; pattern: RegExp }> = [
-  // Emoji tepkisi: rooms/{id}/transient için kural yok; TV'nin dinleyicisi reddediliyor.
-  { id: "O5 emoji transient kuralı yok", pattern: /snapshot listener: FirebaseError: \[code=permission-denied\]: No matching allow statements/ },
-  // Klasik turun "intelligence" kaydı: round_logs için kural yok, her tur reddediliyor.
-  { id: "O6 round_logs kuralı yok", pattern: /Intelligence log failed: .*PERMISSION_DENIED/ },
-];
+export const KNOWN_ERRORS: Array<{ id: string; pattern: RegExp }> = [];
 
 export function realErrors(t: Tracked): string[] {
   return t.errors.filter((e) => !NOISE.test(e) && !KNOWN_ERRORS.some((k) => k.pattern.test(e)));

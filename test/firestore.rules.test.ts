@@ -82,8 +82,8 @@ const asVenueOwner = () =>
     .firestore();
 
 /**
- * /register herkese açık: sıradan bir ziyaretçi de e-posta/şifre hesabı
- * açabiliyor. Bu bağlam tam olarak onu temsil ediyor — token'ı işletme
+ * Auth API'si herkese açık (eskiden /register sayfası da vardı): sıradan
+ * bir ziyaretçi de e-posta/şifre hesabı açabiliyor. Bu bağlam tam olarak onu temsil ediyor — token'ı işletme
  * hesabınınkiyle AYNI, tek farkı staff kaydının olmaması. Yetki eskiden
  * sign_in_provider'a bakıyordu, yani bu hesap da her şeyi yapabiliyordu.
  */
@@ -494,7 +494,7 @@ describe("app_config — mekan markası", () => {
   });
 
   it("KAYIT OLAN HERHANGİ BİRİ markayı değiştiremez — asıl güvenlik açığı buydu", async () => {
-    // /register herkese açık. Yetki sign_in_provider'a bakarken bu hesap
+    // Herkes e-posta/şifre hesabı açabilir. Yetki sign_in_provider'a bakarken bu hesap
     // tüm uygulamanın markasını değiştirebiliyordu; staff kaydı yok, artık
     // reddediliyor.
     await assertFails(

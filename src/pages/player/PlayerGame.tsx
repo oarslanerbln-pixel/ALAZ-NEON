@@ -17,13 +17,11 @@ import { useLocale } from "../../hooks/useLocale";
 // Hooks
 import { useRoom } from "../../hooks/useRoom";
 import { usePlayer } from "../../hooks/usePlayer";
-import { useEmojiPulse } from "../../hooks/useEmojiPulse";
 import { usePlayerPresence } from "../../hooks/useHeartbeat";
 import { PLAYER_HEARTBEAT_MS } from "../../lib/liveness";
 
 // Extracted Components
 import { PlayerHeader } from "./components/PlayerHeader";
-import { EmojiToolbar } from "./components/EmojiToolbar";
 import { PlayerLobby } from "./views/PlayerLobby";
 import { PlayerPlaying } from "./views/PlayerPlaying";
 import { PlayerReview } from "./views/PlayerReview";
@@ -48,7 +46,6 @@ export function PlayerGame() {
   // Centralized State Management via Hooks
   const { room, loading: roomLoading, error: roomError } = useRoom(roomId);
   const { player, loading: playerLoading, error: playerError } = usePlayer(playerId);
-  const { sendReaction } = useEmojiPulse(roomId);
   const { t } = useLocale();
   const isScattegories = !room?.active_game || room?.active_game === "scattegories" || room?.active_game === "none";
 
@@ -366,10 +363,6 @@ export function PlayerGame() {
           )}
         </AnimatePresence>
       </main>
-
-      {(gameState === "review" || gameState === "standings" || gameState === "finished") && (
-        <EmojiToolbar onEmojiClick={sendReaction} />
-      )}
 
       <DatabaseStatus />
     </div>

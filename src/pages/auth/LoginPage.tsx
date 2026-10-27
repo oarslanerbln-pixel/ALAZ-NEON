@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../lib/firebase";
 import { useLocale } from "../../hooks/useLocale";
@@ -187,18 +187,6 @@ export function LoginPage() {
             </motion.button>
           </div>
         </form>
-
-        <div className="mt-8 text-center relative z-20" style={{ transform: "translateZ(20px)" }}>
-          <p className="text-gray-400 text-sm font-medium">
-            {t("auth.noAccount")}{" "}
-            <Link
-              to="/register"
-              className="text-alaz-orange font-black uppercase tracking-widest text-xs hover:text-white transition-colors ml-2 drop-shadow-[0_0_10px_rgba(255,77,0,0.5)]"
-            >
-              {t("auth.register")}
-            </Link>
-          </p>
-        </div>
 
           <motion.div 
             initial={{ opacity: 0 }}

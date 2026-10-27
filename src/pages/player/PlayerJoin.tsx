@@ -10,7 +10,6 @@ import { findJoinableRoomByCode, findPlayerResume } from "../../lib/roomQueries"
 import { readPlayerSession, savePlayerSession, type SessionPlayer } from "../../lib/roomSession";
 import { useLocale } from "../../hooks/useLocale";
 import { errorMessage } from "../../lib/errors";
-import { PhoneAuth } from "../../components/PhoneAuth";
 import { LanguageSwitcher } from "../../components/LanguageSwitcher";
 import { PlayerProfileCard } from "./components/PlayerProfileCard";
 import { PlayerRewards } from "./components/PlayerRewards";
@@ -259,12 +258,12 @@ export function PlayerJoin() {
                   {t("join.resuming")}
                 </span>
               </motion.div>
-            ) : authChecking || resumeCheckPending ? (
+            ) : authChecking || resumeCheckPending || !currentUser ? (
+              // Anonim oturum açılana kadar bekleme ekranı (useAuth her
+              // ziyaretçiye anonim oturum açıyor; telefonla giriş kaldırıldı).
               <div className="flex justify-center items-center py-10">
                 <span className="text-alaz-orange font-bold uppercase tracking-widest animate-pulse">CONNECTING...</span>
               </div>
-            ) : !currentUser ? (
-              <PhoneAuth onSuccess={() => {}} />
             ) : (
               <>
                 <div className="mb-4">

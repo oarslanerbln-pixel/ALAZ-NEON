@@ -10,7 +10,11 @@ interface HostShowcaseProps {
   joinUrl: string;
   roomCode: string;
   venuePromos?: string[];
-  onClose: () => void;
+  /**
+   * Dokununca. Dashboard'da gerek yok: aynı dokunuş useIdle'ı sıfırlayıp
+   * döngüyü kapatıyor (eski kiosk düğmesi kaldırıldı).
+   */
+  onClose?: () => void;
   /** Yalnız önizleme için: döngü bu slayttan başlar. */
   initialIndex?: number;
 }

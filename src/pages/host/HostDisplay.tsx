@@ -37,17 +37,11 @@ import { isRetiredGame, resolveRoutedGame } from "../../lib/gameRouting";
 import { HostTutorial } from "./components/HostTutorial";
 import { DatabaseStatus } from "../../components/DatabaseStatus";
 import { RoomStatusScreen } from "../../components/RoomStatusScreen";
-import { EmojiRain } from "../../components/EmojiRain";
 import { LetterSpinner } from "../../components/LetterSpinner";
 import { finishNightRound, NIGHT_ROUND_OPEN } from "../../lib/nightAwards";
 import { nightPointsForPlayers } from "../../lib/nightLeague";
 import { useHostAnnouncer } from "../../hooks/useHostAnnouncer";
-import {
-  getRoundIntelligence,
-  logRoundIntelligence,
-  evaluateBestOfNight,
-  type JulesAward
-} from "../../lib/intelligence";
+import { evaluateBestOfNight, type JulesAward } from "../../lib/intelligence";
 
 export function HostDisplay() {
   const [searchParams] = useSearchParams();
@@ -280,24 +274,6 @@ function HostDisplayGame({
     );
     setRoundResults(results.sort((a, b) => b.totalScore - a.totalScore));
     setGameHistory((prev) => [...prev, ...results]);
-
-    // AI Intelligence Logging (Self-Learning)
-    const prediction = getRoundIntelligence(
-      letterToQuery,
-      room.categories,
-      players.length,
-      room.timer_setting,
-      room.current_round,
-    );
-    logRoundIntelligence(
-      roomId,
-      room.current_round,
-      letterToQuery,
-      room.categories,
-      players.length,
-      prediction.expectedAvgScore,
-      results,
-    ).then();
 
     // Update Stats for Podium — all at once inside functional updater (no stale closure)
     setPlayerStats((prev) => {
@@ -685,7 +661,6 @@ function HostDisplayGame({
               categories={room?.categories || []}
               submittedPlayerIds={submittedPlayerIds}
               playersCount={players.length}
-              currentRound={room?.current_round}
             />
           )}
 
@@ -730,10 +705,6 @@ function HostDisplayGame({
           )}
         </AnimatePresence>
       </div>
-
-      {(gameState === "review" || gameState === "standings" || gameState === "finished") && roomId && (
-        <EmojiRain roomId={roomId} />
-      )}
 
       <DatabaseStatus />
     </div>

@@ -136,7 +136,6 @@ export function ScreenPreview() {
             categories={["ŞEHİR", "HAYVAN", "MEYVE / SEBZE", "ÜNLÜ KİŞİ"]}
             submittedPlayerIds={players.slice(0, Math.min(3, players.length)).map((p) => p.id)}
             playersCount={players.length}
-            currentRound={room.current_round}
           />
         </TVScaleFrame>
       );

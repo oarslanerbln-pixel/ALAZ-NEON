@@ -25,6 +25,8 @@ interface HostHeaderProps {
   onExitToHome?: () => void;
   /** Çıkış onayı için gösterilecek çeviri anahtarı (varsayılan: ana sayfaya dönüş). */
   exitConfirmKey?: "common.confirmExitHome" | "common.confirmEndNight";
+  /** Çıkış düğmesinin etiketi; geceyi kapatan dashboard "GECEYİ BİTİR" der. */
+  exitLabelKey?: "common.back" | "common.endNight";
 }
 
 export function HostHeader({
@@ -34,6 +36,7 @@ export function HostHeader({
   onReturnToLobby,
   onExitToHome,
   exitConfirmKey = "common.confirmExitHome",
+  exitLabelKey = "common.back",
 }: HostHeaderProps) {
   const { t } = useLocale();
   const navigate = useNavigate();
@@ -99,12 +102,12 @@ export function HostHeader({
         {/* Ana Sayfa Çıkış Butonu */}
         <button
           onClick={handleExitHome}
-          aria-label={t("common.back")}
+          aria-label={t(exitLabelKey)}
           className="flex items-center gap-1.5 text-xs font-mono font-bold text-white/70 hover:text-white bg-white/5 hover:bg-white/15 border border-white/15 hover:border-white/40 px-3.5 py-2 rounded-2xl transition-all active:scale-95 cursor-pointer"
-          title={t("common.back", "ANA SAYFA")}
+          title={t(exitLabelKey)}
         >
           <Home className="w-4 h-4 text-cyan-400" />
-          <span className="hidden md:inline uppercase tracking-wider">{t("common.back", "ANA SAYFA")}</span>
+          <span className="hidden md:inline uppercase tracking-wider">{t(exitLabelKey)}</span>
         </button>
 
         {/* Venue Avatar & Name */}

@@ -9,7 +9,7 @@ import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import type { Room, Player, GameType } from "../../../types/database";
 
 import { GameSettingsModal } from "../components/GameSettingsModal";
-import { GAME_CARDS as GAMES, GAME_CATEGORY_KEY } from "../../../lib/gameCatalog";
+import { GAME_CARDS, GAME_CATEGORY_KEY } from "../../../lib/gameCatalog";
 import { activePlayers as activePlayersOf } from "../../../lib/liveness";
 import { useLocale } from "../../../hooks/useLocale";
 import { useIsStaff } from "../../../hooks/useIsStaff";
@@ -32,8 +32,12 @@ import { getJoinUrl } from "../../../lib/roomUrls";
 /** QR kartının altında 1080'lik tuvale kaydırmasız sığan misafir satırı. */
 const DASHBOARD_LIST_MAX = 6;
 
-
-
+/**
+ * Karusel sırası: oynanabilir modlar önce, kilitliler sonda (sıralama
+ * kararlı; grup içinde katalog sırası korunur). Personel ilk kaydırmada
+ * kilitli bir karta düşmesin.
+ */
+const GAMES = [...GAME_CARDS].sort((a, b) => Number(Boolean(a.isComingSoon)) - Number(Boolean(b.isComingSoon)));
 
 interface HostDashboardProps {
   room: Room;
@@ -50,15 +54,13 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
   // oyun bittikten sonra değil, burada görsün.
   const { isStaff } = useIsStaff();
   const rewardsBlocked = venue.rewards_enabled && Boolean(venue.reward_title?.trim()) && isStaff === false;
-  const [isKioskMode, setIsKioskMode] = useState(false);
 
   // Game Setup State
   const [setupGameMode, setSetupGameMode] = useState<GameType | null>(null);
   const [showFinale, setShowFinale] = useState(false);
   // Gece lobisi bir süre boş kalınca TV tanıtım döngüsüne geçer; kurulum
   // penceresi ya da finale açıkken geçmez. İlk dokunuşta kapanır.
-  const idle = useIdle(SHOWCASE_IDLE_MS, room.status === "night_lobby" && !setupGameMode && !showFinale && !isKioskMode);
-  const showShowcase = isKioskMode || idle;
+  const showShowcase = useIdle(SHOWCASE_IDLE_MS, room.status === "night_lobby" && !setupGameMode && !showFinale);
 
   // Carousel State
   const [carouselIndex, setCarouselIndex] = useState(0);
@@ -162,7 +164,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       // Canlar yukarıda dolduruldu: yalnızca hâlâ sinyal gönderenlere bak.
       const activePlayers = activePlayersOf(players);
       const randomPlayer = activePlayers.length > 0 ? activePlayers[Math.floor(Math.random() * activePlayers.length)] : null;
-      const { category, used } = nextBombCategory(settings?.categories || room.categories, []);
+      const { category, used } = nextBombCategory(settings?.categories || room.categories, [], room.locale);
 
       initialStatus = "tutorial";
       extraUpdates = {
@@ -215,6 +217,7 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
         <HostHeader
           room={room}
           exitConfirmKey="common.confirmEndNight"
+          exitLabelKey="common.endNight"
           onExitToHome={endNight}
         />
 
@@ -265,14 +268,6 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
                   </p>
                 )}
 
-                {venue.promo_images && venue.promo_images.length > 0 && (
-                  <button
-                    onClick={() => setIsKioskMode(true)}
-                    className="mt-8 w-full py-3 bg-white/5 hover:bg-white/15 border border-white/20 rounded-xl text-white font-bold uppercase tracking-widest text-[10px] transition-colors"
-                  >
-                    {t("dashboard.kioskStart")}
-                  </button>
-                )}
               </div>
             </div>
 
@@ -521,7 +516,6 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
             joinUrl={joinUrl}
             roomCode={room.code}
             venuePromos={venue.promo_images}
-            onClose={() => setIsKioskMode(false)}
           />
         )}
       </AnimatePresence>

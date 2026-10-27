@@ -41,7 +41,7 @@ export function HostBombDisplay({
       if (activePlayers.length === 0) return;
       
       const randomPlayer = activePlayers[Math.floor(Math.random() * activePlayers.length)];
-      const { category, used } = nextBombCategory(room.categories, []);
+      const { category, used } = nextBombCategory(room.categories, [], room.locale);
 
       await updateDoc(doc(db, "rooms", room.id), {
         status: "tutorial",
@@ -166,7 +166,7 @@ export function HostBombDisplay({
       
       // Gece lobisinden açılan bombada kategori listesi boş: eskiden burada
       // `active_letter: undefined` yazılıp TV patlama ekranında kalıyordu.
-      const { category, used } = nextBombCategory(room.categories, room.used_bomb_categories);
+      const { category, used } = nextBombCategory(room.categories, room.used_bomb_categories, room.locale);
 
       await updateDoc(doc(db, "rooms", room.id), {
         status: "bomb_intro",
