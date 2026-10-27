@@ -49,9 +49,10 @@ The game expects the following Firestore collections:
 
 Admin screens — venue settings (`/admin/venue`), reward verification
 (`/admin/rewards`) and the nightly report (`/admin/report`) — are restricted to
-**staff accounts**. Staff status is *not* implied by how you signed in: `/register`
-is a public player sign-up that also creates email/password accounts, so
-"signed in with a password" would mean "anyone who registered".
+**staff accounts**. Staff status is *not* implied by how you signed in: anyone
+can create an email/password account through the public Firebase Auth API (the
+app used to have a public `/register` page, too), so "signed in with a password"
+would mean "anyone who registered".
 
 Authority comes from a document in the `staff` collection:
 
@@ -62,8 +63,7 @@ staff/<uid>        # the document's existence grants access; contents are free-f
 No client can write this collection (`allow write: if false` in `firestore.rules`),
 so an account cannot grant itself access. To add a staff member:
 
-1. Have the person register at `/register` (or create the account in
-   Firebase Console → Authentication).
+1. Create the account in Firebase Console → Authentication (Email/Password).
 2. Copy their **User UID** from Firebase Console → Authentication → Users.
    (An account that signs in and opens an admin screen is also shown its own
    `staff/<uid>` path on the access-denied screen.)
@@ -102,7 +102,6 @@ per collection:
 | `rooms`    | `expires_at` |
 | `players`  | `expires_at` |
 | `answers`  | `expires_at` |
-| `ayna_survey` | `expires_at` |
 | `secret` (quiz answer key, `rooms/{id}/secret`) | `expires_at` |
 
 Or with the gcloud CLI:

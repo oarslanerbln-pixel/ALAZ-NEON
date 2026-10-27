@@ -14,7 +14,7 @@ This skill provides a structured approach for an agent to troubleshoot bugs, bla
 1. **Host-Driven State Machine**:
    - The game logic is entirely driven by the `rooms` document in Firebase Firestore.
    - The Host application (`HostDisplay.tsx`) acts as the state manager. It routes to specific game displays (e.g., `HostQuizDisplay.tsx`) based on `active_game` and `status`.
-   - Players (`PlayerGame.tsx`) are "dumb" terminals. They react to `room.status` and render controllers. They should NEVER mutate core room state, only write to `answers` or trigger specific actions via transactions (like buzzing in the sensor game).
+   - Players (`PlayerGame.tsx`) are "dumb" terminals. They react to `room.status` and render controllers. They should NEVER mutate core room state, only write to `answers`; the single exception is passing the bomb (`isBombPass` in `firestore.rules`).
 
 2. **Routing & Component Lifecycle**:
    - Both `HostDisplay.tsx` and `PlayerGame.tsx` rely on early returns.

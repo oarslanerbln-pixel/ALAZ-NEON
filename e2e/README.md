@@ -29,14 +29,18 @@ C: diski doluysa tarayıcıları ve emülatör jar'ını başka diske alın:
 - `cafe-night.spec.ts` — QR → lobi → quiz → kazanan TV'de → gece lobisi →
   QR'sız aynı profille sonraki oyun.
 - `game-modes.spec.ts` — açık her mod bir tur (Arena, Quiz, Bomb), aynı gece
-  ikinci quiz, kilitli modların başlatılamaması.
+  ikinci quiz; karuselde yalnız üç oynanabilir mod ve tek kilitli kart
+  (YÖRÜNGE SAPANI), kilitli kartın başlatılamaması. Sapanın tur testi kilit
+  açılana kadar `test.skip`.
 - `resilience.spec.ts` — wifi kopması, sayfa yenileme, geç katılım, aynı
   takma ad, telefon kilidi (CDP ile sayfa dondurma), host'un hızlı geçtiği
   yavaş telefonlar (4× CPU kısıtı), cevap onayının yolda kaybolması (vekilde
   arıza enjeksiyonu).
 - `cost.spec.ts` — Firestore maliyeti: 6 telefon 40 sn lobide < 60 faturalı okuma
   (nabız yalnızca TV'ye düşmeli; bkz. denetim K3/P1).
-- `staff-venue.spec.ts` — personel girişi, `/admin/venue`, ödül kodu.
+- `staff-venue.spec.ts` — personel girişi, `/admin/venue` (marka, sponsor,
+  tanıtım görselleri, ödül), ödül kodu. Personel hesabı emülatör REST'iyle
+  açılır; uygulamada herkese açık kayıt sayfası yok.
 - `measure.spec.ts` — 20/40 oyuncuda Firestore yükü ve gecikme, TV kare hızı.
 
 ## Bilinen sınırlar
