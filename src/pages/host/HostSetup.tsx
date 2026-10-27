@@ -240,27 +240,6 @@ export function HostSetup() {
                   </div>
                   <span className="text-red-500 font-black border border-red-500/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(255,0,0,0.2)]">ZAMAN</span>
                 </div>
-                <div className="flex items-center justify-between text-[11px] group/item">
-                  <div className="flex items-center gap-2.5">
-                    <GameAnimatedLogo game="sensor" size="sm" className="w-5 h-5" />
-                    <span className="text-white font-bold tracking-wider group-hover/item:text-neon-pink transition-colors">HENGAME <span className="opacity-70 text-purple-400">SENSÖR</span></span>
-                  </div>
-                  <span className="text-neon-pink font-black border border-neon-pink/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(255,0,255,0.2)]">HAREKET</span>
-                </div>
-                <div className="flex items-center justify-between text-[11px] group/item">
-                  <div className="flex items-center gap-2.5">
-                    <GameAnimatedLogo game="wheel" size="sm" className="w-5 h-5" />
-                    <span className="text-white font-bold tracking-wider group-hover/item:text-cyber-yellow transition-colors">HENGAME <span className="opacity-70 text-yellow-500">ÇARK</span></span>
-                  </div>
-                  <span className="text-cyber-yellow font-black border border-cyber-yellow/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(255,215,0,0.2)]">ŞANS</span>
-                </div>
-                <div className="flex items-center justify-between text-[11px] group/item">
-                  <div className="flex items-center gap-2.5">
-                    <GameAnimatedLogo game="colors" size="sm" className="w-5 h-5" />
-                    <span className="text-white font-bold tracking-wider group-hover/item:text-purple-400 transition-colors">NEON <span className="opacity-70 text-pink-500">SAVAŞLARI</span></span>
-                  </div>
-                  <span className="text-purple-400 font-black border border-purple-400/30 px-2 py-0.5 rounded-sm text-[9px] shadow-[0_0_10px_rgba(168,85,247,0.2)]">TAKIM</span>
-                </div>
               </div>
                 <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-neon-blue/5 blur-3xl rounded-full" />
               </div>

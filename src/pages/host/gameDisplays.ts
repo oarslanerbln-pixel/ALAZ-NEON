@@ -20,18 +20,6 @@ type Loader = () => Promise<{ default: ComponentType<HostGameProps> }>;
 const HOST_GAME_LOADERS: Record<RoutedGame, Loader> = {
   quiz: () => import("./quiz/HostQuizDisplay").then((m) => ({ default: m.HostQuizDisplay })),
   bomb: () => import("./bomb/HostBombDisplay").then((m) => ({ default: m.HostBombDisplay })),
-  sensor: () => import("./sensor/HostSensorDisplay").then((m) => ({ default: m.HostSensorDisplay })),
-  wheel: () => import("./wheel/HostWheelDisplay").then((m) => ({ default: m.HostWheelDisplay })),
-  overload: () => import("./overload/HostOverloadDisplay").then((m) => ({ default: m.HostOverloadDisplay })),
-  echo: () => import("./echo/HostEchoDisplay").then((m) => ({ default: m.HostEchoDisplay })),
-  pulse: () => import("./pulse/HostPulseDisplay").then((m) => ({ default: m.HostPulseDisplay })),
-  colors: () => import("./colors/HostColorsDisplay").then((m) => ({ default: m.HostColorsDisplay })),
-  vault: () => import("./vault/HostVaultDisplay").then((m) => ({ default: m.HostVaultDisplay })),
-  unity: () => import("./unity/HostUnityDisplay").then((m) => ({ default: m.HostUnityDisplay })),
-  bar: () => import("./bar/HostBarDisplay").then((m) => ({ default: m.HostBarDisplay })),
-  kablo: () => import("./kablo/HostKabloDisplay").then((m) => ({ default: m.HostKabloDisplay })),
-  ayna: () => import("./ayna/HostAynaDisplay").then((m) => ({ default: m.HostAynaDisplay })),
-  sniper: () => import("./sniper/HostSniperDisplay").then((m) => ({ default: m.HostSniperDisplay })),
   slingshot: () => import("./slingshot/HostSlingshotDisplay").then((m) => ({ default: m.HostSlingshotDisplay })),
 };
 

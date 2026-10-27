@@ -87,7 +87,7 @@ export function usePlayer(playerId: string | null) {
 
     // "Tekrar Oyna" (host resetGame) HER modda total_score'u 0'a
     // sıfırlıyor (bkz. HostDisplay/HostQuizDisplay/
-    // HostSensorDisplay/HostBombDisplay resetGame). Bu, buradan bakınca
+    // HostBombDisplay resetGame). Bu, buradan bakınca
     // dev bir NEGATİF delta gibi görünür — kontrol etmezsek her "yeni oyun"
     // oyuncunun kalıcı lig puanından o ana kadar kazandığını SİLERDİ. 0'a
     // dönüşü (gerçek bir düşüş değil, oda sıfırlaması) senkron dışı bırakıp

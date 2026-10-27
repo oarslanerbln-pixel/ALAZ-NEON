@@ -24,49 +24,13 @@ export type RoomStatus =
   | "bomb_explosion"
   | "bomb_standings"
   | "tutorial"
-  | "sensor_intro"
-  | "sensor_active"
-  | "sensor_buzzed"
-  | "sensor_reveal"
   | "ad_break"
-  | "wheel_active"
-  | "wheel_spinning"
-  | "wheel_result"
-  | "echo_intro"
-  | "echo_active"
-  | "echo_reveal"
-  | "pulse_intro"
-  | "pulse_active"
-  | "pulse_reveal"
-  | "colors_intro"
-  | "colors_active"
-  | "colors_reveal"
-  | "vault_intro"
-  | "vault_active"
-  | "vault_reveal"
-  | "unity_intro"
-  | "unity_active"
-  | "unity_reveal"
-  | "bar_intro"
-  | "bar_active"
-  | "bar_reveal"
-  | "kablo_intro"
-  | "kablo_active"
-  | "kablo_reveal"
-  | "ayna_intro"
-  | "ayna_survey"
-  | "ayna_active"
-  | "ayna_reveal"
-  | "ayna_final"
-  | "sniper_intro"
-  | "sniper_active"
-  | "sniper_reveal"
   | "slingshot_intro"
   | "slingshot_active"
   | "slingshot_reveal";
 
 export type GameMode = "individual" | "team";
-export type GameType = "scattegories" | "quiz" | "bomb" | "sensor" | "wheel" | "overload" | "echo" | "pulse" | "colors" | "vault" | "unity" | "bar" | "kablo" | "ayna" | "sniper" | "slingshot";
+export type GameType = "scattegories" | "quiz" | "bomb" | "slingshot";
 
 export type QuizOption = "A" | "B" | "C" | "D";
 
@@ -126,7 +90,6 @@ export interface Room {
   round_end_time?: number;
   game_mode: GameMode;
   used_letters?: string[];
-  used_sensor_images?: string[];
   used_bomb_categories?: string[];
   locale?: Locale;
   quiz_questions?: PublicQuizQuestion[];
@@ -152,83 +115,15 @@ export interface Room {
   bomb_speed_multiplier?: number;
   // Tutorial Fields
   tutorial_step?: number;
-  // Sensor Game Fields
-  sensor_current_media?: string;
-  sensor_media_answer?: string;
-  sensor_buzzer_player_id?: string | null;
-  sensor_buzzer_timestamp?: number | null;
-  sensor_player_answer?: string | null;
-  // Wheel Game Fields
-  wheel_spinner_id?: string | null;
-  wheel_result_index?: number | null;
-  // Overload Game Fields
-  overload_target_id?: string | null;
-  overload_last_target_id?: string | null;
-  overload_time_allowed?: number;
-  overload_start_time?: number;
-  overload_eliminated_ids?: string[];
-  // Echo Game Fields
-  /**
-   * Yeni tur baslarken HostDashboard bu alani null'a cekiyor — HostEchoDisplay
-   * "soru yoksa yeni soru sec" mantigiyla calisiyor, dolayisiyla temizlenmezse
-   * ikinci Echo turu bir onceki gecenin sorusuyla ve oylariyla aciliyordu.
-   */
-  echo_question?: string | null;
-  echo_votes?: Record<string, string>;
-  // Pulse Game Fields
-  pulse_target_time?: number;
-  pulse_clicks?: Record<string, number>;
-  pulse_result?: number;
   // Ad Break Flow Control
   ad_break_next_state?: RoomStatus;
-  // Colors Game Fields (Neon Wars)
-  colors_target_clicks?: number;
-  colors_red_score?: number;
-  colors_blue_score?: number;
-  colors_team_assignments?: Record<string, "red" | "blue">;
-  colors_end_time?: number;
-  // Vault Game Fields
-  vault_code?: string;
-  vault_winner_id?: string | null;
-  // Unity Game Fields
-  unity_target?: number;
-  unity_current?: number;
-  unity_end_time?: number;
-  // Bar Game Fields
-  bar_active_recipe?: string[];
-  bar_end_time?: number;
-  // Kablo Game Fields
-  kablo_winner_id?: string | null;
-  // AYNA Game Fields (bkz. lib/ayna.ts). Soru METNİ değil kimliği saklanıyor:
-  // her misafir soruyu kendi dilinde görsün.
-  ayna_question_ids?: string[];
-  ayna_index?: number;
-  /** Puanı dağıtılmış son soru — açıklama iki kez puan vermesin. */
-  ayna_scored_through?: number;
-  ayna_round_guesses?: Record<string, number>;
-  ayna_round_points?: Record<string, number>;
-  /** Yalnızca bu AYNA oyununun puan toplamı (total_score gece boyu birikir). */
-  ayna_totals?: Record<string, number>;
-  /** Gizli salon anketinde sorulan sorular (bkz. lib/aynaSalon.ts). */
-  ayna_survey_ids?: string[];
-  /** Yetersiz cevaplı salon sorusunun yerine geçecek yedek dünya soruları. */
-  ayna_reserve_ids?: string[];
-  /**
-   * Açıklanan salon sorusunun gerçeği ve kaç kişiden hesaplandığı. Dünya
-   * sorularında `null` — onların cevabı soru havuzunda. Açıklamadan ÖNCE
-   * yazılmıyor: oda dokümanı herkese açık.
-   */
-  ayna_round_truth?: number | null;
-  ayna_round_sample?: number | null;
+  // Slingshot: turun bitiş zamanı; aynı zamanda turun şutlarını ayıran
+  // anahtar (lib/slingshot.slingshotRoundKey). Şutlar `answers`'ta.
+  slingshot_end_time?: number;
   // Mekan markalaması — oda açılırken o anki aktif mekan profilinden
   // KOPYALANIR (canlı referans değil). Böylece bir mekana satış sonrası
   // marka değiştirilse bile geçmiş odaların/demoların markası değişmez.
   // Alanlar boşsa varsayılan HENGAME markası kullanılır.
-  // Sniper Game Fields
-  sniper_end_time?: number;
-  // Slingshot: turun bitiş zamanı; aynı zamanda turun şutlarını ayıran
-  // anahtar (lib/slingshot.slingshotRoundKey). Şutlar `answers`'ta.
-  slingshot_end_time?: number;
   venue_name?: string;
   venue_logo_url?: string;
   venue_primary_color?: string;
@@ -256,11 +151,6 @@ export interface Player {
    * lib/liveness → mergePresence); host listesine oradan birleştiriliyor.
    */
   last_active?: number;
-  colors_clicks?: number;
-  bar_score?: number;
-  kablo_score?: number;
-  sniper_shot?: { x: number; y: number; timestamp: number } | null;
-  sniper_score?: number;
 }
 
 /**

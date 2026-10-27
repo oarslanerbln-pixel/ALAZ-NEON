@@ -4,7 +4,7 @@ import type { GameMode, Player } from "../types/database";
  * Gecelik lig — F1 usulü yerleşme puanı.
  *
  * Eskiden gecelik skor her oyunun HAM puanını topluyordu: Quiz soru başına
- * ~1500 verirken Colors kazananına 150 düşüyordu, yani geceyi tek başına Quiz
+ * ~1500 verirken başka bir modun kazananına 150 düşüyordu, yani geceyi tek başına Quiz
  * belirliyordu. Artık her oyun bitince yalnızca SIRAYA göre puan dağıtılır;
  * her oyun eşit ağırlıkta, "tutarlı olan şampiyon olur".
  *
@@ -38,20 +38,6 @@ export function placementPointsByScore(entries: readonly { id: string; score: nu
   return out;
 }
 
-/**
- * Skoru olmayan oyunlar için açık sıra (ör. Overload: hayatta kalan, sonra
- * en son elenenden geriye). `orderedIds[0]` birinci; listede olmayan herkes
- * katılım puanı alır.
- */
-export function placementPointsByOrder(orderedIds: readonly string[], allIds: readonly string[]): NightPoints {
-  const out: NightPoints = {};
-  for (const id of allIds) out[id] = PARTICIPATION_POINTS;
-  orderedIds.slice(0, PLACEMENT_POINTS.length).forEach((id, i) => {
-    out[id] = PLACEMENT_POINTS[i];
-  });
-  return out;
-}
-
 /** Takım oyunu: kazanan takımın üyeleri TEAM_WIN_POINTS, diğerleri katılım. */
 export function teamPoints(winnerIds: readonly string[], allIds: readonly string[]): NightPoints {
   const winners = new Set(winnerIds);
@@ -63,7 +49,7 @@ export function teamPoints(winnerIds: readonly string[], allIds: readonly string
 }
 
 /**
- * Skoru `total_score`'da tutan oyunların bitişi (arena, quiz, sensör, bomba).
+ * Skoru `total_score`'da tutan oyunların bitişi (arena, quiz, bomba, sapan).
  * Takım modunda takım toplamı en yüksek olan takım(lar) kazanır.
  */
 export function nightPointsForPlayers(

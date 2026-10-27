@@ -5,7 +5,7 @@ import { useLocale } from "../../../hooks/useLocale";
 import { getCategoryPresets } from "../../../lib/categoryPresets";
 import type { GameType, Room } from "../../../types/database";
 import type { TranslationKey } from "../../../lib/i18n";
-import { X, Play, Check, Clock, RotateCcw, HelpCircle, Heart, Eye, Users } from "lucide-react";
+import { X, Play, Check, Clock, RotateCcw, HelpCircle, Heart, Users } from "lucide-react";
 import { ShimmerButton, GameAnimatedLogo } from "../../../components/fx";
 
 interface Props {
@@ -52,95 +52,6 @@ const GAME_METAS: Record<string, GameMeta> = {
     icon: "rocket",
     description: "Die tickende Wort-Bombe: Gib schnell ein passendes Wort ein und passe die Bombe weiter, bevor sie explodiert!"
   },
-  sensor: {
-    title: "HENGAME SENSOR",
-    badge: "BILD & BUZZER",
-    color: "#ff007f",
-    glow: "rgba(255,0,128,0.5)",
-    icon: "dashboard",
-    description: "Das Bild wird schrittweise schärfer: Wer den Buzzer zuerst drückt und das Bild errät, holt die Punkte."
-  },
-  overload: {
-    title: "NEON OVERLOAD",
-    badge: "REAKTOR-UEBERLASTUNG",
-    color: "#06b6d4",
-    glow: "rgba(6,182,212,0.5)",
-    icon: "flame",
-    description: "Jeder Pass erhöht die Hochspannung: Halte die Reaktorspannung stabil und wehre die Ladung sofort ab!"
-  },
-  colors: {
-    title: "NEON WARS",
-    badge: "TEAM-TAUDRÜCKEN",
-    color: "#a855f7",
-    glow: "rgba(168,85,247,0.5)",
-    icon: "users",
-    description: "Team Rot gegen Team Blau: Schnelligkeit entscheidet, wer die Vorherrschaft auf dem Hauptbildschirm erobert."
-  },
-  bar: {
-    title: "NEON MIXOLOGY",
-    badge: "BAR-MEISTER",
-    color: "#ec4899",
-    glow: "rgba(236,72,153,0.5)",
-    icon: "crown",
-    description: "Cocktail-Rezepte in Rekordzeit: Gieße die richtigen Zutaten in der exakten Reihenfolge ein."
-  },
-  wheel: {
-    title: "HENGAME GLÜCKSRAD",
-    badge: "PREISE & SHOTS",
-    color: "#eab308",
-    glow: "rgba(234,179,8,0.5)",
-    icon: "crown",
-    description: "Belohne deine Gäste mit Shots, Drinks und Specials über das interaktive Neon-Glücksrad."
-  },
-  kablo: {
-    title: "CYBER WIRE",
-    badge: "SCHALTKREIS",
-    color: "#f59e0b",
-    glow: "rgba(245,158,11,0.5)",
-    icon: "flame",
-    description: "Verbinde die Leitungen, um den Hauptgenerator des Clubs im Teamplay aufzuladen."
-  },
-  vault: {
-    title: "NEON TRESOR",
-    badge: "CODE-KNACKER",
-    color: "#10b981",
-    glow: "rgba(16,185,129,0.5)",
-    icon: "dashboard",
-    description: "Knacke die 4-stellige Tresor-Kombination durch logische Hinweise vor allen anderen."
-  },
-  unity: {
-    title: "NEON EINHEIT",
-    badge: "GEMEINSAME ENERGIE",
-    color: "#f97316",
-    glow: "rgba(249,115,22,0.5)",
-    icon: "users",
-    description: "Alle Spieler klicken im Takt, um die Club-Batterie zur maximalen Entladung zu bringen."
-  },
-  ayna: {
-    title: "HENGAME AYNA",
-    badge: "WELT & EMPATHIE",
-    color: "#22d3ee",
-    glow: "rgba(34,211,238,0.5)",
-    icon: "lightbulb",
-    description: "",
-    descKey: "dashboard.modeAynaDesc",
-  },
-  echo: {
-    title: "HENGAME ECHO",
-    badge: "CLUB-VOTING",
-    color: "#6366f1",
-    glow: "rgba(99,102,241,0.5)",
-    icon: "users",
-    description: "Das soziale Voting: Wer ist der lustigste, verrückteste oder aktivste Tisch des Abends?"
-  },
-  pulse: {
-    title: "NEON PULSE",
-    badge: "TIMING-REFLEX",
-    color: "#3b82f6",
-    glow: "rgba(59,130,246,0.5)",
-    icon: "flame",
-    description: "Erwische den perfekten Moment, wenn der Herzschlag-Impuls auf dem TV-Bildschirm den Peak erreicht."
-  }
 };
 
 const QUIZ_CATEGORIES = [
@@ -178,17 +89,6 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
   const [bombLives, setBombLives] = useState("3");
   const [bombSpeedMultiplier] = useState(1.0);
 
-  // Sensor Specific
-  const [sensorUnblurDuration, setSensorUnblurDuration] = useState("25");
-  const [sensorPointReward] = useState("1000");
-
-  // Bar Specific
-  const [barTime, setBarTime] = useState("60");
-  const [barRecipeSpeed, setBarRecipeSpeed] = useState("4.5");
-
-  // Colors Specific
-  const [colorsWinCondition, setColorsWinCondition] = useState<"domination" | "timed">("domination");
-
   // Track previous game to sync defaults during render
   const [prevGame, setPrevGame] = useState<GameType | null>(null);
   if (game !== prevGame) {
@@ -204,14 +104,6 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
       setBombFuseTime("30");
       setBombLives("3");
       setTotalRounds("3");
-    } else if (game === "sensor") {
-      setTotalRounds("5");
-      setSensorUnblurDuration("25");
-    } else if (game === "bar") {
-      setBarTime("60");
-    } else if (game === "ayna") {
-      setTotalRounds("7");
-      setTimerValue("25");
     }
   }
 
@@ -256,10 +148,6 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
     } else if (game === "bomb") {
       baseSettings.timer_setting = parseInt(bombFuseTime, 10);
       baseSettings.bomb_speed_multiplier = bombSpeedMultiplier;
-    } else if (game === "sensor") {
-      baseSettings.timer_setting = parseInt(sensorUnblurDuration, 10);
-    } else if (game === "bar") {
-      baseSettings.timer_setting = parseInt(barTime, 10);
     }
 
     await onStart(game, baseSettings);
@@ -529,58 +417,6 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
               </div>
             )}
 
-            {/* ════════════════ AYNA SETTINGS ════════════════ */}
-            {game === "ayna" && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-gray-300 font-black flex items-center gap-1.5 mb-2.5">
-                    <HelpCircle className="w-4 h-4 text-cyan-400" />
-                    <span>{t("gameSettings.quizQuestionsCount")}</span>
-                  </label>
-                  <div className="grid grid-cols-3 gap-2.5">
-                    {["5", "7", "10"].map(qVal => (
-                      <button
-                        key={qVal}
-                        type="button"
-                        aria-pressed={totalRounds === qVal}
-                        onClick={() => setTotalRounds(qVal)}
-                        className={`py-3.5 rounded-xl font-mono font-black text-sm transition-all border-2 cursor-pointer ${
-                          totalRounds === qVal
-                            ? "bg-cyan-400 text-black border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.5)] scale-105"
-                            : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
-                        }`}
-                      >
-                        {qVal} {t("gameSettings.quizQuestionsSuffix")}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-gray-300 font-black flex items-center gap-1.5 mb-2.5">
-                    <Clock className="w-4 h-4 text-cyan-400" />
-                    <span>{t("gameSettings.quizTimePerQuestion")}</span>
-                  </label>
-                  <div className="grid grid-cols-3 gap-2.5">
-                    {["20", "25", "35"].map(tVal => (
-                      <button
-                        key={tVal}
-                        type="button"
-                        aria-pressed={timerValue === tVal}
-                        onClick={() => setTimerValue(tVal)}
-                        className={`py-3.5 rounded-xl font-mono font-black text-sm transition-all border-2 cursor-pointer ${
-                          timerValue === tVal
-                            ? "bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.5)] scale-105"
-                            : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
-                        }`}
-                      >
-                        {tVal} {t("gameSettings.secondsSuffix")}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* ════════════════ BOMB SETTINGS ════════════════ */}
             {game === "bomb" && (
               <div className="space-y-6">
@@ -648,151 +484,6 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
                         </button>
                       ))}
                     </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ════════════════ SENSOR SETTINGS ════════════════ */}
-            {game === "sensor" && (
-              <div className="space-y-6">
-                <div>
-                  <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-pink-400 font-black flex items-center gap-1.5 mb-2.5">
-                    <Eye className="w-4 h-4 text-pink-400" />
-                    <span>{t("gameSettings.sensorUnblur")}</span>
-                  </label>
-                  <div className="grid grid-cols-3 gap-2.5">
-                    {["15", "25", "35"].map(uVal => (
-                      <button
-                        key={uVal}
-                        onClick={() => setSensorUnblurDuration(uVal)}
-                        className={`py-3.5 rounded-xl font-mono font-black text-sm transition-all border-2 cursor-pointer ${
-                          sensorUnblurDuration === uVal
-                            ? "bg-pink-500 text-white border-pink-500 shadow-[0_0_20px_rgba(255,0,128,0.5)] scale-105"
-                            : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
-                        }`}
-                      >
-                        {uVal} {t("gameSettings.secondsSuffix")}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-gray-300 font-black block mb-2.5">
-                      {t("gameSettings.sensorImagesCount")}
-                    </label>
-                    <div className="grid grid-cols-3 gap-2.5">
-                      {["3", "5", "7"].map(rVal => (
-                        <button
-                          key={rVal}
-                          onClick={() => setTotalRounds(rVal)}
-                          className={`py-3.5 rounded-xl font-mono font-black text-sm transition-all border-2 cursor-pointer ${
-                            totalRounds === rVal
-                              ? "bg-pink-500 text-white border-pink-500 shadow-[0_0_20px_rgba(255,0,128,0.5)] scale-105"
-                              : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
-                          }`}
-                        >
-                          {rVal} {t("gameSettings.imagesSuffix")}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-gray-300 font-black block mb-2.5">
-                      {t("gameSettings.sensorReward")}
-                    </label>
-                    <div className="py-3.5 px-4 rounded-xl font-mono font-black text-base bg-pink-500/20 border-2 border-pink-500/50 text-pink-300 text-center shadow-[0_0_15px_rgba(255,0,128,0.2)]">
-                      +{sensorPointReward} XP
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ════════════════ BAR (MIXOLOGY) SETTINGS ════════════════ */}
-            {game === "bar" && (
-              <div className="space-y-6">
-                <div>
-                  <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-pink-400 font-black block mb-2.5">
-                    ⏱️ COCKTAIL-SERVIERZEIT
-                  </label>
-                  <div className="grid grid-cols-3 gap-2.5">
-                    {["45", "60", "90"].map(bVal => (
-                      <button
-                        key={bVal}
-                        onClick={() => setBarTime(bVal)}
-                        className={`py-3.5 rounded-xl font-mono font-black text-sm transition-all border-2 cursor-pointer ${
-                          barTime === bVal
-                            ? "bg-pink-500 text-white border-pink-500 shadow-[0_0_20px_rgba(236,72,153,0.5)] scale-105"
-                            : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
-                        }`}
-                      >
-                        {bVal} {t("gameSettings.secondsSuffix")}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-gray-300 font-black block mb-2.5">
-                    ⚡ REZEPT-GESCHWINDIGKEIT
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {[
-                      { val: "4.5", label: "Normal (4.5s)" },
-                      { val: "3.0", label: "Turbo Barmen (3.0s)" }
-                    ].map(item => (
-                      <button
-                        key={item.val}
-                        onClick={() => setBarRecipeSpeed(item.val)}
-                        className={`py-3.5 rounded-xl font-mono font-black text-sm transition-all border-2 cursor-pointer ${
-                          barRecipeSpeed === item.val
-                            ? "bg-white text-black border-white shadow-md scale-105"
-                            : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ════════════════ COLORS (NEON WARS) SETTINGS ════════════════ */}
-            {game === "colors" && (
-              <div className="space-y-6">
-                <div>
-                  <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-purple-400 font-black block mb-2.5">
-                    🏆 SIEGBEDINGUNG
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <button
-                      onClick={() => setColorsWinCondition("domination")}
-                      className={`p-4 sm:p-5 rounded-2xl border-2 text-left transition-all cursor-pointer ${
-                        colorsWinCondition === "domination"
-                          ? "bg-purple-500/25 border-purple-400 text-white shadow-[0_0_20px_rgba(168,85,247,0.4)] font-black"
-                          : "bg-white/5 border-white/15 text-gray-300 hover:bg-white/10 hover:text-white"
-                      }`}
-                    >
-                      <div className="font-black text-base text-white mb-1">100% DOMINANZ</div>
-                      <div className="text-xs text-gray-300">Das Team, das die Mittellinie vollständig schiebt, gewinnt sofort.</div>
-                    </button>
-
-                    <button
-                      onClick={() => setColorsWinCondition("timed")}
-                      className={`p-4 sm:p-5 rounded-2xl border-2 text-left transition-all cursor-pointer ${
-                        colorsWinCondition === "timed"
-                          ? "bg-purple-500/25 border-purple-400 text-white shadow-[0_0_20px_rgba(168,85,247,0.4)] font-black"
-                          : "bg-white/5 border-white/15 text-gray-300 hover:bg-white/10 hover:text-white"
-                      }`}
-                    >
-                      <div className="font-black text-base text-white mb-1">45s ZEIT-DUELL</div>
-                      <div className="text-xs text-gray-300">Nach Ablauf der Zeit siegt das Team mit der größeren Fläche.</div>
-                    </button>
                   </div>
                 </div>
               </div>

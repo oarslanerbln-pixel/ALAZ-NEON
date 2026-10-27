@@ -46,18 +46,6 @@ const PLAYER_TUTORIAL_CONTENT = {
       descKey: "tutorial.player.bomb.2.desc",
       icon: "🏃‍♂️"
     }
-  ],
-  sensor: [
-    {
-      titleKey: "tutorial.player.sensor.1.title",
-      descKey: "tutorial.player.sensor.1.desc",
-      icon: "⚡"
-    },
-    {
-      titleKey: "tutorial.player.sensor.2.title",
-      descKey: "tutorial.player.sensor.2.desc",
-      icon: "🏆"
-    }
   ]
 } as const;
 

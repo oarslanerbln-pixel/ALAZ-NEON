@@ -124,22 +124,7 @@ describe("FX Components", () => {
   });
 
   describe("GameAnimatedLogo", () => {
-    const ALL_GAMES: GameType[] = [
-      "scattegories",
-      "quiz",
-      "bomb",
-      "sensor",
-      "wheel",
-      "overload",
-      "echo",
-      "pulse",
-      "colors",
-      "vault",
-      "unity",
-      "bar",
-      "kablo",
-      "ayna",
-    ];
+    const ALL_GAMES: GameType[] = ["scattegories", "quiz", "bomb"];
 
     it.each(ALL_GAMES)("renders SVG emblem correctly for game '%s'", (game) => {
       const { container } = render(

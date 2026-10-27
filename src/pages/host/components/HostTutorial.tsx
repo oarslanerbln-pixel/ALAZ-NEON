@@ -27,10 +27,6 @@ const TUTORIAL_CONTENT = {
     { titleKey: "tutorial.host.bomb.1.title", descKey: "tutorial.host.bomb.1.desc", icon: "💣" },
     { titleKey: "tutorial.host.bomb.2.title", descKey: "tutorial.host.bomb.2.desc", icon: "🔥" },
   ],
-  sensor: [
-    { titleKey: "tutorial.host.sensor.1.title", descKey: "tutorial.host.sensor.1.desc", icon: "⚡" },
-    { titleKey: "tutorial.host.sensor.2.title", descKey: "tutorial.host.sensor.2.desc", icon: "🎯" },
-  ],
 } as const;
 
 export function HostTutorial({ room, onComplete }: Props) {

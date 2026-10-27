@@ -180,7 +180,7 @@ export function HostBombDisplay({
     }
   }, [room, players, venue]);
 
-  // Diğer üç modun hepsinde (Arena/Quiz/Sensör) HostHeader hep görünür —
+  // Diğer modlarda (Arena/Quiz) HostHeader hep görünür —
   // oda kodu, tur sayacı, dil seçici ve "ERKEN BİTİR" her zaman erişilebilir.
   // Bomba modunda bu bileşen hiç import edilmemişti: host TV ekranında
   // oyunu manuel bitirmenin HİÇBİR yolu yoktu, oda kodunu da göremiyordu.

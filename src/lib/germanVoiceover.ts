@@ -23,7 +23,6 @@ export type GermanVoiceoverId =
   | "quiz_correct"
   | "quiz_wrong"
   | "quiz_streak"
-  | "sensor_duel"
   | "podium_reveal"
   | "champion_announce"
   | "free_drink_reward";

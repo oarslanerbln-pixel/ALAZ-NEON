@@ -89,7 +89,8 @@ describe("announcer — oda geçişleri", () => {
   it("oyun girişleri seslendirilir", () => {
     expect(cueForTransition(snap("lobby"), snap("quiz_intro"))).toBe("quiz_intro");
     expect(cueForTransition(snap("lobby"), snap("bomb_intro"))).toBe("bomb_intro");
-    expect(cueForTransition(snap("lobby"), snap("sensor_intro"))).toBe("sensor_intro");
+    // Kaldırılan sensör modunun durumu artık seslendirilmiyor.
+    expect(cueForTransition(snap("lobby"), snap("sensor_intro"))).toBeNull();
   });
 
   it("son soru duyurulur, aradaki sorular sessiz", () => {
