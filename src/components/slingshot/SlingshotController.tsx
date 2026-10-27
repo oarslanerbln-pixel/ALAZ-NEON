@@ -232,7 +232,7 @@ export function SlingshotController({
             animate={{ opacity: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25, ease: EASE.out }}
-            className="absolute inset-0 bg-gradient-to-t from-alaz-orange to-white pointer-events-none z-50 mix-blend-overlay"
+            className="absolute inset-0 bg-gradient-to-t from-alaz-orange to-white pointer-events-none z-50"
           />
         )}
       </AnimatePresence>
@@ -240,14 +240,14 @@ export function SlingshotController({
       {/* Üst HUD: Durum & Güç Telemetrisi */}
       <div className="relative z-10 flex items-center justify-between border-b border-white/10 pb-3">
         <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full bg-alaz-orange animate-pulse" />
-          <span className="font-mono text-xs tracking-widest font-black uppercase text-white/90">
+          <span className="w-3 h-3 rounded-full bg-alaz-orange" />
+          <span className="tabular-nums text-xs tracking-widest font-black uppercase text-white/90">
             {roundHint ?? t("slingshot.penaltyShot")}
           </span>
         </div>
 
         {/* Gerilim & Açı Göstergesi */}
-        <div className="flex items-center gap-3 font-mono text-xs font-bold">
+        <div className="flex items-center gap-3 tabular-nums text-xs font-bold">
           <div className="text-cyan-400">
             {t("slingshot.angle")}: <span className="text-white">{pullAngle > 0 ? `+${pullAngle}°` : `${pullAngle}°`}</span>
           </div>
@@ -264,15 +264,15 @@ export function SlingshotController({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
-        className="relative flex-1 my-3 flex items-center justify-center rounded-3xl border border-white/15 bg-black/50 backdrop-blur-xl overflow-hidden cursor-grab active:cursor-grabbing touch-none"
+        className="relative flex-1 my-3 flex items-center justify-center rounded-3xl border border-white/15 bg-black/50 overflow-hidden cursor-grab active:cursor-grabbing touch-none"
       >
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
 
         {/* Başlangıç Yönergesi */}
         {!isPulling && (disabled || !hasLaunched) && (
           <div className="absolute inset-x-0 bottom-8 flex flex-col items-center pointer-events-none text-center">
-            <span className="text-3xl animate-bounce mb-2">👇</span>
-            <span className="font-mono text-xs font-bold uppercase tracking-wider text-white/80 bg-black/60 px-4 py-1.5 rounded-full border border-white/15">
+            <span className="text-3xl mb-2">👇</span>
+            <span className="tabular-nums text-xs font-bold uppercase tracking-wider text-white/80 bg-black/60 px-4 py-1.5 rounded-full border border-white/15">
               {disabled ? t("slingshot.reloading") : t("slingshot.pullHint")}
             </span>
           </div>
@@ -281,7 +281,7 @@ export function SlingshotController({
 
       {/* Alt Alan: Falso / Spin Kontrol Barı */}
       <div className="relative z-10 w-full flex flex-col gap-2 bg-white/5 border border-white/10 rounded-2xl p-3">
-        <div className="flex justify-between items-center text-[10px] font-mono tracking-widest uppercase text-white/60">
+        <div className="flex justify-between items-center text-xs tabular-nums tracking-widest uppercase text-white/60">
           <span>⤹ {t("slingshot.curveLeft")}</span>
           <span className="text-cyan-300 font-bold">{t("slingshot.spin")}: {curveFactor}</span>
           <span>{t("slingshot.curveRight")} ⤸</span>

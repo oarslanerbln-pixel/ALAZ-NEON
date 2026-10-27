@@ -5,8 +5,8 @@ import { ShareableRecapCard } from "../components/ShareableRecapCard";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { playGermanVoiceover } from "../../../lib/germanVoiceover";
 import { ConfettiCanvas, type ConfettiCanvasRef } from "../../../components/ConfettiCanvas";
-import { DURATION, EASE, SPRING, STAGGER, TWEEN, listItem } from "../../../lib/motion";
-import { CardSpotlight, KineticText, NumberTicker, ShimmerButton } from "../../../components/fx";
+import { DURATION, EASE, TWEEN } from "../../../lib/motion";
+import { NumberTicker } from "../../../components/fx";
 import type { Player } from "../../../types/database";
 import type { JulesAward } from "../../../lib/intelligence";
 import { PARTICIPATION_POINTS, TEAM_WIN_POINTS, placementPointsByScore } from "../../../lib/nightLeague";
@@ -40,88 +40,45 @@ interface PillarProps {
   night?: number;
 }
 
-const PLACE_STYLE: Record<Place, { width: string; height: string; pillar: string; name: string; score: string; number: string; edge: string }> = {
-  1: {
-    width: "w-60 md:w-64",
-    height: "62%",
-    pillar: "bg-gradient-to-t from-yellow-500/20 via-yellow-500/10 to-transparent backdrop-blur-3xl border-t border-x border-yellow-400/50 shadow-[0_0_50px_rgba(251,191,36,0.3)]",
-    name: "text-2xl md:text-3xl font-bold text-white tracking-[0.05em] drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]",
-    score: "text-xl font-semibold text-white mt-1",
-    number: "text-4xl md:text-5xl font-thin text-white/40 mt-3",
-    edge: "from-yellow-200/70 via-yellow-400/40 to-transparent",
-  },
-  2: {
-    width: "w-52 md:w-56",
-    height: "48%",
-    pillar: "bg-white/[0.03] backdrop-blur-3xl border-t border-x border-white/10",
-    name: "text-xl md:text-2xl font-medium text-white tracking-wider",
-    score: "text-lg font-normal text-white/60 mt-1",
-    number: "text-3xl md:text-4xl font-thin text-white/20 mt-2",
-    edge: "from-slate-200/60 via-slate-300/30 to-transparent",
-  },
-  3: {
-    width: "w-52 md:w-56",
-    height: "36%",
-    pillar: "bg-white/[0.02] backdrop-blur-3xl border-t border-x border-white/5",
-    name: "text-lg md:text-xl font-normal text-white/80 tracking-wider",
-    score: "text-base font-normal text-white/50 mt-1",
-    number: "text-2xl md:text-3xl font-thin text-white/10 mt-2",
-    edge: "from-orange-300/50 via-orange-400/25 to-transparent",
-  },
-};
+const PILLAR_HEIGHT: Record<Place, string> = { 1: "h-[300px]", 2: "h-[230px]", 3: "h-[180px]" };
 
 /**
- * Podyum sütunu. `height` animasyonu (her karede layout) yerine sütun sabit
- * yükseklikte durur ve `translateY` ile aşağıdan yükselir; kapsayıcı sahne
- * çizgisinin altını kırpar. Şampiyon sütunu oturunca kısa bir ölçek nabzı atar.
+ * Podyum sütunu: sabit yükseklikte durur, `translateY` ile aşağıdan yükselir
+ * (her karede layout yok); kapsayıcı sahne çizgisinin altını kırpar.
  */
 function Pillar({ place, name, score, night }: PillarProps) {
   const { t } = useLocale();
-  const s = PLACE_STYLE[place];
   const delay = REVEAL_DELAY[place];
   const isWinner = place === 1;
 
   return (
-    <div className={`relative h-full flex flex-col justify-end overflow-hidden px-4 -mx-4 z-10 ${s.width}`}>
+    <div className="flex flex-col items-center justify-end w-[400px]">
       <motion.div
-        initial={{ y: "115%", opacity: 0 }}
-        animate={{ y: 0, opacity: 1, scale: isWinner ? [1, 1, 1.03, 1] : 1 }}
-        transition={{
-          y: { ...SPRING.gentle, delay },
-          opacity: { duration: DURATION.base, delay },
-          scale: { duration: 0.7, delay: delay + 0.55, ease: EASE.inOut, times: [0, 0.2, 0.6, 1] },
-        }}
-        style={{ height: s.height, originY: 1 }}
-        className={`relative w-full rounded-t-3xl flex flex-col items-center justify-start pt-6 will-change-transform ${s.pillar}`}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ ...TWEEN.enter, delay: delay + 0.2 }}
+        className="text-center w-full mb-4"
       >
-        {/* Madalya rengi üst kenar ışığı */}
-        <div aria-hidden="true" className={`absolute top-0 inset-x-0 h-20 rounded-t-3xl bg-gradient-to-b ${s.edge} pointer-events-none`} />
-
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ ...TWEEN.enter, delay: delay + 0.35 }}
-          className={`absolute ${isWinner ? "-top-24" : "-top-18"} text-center w-full`}
-        >
-          <div className={`truncate max-w-[260px] px-2 mx-auto ${s.name}`}>{name}</div>
-          <div className={`tracking-widest ${s.score}`}>
-            <NumberTicker value={score} delay={delay + 0.4} duration={1} />
-          </div>
-        </motion.div>
-
+        <div className={`truncate px-2 font-extrabold text-ink ${isWinner ? "text-6xl" : "text-4xl"}`}>{name}</div>
+        <div className={`mt-1 font-semibold tabular-nums ${isWinner ? "text-4xl text-accent" : "text-3xl text-ink-2"}`}>
+          <NumberTicker value={score} delay={delay + 0.3} duration={1} />
+        </div>
         {night !== undefined && night > 0 && (
-          <motion.span
-            initial={{ opacity: 0, scale: 0.6 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ ...SPRING.bouncy, delay: delay + 1.1 }}
-            className="relative rounded-full border border-amber-300/40 bg-amber-300/10 px-3 py-1 text-xs font-black uppercase tracking-[0.15em] text-amber-200 tabular-nums"
-          >
-            {t("podium.nightPoints", night)}
-          </motion.span>
+          <div className="mt-2 text-2xl text-ink-3 tabular-nums">{t("podium.nightPoints", night)}</div>
         )}
-
-        <div className={s.number}>{place}</div>
       </motion.div>
+      <div className="w-full overflow-hidden">
+        <motion.div
+          initial={{ y: "100%" }}
+          animate={{ y: 0 }}
+          transition={{ duration: DURATION.slow, ease: EASE.out, delay }}
+          className={`w-full rounded-t-3xl flex items-start justify-center pt-6 ${PILLAR_HEIGHT[place]} ${
+            isWinner ? "bg-accent/15 border-t-2 border-x-2 border-accent" : "bg-surface border-t border-x border-line"
+          }`}
+        >
+          <span className={`text-6xl font-extrabold tabular-nums ${isWinner ? "text-accent" : "text-ink-3"}`}>{place}</span>
+        </motion.div>
+      </div>
     </div>
   );
 }
@@ -267,120 +224,63 @@ export function HostPodium({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={TWEEN.screen}
-      className="flex flex-col items-center justify-between h-full w-full py-2 px-6 overflow-hidden bg-black relative select-none"
+      className="flex flex-col items-center justify-between h-full w-full relative select-none bg-bg"
     >
       <ConfettiCanvas ref={confettiRef} autoCannon={false} />
 
-      <KineticText
-        text={t("podium.title")}
-        as="h2"
-        tone="gold"
-        animation="pop"
-        className="text-2xl md:text-4xl font-black mb-1 uppercase tracking-[0.25em] text-glow-gold flex-shrink-0"
-      />
+      <h2 className="text-6xl font-extrabold text-ink tracking-tight">{t("podium.title")}</h2>
 
-      {/* Podyum Sahnesi */}
-      <div className="flex items-end justify-center w-full max-w-4xl gap-4 h-[260px] md:h-[280px] border-b-2 border-white/10 relative flex-shrink-0">
-        <div className="absolute inset-0 bg-gradient-to-t from-amber-500/10 via-transparent to-transparent pointer-events-none" />
-
-        {/* Şampiyon spot ışığı: dönen konik gradyan */}
-        {first && (
-          <motion.div
-            aria-hidden="true"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: DURATION.cinematic, delay: REVEAL_DELAY[1] + 0.3 }}
-            className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 w-[800px] h-[800px] rounded-full podium-spotlight pointer-events-none z-0"
-          />
-        )}
-
-        {second && <Pillar place={2} name={second.name} score={second.score} night={second.night} />}
+      {/* Podyum sahnesi: 2 · 1 · 3 */}
+      <div className="flex items-end justify-center gap-6 w-full border-b border-line">
+        {second ? <Pillar place={2} name={second.name} score={second.score} night={second.night} /> : <div className="w-[400px]" />}
         {first && <Pillar place={1} name={first.name} score={first.score} night={first.night} />}
-        {third && <Pillar place={3} name={third.name} score={third.score} night={third.night} />}
+        {third ? <Pillar place={3} name={third.name} score={third.score} night={third.night} /> : <div className="w-[400px]" />}
       </div>
 
-      {/* RECAP CARD (varsa) */}
-      {awards && (awards.creative || awards.funny) && (
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ ...TWEEN.enter, delay: 3 }}
-          className="mt-1 w-full max-w-md flex justify-center flex-shrink-0"
-        >
-          <ShareableRecapCard awards={awards} roomCode={room?.code} />
-        </motion.div>
-      )}
-
-      {/* OYUNUN ENLERI (AWARDS) */}
+      {/* Oyunun enleri (+ varsa paylaşılabilir özet kartı) */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ ...TWEEN.enter, delay: 3.4 }}
-        className="mt-2 w-full max-w-4xl flex-shrink-0"
+        transition={{ ...TWEEN.enter, delay: 3 }}
+        className="w-full max-w-6xl flex flex-col items-center gap-4"
       >
-        <h3 className="text-center text-[10px] font-bold text-white/50 uppercase tracking-[0.3em] mb-1.5">
-          {t("podium.awardsTitle")}
-        </h3>
-        <motion.div
-          variants={{ hidden: {}, visible: { transition: { staggerChildren: STAGGER.base, delayChildren: 3.6 } } }}
-          initial="hidden"
-          animate="visible"
-          className="grid grid-cols-1 md:grid-cols-3 gap-3"
-        >
+        {awards && (awards.creative || awards.funny) && <ShareableRecapCard awards={awards} roomCode={room?.code} />}
+        <h3 className="text-2xl text-ink-2">{t("podium.awardsTitle")}</h3>
+        <div className="grid grid-cols-3 gap-6 w-full">
           {awardCards.map((card) => (
-            <motion.div key={card.title} variants={listItem}>
-              <CardSpotlight
-                color="purple"
-                ambient={true}
-                radius="1rem"
-                className="bg-white/[0.03] backdrop-blur-2xl shadow-lg hover:bg-white/[0.06] transition-colors"
-                innerClassName="p-2.5 flex flex-col items-center justify-center text-center"
-              >
-                <h4 className="text-white font-bold text-xs uppercase tracking-wider mb-0.5">{card.title}</h4>
-                <p className="text-white/40 text-[9px] font-medium uppercase tracking-widest mb-1">{card.desc}</p>
-                {card.winner ? (
-                  <>
-                    <div className="text-base font-black text-amber-300 truncate w-full px-2 mx-auto tracking-wider">
-                      {card.winner.name}
-                    </div>
-                    <div className="text-white/60 font-medium text-[10px] uppercase tracking-widest tabular-nums">
-                      {card.winner.count} {card.countLabel}
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-white/30 italic text-xs">{card.none}</div>
-                )}
-              </CardSpotlight>
-            </motion.div>
+            <div key={card.title} className="surface rounded-3xl px-6 py-5 text-center">
+              <h4 className="text-2xl font-semibold text-ink">{card.title}</h4>
+              <p className="text-2xl text-ink-3">{card.desc}</p>
+              {card.winner ? (
+                <p className="mt-2 text-3xl font-extrabold text-accent truncate">
+                  {card.winner.name} <span className="text-2xl font-semibold text-ink-2 tabular-nums">· {card.winner.count} {card.countLabel}</span>
+                </p>
+              ) : (
+                <p className="mt-2 text-2xl text-ink-3">{card.none}</p>
+              )}
+            </div>
           ))}
-        </motion.div>
+        </div>
       </motion.div>
 
-      {/* Action Buttons */}
+      {/* Personel düğmeleri */}
       <motion.div
         id="podium-action-buttons"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: DURATION.slow, delay: 4.6 }}
-        className="mt-2 mb-1 flex items-center justify-center gap-4 relative z-20 flex-shrink-0"
+        transition={{ duration: DURATION.slow, delay: 4 }}
+        className="flex items-center justify-center gap-4 relative z-20"
       >
         <button
           onClick={handleDownloadPDF}
           disabled={isGeneratingPDF}
-          className="px-5 py-2.5 border border-white/20 hover:bg-white/10 text-white font-semibold rounded-full transition-colors uppercase tracking-widest text-xs disabled:opacity-50 flex items-center gap-2"
+          className="btn-secondary px-8 h-16 text-2xl disabled:opacity-50"
         >
           {isGeneratingPDF ? "PDF HAZIRLANIYOR..." : "PDF İNDİR"}
         </button>
-        <ShimmerButton
-          onClick={onResetGame}
-          color="yellow"
-          thickness={2}
-          radius="9999px"
-          innerClassName="px-10 py-3.5 bg-gradient-to-r from-amber-300 to-yellow-400 text-black font-black uppercase tracking-[0.2em] text-sm flex items-center gap-2"
-        >
-          <span>{t("podium.newGame")}</span>
-          <span className="text-lg">➔</span>
-        </ShimmerButton>
+        <button onClick={onResetGame} className="btn-primary px-12 h-16 text-2xl uppercase tracking-wide">
+          {t("podium.newGame")}
+        </button>
       </motion.div>
     </motion.div>
   );

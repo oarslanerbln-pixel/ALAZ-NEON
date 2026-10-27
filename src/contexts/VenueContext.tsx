@@ -7,11 +7,10 @@ import { VenueContext } from "./VenueContextCore";
  * context ile dağıtır — her tüketici kendi useActiveVenue()'sunu çağırsaydı
  * aynı dokümana N tane ayrı onSnapshot aboneliği açılırdı.
  *
- * Ayrıca ana vurgu rengini burada CSS değişkenine uygular: index.css'te
- * `--color-alaz-orange` bir Tailwind v4 @theme değişkeni olduğu için, onu
- * :root üzerinde ezmek `bg-alaz-orange`/`text-alaz-orange`/`border-alaz-orange`
- * kullanan HER bileşeni tek noktadan yeniden renklendiriyor — component
- * component renk sınıfı değiştirmeye gerek kalmıyor.
+ * Ayrıca mekânın rengini tek vurgu rengi olarak uygular: index.css'te
+ * `--color-accent` bir Tailwind v4 @theme değişkeni ve eski neon adları ile
+ * renkli aileler de ona bağlı; onu :root üzerinde ezmek tüm arayüzü tek
+ * noktadan yeniden renklendiriyor.
  */
 export function VenueProvider({ children }: { children: React.ReactNode }) {
   const { venue, loading } = useActiveVenue();
@@ -19,9 +18,9 @@ export function VenueProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const root = document.documentElement;
     if (venue.primary_color) {
-      root.style.setProperty("--color-alaz-orange", venue.primary_color);
+      root.style.setProperty("--color-accent", venue.primary_color);
     } else {
-      root.style.removeProperty("--color-alaz-orange");
+      root.style.removeProperty("--color-accent");
     }
   }, [venue.primary_color]);
 

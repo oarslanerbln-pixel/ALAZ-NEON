@@ -19,6 +19,7 @@
     "test:e2e:measure": "firebase emulators:exec --only auth,firestore --project demo-hurrem-e2e \"playwright test --project=measure\""
   },
   "dependencies": {
+    "@fontsource/inter": "^5.3.0",
     "@sentry/react": "^10.70.0",
     "@tailwindcss/vite": "^4.2.1",
     "@types/three": "^0.186.0",

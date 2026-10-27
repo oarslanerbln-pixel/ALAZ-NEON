@@ -44,7 +44,6 @@ import { EASE, DURATION, SPRING, STAGGER, TWEEN, fadeUp, pop, popBouncy, screen,
 | `AnimatedNumber` | Eski değerden yeniye sayar, React'i her karede uyandırmaz | Skor, sıra, sayaçlar |
 | `TimerRing` | SVG `pathLength` ile kesintisiz boşalan halka; ton: calm/warning/critical/over | HostPlaying; quiz/bomba için hazır |
 | `ConfettiCanvas` / `ConfettiEngine` | DPR + dt fizik, 700 parçacık tavanı, sekme gizlenince durur | Standings, Podium, PlayerStandings |
-| `ParticleBackground` | Sprite tabanlı parlama, hız çarpanı lerp ile değişir | HostDisplay, Quiz |
 | `HoldButton` | Dolum `scaleX` motion value ile — kare başına render yok | PlayerPlaying |
 | `ExperienceBar` | `scaleX` dolum; `mode="linear"` geri sayım için | PlayerHeader |
 
@@ -53,11 +52,11 @@ import { EASE, DURATION, SPRING, STAGGER, TWEEN, fadeUp, pop, popBouncy, screen,
 **HostStandings** — satırlar önceki sırayla belirir → 0.9s puan sayacı → 1.6s
 `layout` ile yeni sıraya kayış (+ ▲/▼ rozeti) → 2.3s konfeti.
 
-**HostPodium** — 3. (0.4s) → 2. (1.2s) → 1. (2.2s, fanfar) → 2.45s konfeti,
-spot ışığı; 3.4s ödül kartları kademeli.
+**HostPodium** — 3. (0.4s) → 2. (1.2s) → 1. (2.2s, fanfar) → 2.45s konfeti;
+3s ödül kartları.
 
-**HostPlaying** — >10s nötr · ≤10s amber halka + vinyet · ≤5s kırmızı halka,
-kalp atışı, giriş flaşı · 0s tek sarsıntı + şok dalgası + "SÜRE BİTTİ".
+**HostPlaying** — vurgu renginde halka · ≤5s kırmızı halka ve tik sesi ·
+0s tek sarsıntı + "SÜRE BİTTİ".
 
 ## 5. Yeni ekran kontrol listesi
 
@@ -72,55 +71,53 @@ kalp atışı, giriş flaşı · 0s tek sarsıntı + şok dalgası + "SÜRE BİT
 - [ ] Siren, "sistem çöktü / hacklendi" gibi alarm dili yok: misafir bunu gerçek bir arıza sanıyor.
 - [ ] Telefonda bekleme/hazırlan/bitti ekranı için `PlayerStageScreen`; TV açılışı için `GameIntroCinematic` kullandım.
 
-## 6. Görsel dil v2 — fx katmanı ve ortak ekranlar
+## 6. Görsel dil v3 — sade, tek vurgu (27.10.2026)
 
-Hedef: **sade ama etkili premium.** Tek bir ürün gibi görünen, her oyunda
-aynı iskelete oturan ekranlar; oyunun kimliği yalnızca renk tonu ve simgeden
-gelir. Desenler GitHub'daki Tailwind + Motion kütüphanelerinden seçilip bu
-dosyanın 1. bölümündeki kurallara (yalnızca transform/opacity) uyarlandı.
+Hedef: **sade ama premium.** v2'deki fx katmanı (BeamBorder, AuroraBackdrop,
+GridPattern, ShimmerButton, CardSpotlight, KineticText) ve "AAA" süsleri
+(volumetrik ışık, 3D harf monoliti, lazer köşeler, tarama çizgileri)
+kaldırıldı: okunurluğu düşürüyor, GPU'suz TV'de kare hızını 13 fps'e
+çekiyordu. "Wow" yalnızca gecenin birkaç anında, önceden render edilmiş
+varlıklarla gelir (Blender; bkz. `docs/game-design-review.md`).
 
-### Araştırılan kaynaklar
+### Tokenlar (`src/index.css` → `@theme`)
 
-| Kütüphane | Lisans | Aldığımız desen |
+| Token | Değer | Kullanım |
 |---|---|---|
-| [Magic UI](https://github.com/magicuidesign/magicui) | MIT | Border Beam, Grid Pattern, Aurora, Blur Fade |
-| [Motion Primitives](https://github.com/ibelick/motion-primitives) | MIT | Border Trail, Glow Effect, Text Effect |
-| [Animate UI](https://github.com/imskyleen/animate-ui) | MIT | Yay tabanlı giriş koreografisi |
-| HeroUI v3 notu | — | Sonsuz ortam döngüleri JS yerine **CSS keyframe** ile (daha hafif) |
+| `bg` / `surface` / `surface-2` | #0B0B10 / #15151C / #1E1E27 | zemin, kart, kart içi öğe |
+| `line` | beyaz %8 | ince kenar |
+| `ink` / `ink-2` / `ink-3` | #F5F5F7 / #A1A1AA / #71717A | metin kademeleri |
+| `accent` | mekânın rengi (varsayılan amber #F5A524) | **tek vurgu**; `VenueContext` ezer |
+| `ok` / `bad` | yeşil / kırmızı | yalnızca doğru/yanlış, can |
 
-Kod kopyalanmadı: desenler buradaki tokenlarla yeniden yazıldı, böylece
-ek bağımlılık yok ve hepsi `prefers-reduced-motion`'a uyuyor.
+Eski neon adları (`neon-blue`, `alaz-orange`…) ve Tailwind'in renkli
+aileleri (cyan, purple, pink, amber…) `accent`'e bağlıdır; yeni kodda
+doğrudan `accent`/`ink`/`surface` yaz. Hazır sınıflar: `.surface`,
+`.surface-2`, `.btn-primary`, `.btn-secondary`.
 
-### fx katmanı (`src/components/fx/`)
+### Kurallar
 
-| Bileşen | Ne yapar | Teknik |
-|---|---|---|
-| `BeamBorder` | Kenarda yavaşça dolaşan ince ışık | Arkada dönen konik kare + opak iç panel; yalnızca `rotate` |
-| `AuroraBackdrop` | Süzülen renk bulutları | `radial-gradient(closest-side)` — `filter: blur` yok |
-| `GridPattern` | Merkezden sönen ızgara dokusu | Statik, maskeli |
-| `RevealText` | Kelime kelime açılan başlık | opacity + translateY, ekran okuyucuya tek metin |
-| `ShimmerButton` | Dönen neon huzmeli buton | `whileTap={{ scale: 0.94 }}` yaylanması + mobilde 12ms haptik titreşim (`navigator.vibrate`) |
-| `CardSpotlight` | Neon odak ışığı yansıtan kart | `radial-gradient` ile pointer takibi veya TV için `ambient` yavaş salınım |
-| `KineticText` | Dinamik kinetik tipografi | Harf (`characters`) veya kelime (`words`) yaylanması, ekran okuyucuya tek `aria-label` |
-| `NumberTicker` | Slot makinesi sayaç | `tabular-nums` ve Framer Motion value ile dikey kayan rakamlar, sıfır yatay titreme |
-
-CSS: `.fx-beam`, `.fx-aurora-blob` (index.css); hepsi reduced-motion'da durur.
+- **Yazı:** tek aile Inter (uygulamayla gelir, 400/600/800). `font-mono`
+  yalnızca oda kodunda; sayılar `tabular-nums`. TV tuvalinde (`.tv-canvas`)
+  `text-xs`/`text-sm` 24 px'e çekilir — **TV'de en küçük 24 px**, telefonda
+  14 px (`text-xs` = 14 px).
+- **Izgara:** 8 px katları; TV'de `px-24 py-12` güvenli kenar.
+- **Yüzey:** düz kart, ince kenar, hafif gölge. `backdrop-blur`, parlama
+  gölgesi (`shadow-[0_0_…]`), gradyan metin yok.
+- **Hareket:** durum geçişleri ≤250 ms (`DURATION.base/slow`); ekran başına
+  tek odak animasyonu (süre halkası, puan sayacı, bomba). Sonsuz döngü yok
+  (yükleme çarkı hariç). `DURATION.cinematic` yalnızca wow anları için.
+- **TV üst çubuğu (`HostHeader`):** marka + oda kodu. Personel kontrolleri
+  (lobiye dön, reklam arası, erken bitir, ses, spiker, dil, çıkış) tek "⋯"
+  menüsünde (`role="menu"`).
 
 ### Ortak ekranlar
 
-- **Telefon — `PlayerStageScreen`:** bekle / hazırlan / bitti. İnce dönen
-  ışık halkası, camsı simge, "— OYUN ADI —" satırı, CSS ile büyütülmüş tek
-  başlık (`<html lang>` sayesinde Türkçe i/İ doğru), en fazla bir cümle ve
-  "ana ekranı takip et" hapı. Tonlar: orange, red, blue, cyan, amber,
-  purple, emerald, yellow, pink.
-- **TV — `GameIntroCinematic`:** başlık (+ oyuncu yoklaması) → nasıl oynanır
-  (3 kart, `BeamBorder`) → 3-2-1. ~10.5 sn. Yeni oyun eklerken kendi açılışını
-  yazma; bu bileşene başlık, 3 adım ve iki renk ver.
+- **Telefon — `PlayerStageScreen`:** bekle / hazırlan / bitti. Simge, tek
+  başlık, en fazla bir cümle ve "ana ekranı takip et" hapı. `tone` yalnızca
+  `red` (elendin/hata) ile vurguyu ayırır.
+- **Telefon arka planı — `PlayerBackground`:** tek nötr webp (18 KB) + koyu
+  katman. Telefonda video/Three.js yok.
+- **TV — `GameIntroCinematic`:** başlık → nasıl oynanır → 3-2-1.
 - **Süre gösterimi:** telefonda kalan süre `lib/countdown` ile hesaplanır
   (telefonun soruyu gördüğü an; TV ile saat farkından etkilenmez).
-
-### Tipografi
-
-Başlıklar `Outfit` (font-black, büyük harf, hafif `tracking`), gövde `Inter`.
-Büyük başlıklarda beyazdan %70 beyaza dikey gradyan metin; gövde metni
-`text-white/65–70`, `text-balance`.

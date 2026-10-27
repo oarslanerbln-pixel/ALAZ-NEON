@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
-import { AuroraBackdrop } from "../../../components/fx/AuroraBackdrop";
-import { BeamBorder } from "../../../components/fx/BeamBorder";
-import { GridPattern } from "../../../components/fx/GridPattern";
 import { RevealText } from "../../../components/fx/RevealText";
 import { useLocale } from "../../../hooks/useLocale";
 import { SoundManager, sounds } from "../../../lib/audio";
@@ -23,8 +20,8 @@ interface GameIntroCinematicProps {
   steps: readonly IntroStep[];
   /** Bağlı oyuncuların adları — başlığın altında kısa bir yoklama gibi akar. */
   roster?: readonly string[];
-  /** Vurgu renkleri, "r,g,b": [ana, ikincil]. */
-  rgb: readonly [string, string];
+  /** Eski API uyumluluğu için duruyor; tek vurgu rengi (accent) kullanılıyor. */
+  rgb?: readonly [string, string];
   onComplete: () => void;
 }
 
@@ -46,7 +43,7 @@ const ROSTER_MAX = 14;
  * duyarlı epilepsi) eşiğini aşıyordu. Bu sahne aynı heyecanı ışık ve
  * tipografiyle veriyor; misafir 10 saniyede oyunun kuralını da öğreniyor.
  */
-export function GameIntroCinematic({ eyebrow, title, subtitle, roster = [], steps, rgb, onComplete }: GameIntroCinematicProps) {
+export function GameIntroCinematic({ eyebrow, title, subtitle, roster = [], steps, onComplete }: GameIntroCinematicProps) {
   const { t } = useLocale();
   const [phase, setPhase] = useState<Phase>("title");
   const [count, setCount] = useState<number>(INTRO_TIMELINE.countFrom);
@@ -79,29 +76,8 @@ export function GameIntroCinematic({ eyebrow, title, subtitle, roster = [], step
     return () => timers.forEach(clearTimeout);
   }, []);
 
-  const [primary, secondary] = rgb;
-
   return (
     <div className="fixed inset-0 z-[100] bg-[#030307] text-white overflow-hidden flex items-center justify-center">
-      {/* Sinematik Tanıtım Arka Plan Videosu */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-25 mix-blend-screen -z-10">
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          poster="/media/tanitim/video-poster.webp"
-          className="w-full h-full object-cover scale-105 filter blur-[0.5px]"
-        >
-          <source src="/media/tanitim/hengame-tanitim-720.webm" type="video/webm" />
-          <source src="/media/tanitim/hengame-tanitim-1080.mp4" type="video/mp4" />
-        </video>
-        <div className="absolute inset-0 bg-gradient-to-t from-[#030307] via-transparent to-[#030307]/80" />
-      </div>
-
-      <AuroraBackdrop colors={[primary, secondary, primary]} intensity={0.22} />
-      <GridPattern />
-
       <AnimatePresence mode="wait">
         {phase === "title" && (
           <motion.div
@@ -113,8 +89,7 @@ export function GameIntroCinematic({ eyebrow, title, subtitle, roster = [], step
               initial={{ opacity: 0, letterSpacing: "0.2em" }}
               animate={{ opacity: 1, letterSpacing: "0.5em" }}
               transition={{ duration: DURATION.cinematic, ease: EASE.out }}
-              className="flex items-center gap-4 md:gap-6 text-xl md:text-2xl font-black uppercase"
-              style={{ color: `rgb(${primary})` }}
+              className="flex items-center gap-4 md:gap-6 text-xl md:text-2xl font-black uppercase text-accent"
             >
               <span className="h-px w-12 md:w-16 bg-current opacity-50" aria-hidden="true" />
               {eyebrow}
@@ -125,7 +100,7 @@ export function GameIntroCinematic({ eyebrow, title, subtitle, roster = [], step
               text={title}
               delay={0.25}
               stagger={0.12}
-              className="mt-4 md:mt-6 text-[100px] md:text-[135px] lg:text-[155px] leading-none font-black uppercase tracking-tight bg-gradient-to-b from-white via-white to-white/60 bg-clip-text text-transparent"
+              className="mt-4 md:mt-6 text-[100px] md:text-[135px] lg:text-[155px] leading-none font-black uppercase tracking-tight text-white"
             />
 
             {subtitle && (
@@ -133,8 +108,7 @@ export function GameIntroCinematic({ eyebrow, title, subtitle, roster = [], step
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.1, duration: DURATION.slow, ease: EASE.out }}
-                className="mt-5 md:mt-7 text-2xl md:text-3xl font-black uppercase tracking-[0.35em]"
-                style={{ color: `rgb(${secondary})`, textShadow: `0 0 35px rgba(${secondary},0.45)` }}
+                className="mt-5 md:mt-7 text-2xl md:text-3xl font-black uppercase tracking-[0.35em] text-accent"
               >
                 {subtitle}
               </motion.p>
@@ -184,15 +158,13 @@ export function GameIntroCinematic({ eyebrow, title, subtitle, roster = [], step
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ ...SPRING.gentle, delay: 0.2 + i * 0.18 }}
                 >
-                  <BeamBorder rgb={i % 2 ? secondary : primary} duration={5 + i} radius="2rem" className="h-full" innerClassName="bg-[#07070c]/95">
-                    <div className="h-full flex flex-col items-start gap-4 md:gap-5 p-6 md:p-8">
-                      <div className="flex w-full items-center justify-between">
-                        <span className="text-5xl md:text-6xl leading-none" aria-hidden="true">{step.icon}</span>
-                        <span className="text-4xl font-black tabular-nums text-white/15">{String(i + 1).padStart(2, "0")}</span>
-                      </div>
-                      <p className="text-2xl md:text-3xl font-bold leading-snug text-white text-balance">{step.text}</p>
+                  <div className="surface rounded-[2rem] h-full flex flex-col items-start gap-4 md:gap-5 p-6 md:p-8">
+                    <div className="flex w-full items-center justify-between">
+                      <span className="text-5xl md:text-6xl leading-none" aria-hidden="true">{step.icon}</span>
+                      <span className="text-4xl font-black tabular-nums text-white/15">{String(i + 1).padStart(2, "0")}</span>
                     </div>
-                  </BeamBorder>
+                    <p className="text-2xl md:text-3xl font-bold leading-snug text-white text-balance">{step.text}</p>
+                  </div>
                 </motion.div>
               ))}
             </div>
@@ -207,23 +179,20 @@ export function GameIntroCinematic({ eyebrow, title, subtitle, roster = [], step
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, scale: 1.08, transition: { duration: DURATION.base, ease: EASE.in } }}
           >
-            <BeamBorder rgb={primary} duration={1} thickness={3} radius="9999px" className="w-[340px] h-[340px] md:w-[380px] md:h-[380px]" innerClassName="bg-[#05050a]">
-              <div className="w-full h-full flex items-center justify-center rounded-full" style={{ boxShadow: `inset 0 0 100px rgba(${primary},0.18)` }}>
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={count}
-                    initial={{ opacity: 0, scale: 1.6 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.6 }}
-                    transition={{ duration: DURATION.base, ease: EASE.out }}
-                    className="text-[180px] md:text-[210px] font-black leading-none tabular-nums"
-                    style={{ textShadow: `0 0 50px rgba(${primary},0.6)` }}
-                  >
-                    {count}
-                  </motion.span>
-                </AnimatePresence>
-              </div>
-            </BeamBorder>
+            <div className="surface w-[340px] h-[340px] md:w-[380px] md:h-[380px] flex items-center justify-center rounded-full border-accent">
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={count}
+                  initial={{ opacity: 0, scale: 1.6 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.6 }}
+                  transition={{ duration: DURATION.base, ease: EASE.out }}
+                  className="text-[180px] md:text-[210px] font-black leading-none tabular-nums"
+                >
+                  {count}
+                </motion.span>
+              </AnimatePresence>
+            </div>
             <p className="text-2xl md:text-3xl font-black uppercase tracking-[0.4em] text-white/60">{t("intro.phonesReady")}</p>
           </motion.div>
         )}

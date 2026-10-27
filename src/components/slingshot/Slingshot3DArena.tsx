@@ -290,23 +290,23 @@ export function Slingshot3DArena({ players, shot, onShotResult }: Slingshot3DAre
       {/* Üst HUD: Maç Önü Penaltı Arenası Başlığı */}
       <div className="relative z-20 flex items-center justify-between p-6 bg-gradient-to-b from-black/80 to-transparent">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-alaz-orange/20 border-2 border-alaz-orange flex items-center justify-center text-xl shadow-[0_0_20px_#ff5500]">
+          <div className="w-10 h-10 rounded-2xl bg-alaz-orange/20 border-2 border-alaz-orange flex items-center justify-center text-xl">
             ⚽
           </div>
           <div>
-            <div className="text-xs font-mono tracking-[0.3em] uppercase text-alaz-orange font-bold">
+            <div className="text-xs tabular-nums tracking-[0.3em] uppercase text-alaz-orange font-bold">
               {t("slingshot.arenaEyebrow")}
             </div>
-            <h1 className="text-2xl font-black tracking-tight text-white drop-shadow-md">
+            <h1 className="text-2xl font-black tracking-tight text-white">
               {shot ? t("slingshot.shooter", shot.shooterName) : t("slingshot.title")}
             </h1>
           </div>
         </div>
 
         {/* Canlı Rüzgar Vektörü Göstergesi */}
-        <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-black/60 border border-white/15 backdrop-blur-md">
+        <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-black/60 border border-white/15">
           <span className="text-lg">🌬️</span>
-          <div className="font-mono text-xs">
+          <div className="tabular-nums text-xs">
             <span className="text-white/60">{t("slingshot.wind")}: </span>
             <span className="text-cyan-300 font-bold">{t("slingshot.windRight", WIND)}</span>
           </div>
@@ -317,10 +317,10 @@ export function Slingshot3DArena({ players, shot, onShotResult }: Slingshot3DAre
           {players.map((p) => (
             <div
               key={p.id}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/60 border border-white/15 backdrop-blur-md"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/60 border border-white/15"
             >
-              <span className="font-mono text-xs font-bold">{p.nickname}</span>
-              <span className="font-mono text-sm font-black text-alaz-orange ml-1">
+              <span className="tabular-nums text-xs font-bold">{p.nickname}</span>
+              <span className="tabular-nums text-sm font-black text-alaz-orange ml-1">
                 {t("slingshot.goals", p.score)}
               </span>
             </div>
@@ -331,11 +331,11 @@ export function Slingshot3DArena({ players, shot, onShotResult }: Slingshot3DAre
       {/* Büyük Şut Sonucu Animasyonu (GOL / KURTARILDI / DİREK) */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
         {shotResult === "goal" && (
-          <div className="flex flex-col items-center animate-bounce">
-            <h1 className="text-8xl md:text-9xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-amber-200 to-alaz-orange drop-shadow-[0_0_50px_rgba(255,85,0,0.9)]">
+          <div className="flex flex-col items-center">
+            <h1 className="text-8xl md:text-9xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-amber-200 to-alaz-orange">
               {t("slingshot.goal")}
             </h1>
-            <span className="font-mono text-xl tracking-[0.4em] uppercase text-amber-300 font-black mt-2">
+            <span className="tabular-nums text-xl tracking-[0.4em] uppercase text-amber-300 font-black mt-2">
               {t("slingshot.goalPoints", SLINGSHOT_GOAL_POINTS)}
             </span>
           </div>
@@ -343,7 +343,7 @@ export function Slingshot3DArena({ players, shot, onShotResult }: Slingshot3DAre
 
         {shotResult === "saved" && (
           <div className="flex flex-col items-center">
-            <h1 className="text-7xl md:text-8xl font-black italic tracking-tight text-rose-500 drop-shadow-[0_0_40px_rgba(244,63,94,0.9)]">
+            <h1 className="text-7xl md:text-8xl font-black italic tracking-tight text-rose-500">
               {t("slingshot.saved")}
             </h1>
           </div>
@@ -351,7 +351,7 @@ export function Slingshot3DArena({ players, shot, onShotResult }: Slingshot3DAre
 
         {shotResult === "crossbar" && (
           <div className="flex flex-col items-center">
-            <h1 className="text-7xl md:text-8xl font-black italic tracking-tight text-amber-400 drop-shadow-[0_0_40px_rgba(251,191,36,0.9)]">
+            <h1 className="text-7xl md:text-8xl font-black italic tracking-tight text-amber-400">
               {t("slingshot.crossbar")}
             </h1>
           </div>
@@ -368,8 +368,8 @@ export function Slingshot3DArena({ players, shot, onShotResult }: Slingshot3DAre
 
       {/* Alt HUD: Kılavuz */}
       <div className="relative z-20 flex items-center justify-center p-4 bg-gradient-to-t from-black/80 to-transparent">
-        <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-white/70">
-          <span className="w-2 h-2 rounded-full bg-alaz-orange animate-ping" />
+        <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs tabular-nums text-white/70">
+          <span className="w-2 h-2 rounded-full bg-alaz-orange" />
           <span>{t("slingshot.arenaHint")}</span>
         </div>
       </div>

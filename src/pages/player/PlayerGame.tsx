@@ -5,7 +5,6 @@ import { collection, addDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { retentionExpiry } from "../../lib/retention";
 import { isAlreadyExists } from "../../lib/errors";
-import { NeonIcon } from "../../components/NeonIcon";
 import { HostOfflineBanner } from "../../components/HostOfflineBanner";
 import { DatabaseStatus } from "../../components/DatabaseStatus";
 import { RoomStatusScreen } from "../../components/RoomStatusScreen";
@@ -26,7 +25,7 @@ import { PlayerLobby } from "./views/PlayerLobby";
 import { PlayerPlaying } from "./views/PlayerPlaying";
 import { PlayerReview } from "./views/PlayerReview";
 import { PlayerStandings } from "./views/PlayerStandings";
-import { BackgroundSlider } from "../../components/BackgroundSlider";
+import { PlayerBackground } from "../../components/PlayerBackground";
 import { PlayerTutorial } from "./components/PlayerTutorial";
 import { PlayerStageScreen } from "./components/PlayerStageScreen";
 import { PlayerIntroVideo } from "./components/PlayerIntroVideo";
@@ -213,15 +212,14 @@ export function PlayerGame() {
 
   if (gameState === "closed") {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8 text-center">
-        <NeonIcon type="rocket" color="orange" className="w-24 h-24 mb-8" />
-        <h1 className="text-4xl font-black text-white italic mb-4">
+      <div className="min-h-screen bg-bg flex flex-col items-center justify-center p-8 text-center">
+        <h1 className="text-4xl font-extrabold text-ink mb-4">
           {t("game.roomClosed")}
         </h1>
-        <p className="text-gray-400 mb-8">{t("game.roomClosedDesc")}</p>
+        <p className="text-ink-2 mb-8">{t("game.roomClosedDesc")}</p>
         <button
           onClick={() => navigate("/")}
-          className="glass-panel-alaz px-8 py-4 text-white font-bold rounded-sm"
+          className="btn-primary px-8 h-14 text-lg"
         >
           {t("game.backHome")}
         </button>
@@ -253,11 +251,10 @@ export function PlayerGame() {
     <>
     <HostOfflineBanner room={room} />
     <div 
-      className="min-h-[100dvh] bg-black/60 flex flex-col text-white relative overflow-hidden font-inter transition-colors duration-500"
-      data-tension={timeLeft <= 10 && timeLeft > 0 && gameState === "playing" ? "high" : undefined}
+      className="min-h-[100dvh] flex flex-col text-ink relative overflow-hidden"
     >
       {timeLeft <= 10 && timeLeft > 0 && gameState === "playing" && (
-        <div className={`danger-overlay absolute inset-0 pointer-events-none z-30 ${timeLeft <= 5 ? 'tension-heartbeat-glow bg-red-950/40' : ''}`} />
+        <div className="danger-overlay absolute inset-0 pointer-events-none z-30" />
       )}
       <AnimatePresence>
         {submitStatus === "success" && (
@@ -265,10 +262,10 @@ export function PlayerGame() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            className="absolute inset-0 bg-neon-blue/20 mix-blend-screen pointer-events-none z-50 flex items-center justify-center"
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="absolute inset-0 bg-accent/10 pointer-events-none z-50 flex items-center justify-center"
           >
-            <div className="absolute inset-0 border-8 border-neon-blue/40 shadow-[inset_0_0_100px_rgba(0,243,255,0.4)]" />
+            <div className="absolute inset-0 border-4 border-accent/50" />
           </motion.div>
         )}
         {submitStatus === "error" && (
@@ -276,11 +273,11 @@ export function PlayerGame() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-red-600/30 mix-blend-overlay pointer-events-none z-50 animate-glitch"
+            className="absolute inset-0 bg-bad/20 pointer-events-none z-50"
           />
         )}
       </AnimatePresence>
-      <BackgroundSlider className="fixed inset-0 z-0 opacity-40 pointer-events-none overflow-hidden" />
+      <PlayerBackground />
       <PlayerHeader
         playerName={player?.nickname || t("game.player")}
         totalScore={player?.total_score || 0}

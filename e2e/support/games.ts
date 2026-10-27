@@ -165,9 +165,10 @@ export async function waitForReveal(tv: Tv, q: number): Promise<void> {
     .toBe(q);
 }
 
-/** TV'de "ZUR LOBBY" (onay penceresi kabul edilir) → gece lobisi. */
+/** TV personel menüsünde "ZUR LOBBY" (onay penceresi kabul edilir) → gece lobisi. */
 export async function returnToNightLobby(tv: Tv): Promise<void> {
   tv.page.once("dialog", (d) => d.accept());
-  await tv.page.getByRole("button", { name: "ZUR LOBBY" }).first().click();
+  await tv.page.getByRole("button", { name: "Personalmenü" }).click();
+  await tv.page.getByRole("menuitem", { name: "ZUR LOBBY" }).click();
   await expect.poll(async () => (await adminGet(`rooms/${tv.roomId}`))?.status, { timeout: 15_000 }).toBe("night_lobby");
 }

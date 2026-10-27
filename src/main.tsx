@@ -4,6 +4,14 @@ import * as Sentry from "@sentry/react";
 import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { shouldReloadForStaleChunk } from "./lib/staleChunk";
+// Tek yazı ailesi, uygulamayla birlikte (Google Fonts isteği yok): 3 ağırlık,
+// Türkçe/Almanca için latin + latin-ext. Tarayıcı yalnız gereken dosyayı indirir.
+import "@fontsource/inter/latin-400.css";
+import "@fontsource/inter/latin-ext-400.css";
+import "@fontsource/inter/latin-600.css";
+import "@fontsource/inter/latin-ext-600.css";
+import "@fontsource/inter/latin-800.css";
+import "@fontsource/inter/latin-ext-800.css";
 import "./index.css";
 
 // DSN yoksa init() çağrılmıyor — Sentry tamamen no-op kalıyor, hesap

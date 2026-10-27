@@ -53,7 +53,7 @@ export function Badge({ type, label, size = "md" }: BadgeProps) {
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
 
       <svg
-        className="w-4 h-4 badge-glow"
+        className="w-4 h-4"
         viewBox="0 0 24 24"
         fill="none"
         stroke={config.color}
@@ -62,7 +62,7 @@ export function Badge({ type, label, size = "md" }: BadgeProps) {
         <path d={config.icon} strokeLinecap="round" strokeLinejoin="round" />
       </svg>
 
-      <span className="text-[10px] font-black uppercase tracking-widest text-white whitespace-nowrap">
+      <span className="text-xs font-black uppercase tracking-widest text-white whitespace-nowrap">
         {label}
       </span>
     </motion.div>

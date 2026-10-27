@@ -106,12 +106,12 @@ export function HostShowcase({ joinUrl, roomCode, venuePromos, onClose, initialI
           giriş animasyonunun bitmesine bağlı kalmasın. Katmanın kendisi zaten
           açılırken yumuşakça beliriyor. */}
       <div
-        className="absolute bottom-12 right-12 flex items-center gap-6 rounded-3xl bg-black/70 border border-white/15 backdrop-blur-md px-7 py-6 shadow-[0_0_60px_rgba(255,85,0,0.25)]"
+        className="absolute bottom-12 right-12 flex items-center gap-6 rounded-3xl bg-black/70 border border-white/15 px-7 py-6"
       >
         <div className="flex flex-col items-end gap-2">
           <span className="text-white font-black text-3xl uppercase tracking-[0.12em]">{t("attract.scanToJoin")}</span>
           <span className="text-white/60 text-lg font-bold uppercase tracking-[0.3em]">{t("hostHeader.roomCode")}</span>
-          <span className="text-alaz-orange font-mono font-black text-5xl tracking-widest">{roomCode}</span>
+          <span className="text-alaz-orange tabular-nums font-black text-5xl tracking-widest">{roomCode}</span>
         </div>
         <div className="bg-white p-3 rounded-2xl">
           <QRCodeSVG value={joinUrl} size={196} bgColor="#ffffff" fgColor="#000000" level="H" />

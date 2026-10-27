@@ -6,7 +6,7 @@ import { getCategoryPresets } from "../../../lib/categoryPresets";
 import { GAME_CARDS, GAME_CATEGORY_KEY, gameTitle } from "../../../lib/gameCatalog";
 import type { GameType, Room } from "../../../types/database";
 import { X, Play, Check, Clock, RotateCcw, HelpCircle } from "lucide-react";
-import { ShimmerButton, GameAnimatedLogo, type ShimmerColor } from "../../../components/fx";
+import { GameAnimatedLogo } from "../../../components/fx";
 
 interface Props {
   isOpen: boolean;
@@ -15,17 +15,6 @@ interface Props {
   onClose: () => void;
   onStart: (game: GameType, settings: Partial<Room>) => Promise<void>;
 }
-
-/**
- * Pencerenin renkleri. Başlık, açıklama ve rozet katalogdan (lib/gameCatalog)
- * ve host'un dilinde geliyor; eskiden burada sabit Almanca metinler vardı.
- */
-const GAME_STYLE: Record<GameType, { color: string; glow: string; button: ShimmerColor }> = {
-  scattegories: { color: "#ff5500", glow: "rgba(255,85,0,0.5)", button: "orange" },
-  quiz: { color: "#00e5ff", glow: "rgba(0,229,255,0.5)", button: "blue" },
-  bomb: { color: "#ff003c", glow: "rgba(255,0,60,0.5)", button: "pink" },
-  slingshot: { color: "#10b981", glow: "rgba(16,185,129,0.5)", button: "green" },
-};
 
 const QUIZ_CATEGORIES = [
   { id: "gece", label: "🍸 NIGHTLIFE & BAR", icon: "🍸" },
@@ -80,9 +69,7 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
   if (!isOpen || !game) return null;
 
   const card = GAME_CARDS.find((c) => c.id === game);
-  const style = GAME_STYLE[game];
   const meta = {
-    ...style,
     title: gameTitle(game),
     badge: card ? t(GAME_CATEGORY_KEY[card.category]) : "",
     description: card ? t(card.descKey) : "",
@@ -136,7 +123,7 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="absolute inset-0 bg-black/85 backdrop-blur-2xl"
+          className="absolute inset-0 bg-black/85"
         />
 
         {/* Modal Window */}
@@ -145,38 +132,16 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: 20 }}
           transition={{ type: "spring", damping: 28, stiffness: 300 }}
-          className="relative w-full max-w-2xl max-h-[90vh] bg-[#0c0c16] border-2 border-white/20 rounded-[2.2rem] shadow-[0_30px_90px_rgba(0,0,0,0.95)] flex flex-col overflow-hidden text-white z-10"
-          style={{
-            boxShadow: `0 0 60px ${meta.glow}`
-          }}
+          className="surface relative w-full max-w-2xl max-h-[90vh] rounded-[2.2rem] flex flex-col overflow-hidden text-white z-10"
         >
-          {/* Ambient Glow */}
-          <div 
-            className="absolute -top-32 -right-32 w-96 h-96 rounded-full blur-[120px] pointer-events-none opacity-40"
-            style={{ backgroundColor: meta.color }}
-          />
-
-          {/* ════════════════ MODAL HEADER (HIGH CLARITY) ════════════════ */}
-          <div className="p-6 sm:p-8 pb-5 border-b border-white/15 flex items-center justify-between relative z-10 bg-black/40">
+          {/* ════════════════ MODAL HEADER ════════════════ */}
+          <div className="p-6 sm:p-8 pb-5 border-b border-white/15 flex items-center justify-between relative z-10">
             <div className="flex items-center gap-4 min-w-0">
-              <div 
-                className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center border-2 shrink-0 shadow-lg relative overflow-hidden backdrop-blur-md"
-                style={{ 
-                  backgroundColor: `${meta.color}25`,
-                  borderColor: meta.color,
-                  boxShadow: `0 0 25px ${meta.color}50`
-                }}
-              >
-                {game && <GameAnimatedLogo game={game} size="md" glow={true} className="w-10 h-10 sm:w-12 sm:h-12" />}
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center border border-accent bg-accent/10 shrink-0 relative overflow-hidden">
+                {game && <GameAnimatedLogo game={game} size="md" className="w-10 h-10 sm:w-12 sm:h-12" />}
               </div>
               <div className="min-w-0">
-                <span 
-                  className="text-[11px] font-mono font-black uppercase tracking-[0.22em] px-3 py-1 rounded-full border inline-block"
-                  style={{ 
-                    backgroundColor: `${meta.color}20`,
-                    borderColor: `${meta.color}70`,
-                    color: meta.color
-                  }}
+                <span className="text-xs tabular-nums font-black uppercase tracking-[0.22em] px-3 py-1 rounded-full border border-accent/50 bg-accent/10 text-accent inline-block"
                 >
                   {meta.badge}
                 </span>
@@ -206,7 +171,7 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
             {game === "scattegories" && (
               <div className="space-y-6">
                 <div>
-                  <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-amber-400 font-black block mb-3">
+                  <label className="text-xs sm:text-sm tabular-nums uppercase tracking-[0.2em] text-amber-400 font-black block mb-3">
                     {t("gameSettings.presets")}
                   </label>
                   <div className="flex flex-wrap gap-2.5">
@@ -216,7 +181,7 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
                         onClick={() => handleApplyPreset(name)}
                         className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black uppercase tracking-wider transition-all border cursor-pointer ${
                           activePreset === name
-                            ? "bg-alaz-orange text-black border-alaz-orange shadow-[0_0_20px_rgba(255,85,0,0.6)] scale-105"
+                            ? "bg-alaz-orange text-black border-alaz-orange  scale-105"
                             : "bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/40"
                         }`}
                       >
@@ -227,7 +192,7 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
                 </div>
 
                 <div>
-                  <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-white font-black block mb-2">
+                  <label className="text-xs sm:text-sm tabular-nums uppercase tracking-[0.2em] text-white font-black block mb-2">
                     {t("gameSettings.categories")}
                   </label>
                   <textarea
@@ -237,14 +202,14 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
                       setCategories(e.target.value);
                       setActivePreset(null);
                     }}
-                    className="w-full bg-black/80 border-2 border-white/25 rounded-2xl p-4 text-base text-white focus:border-alaz-orange focus:outline-none resize-none font-mono font-bold shadow-inner"
+                    className="w-full bg-black/80 border-2 border-white/25 rounded-2xl p-4 text-base text-white focus:border-alaz-orange focus:outline-none resize-none tabular-nums font-bold shadow-inner"
                     placeholder="Stadt, Land, Name, Tier..."
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-gray-300 font-black flex items-center gap-1.5 mb-2.5">
+                    <label className="text-xs sm:text-sm tabular-nums uppercase tracking-[0.2em] text-gray-300 font-black flex items-center gap-1.5 mb-2.5">
                       <Clock className="w-4 h-4 text-amber-400" />
                       <span>{t("gameSettings.roundTime")}</span>
                     </label>
@@ -253,9 +218,9 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
                         <button
                           key={tVal}
                           onClick={() => setTimerValue(tVal)}
-                          className={`py-3.5 rounded-xl font-mono font-black text-sm transition-all border-2 cursor-pointer ${
+                          className={`py-3.5 rounded-xl tabular-nums font-black text-sm transition-all border-2 cursor-pointer ${
                             timerValue === tVal
-                              ? "bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.5)] scale-105"
+                              ? "bg-white text-black border-white  scale-105"
                               : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
                           }`}
                         >
@@ -266,7 +231,7 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
                   </div>
 
                   <div>
-                    <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-gray-300 font-black flex items-center gap-1.5 mb-2.5">
+                    <label className="text-xs sm:text-sm tabular-nums uppercase tracking-[0.2em] text-gray-300 font-black flex items-center gap-1.5 mb-2.5">
                       <RotateCcw className="w-4 h-4 text-alaz-orange" />
                       <span>{t("gameSettings.totalRounds")}</span>
                     </label>
@@ -275,9 +240,9 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
                         <button
                           key={rVal}
                           onClick={() => setTotalRounds(rVal)}
-                          className={`py-3.5 rounded-xl font-mono font-black text-sm transition-all border-2 cursor-pointer ${
+                          className={`py-3.5 rounded-xl tabular-nums font-black text-sm transition-all border-2 cursor-pointer ${
                             totalRounds === rVal
-                              ? "bg-alaz-orange text-black border-alaz-orange shadow-[0_0_20px_rgba(255,85,0,0.5)] scale-105"
+                              ? "bg-alaz-orange text-black border-alaz-orange  scale-105"
                               : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
                           }`}
                         >
@@ -294,7 +259,7 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
             {game === "quiz" && (
               <div className="space-y-6">
                 <div>
-                  <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-cyan-400 font-black block mb-3">
+                  <label className="text-xs sm:text-sm tabular-nums uppercase tracking-[0.2em] text-cyan-400 font-black block mb-3">
                     {t("gameSettings.quizPool")}
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -306,7 +271,7 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
                           onClick={() => toggleQuizCategory(cat.id)}
                           className={`p-3.5 rounded-2xl border-2 text-left flex items-center justify-between transition-all cursor-pointer ${
                             isSelected 
-                              ? "bg-cyan-500/25 border-cyan-400 text-white shadow-[0_0_20px_rgba(0,229,255,0.3)] font-black" 
+                              ? "bg-cyan-500/25 border-cyan-400 text-white  font-black" 
                               : "bg-white/5 border-white/15 text-gray-400 hover:bg-white/10 hover:text-white"
                           }`}
                         >
@@ -320,7 +285,7 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-gray-300 font-black flex items-center gap-1.5 mb-2.5">
+                    <label className="text-xs sm:text-sm tabular-nums uppercase tracking-[0.2em] text-gray-300 font-black flex items-center gap-1.5 mb-2.5">
                       <HelpCircle className="w-4 h-4 text-cyan-400" />
                       <span>{t("gameSettings.quizQuestionsCount")}</span>
                     </label>
@@ -329,9 +294,9 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
                         <button
                           key={qVal}
                           onClick={() => setQuizQuestionsCount(qVal)}
-                          className={`py-3.5 rounded-xl font-mono font-black text-sm transition-all border-2 cursor-pointer ${
+                          className={`py-3.5 rounded-xl tabular-nums font-black text-sm transition-all border-2 cursor-pointer ${
                             quizQuestionsCount === qVal
-                              ? "bg-cyan-400 text-black border-cyan-400 shadow-[0_0_20px_rgba(0,229,255,0.5)] scale-105"
+                              ? "bg-cyan-400 text-black border-cyan-400  scale-105"
                               : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
                           }`}
                         >
@@ -342,7 +307,7 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
                   </div>
 
                   <div>
-                    <label className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-gray-300 font-black flex items-center gap-1.5 mb-2.5">
+                    <label className="text-xs sm:text-sm tabular-nums uppercase tracking-[0.2em] text-gray-300 font-black flex items-center gap-1.5 mb-2.5">
                       <Clock className="w-4 h-4 text-cyan-400" />
                       <span>{t("gameSettings.quizTimePerQuestion")}</span>
                     </label>
@@ -351,9 +316,9 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
                         <button
                           key={tVal}
                           onClick={() => setQuizTimePerQuestion(tVal)}
-                          className={`py-3.5 rounded-xl font-mono font-black text-sm transition-all border-2 cursor-pointer ${
+                          className={`py-3.5 rounded-xl tabular-nums font-black text-sm transition-all border-2 cursor-pointer ${
                             quizTimePerQuestion === tVal
-                              ? "bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.5)] scale-105"
+                              ? "bg-white text-black border-white  scale-105"
                               : "bg-white/5 border-white/15 text-gray-300 hover:border-white/40 hover:text-white"
                           }`}
                         >
@@ -375,15 +340,14 @@ export function GameSettingsModal({ isOpen, game, onClose, onStart }: Props) {
             >
               {t("gameSettings.cancel")}
             </button>
-            <ShimmerButton
-              color={meta.button}
+            <button
+              type="button"
               onClick={handleStartGame}
-              className="flex-[2] rounded-2xl"
-              innerClassName="!bg-white !text-black font-black text-sm sm:text-base uppercase tracking-widest py-4 sm:py-4.5 px-8 flex items-center justify-center gap-3 shadow-2xl"
+              className="btn-primary flex-[2] rounded-2xl font-black text-sm sm:text-base uppercase tracking-widest py-4 sm:py-4.5 px-8 flex items-center justify-center gap-3"
             >
-              <Play className="w-5 h-5 fill-black text-black" />
+              <Play className="w-5 h-5 fill-current" />
               <span>{t("gameSettings.startSession")}</span>
-            </ShimmerButton>
+            </button>
           </div>
         </motion.div>
       </div>

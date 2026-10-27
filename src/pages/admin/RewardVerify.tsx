@@ -102,7 +102,7 @@ export function RewardVerify() {
   // Oturum ya da personel kaydı henüz çözülmedi.
   if (authUser === undefined || (authUser && isStaff === undefined)) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center text-white/50 font-mono text-sm uppercase tracking-widest">
+      <div className="min-h-screen bg-black flex items-center justify-center text-white/50 tabular-nums text-sm uppercase tracking-widest">
         Yükleniyor...
       </div>
     );
@@ -113,7 +113,7 @@ export function RewardVerify() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 md:p-10 font-inter">
+    <div className="min-h-screen bg-black text-white p-6 md:p-10">
       <div className="max-w-lg mx-auto">
         <div className="flex items-center justify-between mb-10">
           <div>
@@ -124,7 +124,7 @@ export function RewardVerify() {
           </div>
           <button
             onClick={() => signOut(auth).then(() => navigate("/"))}
-            className="text-[10px] uppercase tracking-widest text-white/40 hover:text-white border border-white/10 px-3 py-2 rounded-lg transition-colors"
+            className="text-xs uppercase tracking-widest text-white/40 hover:text-white border border-white/10 px-3 py-2 rounded-lg transition-colors"
           >
             Çıkış Yap
           </button>
@@ -133,20 +133,20 @@ export function RewardVerify() {
         <div className="flex gap-4 mb-8">
           <Link
             to="/admin/venue"
-            className="text-[10px] uppercase tracking-widest text-white/40 hover:text-white"
+            className="text-xs uppercase tracking-widest text-white/40 hover:text-white"
           >
             ← Mekan Ayarları
           </Link>
           <Link
             to="/admin/report"
-            className="text-[10px] uppercase tracking-widest text-white/40 hover:text-white"
+            className="text-xs uppercase tracking-widest text-white/40 hover:text-white"
           >
             Gecelik Rapor →
           </Link>
         </div>
 
         <form onSubmit={handleLookup} className="space-y-4 mb-8">
-          <label htmlFor="reward-code" className="text-[10px] text-gray-400 font-black uppercase tracking-widest block">
+          <label htmlFor="reward-code" className="text-xs text-gray-400 font-black uppercase tracking-widest block">
             Ödül Kodu
           </label>
           <div className="flex gap-3">
@@ -158,7 +158,7 @@ export function RewardVerify() {
               placeholder="ÖRN: A3F9K2"
               autoFocus
               autoCapitalize="characters"
-              className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white font-mono text-2xl tracking-[0.2em] text-center focus:outline-none focus:border-alaz-orange transition-all uppercase"
+              className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white tabular-nums text-2xl tracking-[0.2em] text-center focus:outline-none focus:border-alaz-orange transition-all uppercase"
             />
             <button
               type="submit"
@@ -207,27 +207,27 @@ export function RewardVerify() {
                 <p className="text-white/40 text-xs mb-1">
                   {found.nickname} · {found.title}
                 </p>
-                <p className="text-white/30 text-[11px]">
+                <p className="text-white/30 text-xs">
                   Son geçerlilik: {new Date(found.expires_at!).toLocaleString("tr-TR")}
                 </p>
               </div>
             ) : (
               <>
                 <div>
-                  <p className="text-white/40 text-[10px] uppercase tracking-widest mb-1">Oyuncu</p>
+                  <p className="text-white/40 text-xs uppercase tracking-widest mb-1">Oyuncu</p>
                   <p className="text-xl font-black">{found.nickname}</p>
                 </div>
                 <div>
-                  <p className="text-white/40 text-[10px] uppercase tracking-widest mb-1">Ödül</p>
+                  <p className="text-white/40 text-xs uppercase tracking-widest mb-1">Ödül</p>
                   <p className="text-alaz-orange font-bold uppercase tracking-widest">{found.title}</p>
                   {found.description && (
                     <p className="text-white/50 text-sm mt-1">{found.description}</p>
                   )}
-                  <p className="text-white/30 text-[11px] mt-2 uppercase tracking-widest">
+                  <p className="text-white/30 text-xs mt-2 uppercase tracking-widest">
                     {REWARD_TYPE_LABEL[found.type]}
                   </p>
                   {found.expires_at && (
-                    <p className="text-white/30 text-[11px] mt-1">
+                    <p className="text-white/30 text-xs mt-1">
                       Son geçerlilik: {new Date(found.expires_at).toLocaleDateString("tr-TR")}
                     </p>
                   )}

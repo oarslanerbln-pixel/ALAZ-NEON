@@ -57,7 +57,7 @@ export function PlayerProfileCard() {
     >
       {/* Premium Glass Panel Card */}
       <div 
-        className="relative p-6 border bg-black/40 backdrop-blur-md shadow-2xl flex flex-col gap-4"
+        className="relative p-6 border bg-black/40 shadow-2xl flex flex-col gap-4"
         style={{ 
           borderColor: `${color}40`,
           boxShadow: `0 10px 40px ${color}20, inset 0 0 20px ${color}10` 
@@ -76,15 +76,15 @@ export function PlayerProfileCard() {
         */}
         <div className="flex justify-between items-start gap-3 z-10">
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] text-white/50 tracking-[0.3em] uppercase mb-1">{t("profile.idCard")}</p>
+            <p className="text-xs text-white/50 tracking-[0.3em] uppercase mb-1">{t("profile.idCard")}</p>
             <h2
-              className="text-xl sm:text-2xl font-bold tracking-wide uppercase drop-shadow-md truncate"
+              className="text-xl sm:text-2xl font-bold tracking-wide uppercase truncate"
               style={{ color: "#fff", textShadow: `0 0 10px ${color}` }}
             >
               {profile.nickname}
             </h2>
             {profile.phone_number && (
-              <p className="text-xs tracking-wider opacity-70 mt-1 font-mono">
+              <p className="text-xs tracking-wider opacity-70 mt-1 tabular-nums">
                 {profile.phone_number.replace(/(\d{3})(\d{3})(\d{2})(\d{2})/, "$1 $2 $3 $4")}
               </p>
             )}
@@ -110,7 +110,7 @@ export function PlayerProfileCard() {
               {league.charAt(0)}
             </div>
             <span
-              className="text-[9px] font-bold tracking-[0.1em] mt-2 text-center whitespace-nowrap"
+              className="text-xs font-bold tracking-[0.1em] mt-2 text-center whitespace-nowrap"
               style={{ color }}
             >
               {t(TIER_KEYS[league])}
@@ -120,7 +120,7 @@ export function PlayerProfileCard() {
 
         <div className="mt-2 pt-4 border-t border-white/10 flex justify-between items-end z-10">
           <div>
-            <p className="text-[10px] text-white/40 tracking-widest uppercase">{t("profile.totalScore")}</p>
+            <p className="text-xs text-white/40 tracking-widest uppercase">{t("profile.totalScore")}</p>
             <p 
               className="text-3xl font-black tracking-wider"
               style={{ color: color, textShadow: `0 0 15px ${color}80` }}
@@ -131,7 +131,7 @@ export function PlayerProfileCard() {
           
           <button 
             onClick={() => auth.signOut()}
-            className="text-[10px] uppercase tracking-widest border border-white/20 px-3 py-1 hover:bg-white/10 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            className="text-xs uppercase tracking-widest border border-white/20 px-3 py-1 hover:bg-white/10 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             {t("profile.logout")}
           </button>

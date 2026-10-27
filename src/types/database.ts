@@ -256,7 +256,7 @@ export interface SponsorAd {
 export interface VenueConfig {
   name: string;
   logo_url?: string;
-  /** Hex renk, örn. "#ff5500". Boşsa varsayılan HENGAME turuncusu kullanılır. */
+  /** Hex renk, örn. "#f5a524". Arayüzün tek vurgu rengi; boşsa varsayılan amber. */
   primary_color?: string;
   rewards_enabled: boolean;
   /**
@@ -294,7 +294,7 @@ export interface VenueConfig {
 
 export const DEFAULT_VENUE_CONFIG: VenueConfig = {
   name: "HENGAME",
-  primary_color: "#ff5500",
+  primary_color: "#f5a524",
   rewards_enabled: true,
   reward_title: "",
   reward_description: "",

@@ -88,13 +88,13 @@ export function HoldButton({
       onContextMenu={(e) => e.preventDefault()}
       disabled={disabled}
       style={{ touchAction: "none", WebkitUserSelect: "none" }}
-      className={`relative overflow-hidden w-full py-5 rounded-sm font-black font-mono text-lg tracking-widest transition-[transform,opacity,background-color,border-color,box-shadow,color] duration-200 border-2 select-none
+      className={`relative overflow-hidden w-full py-5 rounded-sm font-black tabular-nums text-lg tracking-widest transition-[transform,opacity,background-color,border-color,box-shadow,color] duration-200 border-2 select-none
         ${
           disabled
             ? "bg-black/50 border-gray-800 text-gray-500 cursor-not-allowed scale-95 opacity-50"
             : isHolding
-              ? "bg-black border-alaz-orange text-white shadow-[0_0_30px_rgba(255,77,0,0.4)] scale-[0.98]"
-              : "bg-hacker-green/20 border-hacker-green text-hacker-green hover:bg-hacker-green hover:text-black shadow-[0_0_30px_rgba(0,255,65,0.4)]"
+              ? "bg-black border-alaz-orange text-white  scale-[0.98]"
+              : "bg-hacker-green/20 border-hacker-green text-hacker-green hover:bg-hacker-green hover:text-black "
         } ${className}`}
     >
       {!disabled && (
@@ -108,11 +108,11 @@ export function HoldButton({
       {!disabled && !isHolding && (
         <div
           aria-hidden="true"
-          className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-hacker-green/30 to-transparent animate-shimmer z-0 pointer-events-none"
+          className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-hacker-green/30 to-transparent z-0 pointer-events-none"
         />
       )}
 
-      <span className="relative z-10 drop-shadow-md">
+      <span className="relative z-10">
         {isHolding ? `> ${resolvedHoldText}` : `> ${text}`}
       </span>
     </button>

@@ -50,7 +50,7 @@ export function PitchFeatureCard({
       onMouseMove={handleMouseMove}
       className={[
         "group relative flex flex-col items-center text-center p-8 rounded-3xl",
-        "bg-white/[0.02] border border-white/5 backdrop-blur-md overflow-hidden",
+        "bg-white/[0.02] border border-white/5  overflow-hidden",
         "hover:border-white/10 transition-colors duration-500",
         className
       ].filter(Boolean).join(" ")}
@@ -91,9 +91,9 @@ export function PitchFeatureCard({
       <div
         className={[
           "mb-6 p-4 rounded-2xl bg-white/[0.03] border border-white/10",
-          glowColor === "cyan" && "text-neon-blue shadow-[0_0_20px_rgba(34,211,238,0.2)]",
-          glowColor === "orange" && "text-alaz-orange shadow-[0_0_20px_rgba(255,77,0,0.2)]",
-          glowColor === "purple" && "text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.2)]"
+          glowColor === "cyan" && "text-neon-blue ",
+          glowColor === "orange" && "text-alaz-orange ",
+          glowColor === "purple" && "text-purple-400 "
         ].filter(Boolean).join(" ")}
       >
         {icon}

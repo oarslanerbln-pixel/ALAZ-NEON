@@ -61,7 +61,7 @@ export function RoomStatusScreen({ kind, roomId, detail, audience = "host", room
     <div
       role={isLoading ? "status" : "alert"}
       aria-live={isLoading ? "polite" : "assertive"}
-      className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center gap-6 px-6 py-8 font-mono text-center pb-[max(2rem,env(safe-area-inset-bottom))]"
+      className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center gap-6 px-6 py-8 tabular-nums text-center pb-[max(2rem,env(safe-area-inset-bottom))]"
     >
       {isLoading && (
         <div

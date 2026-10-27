@@ -69,9 +69,10 @@ test("HENGAME ARENA: bir tur oynanır, cevaplar puanlanır, podyumda kazanan", a
     await expect.poll(async () => (await adminQuery("answers", "room_id", tv.roomId)).length, { timeout: 20_000 }).toBeGreaterThanOrEqual(1);
     await expect.poll(async () => Number((await adminGet(`players/${phones[0].playerId}`))?.total_score), { timeout: 30_000 }).toBeGreaterThan(0);
 
-    // Host oyunu erken bitirir → podyum, kazanan SPIELER1.
+    // Host oyunu personel menüsünden erken bitirir → podyum, kazanan SPIELER1.
     tv.page.once("dialog", (d) => d.accept());
-    await tv.page.getByRole("button", { name: "VORZEITIG BEENDEN" }).click();
+    await tv.page.getByRole("button", { name: "Personalmenü" }).click();
+    await tv.page.getByRole("menuitem", { name: "VORZEITIG BEENDEN" }).click();
     await expect.poll(async () => (await roomOf(tv.roomId))?.status, { timeout: 20_000 }).toBe("finished");
     await expect(tv.page.getByText("SPIELER1").first()).toBeVisible();
     for (const p of [tv, ...phones]) expect(realErrors(p), p.page.url()).toEqual([]);
@@ -216,10 +217,10 @@ test.skip("YÖRÜNGE SAPANI: telefonun şutu TV'ye ulaşır, sonuçlanır, gol p
   }
 });
 
-test("kilitli mod (BALD VERFÜGBAR) TV'den başlatılamaz; karuselde yalnız 3 oynanabilir mod var", async ({ browser }) => {
+test("kilitli mod (BALD VERFÜGBAR) TV'den başlatılamaz; gece lobisinde yalnız 3 oynanabilir mod var", async ({ browser }) => {
   const tv = await openNight(browser);
   try {
-    // Karusel noktaları: üç oynanabilir mod, sonda tek kilitli mod.
+    // Oyun kartları: üç oynanabilir mod, sonda tek kilitli mod.
     for (const name of ["HENGAME ARENA", "HENGAME QUIZ", "HENGAME BOMB"]) {
       await expect(tv.page.getByRole("button", { name, exact: true })).toHaveCount(1);
     }

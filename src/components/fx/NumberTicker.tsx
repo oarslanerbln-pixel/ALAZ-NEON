@@ -64,7 +64,7 @@ export function NumberTicker({
   }, [value, duration, delay, motionVal, reduced]);
 
   return (
-    <motion.span className={`inline-block tabular-nums font-mono ${className}`}>
+    <motion.span className={`inline-block tabular-nums tabular-nums ${className}`}>
       {display}
     </motion.span>
   );

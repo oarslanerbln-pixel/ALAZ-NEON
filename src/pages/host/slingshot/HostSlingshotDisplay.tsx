@@ -25,7 +25,6 @@ import {
   slingshotRoundKey,
   type ShotResult,
 } from "../../../lib/slingshot";
-import { ShimmerButton } from "../../../components/fx";
 import type { Player } from "../../../types/database";
 
 const PLAYER_COLORS = ["#00f3ff", "#ff5500", "#f43f5e", "#10b981", "#a855f7", "#eab308"];
@@ -224,7 +223,7 @@ export function HostSlingshotDisplay({ room, players, updateRoomStatus }: HostGa
 
   return (
     <TVScaleFrame>
-      <div className="relative w-full h-full min-h-[1080px] flex flex-col justify-between overflow-hidden bg-black text-white font-inter">
+      <div className="relative w-full h-full min-h-[1080px] flex flex-col justify-between overflow-hidden bg-black text-white">
         <AnimatePresence mode="wait">
           {/* 1. İNTRO BRİFİNGİ */}
           {currentStatus === "slingshot_intro" && (
@@ -233,22 +232,22 @@ export function HostSlingshotDisplay({ room, players, updateRoomStatus }: HostGa
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.05 }}
-              className="absolute inset-0 z-30 flex flex-col items-center justify-center p-12 bg-black/90 backdrop-blur-xl"
+              className="absolute inset-0 z-30 flex flex-col items-center justify-center p-12 bg-black/90"
             >
-              <div className="w-24 h-24 mb-6 rounded-3xl bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center text-5xl shadow-[0_0_50px_#10b981]">
+              <div className="w-24 h-24 mb-6 rounded-3xl bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center text-5xl">
                 ⚽
               </div>
-              <h2 className="text-xl font-mono tracking-[0.4em] uppercase text-emerald-400 font-black mb-2">
+              <h2 className="text-xl tabular-nums tracking-[0.4em] uppercase text-emerald-400 font-black mb-2">
                 {t("slingshot.introEyebrow")}
               </h2>
-              <h1 className="text-6xl font-black text-white tracking-tight mb-6 drop-shadow-[0_0_30px_rgba(16,185,129,0.6)]">
+              <h1 className="text-6xl font-black text-white tracking-tight mb-6">
                 {title}
               </h1>
               <p className="text-2xl text-gray-300 max-w-2xl text-center font-light leading-relaxed mb-8">
                 {t("slingshot.introBody")}
               </p>
-              <div className="flex items-center gap-4 text-emerald-300 font-mono text-lg animate-pulse">
-                <span className="w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_10px_#10b981]" />
+              <div className="flex items-center gap-4 text-emerald-300 tabular-nums text-lg">
+                <span className="w-3 h-3 rounded-full bg-emerald-400" />
                 <span>{t("slingshot.introReady")}</span>
               </div>
             </motion.div>
@@ -264,7 +263,7 @@ export function HostSlingshotDisplay({ room, players, updateRoomStatus }: HostGa
               className="relative w-full h-full flex-1"
             >
               <Slingshot3DArena players={hudPlayers} shot={currentShot} onShotResult={handleShotResult} />
-              <div className="absolute top-28 left-1/2 -translate-x-1/2 z-40 px-6 py-2 rounded-2xl bg-black/70 border border-white/15 backdrop-blur-md font-mono text-4xl font-black text-alaz-orange tabular-nums drop-shadow-[0_0_20px_rgba(255,85,0,0.8)]">
+              <div className="absolute top-28 left-1/2 -translate-x-1/2 z-40 px-6 py-2 rounded-2xl bg-black/70 border border-white/15 tabular-nums text-4xl font-black text-alaz-orange">
                 {timeLeft}s
               </div>
             </motion.div>
@@ -277,12 +276,12 @@ export function HostSlingshotDisplay({ room, players, updateRoomStatus }: HostGa
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.05 }}
-              className="absolute inset-0 z-30 flex flex-col items-center justify-center p-12 bg-black/95 backdrop-blur-2xl"
+              className="absolute inset-0 z-30 flex flex-col items-center justify-center p-12 bg-black/95"
             >
-              <div className="text-sm font-mono tracking-[0.4em] uppercase text-emerald-400 font-bold mb-2">
+              <div className="text-sm tabular-nums tracking-[0.4em] uppercase text-emerald-400 font-bold mb-2">
                 {t("slingshot.revealEyebrow")}
               </div>
-              <h1 className="text-5xl font-black text-white tracking-tight mb-8 drop-shadow-[0_0_25px_rgba(16,185,129,0.5)]">
+              <h1 className="text-5xl font-black text-white tracking-tight mb-8">
                 {t("slingshot.revealTitle")}
               </h1>
 
@@ -298,15 +297,15 @@ export function HostSlingshotDisplay({ room, players, updateRoomStatus }: HostGa
                       initial={{ y: 50, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: rank * 0.15 }}
-                      className={`flex flex-col items-center p-6 rounded-3xl border backdrop-blur-md ${
+                      className={`flex flex-col items-center p-6 rounded-3xl border  ${
                         rank === 0
-                          ? "bg-emerald-500/15 border-emerald-400/60 shadow-[0_0_40px_rgba(16,185,129,0.4)] scale-110 z-10"
+                          ? "bg-emerald-500/15 border-emerald-400/60  scale-110 z-10"
                           : "bg-white/5 border-white/10"
                       }`}
                     >
                       <div className="text-3xl mb-2">{rank === 0 ? "🏆" : rank === 1 ? "🥈" : "🥉"}</div>
                       <div className="text-xl font-bold text-white mb-1">{p.nickname}</div>
-                      <div className="font-mono text-2xl font-black text-emerald-300">
+                      <div className="tabular-nums text-2xl font-black text-emerald-300">
                         {t("slingshot.goals", goalsFromScore(p.total_score))}
                       </div>
                     </motion.div>
@@ -315,12 +314,13 @@ export function HostSlingshotDisplay({ room, players, updateRoomStatus }: HostGa
 
               {/* Kontrol Butonları */}
               <div className="flex items-center gap-4">
-                <ShimmerButton
+                <button
+                  type="button"
                   onClick={handleRestart}
-                  className="px-8 py-4 rounded-2xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 font-bold text-lg hover:bg-emerald-500/30 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+                  className="btn-primary px-8 py-4 rounded-2xl font-bold text-lg"
                 >
                   {t("slingshot.playAgain")}
-                </ShimmerButton>
+                </button>
                 <button
                   onClick={handleReturnToLobby}
                   className="px-8 py-4 rounded-2xl bg-white/10 text-white font-bold text-lg hover:bg-white/20 transition-all border border-white/15"

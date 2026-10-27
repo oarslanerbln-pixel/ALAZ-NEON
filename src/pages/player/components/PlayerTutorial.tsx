@@ -66,7 +66,7 @@ export function PlayerTutorial({ room }: Props) {
       }`} />
       
       <div className="z-10 w-full max-w-sm flex flex-col items-center">
-        <div className="bg-black/60 backdrop-blur-md px-4 py-1 rounded-full border border-white/10 mb-8">
+        <div className="bg-black/60 px-4 py-1 rounded-full border border-white/10 mb-8">
           <p className="text-gray-400 text-xs font-bold tracking-widest uppercase">
             {t("tutorial.watchBigScreen")}
           </p>
@@ -81,7 +81,7 @@ export function PlayerTutorial({ room }: Props) {
             transition={{ duration: 0.4 }}
             className="w-full flex flex-col items-center"
           >
-            <div className="text-7xl mb-8 animate-bounce drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+            <div className="text-7xl mb-8">
               {currentSlide.icon}
             </div>
             <h1 className="text-3xl font-black text-white uppercase tracking-tighter mb-4 leading-tight">

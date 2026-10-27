@@ -13,12 +13,9 @@ import { GAME_CARDS, GAME_CATEGORY_KEY } from "../../../lib/gameCatalog";
 import { activePlayers as activePlayersOf } from "../../../lib/liveness";
 import { useLocale } from "../../../hooks/useLocale";
 import { useIsStaff } from "../../../hooks/useIsStaff";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useVenue } from "../../../contexts/VenueContextCore";
-import { AuroraBackdrop } from "../../../components/fx/AuroraBackdrop";
-import { BeamBorder } from "../../../components/fx/BeamBorder";
-import { GridPattern } from "../../../components/fx/GridPattern";
-import { NumberTicker, ShimmerButton, GameAnimatedLogo } from "../../../components/fx";
+import { NumberTicker, GameAnimatedLogo } from "../../../components/fx";
+import { DURATION } from "../../../lib/motion";
 import { NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
 import { clearRoomAnswers, resetPlayersForNewGame } from "../../../lib/gameReset";
 import { nextBombCategory } from "../../../lib/bomb";
@@ -30,12 +27,11 @@ import { HostShowcase } from "./HostShowcase";
 import { getJoinUrl } from "../../../lib/roomUrls";
 
 /** QR kartının altında 1080'lik tuvale kaydırmasız sığan misafir satırı. */
-const DASHBOARD_LIST_MAX = 6;
+const DASHBOARD_LIST_MAX = 5;
 
 /**
- * Karusel sırası: oynanabilir modlar önce, kilitliler sonda (sıralama
- * kararlı; grup içinde katalog sırası korunur). Personel ilk kaydırmada
- * kilitli bir karta düşmesin.
+ * Kart sırası: oynanabilir modlar önce, kilitliler sonda (sıralama
+ * kararlı; grup içinde katalog sırası korunur).
  */
 const GAMES = [...GAME_CARDS].sort((a, b) => Number(Boolean(a.isComingSoon)) - Number(Boolean(b.isComingSoon)));
 
@@ -61,20 +57,6 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
   // Gece lobisi bir süre boş kalınca TV tanıtım döngüsüne geçer; kurulum
   // penceresi ya da finale açıkken geçmez. İlk dokunuşta kapanır.
   const showShowcase = useIdle(SHOWCASE_IDLE_MS, room.status === "night_lobby" && !setupGameMode && !showFinale);
-
-  // Carousel State
-  const [carouselIndex, setCarouselIndex] = useState(0);
-  const [direction, setDirection] = useState(0);
-
-  const paginate = (newDirection: number) => {
-    setDirection(newDirection);
-    let next = carouselIndex + newDirection;
-    if (next < 0) next = GAMES.length - 1;
-    if (next >= GAMES.length) next = 0;
-    setCarouselIndex(next);
-  };
-
-
 
   /**
    * Geceyi bitirir: odayı "closed" durumuna alır ve ana sayfaya döner.
@@ -204,16 +186,8 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
 
   return (
     <TVScaleFrame>
-    <div className="w-full h-full relative overflow-hidden font-sans selection:bg-alaz-orange selection:text-black">
-      {/* Koyu sahne. Eskiden açık pastel bir arka plan ve 100–120 px
-          bulanıklık filtreli, nabız atan beyaz bloblar vardı: loş mekânda göz
-          alıyor, ürünün geri kalanıyla çelişiyor ve TV'nin zayıf GPU'sunu
-          her karede yeniden boyamaya zorluyordu. */}
-      <div className="absolute inset-0 bg-[#05050a] z-0" />
-      <AuroraBackdrop colors={["255,85,0", "168,85,247", "34,211,238"]} intensity={0.16} className="z-0" />
-      <GridPattern className="z-0" />
-
-      <div className="p-6 md:p-10 flex flex-col h-full relative z-10">
+    <div className="w-full h-full relative overflow-hidden">
+      <div className="px-24 py-12 flex flex-col h-full relative">
         <HostHeader
           room={room}
           exitConfirmKey="common.confirmEndNight"
@@ -221,294 +195,115 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
           onExitToHome={endNight}
         />
 
-        <div className="flex-1 mt-4 w-full max-w-[1600px] mx-auto px-4 grid grid-cols-1 lg:grid-cols-4 gap-4">
-          {/* QR Code and Players Column */}
-          <div className="flex flex-col gap-4 lg:col-span-1">
-            <div className="bg-[#0b0b14]/90 backdrop-blur-3xl p-5 rounded-[1.5rem] border border-white/10 flex flex-col items-center shadow-[0_20px_40px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.2)] relative overflow-hidden group/qr">
-              <div className="absolute inset-0 bg-gradient-to-b from-alaz-orange/10 to-transparent pointer-events-none" />
-              <div className="absolute -top-20 -right-20 w-40 h-40 bg-alaz-orange/20 rounded-full blur-[60px] pointer-events-none group-hover/qr:bg-alaz-orange/30 transition-colors duration-700" />
-
-              <div className="relative z-10 flex flex-col items-center w-full">
-                <p className="flex items-center gap-3 text-alaz-orange font-black text-xs uppercase tracking-[0.3em] mb-2">
-                  <span className="h-px w-6 bg-current opacity-50" aria-hidden="true" />
-                  {t("dashboard.step1")}
-                  <span className="h-px w-6 bg-current opacity-50" aria-hidden="true" />
-                </p>
-
-                {/* Misafire konuşuyor: TV'yi okuyan, mekân sahibi değil misafir. */}
-                <h3 className="text-white font-black text-3xl mb-2 uppercase tracking-wide text-center leading-tight">
-                  {t("dashboard.joinTitle")}
-                </h3>
-
-                <p className="text-white/65 text-base font-medium text-center px-2 mb-3 leading-snug text-balance">
-                  {t("dashboard.joinBody")}
-                </p>
-
-                {/* Odanın öbür ucundan okunabilsin: BeamBorder ile vurgulu QR */}
-                <BeamBorder
-                  rgb="255,85,0"
-                  duration={6}
-                  thickness={2}
-                  radius="1.25rem"
-                  innerClassName="bg-white p-3.5 shadow-[0_0_40px_rgba(255,85,0,0.2)] flex items-center justify-center"
-                >
-                  <QRCodeSVG data-testid="join-qr" value={joinUrl} size={200} bgColor="#ffffff" fgColor="#000000" level="H" marginSize={1} />
-                </BeamBorder>
-
-                <div className="mt-3 flex flex-col items-center">
-                  <span className="text-white/50 text-sm uppercase tracking-[0.3em] font-bold mb-1.5">{t("hostHeader.roomCode")}</span>
-                  <div className="bg-white/5 border border-white/10 px-6 py-2 rounded-xl flex items-center justify-center">
-                    <p className="text-alaz-orange font-mono font-black text-3xl tracking-widest drop-shadow-[0_0_15px_rgba(255,85,0,0.5)]">{room.code}</p>
-                  </div>
-                </div>
-
-                {rewardsBlocked && (
-                  <p className="mt-4 text-amber-300/80 text-[11px] font-bold uppercase tracking-[0.15em] text-center text-balance">
-                    {t("dashboard.rewardsNeedStaff")}
-                  </p>
-                )}
-
+        <div className="flex-1 min-h-0 grid grid-cols-[560px_1fr] gap-12">
+          {/* Katılım (misafire konuşur) + gecenin sıralaması */}
+          <div className="flex flex-col gap-6 min-h-0">
+            <div className="surface rounded-3xl p-8 flex flex-col items-center text-center">
+              <h3 className="text-4xl font-extrabold text-ink tracking-tight">{t("dashboard.joinTitle")}</h3>
+              <p className="mt-2 text-2xl text-ink-2 leading-snug text-balance">{t("dashboard.joinBody")}</p>
+              <div className="mt-6 bg-white p-4 rounded-2xl">
+                <QRCodeSVG data-testid="join-qr" value={joinUrl} size={240} bgColor="#ffffff" fgColor="#000000" level="H" marginSize={1} />
               </div>
+              {rewardsBlocked && (
+                <p className="mt-4 text-2xl text-accent text-balance">{t("dashboard.rewardsNeedStaff")}</p>
+              )}
             </div>
 
-            {/* Eskiden max-h-[250px] + overflow-y-auto: QR kartının altında
-                ~157px kalıyordu, TV'de kimse kaydıramadığı için 8 misafirden
-                yalnız 3'ü görünüyordu. Artık kalan yüksekliği dolduruyor,
-                satırlar sıkı ve sığmayanlar tek satırda özetleniyor. */}
-            <div className="flex-1 min-h-0 bg-[#0b0b14]/90 backdrop-blur-3xl rounded-2xl border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.2)] p-4 flex flex-col overflow-hidden">
-              <div className="flex items-center justify-between gap-3 mb-3">
-                <h3 className="text-gray-300 font-black text-base uppercase tracking-widest">
-                  {t("dashboard.playersCount", players.length)}
-                </h3>
+            {/* Eskiden max-h-[250px] + overflow-y-auto: TV'de kimse
+                kaydıramıyordu. Satırlar kalan yüksekliğe sığar, sığmayanlar
+                tek satırda özetlenir. */}
+            <div className="flex-1 min-h-0 surface rounded-3xl p-6 flex flex-col overflow-hidden">
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <h3 className="text-2xl font-semibold text-ink-2">{t("dashboard.playersCount", players.length)}</h3>
                 {/* Gece puanı dağıtılmışsa finale geçilebilir (bkz. NightFinale). */}
                 {players.some((p) => (p.night_score ?? 0) > 0) && (
-                  <ShimmerButton
+                  <button
+                    type="button"
                     onClick={() => setShowFinale(true)}
-                    color="yellow"
-                    thickness={1.5}
-                    radius="9999px"
-                    innerClassName="px-3 py-1 bg-amber-300/15 text-amber-200 text-[11px] font-black uppercase tracking-[0.2em]"
+                    className="btn-secondary px-4 h-12 text-2xl"
                   >
-                    🏆 {t("finale.open")}
-                  </ShimmerButton>
+                    {t("finale.open")}
+                  </button>
                 )}
               </div>
-              <div className="flex-1 min-h-0 overflow-hidden space-y-1.5">
+              <div className="flex-1 min-h-0 overflow-hidden flex flex-col gap-1">
                 {players.length === 0 ? (
-                  <div className="text-gray-400 text-base text-center mt-10">{t("dashboard.waiting")}</div>
+                  <div className="text-ink-3 text-2xl text-center mt-8">{t("dashboard.waiting")}</div>
                 ) : (
                   leaderboard.slice(0, DASHBOARD_LIST_MAX).map((p, i) => (
                     <motion.div
                       key={p.id}
                       layout
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl flex justify-between items-center gap-3"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: DURATION.base }}
+                      className="flex items-center gap-4 h-12"
                     >
-                      <span className="w-6 text-center text-sm font-black text-white/40 tabular-nums" aria-hidden="true">
-                        {(p.night_score ?? 0) > 0 && i < 3 ? ["🥇", "🥈", "🥉"][i] : i + 1}
-                      </span>
-                      <span className="flex-1 min-w-0 truncate font-bold text-lg text-white">{p.nickname}</span>
+                      <span className="w-8 text-2xl font-semibold text-ink-3 tabular-nums" aria-hidden="true">{i + 1}</span>
+                      <span className="flex-1 min-w-0 truncate text-2xl font-semibold text-ink">{p.nickname}</span>
                       {deltas[p.id] !== 0 && (
-                        <motion.span
-                          key={`${p.id}-${ranks.key}`}
-                          initial={{ opacity: 0, y: deltas[p.id] > 0 ? 6 : -6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className={`text-xs font-black tabular-nums ${deltas[p.id] > 0 ? "text-emerald-400" : "text-red-400"}`}
+                        <span
+                          className={`text-2xl font-semibold tabular-nums ${deltas[p.id] > 0 ? "text-ok" : "text-bad"}`}
                           aria-label={t(deltas[p.id] > 0 ? "dashboard.rankUp" : "dashboard.rankDown", Math.abs(deltas[p.id]))}
                         >
                           {deltas[p.id] > 0 ? "▲" : "▼"}{Math.abs(deltas[p.id])}
-                        </motion.span>
+                        </span>
                       )}
-                      <span className="text-alaz-orange font-mono text-sm tabular-nums">
-                        <NumberTicker value={p.night_score || 0} suffix={` ${t("dashboard.pointsSuffix", "").trim()}`} className="text-alaz-orange font-mono text-sm" />
-                      </span>
+                      <NumberTicker
+                        value={p.night_score || 0}
+                        suffix={` ${t("dashboard.pointsSuffix", "").trim()}`}
+                        className="text-2xl text-accent tabular-nums"
+                      />
                     </motion.div>
                   ))
                 )}
                 {players.length > DASHBOARD_LIST_MAX && (
-                  <p className="pt-1 text-center text-base font-bold text-white/50">
-                    {t("common.morePlayers", players.length - DASHBOARD_LIST_MAX)}
-                  </p>
+                  <p className="pt-1 text-2xl text-ink-3">{t("common.morePlayers", players.length - DASHBOARD_LIST_MAX)}</p>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Game Selection Column */}
-          <div className="lg:col-span-3 flex flex-col gap-3">
-            <div className="relative w-full h-full flex flex-col items-center justify-center min-h-[500px]">
-              <h2 className="text-lg font-black text-white/45 uppercase tracking-[0.3em] mb-6">
-                {t("host.step2")}<span className="text-white">{t("host.selectGame")}</span>
-              </h2>
-              
-              <div className="relative w-full max-w-4xl aspect-[21/9] flex items-center justify-center perspective-1000">
-                {/* Carousel Left Arrow */}
+          {/* Oyun seçimi (personel): dört kart, karusel yok */}
+          <div className="flex flex-col min-h-0">
+            <h2 className="text-3xl font-semibold text-ink-2 mb-6">{t("host.selectGame")}</h2>
+            <div className="flex-1 min-h-0 grid grid-cols-2 grid-rows-2 gap-6">
+              {GAMES.map((game) => (
                 <button
-                  onClick={() => paginate(-1)}
-                  className="absolute left-0 z-20 w-16 h-16 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 transition-all hover:scale-110 shadow-xl -ml-8"
+                  key={game.id}
+                  type="button"
+                  onClick={() => handleStartGame(game.id)}
+                  // Kilitli kart tıklanabilir kalır (yalnız uyarı sesi): ad
+                  // ekran okuyucuya ve testlere "(Locked)" ile duyurulur.
+                  aria-label={`${game.titlePrefix} ${game.titleHighlight}${game.isComingSoon ? " (Locked)" : ""}`}
+                  className={`group surface rounded-3xl p-8 flex flex-col text-left transition-colors ${
+                    game.isComingSoon ? "opacity-50 cursor-not-allowed" : "hover:border-accent/60"
+                  }`}
                 >
-                  <ChevronLeft className="w-8 h-8 text-white opacity-80" />
+                  <div className="flex items-center justify-between">
+                    <span className="w-20 h-20 rounded-2xl bg-surface-2 flex items-center justify-center text-accent">
+                      <GameAnimatedLogo game={game.id} size="md" className="w-12 h-12" />
+                    </span>
+                    <span className="text-2xl text-ink-3">
+                      {game.isComingSoon ? t("dashboard.comingSoon", "BALD VERFÜGBAR") : t(GAME_CATEGORY_KEY[game.category])}
+                    </span>
+                  </div>
+                  <h3 className="mt-6 text-5xl font-extrabold text-ink tracking-tight">
+                    {game.titlePrefix} <span className="text-accent">{game.titleHighlight}</span>
+                  </h3>
+                  <p className="mt-3 text-2xl text-ink-2 leading-snug line-clamp-3">{t(game.descKey)}</p>
+                  {!game.isComingSoon && (
+                    <span className="mt-auto pt-4 text-2xl font-semibold text-ink-3 group-hover:text-accent transition-colors">
+                      {t("dashboard.startSession", "SESSION STARTEN")} →
+                    </span>
+                  )}
                 </button>
-
-                <div className="w-full h-full relative overflow-visible flex items-center justify-center px-4">
-                  <AnimatePresence initial={false} custom={direction} mode="popLayout">
-                    <motion.div
-                      key={carouselIndex}
-                      custom={direction}
-                      initial={{ opacity: 0, x: direction > 0 ? 300 : -300, scale: 0.8, rotateY: direction > 0 ? -15 : 15 }}
-                      animate={{ opacity: 1, x: 0, scale: 1, rotateY: 0 }}
-                      exit={{ opacity: 0, x: direction < 0 ? 300 : -300, scale: 0.8, rotateY: direction < 0 ? -15 : 15 }}
-                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                      className="absolute inset-0 flex items-center justify-center p-4"
-                    >
-                      {(() => {
-                        const game = GAMES[carouselIndex];
-                        return (
-                          <BeamBorder
-                            rgb={rgbOf(game.shadowColor)}
-                            duration={7}
-                            radius="2rem"
-                            className="w-full h-full"
-                            innerClassName="bg-[#0b0b14]"
-                            style={{ boxShadow: `0 30px 80px ${game.shadowColor}` }}
-                          >
-                          <button
-                            onClick={() => handleStartGame(game.id)}
-                            disabled={game.isComingSoon}
-                            className={`w-full h-full relative group overflow-hidden rounded-[calc(2rem-1.5px)] p-8 sm:p-10 text-left transition-all duration-500 ${
-                              game.isComingSoon ? "cursor-not-allowed" : ""
-                            }`}
-                          >
-                            {/* Devasa Filigran Animasyonlu Logo */}
-                            <div className="absolute -right-12 -bottom-12 opacity-[0.05] group-hover:opacity-15 transition-all duration-1000 pointer-events-none scale-150 rotate-12">
-                              <GameAnimatedLogo game={game.id} size="watermark" glow={false} />
-                            </div>
-
-                            {/* Arka Plan Glow */}
-                            <div className={`absolute -right-20 -top-20 w-72 h-72 ${game.bgAccent} rounded-full blur-[90px] ${game.hoverBgAccent} transition-colors duration-700 pointer-events-none`} />
-                            <div className="absolute inset-0 bg-gradient-to-br from-white/[0.04] to-transparent pointer-events-none" />
-                            
-                            <div className="relative z-10 flex items-center justify-between h-full gap-6">
-                              {/* Sol Taraf: Kategori, Başlık, Açıklama, Başlat Butonu */}
-                              <div className="flex-1 flex flex-col justify-between h-full pr-2">
-                                <div>
-                                  <div className="flex items-center gap-4 mb-5">
-                                    <div className={`w-16 h-16 sm:w-20 sm:h-20 ${game.iconAccent} border-2 rounded-2xl flex items-center justify-center group-hover:scale-105 transition-all duration-500 shadow-xl backdrop-blur-md relative overflow-hidden shrink-0`}>
-                                      <div className="absolute inset-0 bg-gradient-to-br from-white/15 to-transparent pointer-events-none" />
-                                      <GameAnimatedLogo game={game.id} size="md" glow={!game.isComingSoon} className="w-12 h-12" />
-                                    </div>
-                                    <div className="flex flex-col gap-1.5">
-                                      <div className="flex items-center gap-2">
-                                        <span className="self-start rounded-full border border-white/15 bg-white/[0.08] px-4 py-1 text-xs font-black uppercase tracking-[0.25em] text-white/80">
-                                          {t(GAME_CATEGORY_KEY[game.category])}
-                                        </span>
-                                        {game.isComingSoon && (
-                                          <span className="rounded-full border border-amber-500/40 bg-amber-500/20 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.25)] flex items-center gap-1.5">
-                                            <span>🔒</span>
-                                            <span>{t("dashboard.comingSoon", "BALD VERFÜGBAR")}</span>
-                                          </span>
-                                        )}
-                                      </div>
-                                      <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-white/40 font-bold">
-                                        MOD {carouselIndex + 1} / {GAMES.length}
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-2 tracking-widest transition-colors uppercase leading-tight font-sans">
-                                    {game.titlePrefix} <span className={`text-transparent bg-clip-text bg-gradient-to-r ${game.gradientText}`}>{game.titleHighlight}</span>
-                                  </h3>
-                                  <p className="text-gray-300 text-sm sm:text-base md:text-lg leading-relaxed mt-3 max-w-xl font-medium">
-                                    {t(game.descKey)}
-                                  </p>
-                                </div>
-                                
-                                <div className="mt-6 flex items-center gap-4 text-white text-xs sm:text-sm font-black tracking-[0.25em] uppercase">
-                                  {game.isComingSoon ? (
-                                    <div className="bg-white/5 px-6 sm:px-8 py-3 sm:py-3.5 rounded-2xl flex items-center gap-3 backdrop-blur-md border border-white/10 text-white/40 cursor-not-allowed shadow-none">
-                                      <span className="text-base">🔒</span>
-                                      <span>{t("dashboard.comingSoon", "BALD VERFÜGBAR")}</span>
-                                    </div>
-                                  ) : (
-                                    <div className="bg-white/10 px-6 sm:px-8 py-3 sm:py-3.5 rounded-2xl flex items-center gap-3 backdrop-blur-md border border-white/20 group-hover:bg-white/20 group-hover:border-white/40 transition-all shadow-lg group-hover:shadow-[0_0_25px_rgba(255,255,255,0.2)]">
-                                      <span>{t("dashboard.startSession", "SESSION STARTEN")}</span>
-                                      <span className="text-xl sm:text-2xl leading-none group-hover:translate-x-2 transition-transform">➔</span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Sağ Taraf: Büyük Canlı Hareketli Logo Sahnesi (TV için WOW Etkisi) */}
-                              <div className="hidden sm:flex relative items-center justify-center w-48 h-48 md:w-60 md:h-60 shrink-0">
-                                <motion.div
-                                  className="absolute inset-0 rounded-full border border-white/10 opacity-50 pointer-events-none"
-                                  animate={{ rotate: 360, scale: [1, 1.06, 1] }}
-                                  transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-                                />
-                                <motion.div
-                                  className="absolute inset-4 rounded-full border border-dashed border-white/15 opacity-35 pointer-events-none"
-                                  animate={{ rotate: -360 }}
-                                  transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
-                                />
-                                <div className={`absolute inset-6 rounded-full ${game.bgAccent} blur-2xl opacity-60 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none`} />
-                                
-                                <div className={`relative z-10 transition-transform duration-700 ${game.isComingSoon ? "opacity-75 grayscale-[25%]" : "group-hover:scale-110"}`}>
-                                  <GameAnimatedLogo game={game.id} size="xl" glow={!game.isComingSoon} className="w-44 h-44 md:w-52 md:h-52 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]" />
-                                </div>
-                                {game.isComingSoon && (
-                                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                    <div className="w-14 h-14 rounded-full bg-black/60 backdrop-blur-md border border-amber-500/40 flex items-center justify-center text-2xl shadow-[0_0_20px_rgba(245,158,11,0.3)]">
-                                      🔒
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </button>
-                          </BeamBorder>
-                        );
-                      })()}
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-
-                {/* Carousel Right Arrow */}
-                <button
-                  onClick={() => paginate(1)}
-                  className="absolute right-0 z-20 w-16 h-16 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 transition-all hover:scale-110 shadow-xl -mr-8"
-                >
-                  <ChevronRight className="w-8 h-8 text-white opacity-80" />
-                </button>
-              </div>
-              
-              {/* Carousel Indicators */}
-              <div className="flex flex-wrap justify-center items-center gap-2 mt-8 max-w-md">
-                {GAMES.map((g, idx) => (
-                  <button
-                    key={g.id}
-                    onClick={() => {
-                      setDirection(idx > carouselIndex ? 1 : -1);
-                      setCarouselIndex(idx);
-                    }}
-                    aria-label={`${g.titlePrefix} ${g.titleHighlight}${g.isComingSoon ? " (Locked)" : ""}`}
-                    aria-current={idx === carouselIndex}
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      idx === carouselIndex
-                        ? 'w-8 bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)]'
-                        : g.isComingSoon
-                          ? 'w-2 bg-white/15 hover:bg-white/30'
-                          : 'w-2 bg-white/40 hover:bg-white/70'
-                    }`}
-                  />
-                ))}
-              </div>
+              ))}
             </div>
-            
           </div>
         </div>
       </div>
-      
+
       <AnimatePresence>
         {showShowcase && (
           <HostShowcase
@@ -533,10 +328,4 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     </div>
     </TVScaleFrame>
   );
-}
-
-/** "rgba(255,85,0,0.4)" → "255,85,0" (BeamBorder ışık rengi için). */
-function rgbOf(color: string): string {
-  const m = color.match(/(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
-  return m ? `${m[1]},${m[2]},${m[3]}` : "255,85,0";
 }

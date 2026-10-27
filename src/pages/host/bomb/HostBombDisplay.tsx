@@ -216,7 +216,7 @@ export function HostBombDisplay({
 
   return (
     <TVScaleFrame>
-    <div className="w-full h-full overflow-hidden bg-black text-white flex flex-col p-4">
+    <div className="w-full h-full overflow-hidden flex flex-col px-24 py-12">
       <HostHeader 
         room={room} 
         onEndGameEarly={handleEndGameEarly} 

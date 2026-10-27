@@ -27,7 +27,7 @@ function computeScale() {
  *
  * Not: transform içeren bir ata, içindeki `position: fixed` elemanlar için
  * yeni bir konumlama bağlamı oluşturur (CSS spesifikasyonu) — bu yüzden
- * ParticleBackground/DatabaseStatus gibi `fixed` bileşenler artık
+ * DatabaseStatus gibi `fixed` bileşenler artık
  * gerçek tarayıcı penceresine değil, bu TV tuvaline göre konumlanıp onunla
  * birlikte ölçekleniyor. İstenen tam olarak bu: taşan kısımlar (letterbox
  * şeritleri) düz siyah kalıyor, hiçbir öğe ekranın dışına sarkmıyor.
@@ -50,7 +50,8 @@ export function TVScaleFrame({ children }: { children: ReactNode }) {
           height: DESIGN_HEIGHT,
           transform: `scale(${scale})`,
         }}
-        className="relative flex-shrink-0 origin-center"
+        // tv-canvas: küçük yazı kademeleri 24 px'e çekilir (bkz. index.css).
+        className="tv-canvas relative flex-shrink-0 origin-center bg-bg text-ink"
       >
         {children}
       </div>

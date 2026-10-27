@@ -14,8 +14,7 @@ import { bombLives } from "../../../lib/bomb";
 import { gameTitle } from "../../../lib/gameCatalog";
 import { PlayerStageScreen } from "../components/PlayerStageScreen";
 import { PlayerIntroVideo } from "../components/PlayerIntroVideo";
-import { ShimmerButton } from "../../../components/fx";
-import { DURATION, EASE, SPRING } from "../../../lib/motion";
+import { DURATION, EASE } from "../../../lib/motion";
 
 interface Props {
   room: Room;
@@ -153,36 +152,26 @@ export function PlayerBombController({ room, player }: Props) {
 
   if (room.status === "bomb_explosion") {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-rose-950 text-white p-6 text-center relative overflow-hidden">
-        {/* Tek seferlik patlama flaşı: sürekli yanıp sönen kırmızı yerine
-            (WCAG 2.3.1) bir kez parlayıp sönüyor. */}
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] bg-bg text-ink p-6 text-center relative overflow-hidden">
+        {/* Tek seferlik patlama flaşı (WCAG 2.3.1: sürekli yanıp sönme yok). */}
         <motion.div
-          initial={{ opacity: 0.8 }}
-          animate={{ opacity: 0.2 }}
+          initial={{ opacity: 0.6 }}
+          animate={{ opacity: 0.12 }}
           transition={{ duration: DURATION.slow, ease: EASE.out }}
-          className="absolute inset-0 bg-red-600/40 pointer-events-none"
+          className="absolute inset-0 bg-bad pointer-events-none"
           aria-hidden="true"
         />
         <motion.span
-          initial={{ scale: 0.3, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1, rotate: [0, -8, 8, -4, 0] }}
-          transition={{ ...SPRING.bouncy, rotate: { duration: 0.5, delay: 0.15 } }}
-          className="text-7xl mb-4 inline-block"
+          initial={{ scale: 0.6, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: DURATION.slow, ease: EASE.out }}
+          className="relative text-7xl mb-4 inline-block"
           aria-hidden="true"
         >
           💥
         </motion.span>
-        <motion.h1
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, duration: DURATION.base, ease: EASE.out }}
-          className="text-4xl font-black text-white tracking-widest uppercase drop-shadow-md"
-        >
-          {t("bomb.explodedShort")}
-        </motion.h1>
-        <p className="mt-3 font-semibold text-sm tracking-wider uppercase text-white/70">
-          {t("bomb.watchMainScreen")}
-        </p>
+        <h1 className="relative text-4xl font-extrabold text-ink">{t("bomb.explodedShort")}</h1>
+        <p className="relative mt-3 text-base text-ink-2">{t("bomb.watchMainScreen")}</p>
       </div>
     );
   }
@@ -194,143 +183,91 @@ export function PlayerBombController({ room, player }: Props) {
   }
 
   const latestWord = (room.used_words || []).slice(-1)[0];
+  const category = room.active_letter || t("bomb.generalCategory");
 
   return (
-    <div className={`flex-1 flex flex-col min-h-[100dvh] px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] transition-colors duration-500 ${
-      isMyTurn ? 'bg-[#180408]' : 'bg-[#07070d]'
-    } text-white justify-between relative overflow-hidden select-none`}>
-      
-      {/* Edge Glow Pulse when it is player's turn */}
-      {isMyTurn && (
-        <motion.div
-          animate={{ opacity: [0.3, 0.7, 0.3] }}
-          transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute inset-0 pointer-events-none shadow-[inset_0_0_60px_rgba(244,63,94,0.4)] z-30"
-        />
-      )}
-
-      {/* Top Header: Lives & Category */}
-      <header className="flex justify-between items-center px-4 py-3 rounded-2xl bg-[#0d0d18]/90 border border-white/[0.08] backdrop-blur-xl z-20 max-w-md mx-auto w-full">
-        {/* Sleek Ruby Life Crystals */}
-        <div className="flex gap-2 items-center">
+    <div className="flex-1 flex flex-col min-h-[100dvh] px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] bg-bg text-ink relative overflow-hidden select-none">
+      {/* Canlar ve kategori */}
+      <header className="flex justify-between items-center gap-4 max-w-md mx-auto w-full">
+        <div className="flex items-center gap-2" aria-label={t("bomb.livesShort", currentLives)}>
           {Array.from({ length: 3 }).map((_, i) => (
-            <span
-              key={i}
-              className={`w-3.5 h-3.5 rounded-full transition-all duration-300 ${
-                i < currentLives
-                  ? "bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.85)] scale-100"
-                  : "bg-white/10 border border-white/10 scale-90"
-              }`}
-            />
+            <span key={i} className={`w-3.5 h-3.5 rounded-full ${i < currentLives ? "bg-bad" : "bg-surface-2"}`} />
           ))}
-          <span className="text-xs font-mono font-bold text-white/60 ml-1.5 uppercase">
-            {t("bomb.livesShort", currentLives)}
-          </span>
+          <span className="ml-1 text-base text-ink-2 whitespace-nowrap">{t("bomb.livesShort", currentLives)}</span>
         </div>
-
-        {/* Category Pill */}
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 min-w-0">
-          <span className="text-[11px] font-mono text-white/50 uppercase tracking-wider shrink-0">{t("bomb.category")}</span>
-          <span className="text-xs font-black text-rose-300 uppercase tracking-wide truncate">
-            {room.active_letter || t("bomb.generalCategory")}
-          </span>
-        </div>
+        <span className="text-base text-ink-2 truncate min-w-0">
+          {t("bomb.category")} <span className="font-semibold text-ink">{category}</span>
+        </span>
       </header>
 
-      {/* Main Action Center */}
-      <div className="flex-1 flex flex-col justify-center items-center max-w-md mx-auto w-full my-4 z-20">
+      <div className="flex-1 flex flex-col justify-center items-center max-w-md mx-auto w-full my-4">
         <AnimatePresence mode="wait" initial={false}>
         {isMyTurn ? (
           <motion.div
             key="my-turn"
-            initial={{ scale: 0.92, opacity: 0 }}
+            initial={{ scale: 0.96, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.96, opacity: 0, transition: { duration: DURATION.fast, ease: EASE.in } }}
-            transition={SPRING.bouncy}
-            className="w-full"
+            exit={{ opacity: 0, transition: { duration: DURATION.fast } }}
+            transition={{ duration: DURATION.base, ease: EASE.out }}
+            className="w-full surface rounded-3xl p-6 flex flex-col items-center text-center border-accent/60"
           >
-            <div className="w-full bg-[#1b070b]/95 border-2 border-rose-500/70 rounded-3xl p-6 shadow-[0_0_60px_rgba(244,63,94,0.35)] backdrop-blur-2xl flex flex-col items-center text-center relative overflow-hidden">
-              {/* Lazer Köşebentler */}
-              <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-rose-500 shadow-[0_0_10px_#f43f5e]" />
-              <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-amber-500 shadow-[0_0_10px_#f59e0b]" />
-              <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-amber-500 shadow-[0_0_10px_#f59e0b]" />
-              <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-rose-500 shadow-[0_0_10px_#f43f5e]" />
+            <span className="text-5xl" aria-hidden="true">💣</span>
+            <h2 className="mt-3 text-3xl font-extrabold text-accent">{t("bomb.yourTurn")}</h2>
+            <p className="mt-1 text-base text-ink-2">
+              {t("bomb.category")}: <span className="font-semibold text-ink">{category}</span>
+            </p>
 
-              <div className="flex items-center gap-2.5 mb-1 relative z-10">
-                <span className="text-3xl animate-bounce">💣</span>
-                <h2 className="text-2xl font-black text-rose-300 uppercase tracking-tight drop-shadow-[0_0_15px_rgba(244,63,94,0.8)]">
-                  {t("bomb.yourTurn")}
-                </h2>
-              </div>
-              
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-300 font-mono text-xs font-bold uppercase tracking-wider mb-4 relative z-10">
-                <span>{t("bomb.category")}:</span>
-                <span className="text-white font-black">{room.active_letter || t("bomb.generalCategory")}</span>
-              </div>
-
-              <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3 relative z-10">
-                <input
-                  type="text"
-                  value={word}
-                  onChange={(e) => setWord(e.target.value)}
-                  autoFocus
-                  disabled={isSubmitting}
-                  className="w-full bg-black/90 border-2 border-rose-500/70 text-white rounded-2xl p-4 text-2xl placeholder:text-sm placeholder:font-bold font-black text-center uppercase tracking-wider focus:outline-none focus:border-amber-400 focus:shadow-[0_0_35px_rgba(251,191,36,0.45)] shadow-inner transition-all"
-                  placeholder={t("bomb.wordPlaceholder")}
-                />
-                <ShimmerButton
-                  type="submit"
-                  color="orange"
-                  disabled={!word.trim() || isSubmitting}
-                  innerClassName="!bg-gradient-to-r !from-rose-600 via-red-600 !to-amber-500 text-white font-black text-base uppercase tracking-widest py-4 shadow-[0_0_30px_rgba(244,63,94,0.5)] active:scale-95 transition-transform"
-                  className="w-full"
-                >
-                  {isSubmitting ? t("bomb.throwing") : `🔥 ${t("bomb.throwBomb")}`}
-                </ShimmerButton>
-              </form>
-            </div>
+            <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3 mt-6">
+              <input
+                type="text"
+                value={word}
+                onChange={(e) => setWord(e.target.value)}
+                autoFocus
+                disabled={isSubmitting}
+                className="w-full h-16 bg-surface-2 border border-line text-ink rounded-2xl px-4 text-2xl font-extrabold text-center uppercase placeholder:text-base placeholder:font-semibold placeholder:text-ink-3 focus:outline-none focus:border-accent transition-colors"
+                placeholder={t("bomb.wordPlaceholder")}
+              />
+              <button
+                type="submit"
+                disabled={!word.trim() || isSubmitting}
+                className="btn-primary w-full h-16 text-lg uppercase tracking-wide"
+              >
+                {isSubmitting ? t("bomb.throwing") : t("bomb.throwBomb")}
+              </button>
+            </form>
           </motion.div>
         ) : (
           <motion.div
             key="waiting"
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8, transition: { duration: DURATION.fast, ease: EASE.in } }}
+            exit={{ opacity: 0, transition: { duration: DURATION.fast } }}
             transition={{ duration: DURATION.base, ease: EASE.out }}
-            className="text-center p-8 bg-[#0c0c16]/90 border border-white/[0.08] rounded-3xl backdrop-blur-xl w-full shadow-2xl"
+            className="text-center p-8 surface rounded-3xl w-full"
           >
-            <div className="text-5xl mb-3 opacity-80">💣</div>
-            <h2 className="text-xs font-mono font-bold text-white/50 uppercase tracking-widest mb-1.5">
-              {t("bomb.elsewhereLabel")}
-            </h2>
-            <p className="text-xl font-bold text-white tracking-tight mb-4">
-              {t("bomb.atAnotherTable")}
-            </p>
+            <div className="text-5xl mb-3" aria-hidden="true">💣</div>
+            <p className="text-base text-ink-2">{t("bomb.elsewhereLabel")}</p>
+            <p className="mt-1 text-2xl font-extrabold text-ink">{t("bomb.atAnotherTable")}</p>
             {latestWord && (
-              <div className="bg-white/[0.04] border border-white/10 rounded-xl px-4 py-2.5 inline-flex items-center gap-2 max-w-full">
-                <span className="text-[11px] text-white/50 font-mono uppercase shrink-0">{t("bomb.lastWord")}:</span>
-                {/* Her yeni kelime kısa bir yaylanmayla giriyor: bomba el değiştirdi. */}
+              <p className="mt-5 text-base text-ink-2 truncate">
+                {t("bomb.lastWord")}:{" "}
+                {/* Her yeni kelime kısa bir girişle beliriyor: bomba el değiştirdi. */}
                 <motion.span
                   key={latestWord}
-                  initial={{ opacity: 0, scale: 0.6 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={SPRING.bouncy}
-                  className="text-sm font-black text-amber-300 uppercase tracking-wider truncate"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: DURATION.base }}
+                  className="font-extrabold text-accent uppercase"
                 >
                   {latestWord}
                 </motion.span>
-              </div>
+              </p>
             )}
-            <p className="mt-4 text-xs text-white/50 font-medium">{t("bomb.waitYourTurn")}</p>
+            <p className="mt-4 text-sm text-ink-3">{t("bomb.waitYourTurn")}</p>
           </motion.div>
         )}
         </AnimatePresence>
       </div>
-
-      {/* Bottom Status */}
-      <footer className="text-center py-2 text-[10px] font-mono text-white/20 z-20">
-        HENGAME BOMB
-      </footer>
     </div>
   );
 }
