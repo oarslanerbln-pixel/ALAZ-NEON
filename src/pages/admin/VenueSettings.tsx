@@ -33,7 +33,7 @@ export function VenueSettings() {
 
   const [name, setName] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
-  const [primaryColor, setPrimaryColor] = useState("#ff5500");
+  const [primaryColor, setPrimaryColor] = useState("#f5a524");
   const [rewardsEnabled, setRewardsEnabled] = useState(true);
   const [rewardTitle, setRewardTitle] = useState("");
   const [rewardDescription, setRewardDescription] = useState("");
@@ -129,7 +129,7 @@ export function VenueSettings() {
   // Oturum ya da personel kaydı henüz çözülmedi.
   if (authUser === undefined || (authUser && isStaff === undefined)) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center text-white/50 font-mono text-sm uppercase tracking-widest">
+      <div className="min-h-screen bg-black flex items-center justify-center text-white/50 tabular-nums text-sm uppercase tracking-widest">
         Yükleniyor...
       </div>
     );
@@ -141,7 +141,7 @@ export function VenueSettings() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 md:p-10 font-inter">
+    <div className="min-h-screen bg-black text-white p-6 md:p-10">
       <div className="max-w-lg mx-auto">
         <div className="flex items-center justify-between mb-10">
           <div>
@@ -152,7 +152,7 @@ export function VenueSettings() {
           </div>
           <button
             onClick={() => signOut(auth).then(() => navigate("/"))}
-            className="text-[10px] uppercase tracking-widest text-white/40 hover:text-white border border-white/10 px-3 py-2 rounded-lg transition-colors"
+            className="text-xs uppercase tracking-widest text-white/40 hover:text-white border border-white/10 px-3 py-2 rounded-lg transition-colors"
           >
             Çıkış Yap
           </button>
@@ -166,7 +166,7 @@ export function VenueSettings() {
           )}
 
           <div className="space-y-3">
-            <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
+            <label className="text-xs text-gray-400 font-black uppercase tracking-widest">
               Mekan Adı
             </label>
             <input
@@ -177,13 +177,13 @@ export function VenueSettings() {
               placeholder="Örn: LUNA Rooftop"
               className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-alaz-orange transition-all"
             />
-            <p className="text-white/30 text-[11px]">
+            <p className="text-white/30 text-xs">
               Landing, giriş ekranı ve host başlığında görünen isim. Boş bırakılırsa varsayılan HENGAME markası kullanılır.
             </p>
           </div>
 
           <div className="space-y-3">
-            <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
+            <label className="text-xs text-gray-400 font-black uppercase tracking-widest">
               Logo URL (opsiyonel)
             </label>
             <input
@@ -196,7 +196,7 @@ export function VenueSettings() {
           </div>
 
           <div className="space-y-3">
-            <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
+            <label className="text-xs text-gray-400 font-black uppercase tracking-widest">
               Ana Renk
             </label>
             <div className="flex items-center gap-4">
@@ -210,19 +210,19 @@ export function VenueSettings() {
                 type="text"
                 value={primaryColor}
                 onChange={(e) => setPrimaryColor(e.target.value)}
-                className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-mono focus:outline-none focus:border-alaz-orange transition-all"
+                className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white tabular-nums focus:outline-none focus:border-alaz-orange transition-all"
               />
             </div>
-            <p className="text-white/30 text-[11px]">
+            <p className="text-white/30 text-xs">
               Uygulama genelindeki turuncu vurgu rengini değiştirir (bomba/quiz kendi neon renklerini korur).
             </p>
           </div>
 
           <div className="space-y-3">
-            <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
+            <label className="text-xs text-gray-400 font-black uppercase tracking-widest">
               Tanıtım Görselleri (opsiyonel)
             </label>
-            <p className="text-white/30 text-[11px]">
+            <p className="text-white/30 text-xs">
               Boşta ekranında (TV) şampiyonlar ve "nasıl oynanır" slaytları arasına eklenir — mekanın kendi kampanya/menü görseli. Görseli kendi barındırdığınız bir yere (Instagram, Google Drive genel link vb.) koyup URL'ini buraya yapıştırın.
             </p>
             <div className="flex gap-3">
@@ -280,7 +280,7 @@ export function VenueSettings() {
           <div className="space-y-4 bg-white/5 border border-white/10 rounded-2xl px-6 py-6">
             <div>
               <div className="text-sm font-bold uppercase tracking-widest text-cyber-yellow">DOOH Reklam Ağı (Sponsorlar)</div>
-              <p className="text-white/40 text-[11px] mt-1">
+              <p className="text-white/40 text-xs mt-1">
                 TV ekranında (Host arayüzü) tam ekran gösterilecek reklamlar. İster video (mp4), ister görsel (jpg/png) ekleyin.
               </p>
             </div>
@@ -344,7 +344,7 @@ export function VenueSettings() {
                     )}
                     <div className="flex-1 overflow-hidden">
                       <div className="text-white text-xs font-bold truncate">{ad.sponsor_name}</div>
-                      <div className="text-white/40 text-[10px] truncate">{ad.type.toUpperCase()} • {ad.duration_seconds}sn</div>
+                      <div className="text-white/40 text-xs truncate">{ad.type.toUpperCase()} • {ad.duration_seconds}sn</div>
                     </div>
                     <button
                       type="button"
@@ -362,7 +362,7 @@ export function VenueSettings() {
           <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-2xl px-6 py-5">
             <div>
               <div className="text-sm font-bold uppercase tracking-widest">Ödül Sistemi</div>
-              <p className="text-white/40 text-[11px] mt-1">
+              <p className="text-white/40 text-xs mt-1">
                 Kapalıysa oyuncu ekranında ödül paneli hiç görünmez.
               </p>
             </div>
@@ -390,7 +390,7 @@ export function VenueSettings() {
           {rewardsEnabled && (
             <div className="space-y-6 bg-white/5 border border-white/10 rounded-2xl px-6 py-6">
               <div className="space-y-3">
-                <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
+                <label className="text-xs text-gray-400 font-black uppercase tracking-widest">
                   Ödül Başlığı
                 </label>
                 <input
@@ -400,13 +400,13 @@ export function VenueSettings() {
                   placeholder="Örn: Ücretsiz Espresso"
                   className="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-alaz-orange transition-all"
                 />
-                <p className="text-white/30 text-[11px]">
+                <p className="text-white/30 text-xs">
                   Boş bırakılırsa oyun bittiğinde hiç ödül dağıtılmaz — sistemi kapatmadan geçici olarak durdurmanın yolu.
                 </p>
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
+                <label className="text-xs text-gray-400 font-black uppercase tracking-widest">
                   Ödül Açıklaması (opsiyonel)
                 </label>
                 <input
@@ -419,7 +419,7 @@ export function VenueSettings() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
+                <label className="text-xs text-gray-400 font-black uppercase tracking-widest">
                   Ödül Tipi
                 </label>
                 <div className="grid grid-cols-3 gap-3">
@@ -441,7 +441,7 @@ export function VenueSettings() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
+                <label className="text-xs text-gray-400 font-black uppercase tracking-widest">
                   Geçerlilik Süresi (Gün)
                 </label>
                 <input
@@ -451,25 +451,25 @@ export function VenueSettings() {
                   onChange={(e) => setRewardValidityDays(Number(e.target.value))}
                   className="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-alaz-orange transition-all"
                 />
-                <p className="text-white/30 text-[11px]">
+                <p className="text-white/30 text-xs">
                   Oyuncu bir ödülü kazandıktan kaç gün sonra kullanamaz hâle gelsin. Zaten dağıtılmış ödülleri etkilemez, yalnızca bundan sonra kazanılanlara uygulanır.
                 </p>
               </div>
 
-              <p className="text-white/30 text-[11px]">
+              <p className="text-white/30 text-xs">
                 Kazanan: bireysel modda en yüksek puanlı oyuncu (veya beraberlikte hepsi); takım modunda kazanan takımın tüm üyeleri; bomba modunda son ayakta kalan oyuncu. Oyun bittiği an otomatik dağıtılır.
               </p>
 
               <div className="grid grid-cols-2 gap-3">
                 <Link
                   to="/admin/rewards"
-                  className="block text-center text-[10px] uppercase tracking-widest text-alaz-orange hover:text-white border border-alaz-orange/30 hover:border-white/30 rounded-xl py-3 transition-colors"
+                  className="block text-center text-xs uppercase tracking-widest text-alaz-orange hover:text-white border border-alaz-orange/30 hover:border-white/30 rounded-xl py-3 transition-colors"
                 >
                   Ödül Doğrula →
                 </Link>
                 <Link
                   to="/admin/report"
-                  className="block text-center text-[10px] uppercase tracking-widest text-alaz-orange hover:text-white border border-alaz-orange/30 hover:border-white/30 rounded-xl py-3 transition-colors"
+                  className="block text-center text-xs uppercase tracking-widest text-alaz-orange hover:text-white border border-alaz-orange/30 hover:border-white/30 rounded-xl py-3 transition-colors"
                 >
                   Gecelik Rapor →
                 </Link>

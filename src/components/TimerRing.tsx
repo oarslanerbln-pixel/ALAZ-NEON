@@ -16,10 +16,10 @@ interface TimerRingProps {
 }
 
 const TONE_COLOR: Record<TimerTone, string> = {
-  calm: "rgba(255,255,255,0.85)",
-  warning: "#ffaa00",
-  critical: "#ff0033",
-  over: "rgba(255,0,51,0.4)",
+  calm: "var(--color-accent)",
+  warning: "var(--color-accent)",
+  critical: "var(--color-bad)",
+  over: "color-mix(in oklab, var(--color-bad) 40%, transparent)",
 };
 
 /**
@@ -28,8 +28,7 @@ const TONE_COLOR: Record<TimerTone, string> = {
  * `pathLength` framer tarafından `stroke-dasharray` olarak sürülür; her tam
  * saniye tik'inde 1sn'lik doğrusal tween ile bir sonraki değere akar — ekran
  * saniyede iki kez tamsayı alsa da halka KESİNTİSİZ boşalıyor görünür.
- * Parlama için filter yerine altta ikinci, geniş ve saydam bir çizgi var
- * (drop-shadow her karede yeniden raster gerektirirdi).
+ * Tek ray + tek çizgi; parlama katmanı yok.
  */
 export function TimerRing({
   timeLeft,
@@ -47,21 +46,7 @@ export function TimerRing({
     <div style={{ width: size, height: size }} className={`relative ${className}`}>
       <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full -rotate-90" aria-hidden="true">
         {/* Ray */}
-        <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={strokeWidth} />
-        {/* Parlama (geniş, saydam) */}
-        <motion.circle
-          cx="50"
-          cy="50"
-          r="46"
-          fill="none"
-          strokeWidth={strokeWidth * 3}
-          strokeLinecap="round"
-          stroke={color}
-          style={{ opacity: 0.18, transition: "stroke 0.5s ease" }}
-          initial={false}
-          animate={{ pathLength: fraction }}
-          transition={{ duration: 1, ease: "linear" }}
-        />
+        <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={strokeWidth} />
         {/* Ana çizgi */}
         <motion.circle
           cx="50"
@@ -70,8 +55,8 @@ export function TimerRing({
           fill="none"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
-          stroke={color}
-          style={{ transition: "stroke 0.5s ease" }}
+          // var() sunum özniteliğinde çözülmez; renk stil olarak verilir.
+          style={{ stroke: color, transition: "stroke 0.25s ease" }}
           initial={false}
           animate={{ pathLength: fraction }}
           transition={{ duration: 1, ease: "linear" }}

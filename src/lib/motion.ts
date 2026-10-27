@@ -43,11 +43,13 @@ export const EASE = {
  *  slow     : ekranın büyük bölümünü kaplayan geçişler
  *  cinematic: intro / podyum gibi "sahne" anları
  */
+// Görsel dil: durum geçişleri en çok 250 ms. `cinematic` yalnızca gecenin
+// birkaç "wow" anı için (oyun başlangıcı, kazanan) — sıradan ekranlarda değil.
 export const DURATION = {
-  instant: 0.12,
-  fast: 0.2,
-  base: 0.35,
-  slow: 0.6,
+  instant: 0.1,
+  fast: 0.15,
+  base: 0.2,
+  slow: 0.25,
   cinematic: 1.2,
 } as const;
 
