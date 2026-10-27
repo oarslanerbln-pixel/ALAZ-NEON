@@ -112,7 +112,7 @@ async function dismissShowcaseOnAction(tv: Page): Promise<void> {
 }
 
 /**
- * Karuselden oyunu seçip ayar penceresinde "SPIEL STARTEN". `configure`
+ * Gece lobisinden oyunu seçip ayar penceresinde "SPIEL STARTEN". `configure`
  * pencere açıkken ayar düğmelerine basabilir (soru sayısı, süre...).
  */
 export async function startGameFromDashboard(
@@ -127,15 +127,8 @@ export async function startGameFromDashboard(
   // tıklamanın önüne geçebiliyor. Playwright her TV eyleminden önce açıksa
   // personel gibi bir dokunuşla kapatır.
   await dismissShowcaseOnAction(tv);
-  // Karusel noktaları oyun adını aria-label olarak taşıyor ("HENGAME QUIZ").
+  // Gece lobisindeki oyun kartları adı aria-label olarak taşıyor ("HENGAME QUIZ").
   await tv.getByRole("button", { name: `${prefix} ${highlight}`, exact: true }).click();
-  const card = tv
-    .locator("button:not([disabled])")
-    .filter({ hasText: new RegExp(`${prefix}[\\s\\S]{0,40}${highlight}`) })
-    .filter({ hasText: /SESSION STARTEN/i })
-    .first();
-  await expect(card).toBeVisible();
-  await card.click();
   const start = tv.getByRole("button", { name: "SPIEL STARTEN" });
   await expect(start).toBeVisible();
   if (configure) await configure(tv);

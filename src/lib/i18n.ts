@@ -761,6 +761,8 @@ const translations = {
     en: (r: number, total: number) => `ROUND ${r} / ${total}`,
   },
   "hostHeader.roomCode": { tr: "Oda Kodu", de: "Raum-Code", en: "Room Code" },
+  "hostHeader.menu": { tr: "Personel menüsü", de: "Personalmenü", en: "Staff menu" },
+  "hostHeader.language": { tr: "Dil", de: "Sprache", en: "Language" },
   "hostLobby.cancelCountdown": {
     tr: "Geri Sayımı İptal Et",
     de: "Countdown abbrechen",
@@ -1261,6 +1263,11 @@ const translations = {
   },
   "quiz.getReady": { tr: "HAZIRLAN!", de: "MACH DICH BEREIT!", en: "GET READY!" },
   "quiz.answerSaved": { tr: "CEVAP KİLİTLENDİ 🔒", de: "ANTWORT GESPEICHERT 🔒", en: "ANSWER LOCKED 🔒" },
+  "quiz.tapHint": {
+    tr: "Cevabına dokun — doğruyu TV gösterecek.",
+    de: "Tippe deine Antwort — der TV zeigt die Auflösung.",
+    en: "Tap your answer — the TV shows the result.",
+  },
   "quiz.lockedWait": {
     tr: "Cevabın Kilitlendi · TV Ekranını Takip Et",
     de: "Antwort eingeloggt · Schau auf den TV",

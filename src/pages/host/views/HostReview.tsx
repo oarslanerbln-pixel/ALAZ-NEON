@@ -79,11 +79,11 @@ function CognitiveAnalyticsStrip({ results }: { results: RoundResultInfo[] }) {
   const mentalScore = Math.min(100, Math.round((avgAccuracy + uniqueDensity * 20) / 1.5));
 
   return (
-    <div className="flex items-center justify-between w-full max-w-6xl mx-auto px-6 py-2.5 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-2xl shadow-[0_4px_20px_rgba(0,0,0,0.5)] mb-4">
+    <div className="flex items-center justify-between w-full max-w-6xl mx-auto px-6 py-2.5 rounded-full bg-white/[0.03] border border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.5)] mb-4">
       {/* İsabet */}
       <div className="flex items-center gap-3">
-        <span className="w-2 h-2 rounded-full bg-alaz-orange shadow-[0_0_8px_#ff4d00] animate-pulse" />
-        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">
+        <span className="w-2 h-2 rounded-full bg-alaz-orange" />
+        <span className="text-xs font-bold uppercase tracking-[0.2em] text-white/50">
           {t("review.cognitiveAccuracy")}
         </span>
         <span className="text-xl font-black text-white tabular-nums">
@@ -95,8 +95,8 @@ function CognitiveAnalyticsStrip({ results }: { results: RoundResultInfo[] }) {
 
       {/* Özgünlük */}
       <div className="flex items-center gap-3">
-        <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#00f3ff] animate-pulse" />
-        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">
+        <span className="w-2 h-2 rounded-full bg-cyan-400" />
+        <span className="text-xs font-bold uppercase tracking-[0.2em] text-white/50">
           {t("review.originalityDensity")}
         </span>
         <span className="text-xl font-black text-cyan-400 tabular-nums">
@@ -108,15 +108,15 @@ function CognitiveAnalyticsStrip({ results }: { results: RoundResultInfo[] }) {
 
       {/* Zihinsel Performans */}
       <div className="flex items-center gap-3">
-        <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse" />
-        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">
+        <span className="w-2 h-2 rounded-full bg-emerald-400" />
+        <span className="text-xs font-bold uppercase tracking-[0.2em] text-white/50">
           {t("review.mentalPerformance")}
         </span>
         <span className="text-xl font-black text-emerald-400 tabular-nums">
           %{mentalScore}
         </span>
         <div className="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden ml-1">
-          <div style={{ width: `${mentalScore}%` }} className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 shadow-[0_0_10px_#34d399]" />
+          <div style={{ width: `${mentalScore}%` }} className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400" />
         </div>
       </div>
     </div>
@@ -151,7 +151,7 @@ export function HostReview({
   const { t } = useLocale();
   if (isAnalyzing) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center space-y-8 animate-pulse">
+      <div className="flex-1 flex flex-col items-center justify-center space-y-8">
         <div className="w-32 h-32 rounded-full border-8 border-alaz-orange border-t-transparent animate-spin" />
         <div className="text-center">
           <h2 className="text-4xl font-black text-white uppercase tracking-widest mb-2">
@@ -173,7 +173,7 @@ export function HostReview({
       className="w-full h-full flex flex-col"
     >
       <div className="text-center mb-2">
-        <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-[0.2em] text-glow-ultra-alaz">
+        <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-[0.2em]">
           {t("review.roundSummary", room?.current_round || 1)}
         </h2>
         <p className="text-gray-400 text-xs uppercase font-bold tracking-widest">
@@ -188,7 +188,7 @@ export function HostReview({
       <div className="flex-1 flex gap-6 overflow-hidden w-full max-w-7xl mx-auto min-h-0 pb-2 px-4">
         {/* Leaderboard */}
         <div className="w-1/3 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar">
-          <h3 className="text-sm font-black text-gray-500 uppercase tracking-widest mb-2 sticky top-0 bg-dark-bg/80 backdrop-blur-md py-2 z-10 w-full">
+          <h3 className="text-sm font-black text-gray-500 uppercase tracking-widest mb-2 sticky top-0 bg-dark-bg/80 py-2 z-10 w-full">
             {room?.game_mode === "team"
               ? t("review.teamRanking")
               : t("review.overallRanking")}
@@ -234,7 +234,7 @@ export function HostReview({
                           {team.total}
                         </span>
                       </div>
-                      <div className="text-[11px] font-black tracking-widest text-green-400 text-right uppercase">
+                      <div className="text-xs font-black tracking-widest text-green-400 text-right uppercase">
                         {t("review.thisRound", team.round)}
                       </div>
                     </motion.div>
@@ -266,7 +266,7 @@ export function HostReview({
                       <div className="flex justify-between items-center mb-3">
                         <div className="flex flex-col">
                           <span
-                            className={`text-[10px] font-bold uppercase tracking-[0.2em] ${isTop ? "text-alaz-orange" : "text-gray-500"}`}
+                            className={`text-xs font-bold uppercase tracking-[0.2em] ${isTop ? "text-alaz-orange" : "text-gray-500"}`}
                           >
                             {t("review.rank", i + 1)}
                           </span>
@@ -275,7 +275,7 @@ export function HostReview({
                           </span>
                         </div>
                         <span
-                          className={`text-4xl font-black ${isTop ? "text-glow-alaz text-white" : "text-gray-400"}`}
+                          className={`text-4xl font-black ${isTop ? " text-white" : "text-gray-400"}`}
                         >
                           {p.total_score}
                         </span>
@@ -327,7 +327,7 @@ export function HostReview({
                       </div>
 
                       {rRes && (
-                        <div className="text-[11px] font-black tracking-widest text-green-400 text-right uppercase mt-4">
+                        <div className="text-xs font-black tracking-widest text-green-400 text-right uppercase mt-4">
                           TUR: {t("review.points", rRes.roundScore)}
                         </div>
                       )}
@@ -339,7 +339,7 @@ export function HostReview({
         </div>
 
         {/* Answers Breakdown */}
-        <div className="w-2/3 bg-black/40 p-8 border border-white/5 flex flex-col relative overflow-hidden rounded-none shadow-[0_0_50px_rgba(0,0,0,0.8)] backdrop-blur-xl">
+        <div className="w-2/3 bg-black/40 p-8 border border-white/5 flex flex-col relative overflow-hidden rounded-none">
           <div className="absolute top-0 right-0 w-96 h-96 bg-alaz-orange/10 blur-[150px] pointer-events-none" />
           <h3 className="text-sm font-black text-gray-500 uppercase tracking-widest mb-6 relative z-10">
             {t("review.categoryAnalysis")}
@@ -348,7 +348,7 @@ export function HostReview({
             {(room?.categories || []).map((cat, catIdx) => (
               <div key={cat} className="space-y-3">
                 <h4 className="text-alaz-orange font-black text-lg uppercase tracking-tight pb-2 border-b border-white/10 flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-alaz-orange/20 flex items-center justify-center text-[10px]">
+                  <span className="w-6 h-6 rounded-full bg-alaz-orange/20 flex items-center justify-center text-xs">
                     {catIdx + 1}
                   </span>
                   {cat}
@@ -381,7 +381,7 @@ export function HostReview({
                           </span>
                         </div>
 
-                        <div className="text-[11px] text-alaz-orange font-black uppercase tracking-widest mb-1 truncate">
+                        <div className="text-xs text-alaz-orange font-black uppercase tracking-widest mb-1 truncate">
                           {res.name}
                         </div>
                         <div
@@ -406,7 +406,7 @@ export function HostReview({
                             "bunu mu demek istedi" bilgisini gorup isterse
                             tiklayip tamamen reddedebiliyor. */}
                         {ans?.isTypo && !isRejected && (
-                          <div className="text-[10px] font-black uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-1 rounded-sm mb-2 truncate">
+                          <div className="text-xs font-black uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-1 rounded-sm mb-2 truncate">
                             {t("review.typoLabel", safeForDisplay(ans.typoSuggestion || ""))}
                             <span className="text-amber-300/70 ml-1">
                               · {t("review.typoHalfPoints")}
@@ -425,13 +425,13 @@ export function HostReview({
                           }`}
                         >
                           {ans?.isJoker && (
-                            <span className="bg-alaz-orange/20 text-alaz-orange px-1 rounded-sm border border-alaz-orange/30 mr-1 animate-pulse">
+                            <span className="bg-alaz-orange/20 text-alaz-orange px-1 rounded-sm border border-alaz-orange/30 mr-1">
                               JOKER
                             </span>
                           )}
                           {!isRejected ? (
                             <>
-                              <div className={`w-1.5 h-1.5 rounded-full ${ans?.isJoker ? 'bg-alaz-orange' : 'bg-current'} animate-pulse`} />
+                              <div className={`w-1.5 h-1.5 rounded-full ${ans?.isJoker ? 'bg-alaz-orange' : 'bg-current'} `} />
                               {ans.points > 0 ? '+' : ''}{ans.points} {t("review.points", ans.points)}{" "}
                               {ans.isUnique ? t("review.uniqueBonus") : ""}
                             </>
@@ -473,7 +473,7 @@ export function HostReview({
                 <NeonIcon
                   type="rocket"
                   color="blue"
-                  className="w-8 h-8 animate-beat"
+                  className="w-8 h-8"
                 />
                 <div>
                   <h4 className="text-neon-blue font-black tracking-widest uppercase">
@@ -501,7 +501,7 @@ export function HostReview({
           onClick={onNextStep}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="w-full py-4 bg-gradient-to-r from-alaz-orange to-amber-500 text-black font-black text-xl rounded-full uppercase tracking-[0.25em] shadow-[0_0_35px_rgba(255,77,0,0.4)] transition-all hover:brightness-110 flex items-center justify-center gap-3"
+          className="w-full py-4 bg-gradient-to-r from-alaz-orange to-amber-500 text-black font-black text-xl rounded-full uppercase tracking-[0.25em] transition-all hover:brightness-110 flex items-center justify-center gap-3"
         >
           <span>
             {room!.current_round >= room!.total_rounds

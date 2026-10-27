@@ -70,7 +70,7 @@ export function PlayerHeader({
   }, [timeLeft, isPlaying]);
 
   return (
-    <header className="sticky top-0 z-30 w-full backdrop-blur-2xl bg-[#090912]/92 border-b border-white/[0.07] shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+    <header className="sticky top-0 z-30 w-full bg-[#090912]/92 border-b border-white/[0.07] shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
       <div className="max-w-md mx-auto px-4 h-14 flex items-center justify-between gap-2.5">
         {/* Left: Player Profile Pill */}
         <div className="flex items-center gap-2 min-w-0">
@@ -81,7 +81,7 @@ export function PlayerHeader({
             <span className="text-sm font-bold text-white truncate leading-tight">
               {playerName}
             </span>
-            <span className="text-[10px] font-mono font-medium text-white/45 uppercase tracking-wider">
+            <span className="text-xs tabular-nums font-medium text-white/45 uppercase tracking-wider">
               {t("playerHeader.round", "RUNDE")} {currentRound}
             </span>
           </div>
@@ -94,12 +94,12 @@ export function PlayerHeader({
             animate={{ scale: 1, opacity: 1 }}
             className={`flex items-center gap-2 px-3 py-1 rounded-xl bg-white/[0.05] border transition-colors ${
               isCritical
-                ? "border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.35)]"
-                : "border-alaz-orange/40 shadow-[0_0_15px_rgba(255,85,0,0.2)]"
+                ? "border-red-500 "
+                : "border-alaz-orange/40 "
             }`}
           >
-            <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest">{t("playerHeader.letter", "BUCHSTABE")}</span>
-            <span className={`text-lg font-black font-mono leading-none ${isCritical ? "text-red-400" : "text-alaz-orange"}`}>
+            <span className="text-xs tabular-nums text-white/40 uppercase tracking-widest">{t("playerHeader.letter", "BUCHSTABE")}</span>
+            <span className={`text-lg font-black tabular-nums leading-none ${isCritical ? "text-red-400" : "text-alaz-orange"}`}>
               {activeLetter}
             </span>
           </motion.div>
@@ -111,11 +111,11 @@ export function PlayerHeader({
             <div className="flex items-baseline gap-1">
               <motion.span
                 ref={scoreScope}
-                className="text-lg font-black font-mono text-white leading-none tracking-tight"
+                className="text-lg font-black tabular-nums text-white leading-none tracking-tight"
               >
                 <AnimatedNumber value={totalScore} duration={0.8} />
               </motion.span>
-              <span className="text-[10px] font-mono text-white/40 uppercase">{t("playerHeader.points", "PTS")}</span>
+              <span className="text-xs tabular-nums text-white/40 uppercase">{t("playerHeader.points", "PTS")}</span>
               <AnimatePresence>
                 {roundPoints !== null && (
                   <motion.span
@@ -164,8 +164,8 @@ export function PlayerHeader({
           <motion.div
             className={`h-full transition-all duration-300 ${
               isCritical
-                ? "bg-gradient-to-r from-red-500 to-rose-400 shadow-[0_0_12px_rgba(239,68,68,0.9)]"
-                : "bg-gradient-to-r from-alaz-orange to-amber-400 shadow-[0_0_8px_rgba(255,85,0,0.6)]"
+                ? "bg-gradient-to-r from-red-500 to-rose-400 "
+                : "bg-gradient-to-r from-alaz-orange to-amber-400 "
             }`}
             style={{ width: `${timeProgress}%` }}
           />
@@ -183,8 +183,8 @@ export function PlayerHeader({
             className="overflow-hidden bg-alaz-orange/10 border-t border-alaz-orange/20"
           >
             <div className="px-4 py-1.5 flex items-center justify-center gap-2 text-alaz-orange">
-              <div className="w-1.5 h-1.5 rounded-full bg-alaz-orange animate-ping" />
-              <span className="text-[11px] font-bold uppercase tracking-[0.2em] font-mono">
+              <div className="w-1.5 h-1.5 rounded-full bg-alaz-orange" />
+              <span className="text-xs font-bold uppercase tracking-[0.2em] tabular-nums">
                 {t("playerHeader.submittingAnswers")}
               </span>
             </div>

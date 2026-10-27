@@ -31,10 +31,10 @@ export function ExperienceBar({
       <div className="flex justify-between items-end px-1">
         {/* label="" = "başlık istemiyorum" demek; `||` bunu yutup varsayılanı
             basıyordu (mobil başlıkta gereksiz "TUR İLERLEMESİ" yazısı). */}
-        <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+        <span className="text-xs font-black uppercase tracking-widest text-gray-500">
           {label ?? t("xpBar.roundProgress")}
         </span>
-        <span className="text-[10px] font-black text-white px-2 py-0.5 rounded bg-white/5 tabular-nums">
+        <span className="text-xs font-black text-white px-2 py-0.5 rounded bg-white/5 tabular-nums">
           {Math.round(progress)}%
         </span>
       </div>
@@ -45,16 +45,8 @@ export function ExperienceBar({
           animate={{ scaleX: fraction }}
           transition={mode === "linear" ? { duration: 1, ease: "linear" } : SPRING.gentle}
           style={{ backgroundColor: color, originX: 0 }}
-          className="h-full w-full relative overflow-hidden progress-glow will-change-transform"
-        >
-          {/* Animated shine effect */}
-          <motion.div
-            aria-hidden="true"
-            animate={{ x: ["-100%", "200%"] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12"
-          />
-        </motion.div>
+          className="h-full w-full will-change-transform"
+        />
       </div>
     </div>
   );

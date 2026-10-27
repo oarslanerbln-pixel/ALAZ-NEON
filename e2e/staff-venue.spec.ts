@@ -18,8 +18,8 @@ const SEEDED_VENUE = {
   reward_description: "An der Bar einlösen",
   reward_type: "drink",
   reward_validity_days: 14,
-  promo_images: ["http://127.0.0.1:4173/hero-3.png"],
-  sponsor_ads: [{ id: "ad1", sponsor: "Club Mate", url: "http://127.0.0.1:4173/hero-3.png", type: "image", duration: 10 }],
+  promo_images: ["http://127.0.0.1:4173/media/tanitim/video-poster.webp"],
+  sponsor_ads: [{ id: "ad1", sponsor: "Club Mate", url: "http://127.0.0.1:4173/media/tanitim/video-poster.webp", type: "image", duration: 10 }],
   updated_at: 1,
 };
 

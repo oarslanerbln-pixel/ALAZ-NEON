@@ -48,14 +48,14 @@ export function PlayerIntroVideo({
       {/* ═══════════════════════════════════════════════════════════════
           ÜST HUD: CANLI YAYIN & TUR BİLGİSİ
           ═══════════════════════════════════════════════════════════════ */}
-      <div className="flex items-center justify-between px-3 py-2 rounded-2xl bg-black/60 border border-white/10 backdrop-blur-xl mb-3 shadow-lg">
+      <div className="flex items-center justify-between px-3 py-2 rounded-2xl bg-black/60 border border-white/10 mb-3 shadow-lg">
         {/* Canlı Yayın Beacon */}
         <div className="flex items-center gap-2">
           <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+            <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
           </span>
-          <span className="text-[11px] font-mono font-black uppercase tracking-[0.2em] text-white">
+          <span className="text-xs tabular-nums font-black uppercase tracking-[0.2em] text-white">
             {t("intro.liveBroadcast")}
           </span>
         </div>
@@ -63,7 +63,7 @@ export function PlayerIntroVideo({
         {/* Tur Bilgisi & Ses Aç/Kapa */}
         <div className="flex items-center gap-2">
           {currentRound !== undefined && totalRounds !== undefined && (
-            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-white/[0.06] text-white/70 border border-white/10">
+            <span className="text-xs tabular-nums font-bold px-2 py-0.5 rounded-md bg-white/[0.06] text-white/70 border border-white/10">
               {t("hostHeader.roundLabel", currentRound, totalRounds)}
             </span>
           )}
@@ -85,13 +85,7 @@ export function PlayerIntroVideo({
       {/* ═══════════════════════════════════════════════════════════════
           ORTA ÇEKİRDEK: SİNEMATİK VİDEO OYNATICI & SİBER ÇERÇEVE
           ═══════════════════════════════════════════════════════════════ */}
-      <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(255,85,0,0.15)] bg-black">
-        {/* Dış Ambient Parlama */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-tr from-alaz-orange/20 via-transparent to-cyan-400/20 pointer-events-none z-10 mix-blend-screen"
-        />
-
+      <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden border border-white/20 bg-black">
         {/* Video Elemanı */}
         <video
           ref={videoRef}
@@ -110,26 +104,20 @@ export function PlayerIntroVideo({
         {/* Üst ve Alt Karartma Gradyanı */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/60 pointer-events-none" />
 
-        {/* Köşe Prizma Çentikleri (Blender / Cyber Aesthethic) */}
-        <div className="absolute top-3 left-3 w-3 h-3 border-t-2 border-l-2 border-alaz-orange pointer-events-none z-20" />
-        <div className="absolute top-3 right-3 w-3 h-3 border-t-2 border-r-2 border-cyan-400 pointer-events-none z-20" />
-        <div className="absolute bottom-3 left-3 w-3 h-3 border-b-2 border-l-2 border-cyan-400 pointer-events-none z-20" />
-        <div className="absolute bottom-3 right-3 w-3 h-3 border-b-2 border-r-2 border-alaz-orange pointer-events-none z-20" />
-
         {/* Video Üstü Canlı Logo / Başlık Rozeti */}
         <div className="absolute inset-x-0 bottom-4 px-4 flex flex-col items-center text-center z-20 pointer-events-none">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={SPRING.snappy}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/70 border border-white/20 backdrop-blur-md mb-1 shadow-lg"
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/70 border border-white/20 mb-1 shadow-lg"
           >
-            <Sparkles className="w-3 h-3 text-alaz-orange animate-spin-slow" />
-            <span className="text-[10px] font-mono font-black tracking-[0.25em] text-white uppercase">
+            <Sparkles className="w-3 h-3 text-alaz-orange" />
+            <span className="text-xs tabular-nums font-black tracking-[0.25em] text-white uppercase">
               {gameTitle}
             </span>
           </motion.div>
-          <p className="text-sm font-bold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
+          <p className="text-sm font-bold text-white">
             {t("intro.getReady")}
           </p>
         </div>
@@ -140,9 +128,9 @@ export function PlayerIntroVideo({
           ═══════════════════════════════════════════════════════════════ */}
       <div className="mt-4 flex flex-col gap-2.5">
         {/* Hızlı Taktik Kartı */}
-        <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-xl flex items-center gap-3">
+        <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-alaz-orange/20 border border-alaz-orange/40 flex items-center justify-center shrink-0">
-            <Radio className="w-4 h-4 text-alaz-orange animate-pulse" />
+            <Radio className="w-4 h-4 text-alaz-orange" />
           </div>
           <p className="text-xs font-semibold text-white/80 leading-snug">
             {t("intro.arenaTip")}
@@ -150,14 +138,12 @@ export function PlayerIntroVideo({
         </div>
 
         {/* Büyük Ekrana Odaklanma Rozeti */}
-        <motion.div
-          animate={{ opacity: [0.7, 1, 0.7] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          className="py-2.5 px-4 rounded-xl bg-cyan-500/10 border border-cyan-400/25 flex items-center justify-center gap-2 text-cyan-300 text-[11px] font-mono font-bold tracking-[0.2em] uppercase"
+        <div
+          className="py-2.5 px-4 rounded-xl bg-accent/10 border border-accent/25 flex items-center justify-center gap-2 text-accent text-xs tabular-nums font-bold tracking-[0.2em] uppercase"
         >
           <span>👀</span>
           <span>{t("playerReview.watchMainScreen")}</span>
-        </motion.div>
+        </div>
       </div>
     </motion.div>
   );

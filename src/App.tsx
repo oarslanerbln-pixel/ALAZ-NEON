@@ -55,8 +55,8 @@ function RouteFallback() {
   const { t } = useLocale();
 
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center font-mono">
-      <div className="text-alaz-orange text-sm uppercase tracking-[0.5em] animate-pulse">
+    <div className="fixed inset-0 bg-black flex items-center justify-center tabular-nums">
+      <div className="text-alaz-orange text-sm uppercase tracking-[0.5em]">
         {t("common.loading")}
       </div>
     </div>

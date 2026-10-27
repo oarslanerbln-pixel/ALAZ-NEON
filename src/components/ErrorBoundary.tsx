@@ -39,10 +39,10 @@ export class ErrorBoundary extends Component<Props, State> {
             Lütfen bu ekranın fotoğrafını atın veya hatayı kopyalayın:
           </p>
           <div className="bg-gray-900 p-6 rounded-lg text-left w-full max-w-4xl overflow-auto border border-red-500">
-            <h2 className="text-2xl font-mono text-red-400 mb-2">
+            <h2 className="text-2xl tabular-nums text-red-400 mb-2">
               {this.state.error?.toString()}
             </h2>
-            <pre className="text-sm font-mono text-gray-300 whitespace-pre-wrap">
+            <pre className="text-sm tabular-nums text-gray-300 whitespace-pre-wrap">
               {this.state.error?.stack}
             </pre>
           </div>

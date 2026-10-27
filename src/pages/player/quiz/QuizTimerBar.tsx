@@ -38,15 +38,14 @@ export function QuizTimerBar({ durationSec, roundEndTime, live, onUrgentChange }
     onUrgentChange?.(urgent);
   }, [urgent, onUrgentChange]);
 
-  const tone = urgent ? "bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.8)]" : secondsLeft <= 10 ? "bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.7)]" : "bg-sky-400 shadow-[0_0_12px_rgba(56,189,248,0.7)]";
+  const tone = urgent ? "bg-bad" : "bg-accent";
 
   return (
     <>
-      {urgent && <div className="absolute inset-0 bg-red-600/10 motion-safe:animate-pulse pointer-events-none z-0" aria-hidden="true" />}
       {/* Çentikli telefonlarda (viewport-fit=cover) y=0 durum çubuğunun
           altında kalıyordu; çubuk güvenli alanın hemen altına iniyor. */}
       <div
-        className="absolute top-[env(safe-area-inset-top)] inset-x-0 h-1.5 bg-white/10 z-30"
+        className="absolute top-[calc(env(safe-area-inset-top)+12px)] inset-x-5 h-2 rounded-full overflow-hidden bg-surface-2 z-30"
         role="progressbar"
         aria-label={t("quiz.timeLeft")}
         aria-valuemin={0}

@@ -60,10 +60,10 @@ export function PlayerStandings({ currentPlayer }: PlayerStandingsProps) {
   }, [currentPlayer]);
 
   const rankLabel = (rank: number) => {
-    if (rank === 1) return { emoji: "1", color: "text-white", border: "border-l-[6px] border-l-alaz-orange border-y border-y-white/10", bg: "bg-black/80 backdrop-blur-xl" };
-    if (rank === 2) return { emoji: "2", color: "text-white/80", border: "border-l-4 border-l-gray-400 border-y border-y-white/10", bg: "bg-black/70 backdrop-blur-xl" };
-    if (rank === 3) return { emoji: "3", color: "text-white/80", border: "border-l-4 border-l-orange-800 border-y border-y-white/10", bg: "bg-black/70 backdrop-blur-xl" };
-    return { emoji: `${rank}`, color: "text-white/50", border: "border-l-4 border-l-white/10 border-y border-y-white/5", bg: "bg-black/60 backdrop-blur-xl" };
+    if (rank === 1) return { emoji: "1", color: "text-white", border: "border-l-[6px] border-l-alaz-orange border-y border-y-white/10", bg: "bg-black/80 " };
+    if (rank === 2) return { emoji: "2", color: "text-white/80", border: "border-l-4 border-l-gray-400 border-y border-y-white/10", bg: "bg-black/70 " };
+    if (rank === 3) return { emoji: "3", color: "text-white/80", border: "border-l-4 border-l-orange-800 border-y border-y-white/10", bg: "bg-black/70 " };
+    return { emoji: `${rank}`, color: "text-white/50", border: "border-l-4 border-l-white/10 border-y border-y-white/5", bg: "bg-black/60 " };
   };
 
   return (
@@ -85,14 +85,10 @@ export function PlayerStandings({ currentPlayer }: PlayerStandingsProps) {
         className="w-full max-w-sm mb-8"
       >
         {currentPlayer && myRank !== null ? (
-          <div className="relative bg-black/80 backdrop-blur-xl border border-white/20 p-6 overflow-hidden shadow-2xl">
-            {/* Corner accents */}
-            <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-alaz-orange" />
-            <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-alaz-orange" />
-
+          <div className="surface relative p-6 overflow-hidden">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[10px] text-white/50 font-mono uppercase tracking-[0.3em] mb-1">
+                <p className="text-xs text-white/50 tabular-nums uppercase tracking-[0.3em] mb-1">
                   {t("playerStandings.ranking")}
                 </p>
                 <motion.div
@@ -100,20 +96,17 @@ export function PlayerStandings({ currentPlayer }: PlayerStandingsProps) {
                   animate={{ scale: 1, opacity: 1, rotate: 0 }}
                   transition={{ ...SPRING.bouncy, delay: 0.3 }}
                   className="text-6xl font-black tracking-tighter tabular-nums origin-left"
-                  style={{
-                    color: myRank === 1 ? "#ff5500" : "#ffffff",
-                    textShadow: myRank === 1 ? "0 0 20px rgba(255,85,0,0.5)" : "none"
-                  }}
+                  style={{ color: myRank === 1 ? "var(--color-accent)" : "#ffffff" }}
                 >
                   #{myRank}
                 </motion.div>
               </div>
 
               <div className="text-right border-l border-white/20 pl-6">
-                <p className="text-[10px] text-white/50 font-mono uppercase tracking-[0.3em] mb-1">
+                <p className="text-xs text-white/50 tabular-nums uppercase tracking-[0.3em] mb-1">
                   {t("playerStandings.score")}
                 </p>
-                <span className="text-4xl font-mono font-black text-white">
+                <span className="text-4xl tabular-nums font-black text-white">
                   <AnimatedNumber from={0} value={currentPlayer.total_score} delay={0.45} duration={0.9} />
                 </span>
               </div>
@@ -138,7 +131,7 @@ export function PlayerStandings({ currentPlayer }: PlayerStandingsProps) {
             }}
             className="w-full max-w-sm space-y-2"
           >
-            <p className="text-[10px] text-white/50 uppercase tracking-[0.4em] mb-4 font-mono text-left pl-2">
+            <p className="text-xs text-white/50 uppercase tracking-[0.4em] mb-4 tabular-nums text-left pl-2">
               {t("playerStandings.leaderboard")}
             </p>
             {rankedPlayers.map((p) => {
@@ -149,10 +142,10 @@ export function PlayerStandings({ currentPlayer }: PlayerStandingsProps) {
                   key={p.id}
                   layout
                   variants={{ hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0, transition: SPRING.snappy } }}
-                  className={`flex items-center h-12 shadow-lg ${style.border} ${style.bg} ${isMe ? "bg-white/10" : ""}`}
+                  className={`flex items-center h-12 ${style.border} ${style.bg} ${isMe ? "bg-white/10" : ""}`}
                 >
                   <div className="w-10 h-full flex items-center justify-center border-r border-white/10 bg-black/40">
-                    <span className={`text-sm font-mono font-bold tracking-tighter italic tabular-nums ${style.color}`}>
+                    <span className={`text-sm tabular-nums font-bold tracking-tighter italic tabular-nums ${style.color}`}>
                       {style.emoji}
                     </span>
                   </div>
@@ -160,7 +153,7 @@ export function PlayerStandings({ currentPlayer }: PlayerStandingsProps) {
                     {p.nickname}
                   </span>
                   <div className="w-16 h-full flex items-center justify-center bg-black/50">
-                    <span className={`text-sm font-mono font-black tabular-nums ${isMe ? "text-alaz-orange" : "text-white"}`}>
+                    <span className={`text-sm tabular-nums font-black tabular-nums ${isMe ? "text-alaz-orange" : "text-white"}`}>
                       {p.total_score}
                     </span>
                   </div>
@@ -173,8 +166,8 @@ export function PlayerStandings({ currentPlayer }: PlayerStandingsProps) {
 
       <motion.p
         initial={{ opacity: 0 }}
-        animate={{ opacity: [0, 0.7, 0.4, 0.7] }}
-        transition={{ delay: 1, duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        animate={{ opacity: 0.7 }}
+        transition={{ delay: 1, duration: 0.25, ease: "easeOut" }}
         className="mt-8 text-zinc-400 font-light text-sm tracking-widest uppercase text-center"
       >
         {t("playerStandings.watchMainScreen")}

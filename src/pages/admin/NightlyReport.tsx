@@ -159,7 +159,7 @@ export function NightlyReport() {
   // Oturum ya da personel kaydı henüz çözülmedi.
   if (authUser === undefined || (authUser && isStaff === undefined)) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center text-white/50 font-mono text-sm uppercase tracking-widest">
+      <div className="min-h-screen bg-black flex items-center justify-center text-white/50 tabular-nums text-sm uppercase tracking-widest">
         Yükleniyor...
       </div>
     );
@@ -175,7 +175,7 @@ export function NightlyReport() {
       : null;
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 md:p-10 font-inter">
+    <div className="min-h-screen bg-black text-white p-6 md:p-10">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -189,7 +189,7 @@ export function NightlyReport() {
           </div>
           <button
             onClick={() => signOut(auth).then(() => navigate("/"))}
-            className="text-[10px] uppercase tracking-widest text-white/40 hover:text-white border border-white/10 px-3 py-2 rounded-lg transition-colors shrink-0"
+            className="text-xs uppercase tracking-widest text-white/40 hover:text-white border border-white/10 px-3 py-2 rounded-lg transition-colors shrink-0"
           >
             Çıkış Yap
           </button>
@@ -199,13 +199,13 @@ export function NightlyReport() {
           <div className="flex gap-3">
             <Link
               to="/admin/venue"
-              className="text-[10px] uppercase tracking-widest text-white/40 hover:text-white"
+              className="text-xs uppercase tracking-widest text-white/40 hover:text-white"
             >
               ← Mekan Ayarları
             </Link>
             <Link
               to="/admin/rewards"
-              className="text-[10px] uppercase tracking-widest text-white/40 hover:text-white"
+              className="text-xs uppercase tracking-widest text-white/40 hover:text-white"
             >
               Ödül Doğrula →
             </Link>
@@ -213,7 +213,7 @@ export function NightlyReport() {
           {data && (
             <button
               onClick={copySummary}
-              className="text-[10px] uppercase tracking-widest bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-md border border-white/20 transition-all"
+              className="text-xs uppercase tracking-widest bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-md border border-white/20 transition-all"
             >
               {copied ? "✓ Kopyalandı!" : "📋 Özeti Kopyala"}
             </button>
@@ -254,29 +254,29 @@ export function NightlyReport() {
           <>
             <div className="grid grid-cols-3 gap-4 mb-4">
               <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-                <p className="text-white/40 text-[10px] uppercase tracking-widest mb-1">Oyun Sayısı</p>
+                <p className="text-white/40 text-xs uppercase tracking-widest mb-1">Oyun Sayısı</p>
                 <p className="text-3xl font-black text-white">{data.roomCount}</p>
-                <p className="text-white/30 text-[10px] mt-1">{data.finishedCount} tamamlandı</p>
+                <p className="text-white/30 text-xs mt-1">{data.finishedCount} tamamlandı</p>
               </div>
               <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-                <p className="text-white/40 text-[10px] uppercase tracking-widest mb-1">Oyuncu</p>
+                <p className="text-white/40 text-xs uppercase tracking-widest mb-1">Oyuncu</p>
                 <p className="text-3xl font-black text-white">{data.playerCount}</p>
-                <p className="text-white/30 text-[10px] mt-1">toplam katılım</p>
+                <p className="text-white/30 text-xs mt-1">toplam katılım</p>
               </div>
               <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-                <p className="text-white/40 text-[10px] uppercase tracking-widest mb-1">Oda Başına</p>
+                <p className="text-white/40 text-xs uppercase tracking-widest mb-1">Oda Başına</p>
                 <p className="text-3xl font-black text-cyan-400">{data.avgPlayersPerRoom}</p>
-                <p className="text-white/30 text-[10px] mt-1">ort. oyuncu</p>
+                <p className="text-white/30 text-xs mt-1">ort. oyuncu</p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <p className="text-white/40 text-[10px] uppercase tracking-widest mb-2">İkram Dağıtıldı</p>
+                <p className="text-white/40 text-xs uppercase tracking-widest mb-2">İkram Dağıtıldı</p>
                 <p className="text-4xl font-black text-alaz-orange">{data.rewardsGranted}</p>
               </div>
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <p className="text-white/40 text-[10px] uppercase tracking-widest mb-2">Barda Kullanıldı</p>
+                <p className="text-white/40 text-xs uppercase tracking-widest mb-2">Barda Kullanıldı</p>
                 <p className="text-4xl font-black text-green-400">
                   {data.rewardsClaimed}
                   {redemptionRate !== null && (
@@ -289,7 +289,7 @@ export function NightlyReport() {
             {/* Hourly Traffic Distribution */}
             {data.hourlyBreakdown.length > 0 && (
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-4">
-                <p className="text-white/40 text-[10px] uppercase tracking-widest mb-4">⏰ Saatlik Yoğunluk (Peak Hours)</p>
+                <p className="text-white/40 text-xs uppercase tracking-widest mb-4">⏰ Saatlik Yoğunluk (Peak Hours)</p>
                 <div className="space-y-3">
                   {data.hourlyBreakdown.map((item) => {
                     const maxHourly = Math.max(...data.hourlyBreakdown.map((b) => b.count), 1);
@@ -297,7 +297,7 @@ export function NightlyReport() {
                     return (
                       <div key={item.hourLabel} className="space-y-1">
                         <div className="flex justify-between text-xs">
-                          <span className="text-white/70 font-mono">{item.hourLabel}</span>
+                          <span className="text-white/70 tabular-nums">{item.hourLabel}</span>
                           <span className="font-bold text-alaz-orange">{item.count} oyun</span>
                         </div>
                         <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
@@ -315,7 +315,7 @@ export function NightlyReport() {
 
             {Object.keys(data.modeBreakdown).length > 0 && (
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <p className="text-white/40 text-[10px] uppercase tracking-widest mb-4">🎮 Oyun Modu Popülaritesi</p>
+                <p className="text-white/40 text-xs uppercase tracking-widest mb-4">🎮 Oyun Modu Popülaritesi</p>
                 <div className="space-y-2">
                   {Object.entries(data.modeBreakdown)
                     .sort((a, b) => b[1] - a[1])
@@ -326,7 +326,7 @@ export function NightlyReport() {
                           <span className="text-sm text-white/80">{mode}</span>
                           <div className="flex items-center gap-3">
                             <span className="text-xs text-white/40">%{modePercent}</span>
-                            <span className="font-mono font-bold text-alaz-orange">{count}</span>
+                            <span className="tabular-nums font-bold text-alaz-orange">{count}</span>
                           </div>
                         </div>
                       );

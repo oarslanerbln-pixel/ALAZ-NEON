@@ -14,42 +14,16 @@ import { PlayerStageScreen } from "../components/PlayerStageScreen";
 import { PlayerIntroVideo } from "../components/PlayerIntroVideo";
 import { QuizTimerBar } from "./QuizTimerBar";
 import { NumberTicker } from "../../../components/fx";
-import { SPRING, STAGGER } from "../../../lib/motion";
+import { DURATION, EASE } from "../../../lib/motion";
 
-const OPTION_THEMES = {
-  A: {
-    border: "border-cyan-400/50",
-    glow: "shadow-[0_0_25px_rgba(0,243,255,0.25)]",
-    badge: "bg-cyan-500/20 text-cyan-300 border-cyan-400/40",
-    activeGlow: "shadow-[0_0_35px_rgba(0,243,255,0.5)]",
-    accent: "text-cyan-400",
-    corner: "border-cyan-400",
-  },
-  B: {
-    border: "border-purple-400/50",
-    glow: "shadow-[0_0_25px_rgba(192,132,252,0.25)]",
-    badge: "bg-purple-500/20 text-purple-300 border-purple-400/40",
-    activeGlow: "shadow-[0_0_35px_rgba(192,132,252,0.5)]",
-    accent: "text-purple-400",
-    corner: "border-purple-400",
-  },
-  C: {
-    border: "border-alaz-orange/50",
-    glow: "shadow-[0_0_25px_rgba(255,85,0,0.25)]",
-    badge: "bg-alaz-orange/20 text-orange-300 border-alaz-orange/40",
-    activeGlow: "shadow-[0_0_35px_rgba(255,85,0,0.5)]",
-    accent: "text-alaz-orange",
-    corner: "border-alaz-orange",
-  },
-  D: {
-    border: "border-pink-400/50",
-    glow: "shadow-[0_0_25px_rgba(244,114,182,0.25)]",
-    badge: "bg-pink-500/20 text-pink-300 border-pink-400/40",
-    activeGlow: "shadow-[0_0_35px_rgba(244,114,182,0.5)]",
-    accent: "text-pink-400",
-    corner: "border-pink-400",
-  },
+/** Telefon ekranları arasında kısa, sade geçiş (≤250 ms). */
+const FADE = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+  transition: { duration: DURATION.base },
 } as const;
+
 
 interface PlayerQuizControllerProps {
   room: Room;
@@ -185,7 +159,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
   const totalRounds = room.total_rounds || 5;
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-between min-h-[100dvh] bg-[#07070d] text-white relative overflow-hidden select-none pt-[env(safe-area-inset-top)] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+    <div className="flex-1 flex flex-col items-center justify-between min-h-[100dvh] bg-bg text-ink relative overflow-hidden select-none pt-[env(safe-area-inset-top)] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       {gameState === "question_active" && (
         <QuizTimerBar
           key={room.current_question_index ?? 0}
@@ -196,36 +170,31 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
         />
       )}
 
-      {/* Top Status Bar */}
-      <header className="w-full max-w-md mx-auto px-4 pt-4 pb-2 flex justify-between items-center z-20">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-xl">
-          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-          <span className="text-xs font-bold text-white/90 truncate max-w-[140px]">{player.nickname}</span>
+      {/* Oyuncu ve puan */}
+      <header className="w-full max-w-md mx-auto px-5 pt-9 pb-2 flex justify-between items-center gap-3 z-20">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="w-10 h-10 shrink-0 rounded-full bg-surface-2 flex items-center justify-center text-base font-extrabold text-accent">
+            {player.nickname.trim().charAt(0).toUpperCase()}
+          </span>
+          <span className="text-lg font-semibold text-ink truncate">{player.nickname}</span>
         </div>
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-alaz-orange/10 border border-alaz-orange/30 text-alaz-orange backdrop-blur-xl">
-          <span className="text-xs">⚡</span>
-          <NumberTicker value={player.total_score} initial={player.total_score} className="text-xs font-black font-mono tabular-nums" />
-          <span className="text-[11px] text-white/50 uppercase">{t("quiz.pts")}</span>
-        </div>
+        <span className="shrink-0 text-lg">
+          <NumberTicker value={player.total_score} initial={player.total_score} className="font-extrabold tabular-nums text-ink" />{" "}
+          <span className="text-ink-2">{t("quiz.pts")}</span>
+        </span>
       </header>
 
-      {/* Content Area */}
-      <div className="relative z-10 w-full max-w-md px-4 flex-1 flex flex-col justify-center min-h-0">
+      <div className="relative z-10 w-full max-w-md px-5 flex-1 flex flex-col justify-center min-h-0">
         {/* Soru numarasıyla anahtarlı: host ekranları hızlı geçerken yavaş
             telefonda bir çıkış animasyonu hiç bitmeyebiliyor ve "wait" kipi
             yeni ekranı sonsuza dek bekletiyordu (telefon önceki sorunun
             açıklamasında kalıp yeni soruyu kaçırıyordu). Yeni soru ağacı
             baştan kurar. */}
         <AnimatePresence mode="wait" key={questionIndex}>
-          
+
           {/* LOBBY */}
           {(gameState === "lobby" || gameState === "quiz_lobby") && (
-            <motion.div
-              key="lobby"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, y: -20 }}
-            >
+            <motion.div key="lobby" {...FADE}>
               <PlayerStageScreen icon="💡" tone="blue" eyebrow={gameTitle("quiz")} title={t("lobby.readyTitle")} body={t("quiz.watchMainScreen")} waiting hint={null} />
             </motion.div>
           )}
@@ -238,12 +207,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
               totalRounds={totalRounds}
             />
           ) : gameState === "question_intro" ? (
-            <motion.div
-              key={`intro-${questionIndex}`}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-            >
+            <motion.div key={`intro-${questionIndex}`} {...FADE}>
               <PlayerStageScreen
                 icon="🧠"
                 tone="blue"
@@ -256,116 +220,64 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
             </motion.div>
           ) : null}
 
-          {/* ACTIVE QUESTION - 4 TACTILE CYBER POWER BLOCKS */}
+          {/* SORU: başlık üstte, şıklar başparmak bölgesinde */}
           {gameState === "question_active" && currentQ && (
-            <motion.div
-              key="active"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="w-full flex-1 flex flex-col gap-3 py-2"
-            >
-              {/* Question Preview Box */}
-              <div className="w-full bg-[#0d0d18]/95 border border-white/[0.12] rounded-2xl p-4 sm:p-5 shadow-2xl backdrop-blur-xl text-center mb-auto relative overflow-hidden">
-                <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-cyan-400 via-purple-400 to-alaz-orange" />
-                {currentQ.category && (
-                  <span className="inline-block text-[10px] font-mono uppercase text-cyan-300 font-black tracking-[0.25em] px-3 py-0.5 rounded-full bg-cyan-400/10 border border-cyan-400/30 mb-2">
-                    {currentQ.category}
-                  </span>
-                )}
-                <h3 className="text-base sm:text-lg font-bold text-white leading-relaxed line-clamp-3">
-                  {currentQ.text}
-                </h3>
-              </div>
+            <motion.div key="active" {...FADE} className="w-full flex-1 flex flex-col py-2">
+              <p className="text-base text-ink-2">
+                <span className="font-semibold tabular-nums">{t("quiz.questionCounter", currentRound, totalRounds)}</span>
+                {currentQ.category && <> · {currentQ.category}</>}
+              </p>
+              <h3 className="mt-2 text-[26px] font-extrabold text-ink leading-tight text-balance">{currentQ.text}</h3>
 
-              {/* 4 Tactile Cyber Power Blocks */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full">
-                {(["A", "B", "C", "D"] as const).map((opt, i) => {
+              <div className="mt-auto pt-6 flex flex-col gap-3 w-full">
+                {(["A", "B", "C", "D"] as const).map((opt) => {
                   const isSelected = selectedOption === opt;
-                  const theme = OPTION_THEMES[opt];
-
                   return (
                     <motion.button
                       key={opt}
                       data-testid={`quiz-option-${opt}`}
-                      initial={{ opacity: 0, y: 14 }}
-                      animate={{
-                        opacity: hasSubmitted && !isSelected ? 0.25 : 1,
-                        y: 0,
-                        scale: isSelected ? 1.02 : 1,
-                      }}
-                      transition={{ ...SPRING.snappy, delay: hasSubmitted ? 0 : i * STAGGER.tight }}
-                      whileTap={hasSubmitted ? undefined : { scale: 0.94 }}
+                      animate={{ opacity: hasSubmitted && !isSelected ? 0.35 : 1 }}
+                      transition={{ duration: DURATION.fast }}
+                      whileTap={hasSubmitted ? undefined : { scale: 0.98 }}
                       onClick={() => !hasSubmitted && handleSubmit(opt)}
                       disabled={hasSubmitted}
-                      className={`w-full min-h-[72px] sm:min-h-[80px] p-3.5 sm:p-4 rounded-2xl border-2 transition-all duration-200 flex items-center gap-3.5 text-left relative overflow-hidden select-none touch-manipulation ${
-                        isSelected
-                          ? "bg-white text-black border-white shadow-[0_0_40px_rgba(255,255,255,0.8)]"
-                          : `bg-[#0c0c16]/90 backdrop-blur-xl ${theme.border} ${theme.glow} text-white hover:border-white/40 active:scale-[0.98]`
+                      className={`w-full min-h-[72px] px-4 rounded-3xl border flex items-center gap-4 text-left select-none touch-manipulation transition-colors ${
+                        isSelected ? "bg-accent border-accent text-bg" : "bg-surface border-line text-ink active:bg-surface-2"
                       }`}
                     >
-                      {/* Lazer Köşebentler */}
-                      <div className={`absolute top-1 left-1 w-2.5 h-2.5 border-t-2 border-l-2 ${isSelected ? "border-black" : theme.corner}`} />
-                      <div className={`absolute bottom-1 right-1 w-2.5 h-2.5 border-b-2 border-r-2 ${isSelected ? "border-black" : theme.corner}`} />
-
-                      <div className={`w-11 h-11 rounded-xl border flex items-center justify-center text-base font-black shrink-0 transition-colors ${
-                        isSelected
-                          ? "bg-black text-white border-black shadow-[0_0_15px_rgba(0,0,0,0.5)]"
-                          : theme.badge
-                      }`}>
+                      <span
+                        className={`w-12 h-12 shrink-0 rounded-2xl border-2 flex items-center justify-center text-xl font-extrabold ${
+                          isSelected ? "border-bg/40 text-bg" : "border-accent/60 text-accent"
+                        }`}
+                      >
                         {opt}
-                      </div>
-                      <div className={`text-sm sm:text-base font-bold flex-1 leading-snug line-clamp-2 ${isSelected ? "text-black font-black" : "text-white"}`}>
-                        {currentQ.options[opt]}
-                      </div>
-                      {isSelected && (
-                        <div className="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center text-xs font-black shadow-md shrink-0">
-                          🔒
-                        </div>
-                      )}
+                      </span>
+                      <span className="flex-1 text-xl font-semibold leading-snug line-clamp-2">{currentQ.options[opt]}</span>
                     </motion.button>
                   );
                 })}
               </div>
 
-              {hasSubmitted && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={SPRING.bouncy}
-                  className="w-full py-2.5 px-4 bg-black/80 border border-cyan-400/40 rounded-2xl flex items-center justify-between shadow-[0_0_30px_rgba(0,243,255,0.2)] backdrop-blur-xl mt-1"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-                    <span className="text-white font-mono text-[11px] tracking-widest font-black uppercase">
-                      {t("quiz.answerSaved")}
-                    </span>
-                  </div>
-                  {responseSec && (
-                    <span className="text-[11px] font-mono font-black text-amber-300 px-2.5 py-0.5 rounded-full bg-amber-400/15 border border-amber-400/30">
-                      ⚡ {responseSec}s
-                    </span>
-                  )}
-                </motion.div>
-              )}
+              <div className="mt-4 min-h-[28px] text-center text-base">
+                {hasSubmitted ? (
+                  <span className="text-ink">
+                    {t("quiz.answerSaved")}
+                    {responseSec && <span className="ml-2 text-ink-2 tabular-nums">{responseSec}s</span>}
+                  </span>
+                ) : (
+                  <span className="text-ink-2">{t("quiz.tapHint")}</span>
+                )}
+              </div>
             </motion.div>
           )}
 
-          {/* QUESTION REVEAL SCREEN */}
+          {/* CEVAP AÇIKLANDI */}
           {gameState === "question_reveal" && currentQ && (() => {
             const revealed = revealedOption(room, room.current_question_index ?? 0);
             if (!revealed) {
               return (
-                <motion.div
-                  key="reveal-pending"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="text-center w-full py-10"
-                >
-                  <p className="text-white/70 font-black text-base uppercase tracking-widest animate-pulse">
-                    {t("quiz.revealPending")}
-                  </p>
+                <motion.div key="reveal-pending" {...FADE} className="text-center w-full py-10">
+                  <p className="text-ink-2 text-lg">{t("quiz.revealPending")}</p>
                 </motion.div>
               );
             }
@@ -373,49 +285,28 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
             return (
               <motion.div
                 key="reveal"
-                initial={isCorrect ? { opacity: 0, scale: 0.88 } : { opacity: 0, x: -12 }}
-                animate={isCorrect ? { opacity: 1, scale: 1 } : { opacity: 1, x: [0, -8, 8, -6, 6, 0] }}
-                transition={isCorrect ? SPRING.bouncy : { duration: 0.4 }}
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={isCorrect ? { opacity: 1, scale: 1 } : { opacity: 1, scale: 1, x: [0, -6, 6, 0] }}
+                transition={{ duration: DURATION.slow, ease: EASE.out }}
                 exit={{ opacity: 0 }}
                 className="text-center w-full"
               >
-                <div
-                  className={`rounded-3xl border-2 p-7 backdrop-blur-2xl transition-all shadow-2xl mb-4 relative overflow-hidden ${
-                    isCorrect
-                      ? "bg-gradient-to-b from-emerald-950/90 to-black/95 border-emerald-400 text-emerald-100 shadow-[0_0_60px_rgba(52,211,153,0.35)]"
-                      : "bg-gradient-to-b from-rose-950/90 to-black/95 border-rose-500/60 text-rose-100 shadow-[0_0_60px_rgba(244,63,94,0.3)]"
-                  }`}
-                >
-                  {/* Aura */}
-                  <div className={`absolute -inset-10 ${isCorrect ? "bg-emerald-500/15" : "bg-rose-500/10"} blur-3xl pointer-events-none -z-10`} />
-
-                  <div className="text-5xl mb-3">{isCorrect ? "🎯" : "💀"}</div>
-                  <h2 className={`text-2xl font-black uppercase tracking-wider mb-2 ${
-                    isCorrect ? "text-emerald-300 drop-shadow-[0_0_15px_rgba(52,211,153,0.8)]" : "text-rose-300"
-                  }`}>
+                <div className={`rounded-3xl border-2 p-7 mb-4 ${isCorrect ? "bg-ok/10 border-ok" : "bg-bad/10 border-bad/60"}`}>
+                  <h2 className={`text-3xl font-extrabold ${isCorrect ? "text-ok" : "text-bad"}`}>
                     {isCorrect ? t("quiz.playerCorrect") : t("quiz.playerWrong")}
                   </h2>
-
-                  <p className="text-sm text-white/90 font-medium">
-                    {t("quiz.correctAnswer")}: <strong className="text-white font-bold ml-1">{revealed} — {currentQ.options[revealed]}</strong>
+                  <p className="mt-3 text-lg text-ink-2">
+                    {t("quiz.correctAnswer")}: <strong className="text-ink font-semibold">{revealed} — {currentQ.options[revealed]}</strong>
                   </p>
                 </div>
-
-                <p className="text-white/50 text-xs font-mono uppercase tracking-widest">
-                  {t("quiz.followRankingOnScreen")}
-                </p>
+                <p className="text-ink-2 text-base">{t("quiz.followRankingOnScreen")}</p>
               </motion.div>
             );
           })()}
 
           {/* LEADERBOARD ON MOBILE */}
           {gameState === "quiz_leaderboard" && (
-            <motion.div
-              key="leaderboard"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-            >
+            <motion.div key="leaderboard" {...FADE}>
               <PlayerStageScreen icon="🏆" tone="orange" eyebrow={gameTitle("quiz")} title={t("quiz.ranking")} body={t("quiz.followRankingOnScreen")} hint={null}>
                 <ScoreTile label={t("quiz.yourScore")} score={player.total_score} />
               </PlayerStageScreen>
@@ -424,11 +315,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
 
           {/* GAME OVER FINISHED */}
           {gameState === "finished" && (
-            <motion.div
-              key="finished"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-            >
+            <motion.div key="finished" {...FADE}>
               <PlayerStageScreen icon="👑" tone="orange" eyebrow={gameTitle("quiz")} title={t("quiz.gameOver")} hint={t("common.followMainScreen")}>
                 <ScoreTile label={t("quiz.finalScore")} score={player.total_score} />
               </PlayerStageScreen>
@@ -437,21 +324,12 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
 
           {/* FALLBACK LOADING */}
           {!["lobby", "quiz_lobby", "question_intro", "quiz_intro", "question_active", "question_reveal", "quiz_leaderboard", "finished"].includes(gameState) && (
-            <motion.div
-              key="fallback"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
+            <motion.div key="fallback" {...FADE}>
               <PlayerStageScreen icon="💡" tone="blue" eyebrow={gameTitle("quiz")} title={t("quiz.loading")} waiting hint={null} />
             </motion.div>
           )}
-          
-        </AnimatePresence>
-      </div>
 
-      <div className="w-full text-center py-2 text-[10px] font-mono text-white/20">
-        HENGAME QUIZ
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -459,9 +337,9 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
 
 function ScoreTile({ label, score }: { label: string; score: number }) {
   return (
-    <div className="w-full max-w-xs rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 flex items-center justify-between backdrop-blur-md">
-      <span className="text-sm font-semibold text-white/60">{label}</span>
-      <NumberTicker value={score} className="text-3xl font-black text-alaz-orange tabular-nums" />
+    <div className="w-full max-w-xs surface rounded-2xl px-5 py-4 flex items-center justify-between">
+      <span className="text-base text-ink-2">{label}</span>
+      <NumberTicker value={score} className="text-3xl font-extrabold text-accent tabular-nums" />
     </div>
   );
 }

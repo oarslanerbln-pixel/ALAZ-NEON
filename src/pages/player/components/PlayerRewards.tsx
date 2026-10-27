@@ -89,7 +89,7 @@ export function PlayerRewards() {
   if (rewards.length === 0) {
     return (
       <div className="w-full border border-white/10 bg-black/20 p-4 text-center">
-        <p className="text-white/40 text-[10px] tracking-[0.2em] uppercase font-bold">{t("rewards.none")}</p>
+        <p className="text-white/40 text-xs tracking-[0.2em] uppercase font-bold">{t("rewards.none")}</p>
       </div>
     );
   }
@@ -97,7 +97,7 @@ export function PlayerRewards() {
   return (
     <div className="w-full flex flex-col gap-3">
       <div className="flex items-center gap-2 mb-2">
-        <div className="w-2 h-2 bg-[#ff003c] animate-pulse" />
+        <div className="w-2 h-2 bg-[#ff003c]" />
         <h3 className="text-[#ff003c] text-xs font-bold uppercase tracking-widest">{t("rewards.active")}</h3>
       </div>
 
@@ -112,11 +112,11 @@ export function PlayerRewards() {
           >
             <div>
               <p className="text-[#ff003c] font-bold tracking-widest text-sm uppercase">{reward.title}</p>
-              <p className="text-white/60 text-[10px] tracking-wider mt-1">{reward.description}</p>
+              <p className="text-white/60 text-xs tracking-wider mt-1">{reward.description}</p>
             </div>
             <button
               onClick={() => setOpenReward(reward)}
-              className="px-3 py-2 bg-[#ff003c]/20 border border-[#ff003c]/50 text-[#ff003c] text-[10px] uppercase font-bold tracking-widest group-hover:bg-[#ff003c] group-hover:text-black transition-colors"
+              className="px-3 py-2 bg-[#ff003c]/20 border border-[#ff003c]/50 text-[#ff003c] text-xs uppercase font-bold tracking-widest group-hover:bg-[#ff003c] group-hover:text-black transition-colors"
             >
               {t("rewards.use")}
             </button>
@@ -135,7 +135,7 @@ export function PlayerRewards() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-md flex items-center justify-center p-6"
+            className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-6"
             onClick={() => setOpenReward(null)}
           >
             <motion.div
@@ -144,7 +144,7 @@ export function PlayerRewards() {
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ type: "spring", bounce: 0.3, duration: 0.4 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-xs bg-black border-2 border-[#ff003c] p-8 flex flex-col items-center gap-6 relative shadow-[0_0_60px_rgba(255,0,60,0.35)]"
+              className="w-full max-w-xs bg-black border-2 border-[#ff003c] p-8 flex flex-col items-center gap-6 relative"
             >
               <button
                 onClick={() => setOpenReward(null)}
@@ -168,16 +168,16 @@ export function PlayerRewards() {
               </div>
 
               <div className="text-center">
-                <p className="text-white/40 text-[9px] uppercase tracking-[0.3em] mb-1">{t("rewards.codeLabel")}</p>
-                <p className="text-white font-mono font-black text-3xl tracking-[0.3em]">{openReward.code}</p>
+                <p className="text-white/40 text-xs uppercase tracking-[0.3em] mb-1">{t("rewards.codeLabel")}</p>
+                <p className="text-white tabular-nums font-black text-3xl tracking-[0.3em]">{openReward.code}</p>
               </div>
 
-              <p className="text-white/40 text-[10px] text-center uppercase tracking-widest">
+              <p className="text-white/40 text-xs text-center uppercase tracking-widest">
                 {t("rewards.showAtCounter")}
               </p>
 
               {openReward.expires_at && (
-                <p className="text-white/25 text-[9px] text-center uppercase tracking-widest">
+                <p className="text-white/25 text-xs text-center uppercase tracking-widest">
                   {t("rewards.validUntil", new Date(openReward.expires_at).toLocaleDateString(dateLocaleTag))}
                 </p>
               )}

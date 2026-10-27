@@ -12,22 +12,6 @@ interface LetterSpinnerProps {
 
 const LETTERS = "ABCDEFGHIJKLMNOPRSTUVYZ".split("");
 
-interface Particle3D {
-  x: number;
-  y: number;
-  z: number;
-  vx: number;
-  vy: number;
-  vz: number;
-  prevPx?: number;
-  prevPy?: number;
-  size: number;
-  color: string;
-  alpha: number;
-  maxLife: number;
-  life: number;
-}
-
 export function LetterSpinner({
   targetLetter,
   onComplete,
@@ -36,7 +20,6 @@ export function LetterSpinner({
   const [displayIndex, setDisplayIndex] = useState(0);
   const [phase, setPhase] = useState<"spinning" | "locking" | "locked" | "climax">("spinning");
   const [rpmGauge, setRpmGauge] = useState(100);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const onCompleteRef = useRef(onComplete);
 
   const fallbackLetter = useMemo(
@@ -53,124 +36,6 @@ export function LetterSpinner({
   useEffect(() => {
     onCompleteRef.current = onComplete;
   }, [onComplete]);
-
-  // ═══════════════════════════════════════════════════════════════
-  // 60 FPS APU-DOSTU 3D YILDIZ KAYMASI (WARP SPEED NEBULA) SİSTEMİ
-  // ═══════════════════════════════════════════════════════════════
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    let animId: number;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-    const resize = () => {
-      const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      ctx.scale(dpr, dpr);
-    };
-    resize();
-
-    const particles: Particle3D[] = [];
-    const colors = ["#ff5500", "#ffaa00", "#00f3ff", "#ffffff", "#fed7aa"];
-    const maxParticles = 110;
-
-    const createParticle = (): Particle3D => {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 1.5 + Math.random() * 4.5;
-      const dist = 20 + Math.random() * 110;
-      return {
-        x: Math.cos(angle) * dist,
-        y: Math.sin(angle) * dist,
-        z: Math.random() * 260 - 130,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        vz: (Math.random() - 0.5) * 3,
-        size: 1.5 + Math.random() * 3.5,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        alpha: 0.15 + Math.random() * 0.75,
-        maxLife: 40 + Math.random() * 55,
-        life: 0,
-      };
-    };
-
-    let running = true;
-    const render = () => {
-      if (!running) return;
-      const rect = canvas.getBoundingClientRect();
-      const cx = rect.width / 2;
-      const cy = rect.height / 2;
-
-      ctx.clearRect(0, 0, rect.width, rect.height);
-
-      // Yeni yıldız parçacığı üretimi
-      if (particles.length < maxParticles) {
-        particles.push(createParticle());
-      }
-
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.life++;
-        p.x += p.vx;
-        p.y += p.vy;
-        p.z += p.vz;
-
-        const progress = p.life / p.maxLife;
-        const currentAlpha = p.alpha * (1 - progress);
-
-        // 3D Perspektif İzdüşümü
-        const fov = 320;
-        const scale = fov / (fov + p.z);
-        const px = cx + p.x * scale;
-        const py = cy + p.y * scale;
-        const pSize = p.size * scale;
-
-        if (progress >= 1 || px < -30 || px > rect.width + 30 || py < -30 || py > rect.height + 30) {
-          particles.splice(i, 1);
-          continue;
-        }
-
-        ctx.save();
-        ctx.globalAlpha = currentAlpha;
-
-        // 3D Kinetik Yıldız Kayma Kuyruğu (Star Streak)
-        if (p.prevPx !== undefined && p.prevPy !== undefined) {
-          ctx.strokeStyle = p.color;
-          ctx.lineWidth = Math.max(0.6, pSize * 0.75);
-          ctx.beginPath();
-          ctx.moveTo(p.prevPx, p.prevPy);
-          ctx.lineTo(px, py);
-          ctx.stroke();
-        }
-
-        // Yıldız Çekirdeği
-        ctx.fillStyle = p.color;
-        ctx.shadowColor = p.color;
-        ctx.shadowBlur = 10 * scale;
-        ctx.beginPath();
-        ctx.arc(px, py, Math.max(0.6, pSize), 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-
-        p.prevPx = px;
-        p.prevPy = py;
-      }
-
-      animId = requestAnimationFrame(render);
-    };
-
-    animId = requestAnimationFrame(render);
-
-    window.addEventListener("resize", resize);
-    return () => {
-      running = false;
-      cancelAnimationFrame(animId);
-      window.removeEventListener("resize", resize);
-    };
-  }, []);
 
   // ═══════════════════════════════════════════════════════════════
   // KİNETİK ÇARK VE SES KOREOGRAFİSİ (BLENDER EEVEE / UNITY TIMELINE)
@@ -236,79 +101,24 @@ export function LetterSpinner({
 
   return (
     <div className="relative w-full h-[520px] sm:h-[580px] md:h-[620px] flex flex-col items-center justify-center select-none overflow-hidden">
-      {/* 3D Hacimsel Parçacık ve Kayan Yıldızlar Tuvali */}
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-90"
-      />
-
-      {/* Üst HUD: Cyberpunk Protokol Rozeti */}
+      {/* Üst HUD: Protokol Rozeti */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: DURATION.base }}
         className="relative z-20 mb-6 flex flex-col items-center gap-2"
       >
-        <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/60 border border-white/15 backdrop-blur-xl shadow-[0_0_20px_rgba(255,85,0,0.15)]">
-          <span className="w-2 h-2 rounded-full bg-alaz-orange animate-pulse" />
-          <span className="text-[11px] font-mono tracking-[0.3em] uppercase text-white/90">
+        <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/60 border border-white/15">
+          <span className="w-2 h-2 rounded-full bg-alaz-orange" />
+          <span className="text-xs tabular-nums tracking-[0.3em] uppercase text-white/90">
             {t("arena.spinnerProtocol")}
           </span>
         </div>
       </motion.div>
 
-      {/* ═══════════════════════════════════════════════════════════════
-          3D JİROSKOPİK HALKALAR & ŞEFFAF HOLOGRAFİK HARF SAHNESİ
-          (ÖNÜNDE ARKA PLANI KAPATAN HİÇBİR KUTU / KART YOKTUR)
-          ═══════════════════════════════════════════════════════════════ */}
+      {/* Harf sahnesi: kutu/kart yok, yalnızca köşe işaretleri ve harf */}
       <div className="relative z-10 w-[300px] sm:w-[380px] md:w-[420px] h-[300px] sm:h-[340px] md:h-[360px] flex items-center justify-center perspective-[1200px]">
-        {/* Ortam Işık Aurası (Ambient Volumetric Glow) */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-tr from-alaz-orange/20 via-neon-blue/15 to-amber-400/20 blur-[100px] rounded-full pointer-events-none -z-10"
-        />
-
-        {/* 3D Jiroskop Halkası 1 (Dış — Plazma Cyan) */}
-        <motion.div
-          aria-hidden="true"
-          animate={{
-            rotateX: [0, 360],
-            rotateY: [360, 0],
-            rotateZ: [0, 180, 360],
-          }}
-          transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-          style={{ transformStyle: "preserve-3d" }}
-          className="absolute w-64 h-64 sm:w-72 sm:h-72 md:w-84 md:h-84 rounded-full border border-cyan-400/35 border-dashed shadow-[0_0_35px_rgba(0,243,255,0.25)] pointer-events-none"
-        />
-
-        {/* 3D Jiroskop Halkası 2 (Orta — Alaz Turuncu) */}
-        <motion.div
-          aria-hidden="true"
-          animate={{
-            rotateX: [360, 0],
-            rotateY: [0, 360],
-            rotateZ: [180, 360, 180],
-          }}
-          transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-          style={{ transformStyle: "preserve-3d" }}
-          className="absolute w-52 h-52 sm:w-60 sm:h-60 md:w-72 md:h-72 rounded-full border-2 border-alaz-orange/45 shadow-[0_0_30px_rgba(255,85,0,0.3)] pointer-events-none border-t-transparent border-b-transparent"
-        />
-
-        {/* 3D Jiroskop Halkası 3 (İç — Altın Kor) */}
-        <motion.div
-          aria-hidden="true"
-          animate={{
-            rotateX: [180, -180],
-            rotateY: [180, -180],
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-          style={{ transformStyle: "preserve-3d" }}
-          className="absolute w-40 h-40 sm:w-48 sm:h-48 md:w-60 md:h-60 rounded-full border border-amber-300/50 shadow-[0_0_25px_rgba(251,191,36,0.25)] pointer-events-none"
-        />
-
-        {/* ═══════════════════════════════════════════════════════════
-            3D HOLOGRAFİK HEDEFLEME RETİKÜLÜ (TAMAMEN ŞEFFAF / KARTSIZ)
-            ═══════════════════════════════════════════════════════════ */}
+        {/* Hedefleme köşeleri */}
         <motion.div
           animate={
             phase === "locked"
@@ -323,16 +133,10 @@ export function LetterSpinner({
         >
           {/* Lazer Odaklama Köşebentleri (Optic Reticle) */}
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-cyan-400 rounded-tl-xl shadow-[0_0_15px_#00f3ff]" />
-            <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-alaz-orange rounded-tr-xl shadow-[0_0_15px_#ff5500]" />
-            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-alaz-orange rounded-bl-xl shadow-[0_0_15px_#ff5500]" />
-            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-cyan-400 rounded-br-xl shadow-[0_0_15px_#00f3ff]" />
-
-            {/* İnce artı hedefleme çizgileri */}
-            <div className="absolute top-1/2 left-0 -translate-y-1/2 w-3 h-[1px] bg-cyan-400/80 shadow-[0_0_8px_#00f3ff]" />
-            <div className="absolute top-1/2 right-0 -translate-y-1/2 w-3 h-[1px] bg-cyan-400/80 shadow-[0_0_8px_#00f3ff]" />
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1px] h-3 bg-alaz-orange/80 shadow-[0_0_8px_#ff5500]" />
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1px] h-3 bg-alaz-orange/80 shadow-[0_0_8px_#ff5500]" />
+            <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-accent rounded-tl-xl" />
+            <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-accent rounded-tr-xl" />
+            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-accent rounded-bl-xl" />
+            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-accent rounded-br-xl" />
           </div>
 
           {/* Kilitlenme Şok Dalgası (Expanding Shockwave Ring) */}
@@ -342,7 +146,7 @@ export function LetterSpinner({
                 initial={{ scale: 0.2, opacity: 0.9 }}
                 animate={{ scale: 2.4, opacity: 0 }}
                 transition={{ duration: 0.9, ease: EASE.out }}
-                className="absolute inset-0 rounded-full border-2 border-alaz-orange pointer-events-none shadow-[0_0_40px_rgba(255,85,0,0.8)]"
+                className="absolute inset-0 rounded-full border-2 border-alaz-orange pointer-events-none"
               />
             )}
           </AnimatePresence>
@@ -357,7 +161,7 @@ export function LetterSpinner({
                   animate={{ opacity: 1, scale: 1, rotateX: 0, z: 0 }}
                   exit={{ opacity: 0, scale: 1.25, rotateX: -90, z: 60 }}
                   transition={{ duration: 0.11, ease: "linear" }}
-                  className="text-7xl sm:text-8xl md:text-[9.5rem] font-black tracking-tight text-white font-sans select-none drop-shadow-[0_0_35px_rgba(255,255,255,0.85)] drop-shadow-[0_0_65px_rgba(0,243,255,0.45)]"
+                  className="text-7xl sm:text-8xl md:text-[9.5rem] font-black tracking-tight text-white font-sans select-none"
                 >
                   {LETTERS[displayIndex]}
                 </motion.div>
@@ -367,7 +171,7 @@ export function LetterSpinner({
                   initial={{ scale: 0.15, opacity: 0, rotateY: -60, z: -120 }}
                   animate={{ scale: [0.15, 1.25, 0.96, 1.05, 1], opacity: 1, rotateY: 0, z: 0 }}
                   transition={SPRING.bouncy}
-                  className="text-8xl sm:text-9xl md:text-[12.5rem] font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-amber-200 to-alaz-orange drop-shadow-[0_15px_35px_rgba(0,0,0,0.9)] drop-shadow-[0_0_55px_rgba(255,85,0,0.95)] drop-shadow-[0_0_100px_rgba(251,191,36,0.7)] select-none will-change-transform"
+                  className="text-8xl sm:text-9xl md:text-[12.5rem] font-black tracking-tighter text-accent select-none will-change-transform"
                 >
                   {effectiveLetter}
                 </motion.div>
@@ -384,16 +188,16 @@ export function LetterSpinner({
         transition={{ duration: DURATION.base, delay: 0.1 }}
         className="relative z-20 mt-8 flex flex-col items-center gap-3"
       >
-        <div className="text-sm md:text-base font-mono tracking-[0.25em] font-bold text-alaz-orange flex items-center gap-2">
+        <div className="text-sm md:text-base tabular-nums tracking-[0.25em] font-bold text-alaz-orange flex items-center gap-2">
           {phase === "spinning" ? (
             <>
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
               <span>{t("arena.spinnerResolving")}</span>
             </>
           ) : (
             <>
               <span className="w-2 h-2 rounded-full bg-alaz-orange" />
-              <span className="text-white drop-shadow-[0_0_15px_rgba(255,85,0,0.8)]">
+              <span className="text-white">
                 {t("arena.spinnerLocked")}
               </span>
             </>
@@ -403,7 +207,7 @@ export function LetterSpinner({
         {/* Kinetik RPM Gösterge Çubuğu */}
         <div className="w-64 h-1.5 bg-white/10 rounded-full overflow-hidden border border-white/10 relative">
           <motion.div
-            className="h-full bg-gradient-to-r from-neon-blue via-amber-400 to-alaz-orange"
+            className="h-full bg-accent"
             style={{ width: `${rpmGauge}%` }}
             transition={{ duration: 0.1 }}
           />
@@ -421,24 +225,9 @@ export function LetterSpinner({
               initial={{ opacity: 0.85 }}
               animate={{ opacity: 0 }}
               transition={{ duration: 0.45, ease: EASE.out }}
-              className="absolute inset-0 bg-white mix-blend-overlay"
+              className="absolute inset-0 bg-white"
             />
 
-            {/* Genişleyen Holografik Şok Dalgası 1 */}
-            <motion.div
-              initial={{ scale: 0.2, opacity: 1 }}
-              animate={{ scale: 7, opacity: 0 }}
-              transition={{ duration: 1.2, ease: EASE.out }}
-              className="absolute w-72 h-72 rounded-full border-4 border-alaz-orange shadow-[0_0_50px_#ff5500] will-change-transform"
-            />
-
-            {/* Genişleyen Şok Dalgası 2 (Cyan Plazma) */}
-            <motion.div
-              initial={{ scale: 0.1, opacity: 0.9 }}
-              animate={{ scale: 5.5, opacity: 0 }}
-              transition={{ duration: 1.0, ease: EASE.out, delay: 0.1 }}
-              className="absolute w-60 h-60 rounded-full border-2 border-cyan-400 shadow-[0_0_40px_#00f3ff] will-change-transform"
-            />
           </div>
         )}
       </AnimatePresence>

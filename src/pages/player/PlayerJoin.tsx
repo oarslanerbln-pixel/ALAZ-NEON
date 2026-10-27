@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { collection, doc, setDoc } from "firebase/firestore";
@@ -15,6 +15,7 @@ import { PlayerProfileCard } from "./components/PlayerProfileCard";
 import { PlayerRewards } from "./components/PlayerRewards";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { containsProfanity } from "../../lib/profanity";
+import { DURATION, EASE } from "../../lib/motion";
 
 export function PlayerJoin() {
   const navigate = useNavigate();
@@ -57,6 +58,16 @@ export function PlayerJoin() {
     setNickname(profile.nickname);
     setNicknamePrefilledFrom(profile.nickname);
   }
+
+  // Profil adı, misafir alana odaklanıp ilk harfi basmadan hemen önce
+  // gelebiliyor (QR akışında alan autoFocus): o zaman yazılan harf önerinin
+  // arkasına ekleniyordu ("PLAYER_7LRQAYSE", E2E'de yakalandı). Öneri odaktaki
+  // alana seçili gelir; ilk tuş onun yerine geçer.
+  const nicknameInputRef = useRef<HTMLInputElement>(null);
+  useLayoutEffect(() => {
+    const input = nicknameInputRef.current;
+    if (nicknamePrefilledFrom && input && document.activeElement === input) input.select();
+  }, [nicknamePrefilledFrom]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -199,205 +210,135 @@ export function PlayerJoin() {
     }
   };
 
-  return (
-    <div className="flex-1 flex flex-col items-center justify-start pt-10 pb-safe p-5 min-h-[100dvh] bg-black relative overflow-y-auto font-sans selection:bg-alaz-orange selection:text-black">
-      {/* Cinematic Deep Background */}
-      <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(circle_at_top,rgba(255,85,0,0.12)_0%,rgba(0,0,0,1)_70%)]" />
-      <div className="absolute inset-0 pointer-events-none z-0 bg-white/[0.01] bg-[url('/noise.png')] mix-blend-overlay" />
+  const fieldClass =
+    "w-full h-16 px-5 rounded-2xl bg-surface-2 border border-line text-center uppercase font-extrabold text-ink placeholder:text-ink-3 focus:outline-none focus:border-accent transition-colors";
 
+  return (
+    <div className="flex-1 flex flex-col items-center justify-start px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-safe min-h-[100dvh] bg-bg relative overflow-y-auto">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="w-full max-w-lg z-10"
+        transition={{ duration: DURATION.base, ease: EASE.out }}
+        className="w-full max-w-md"
       >
-        <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="mb-6 flex items-center justify-between gap-3">
           <button
             onClick={() => navigate("/")}
-            className="flex items-center gap-2 text-white/50 hover:text-white transition-colors text-[10px] font-bold uppercase tracking-widest shrink-0 bg-white/5 px-4 py-2 rounded-full backdrop-blur-md border border-white/10"
+            className="flex items-center gap-2 text-ink-2 hover:text-ink transition-colors text-sm font-semibold shrink-0 h-11 px-4 rounded-full bg-surface border border-line"
           >
-            <span className="text-lg leading-none">←</span> {t("common.back", "ANA SAYFA")}
+            <span aria-hidden="true">←</span> {t("common.back", "ANA SAYFA")}
           </button>
           <LanguageSwitcher />
         </div>
-        <div className="bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-[2rem] shadow-[0_20px_40px_rgba(0,0,0,0.8),inset_0_0_20px_rgba(255,255,255,0.02)] relative overflow-hidden">
-          
-          {/* Subtle top glow highlight */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-50" />
 
-          <form onSubmit={handleJoin} className="p-8 md:p-12 space-y-8">
-            <div className="text-center mb-10 flex flex-col items-center">
-              <h1 className="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/70 uppercase tracking-[0.2em] drop-shadow-lg mb-2">
-                {t("join.title")}
-              </h1>
-              <p className="text-alaz-orange mt-2 uppercase tracking-[0.4em] text-[10px] font-bold">
-                {t("join.subtitle")}
-              </p>
-            </div>
+        <form onSubmit={handleJoin} className="flex flex-col gap-6">
+          <div>
+            <p className="text-base font-semibold text-accent">{t("join.subtitle")}</p>
+            <h1 className="mt-1 text-4xl font-extrabold text-ink tracking-tight">{t("join.title")}</h1>
+          </div>
 
-            <AnimatePresence>
-              {errorMsg && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="bg-[#ff003c]/10 border-l-2 border-[#ff003c] p-4 text-[#ff003c] text-xs uppercase tracking-wider"
-                >
-                  <span className="font-bold">ERR:</span> {errorMsg}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {resumingAs ? (
+          <AnimatePresence>
+            {errorMsg && (
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="flex flex-col items-center gap-3 py-10 text-center"
-                role="status"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: DURATION.base }}
+                role="alert"
+                className="rounded-2xl bg-bad/10 border border-bad/40 px-4 py-3 text-base text-bad"
               >
-                <span className="text-2xl md:text-3xl font-black uppercase tracking-[0.15em] text-white">
-                  {t("join.welcomeBack", resumingAs)}
-                </span>
-                <span className="text-alaz-orange text-[10px] font-bold uppercase tracking-[0.3em] animate-pulse">
-                  {t("join.resuming")}
-                </span>
+                {errorMsg}
               </motion.div>
-            ) : authChecking || resumeCheckPending || !currentUser ? (
-              // Anonim oturum açılana kadar bekleme ekranı (useAuth her
-              // ziyaretçiye anonim oturum açıyor; telefonla giriş kaldırıldı).
-              <div className="flex justify-center items-center py-10">
-                <span className="text-alaz-orange font-bold uppercase tracking-widest animate-pulse">CONNECTING...</span>
-              </div>
-            ) : (
-              <>
-                <div className="mb-4">
-                  <PlayerProfileCard />
-                </div>
-                
-                <div className="mb-8">
-                  <PlayerRewards />
-                </div>
-                
-                <div className="space-y-6">
-                  {/* Room Code */}
-              <div className="group">
-                <label className="flex items-center gap-2 text-white/50 text-[10px] font-bold uppercase tracking-[0.3em] mb-3 ml-2">
-                  {t("join.roomCode")}
-                </label>
-                <div className="flex bg-white/[0.02] border border-white/10 rounded-2xl group-focus-within:border-alaz-orange/60 group-focus-within:bg-white/[0.04] transition-all shadow-inner overflow-hidden relative">
-                  <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-alaz-orange/80 to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity" />
-                  {urlCode ? (
-                    <div className="w-full px-6 py-5 text-3xl tracking-[0.4em] uppercase font-black text-white bg-transparent flex items-center justify-center">
-                      {roomCode}
-                    </div>
-                  ) : (
-                    <input
-                      type="text"
-                      required
-                      maxLength={4}
-                      inputMode="text"
-                      autoCapitalize="characters"
-                      value={roomCode}
-                      onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                      placeholder="****"
-                      className="w-full px-6 py-5 text-center text-3xl tracking-[0.4em] uppercase font-black focus:outline-none bg-transparent text-white placeholder:text-white/10"
-                    />
-                  )}
-                </div>
-              </div>
+            )}
+          </AnimatePresence>
 
-              {/* Nickname */}
-              <div className="group mt-6">
-                <label className="flex items-center gap-2 text-white/50 text-[10px] font-bold uppercase tracking-[0.3em] mb-3 ml-2">
-                  {t("join.nickname")}
-                </label>
-                <div className="flex bg-white/[0.02] border border-white/10 rounded-2xl group-focus-within:border-alaz-orange/60 group-focus-within:bg-white/[0.04] transition-all shadow-inner overflow-hidden relative">
-                  <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-alaz-orange/80 to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity" />
+          {resumingAs ? (
+            <div className="flex flex-col items-center gap-2 py-10 text-center" role="status">
+              <span className="text-3xl font-extrabold text-ink">{t("join.welcomeBack", resumingAs)}</span>
+              <span className="text-base text-ink-2">{t("join.resuming")}</span>
+            </div>
+          ) : authChecking || resumeCheckPending || !currentUser ? (
+            // Anonim oturum açılana kadar bekleme ekranı (useAuth her
+            // ziyaretçiye anonim oturum açıyor; telefonla giriş kaldırıldı).
+            <div className="flex justify-center items-center py-10">
+              <span className="text-base text-ink-2">{t("join.connecting")}</span>
+            </div>
+          ) : (
+            <>
+              <PlayerProfileCard />
+              <PlayerRewards />
+
+              <label className="flex flex-col gap-2">
+                <span className="text-sm font-semibold text-ink-2">{t("join.roomCode")}</span>
+                {urlCode ? (
+                  <div className={`${fieldClass} flex items-center justify-center font-mono text-3xl tracking-[0.3em]`}>{roomCode}</div>
+                ) : (
                   <input
                     type="text"
                     required
-                    autoFocus={!!urlCode}
+                    maxLength={4}
+                    inputMode="text"
                     autoCapitalize="characters"
-                    value={nickname}
-                    onChange={(e) => {
-                      setNicknameTouched(true);
-                      setNickname(e.target.value);
-                    }}
-                    placeholder={t("join.nicknamePlaceholderShort")}
-                    maxLength={15}
-                    className="w-full px-6 py-5 text-center text-xl tracking-[0.3em] uppercase font-black focus:outline-none bg-transparent text-white placeholder:text-white/20"
+                    value={roomCode}
+                    onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                    placeholder="••••"
+                    className={`${fieldClass} font-mono text-3xl tracking-[0.3em]`}
                   />
-                </div>
-              </div>
+                )}
+              </label>
 
-              {/* Team Name */}
+              <label className="flex flex-col gap-2">
+                <span className="text-sm font-semibold text-ink-2">{t("join.nickname")}</span>
+                <input
+                  ref={nicknameInputRef}
+                  type="text"
+                  required
+                  autoFocus={!!urlCode}
+                  autoCapitalize="characters"
+                  value={nickname}
+                  onChange={(e) => {
+                    setNicknameTouched(true);
+                    setNickname(e.target.value);
+                  }}
+                  placeholder={t("join.nicknamePlaceholderShort")}
+                  maxLength={15}
+                  className={`${fieldClass} text-xl tracking-wide`}
+                />
+              </label>
+
               <AnimatePresence>
                 {gameMode === "team" && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="group"
+                  <motion.label
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: DURATION.base }}
+                    className="flex flex-col gap-2"
                   >
-                    <label className="flex items-center gap-2 text-[#ff003c]/70 text-xs font-bold uppercase tracking-widest mb-2">
-                      <span className="text-alaz-orange">[3]</span> {t("join.teamLabel")}
-                    </label>
-                    <div className="flex bg-[#ff003c]/5 border border-[#ff003c]/30 group-focus-within:border-[#ff003c] transition-colors">
-                      <div className="px-4 py-4 border-r border-[#ff003c]/30 text-[#ff003c] font-bold bg-[#ff003c]/10 flex items-center justify-center">
-                        TEAM
-                      </div>
-                      <input
-                        type="text"
-                        required
-                        value={teamName}
-                        onChange={(e) => setTeamName(e.target.value)}
-                        placeholder={t("join.teamPlaceholderShort")}
-                        maxLength={20}
-                        className="w-full px-4 py-4 text-xl tracking-[0.2em] uppercase font-bold focus:outline-none bg-transparent text-[#ff003c] placeholder:text-[#ff003c]/20"
-                      />
-                    </div>
-                  </motion.div>
+                    <span className="text-sm font-semibold text-ink-2">{t("join.teamLabel")}</span>
+                    <input
+                      type="text"
+                      required
+                      value={teamName}
+                      onChange={(e) => setTeamName(e.target.value)}
+                      placeholder={t("join.teamPlaceholderShort")}
+                      maxLength={20}
+                      className={`${fieldClass} text-xl tracking-wide`}
+                    />
+                  </motion.label>
                 )}
               </AnimatePresence>
-            </div>
 
-            <motion.button
-              whileHover={!isLoading ? { scale: 1.02 } : {}}
-              whileTap={!isLoading ? { scale: 0.98 } : {}}
-              type="submit"
-              disabled={isLoading}
-              className={`w-full py-5 rounded-2xl transition-all font-black tracking-[0.4em] uppercase text-sm mt-10 relative overflow-hidden group ${
-                isLoading
-                  ? "bg-white/[0.05] border border-white/10 text-white/30 cursor-not-allowed"
-                  : nickname.trim().length > 0
-                    ? "bg-white text-black border border-white shadow-[0_0_30px_rgba(255,255,255,0.4)]"
-                    : "bg-white/[0.03] border border-white/20 text-white/50 hover:bg-white/[0.08]"
-              }`}
-            >
-              {nickname.trim().length > 0 && !isLoading && (
-                <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(0,0,0,0.1),transparent)] translate-x-[-100%] group-hover:animate-[shimmer_1.5s_infinite]" />
-              )}
-              {isLoading ? (
-                <span className="flex items-center justify-center gap-3 relative z-10">
-                  <span className="w-2 h-2 rounded-full bg-white/50 animate-ping" />
-                  {t("join.connecting")}
-                </span>
-              ) : (
-                <span className="relative z-10">
-                  {t("join.submit")}
-                </span>
-              )}
-            </motion.button>
-              </>
-            )}
-          </form>
-        </div>
-
-        <div className="mt-6 text-center">
-          <p className="text-[9px] text-white/20 uppercase tracking-[0.4em] font-medium">
-            {t("join.terminalFooter")}
-          </p>
-        </div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="btn-primary w-full h-16 mt-2 text-lg uppercase tracking-wide"
+              >
+                {isLoading ? t("join.connecting") : t("join.submit")}
+              </button>
+            </>
+          )}
+        </form>
       </motion.div>
     </div>
   );

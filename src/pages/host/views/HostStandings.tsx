@@ -6,7 +6,6 @@ import type { Player, RoundResultInfo, Room } from "../../../types/database";
 import { ConfettiCanvas, type ConfettiCanvasRef } from "../../../components/ConfettiCanvas";
 import { AnimatedNumber } from "../../../components/AnimatedNumber";
 import { SPRING, STAGGER, TWEEN, popBouncy } from "../../../lib/motion";
-import { ShimmerButton } from "../../../components/fx";
 import type { Variants } from "framer-motion";
 
 interface HostStandingsProps {
@@ -123,10 +122,10 @@ export function HostStandings({ room, players, roundResults, onNextStep }: HostS
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ ...SPRING.gentle, delay: 0.1 }}
-        className="w-full flex items-center justify-between px-8 py-3.5 bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-2xl mb-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)] flex-shrink-0"
+        className="w-full flex items-center justify-between px-8 py-3.5 bg-white/[0.03] border border-white/10 rounded-2xl mb-3 flex-shrink-0"
       >
         <div className="flex items-center gap-3">
-          <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_10px_#00f3ff] animate-pulse" />
+          <span className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
           <h2 className="text-2xl font-bold text-white uppercase tracking-[0.25em]">
             {t("standings.title")}
           </h2>
@@ -156,30 +155,30 @@ export function HostStandings({ room, players, roundResults, onNextStep }: HostS
             const prevIdx = previousIndex.get(item.id) ?? index;
             const delta = revealed ? prevIdx - index : 0; // + : yükseldi
 
-            let rowBg = "bg-white/[0.02] backdrop-blur-2xl border border-white/5 shadow-md";
+            let rowBg = "bg-white/[0.02] border border-white/5";
             let textStyle = "text-white/90";
             let scoreStyle = "text-white/80 font-light";
             let badgeBg = "bg-white/5 text-white/70";
             let rankText = "text-white/30";
 
             if (isFirst) {
-              rowBg = "bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-white/[0.02] backdrop-blur-3xl border border-amber-400/50 shadow-[0_0_35px_rgba(251,191,36,0.25)]";
-              textStyle = "text-white font-bold text-glow-gold";
-              scoreStyle = "text-amber-300 font-black text-glow-gold";
-              badgeBg = "bg-gradient-to-br from-amber-400 to-yellow-600 text-black font-black shadow-[0_0_15px_rgba(251,191,36,0.5)]";
-              rankText = "text-amber-400 font-black";
+              rowBg = "bg-accent/10 border border-accent/50";
+              textStyle = "text-white font-bold";
+              scoreStyle = "text-accent font-black";
+              badgeBg = "bg-accent text-black font-black";
+              rankText = "text-accent font-black";
             } else if (isSecond) {
-              rowBg = "bg-gradient-to-r from-slate-300/15 via-white/5 to-white/[0.02] backdrop-blur-3xl border border-slate-300/40 shadow-[0_0_20px_rgba(255,255,255,0.15)]";
+              rowBg = "bg-white/5 border border-white/20";
               textStyle = "text-white font-semibold";
-              scoreStyle = "text-slate-200 font-black";
-              badgeBg = "bg-gradient-to-br from-slate-200 to-slate-400 text-black font-black shadow-[0_0_10px_rgba(255,255,255,0.3)]";
-              rankText = "text-slate-300 font-black";
+              scoreStyle = "text-white font-black";
+              badgeBg = "bg-white/80 text-black font-black";
+              rankText = "text-white/70 font-black";
             } else if (isThird) {
-              rowBg = "bg-gradient-to-r from-amber-700/15 via-orange-600/5 to-white/[0.02] backdrop-blur-3xl border border-amber-600/30 shadow-[0_0_15px_rgba(217,119,6,0.15)]";
+              rowBg = "bg-white/[0.03] border border-white/10";
               textStyle = "text-white/95 font-medium";
-              scoreStyle = "text-amber-400/90 font-bold";
-              badgeBg = "bg-gradient-to-br from-amber-600 to-orange-700 text-white font-bold";
-              rankText = "text-amber-600 font-black";
+              scoreStyle = "text-white/90 font-bold";
+              badgeBg = "bg-white/20 text-white font-bold";
+              rankText = "text-white/50 font-black";
             }
 
             return (
@@ -190,14 +189,6 @@ export function HostStandings({ room, players, roundResults, onNextStep }: HostS
                 transition={SPRING.layout}
                 className={`relative w-full flex items-center h-16 md:h-18 shrink-0 overflow-hidden rounded-2xl transition-[background-color,border-color,box-shadow] duration-500 ${rowBg}`}
               >
-                {/* Lider parıltısı: transform-only shimmer */}
-                {isFirst && (
-                  <div
-                    aria-hidden="true"
-                    className="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-amber-300/15 to-transparent animate-shimmer pointer-events-none"
-                  />
-                )}
-
                 {/* Sıra */}
                 <div className="w-16 h-full flex items-center justify-center border-r border-white/5 relative overflow-hidden">
                   <AnimatePresence mode="popLayout" initial={false}>
@@ -216,7 +207,7 @@ export function HostStandings({ room, players, roundResults, onNextStep }: HostS
 
                 {/* Rozet */}
                 <div className="w-16 h-full flex items-center justify-center border-r border-white/5">
-                  <div className={`w-10 h-10 flex items-center justify-center rounded-full text-xs font-mono tracking-wider ${badgeBg}`}>
+                  <div className={`w-10 h-10 flex items-center justify-center rounded-full text-xs tabular-nums tracking-wider ${badgeBg}`}>
                     {upperTL(item.name.substring(0, 3))}
                   </div>
                 </div>
@@ -228,7 +219,7 @@ export function HostStandings({ room, players, roundResults, onNextStep }: HostS
                     {item.roundScore > 0 && (
                       <motion.span
                         variants={ROUND_CHIP_VARIANTS}
-                        className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/30 tabular-nums shadow-[0_0_8px_rgba(52,211,153,0.3)]"
+                        className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/30 tabular-nums"
                       >
                         +{item.roundScore}
                       </motion.span>
@@ -242,7 +233,7 @@ export function HostStandings({ room, players, roundResults, onNextStep }: HostS
                           animate="visible"
                           exit="exit"
                           className={`text-xs font-bold tracking-widest px-2 py-0.5 rounded-full tabular-nums ${
-                            delta > 0 ? "text-emerald-300 bg-emerald-500/20 shadow-[0_0_8px_rgba(52,211,153,0.3)]" : "text-rose-300/80 bg-rose-500/15"
+                            delta > 0 ? "text-emerald-300 bg-emerald-500/20 " : "text-rose-300/80 bg-rose-500/15"
                           }`}
                         >
                           {delta > 0 ? `▲ +${delta}` : `▼ ${delta}`}
@@ -271,17 +262,14 @@ export function HostStandings({ room, players, roundResults, onNextStep }: HostS
 
       {/* Docked Next Button */}
       <div className="mt-3 w-full max-w-md flex justify-center flex-shrink-0">
-        <ShimmerButton
+        <button
+          type="button"
           onClick={onNextStep}
-          color="orange"
-          thickness={2}
-          radius="9999px"
-          className="w-full"
-          innerClassName="w-full py-4 bg-gradient-to-r from-alaz-orange to-amber-400 text-black font-black uppercase tracking-[0.25em] text-lg flex items-center justify-center gap-3 shadow-[0_0_35px_rgba(255,85,0,0.4)]"
+          className="btn-primary w-full px-6 py-4 rounded-full font-black uppercase tracking-[0.25em] text-lg flex items-center justify-center gap-3"
         >
           <span>{room?.current_round === room?.total_rounds ? t("standings.finishGame") : t("standings.nextRound")}</span>
           <span className="text-xl">➔</span>
-        </ShimmerButton>
+        </button>
       </div>
     </motion.div>
   );

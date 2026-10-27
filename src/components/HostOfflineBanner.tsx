@@ -42,7 +42,7 @@ export function HostOfflineBanner({ room }: { room: Room | null }) {
   return (
     <div
       role="status"
-      className="fixed top-0 inset-x-0 z-[90] flex items-center justify-center gap-2 bg-amber-500 px-4 py-2 text-black font-black text-[11px] uppercase tracking-widest shadow-lg"
+      className="fixed top-0 inset-x-0 z-[90] flex items-center justify-center gap-2 bg-amber-500 px-4 py-2 text-black font-black text-xs uppercase tracking-widest shadow-lg"
     >
       <WifiOff className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
       <span>{t("join.hostOffline")}</span>

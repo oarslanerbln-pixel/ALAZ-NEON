@@ -56,12 +56,12 @@ export function StaffAccessNotice({ title, user }: Props) {
             Mekan sahibiyseniz: Firebase Console → Firestore → <code>staff</code>{" "}
             koleksiyonuna bu hesabın kimliğiyle bir doküman ekleyin.
           </p>
-          <code className="text-[10px] text-white/40 bg-white/5 border border-white/10 px-3 py-2 rounded-lg break-all max-w-sm">
+          <code className="text-xs text-white/40 bg-white/5 border border-white/10 px-3 py-2 rounded-lg break-all max-w-sm">
             staff/{user.uid}
           </code>
           <button
             onClick={() => signOut(auth)}
-            className="text-[10px] uppercase tracking-widest text-white/40 hover:text-white border border-white/10 px-4 py-2 rounded-lg transition-colors"
+            className="text-xs uppercase tracking-widest text-white/40 hover:text-white border border-white/10 px-4 py-2 rounded-lg transition-colors"
           >
             Çıkış Yap
           </button>

@@ -85,7 +85,7 @@ export function QuizLeaderboard({ players, streaks, previous, onSettled }: QuizL
                 transition={{ ...SPRING.layout, opacity: { delay: idx * STAGGER.tight }, x: { delay: idx * STAGGER.tight } }}
                 className={`flex items-center rounded-xl border-2 ${compact ? "px-4 py-2.5" : "p-5"} ${
                   place === 0
-                    ? "bg-amber-500/20 border-amber-400 shadow-[0_0_30px_rgba(251,191,36,0.4)]"
+                    ? "bg-amber-500/20 border-amber-400 "
                     : place === 1
                     ? "bg-slate-300/15 border-slate-300"
                     : place === 2

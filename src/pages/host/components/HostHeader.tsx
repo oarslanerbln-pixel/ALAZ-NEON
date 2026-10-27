@@ -1,13 +1,11 @@
-import { NeonIcon } from "../../../components/NeonIcon";
 import { LanguageSwitcher } from "../../../components/LanguageSwitcher";
 import { useLocale } from "../../../hooks/useLocale";
-import { Volume2, VolumeX, Sparkles, Radio, Home, LayoutGrid, Mic, MicOff } from "lucide-react";
+import { Volume2, VolumeX, Radio, Home, LayoutGrid, Mic, MicOff, MoreHorizontal, Flag } from "lucide-react";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { hostAnnouncer } from "../../../lib/announcerPlayer";
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { BeamBorder } from "../../../components/fx";
 
 interface HostHeaderProps {
   room: {
@@ -29,6 +27,11 @@ interface HostHeaderProps {
   exitLabelKey?: "common.back" | "common.endNight";
 }
 
+/**
+ * TV üst çubuğu. Salon yalnızca markayı ve oda kodunu görür; personel
+ * kontrolleri (lobiye dön, reklam arası, erken bitir, ses, spiker, dil,
+ * çıkış) tek bir "⋯" menüsünde durur — izleyicinin ekranını kalabalıklaştırmaz.
+ */
 export function HostHeader({
   room,
   onEndGameEarly,
@@ -41,8 +44,25 @@ export function HostHeader({
   const { t } = useLocale();
   const navigate = useNavigate();
   const [isMuted, setIsMuted] = useState(() => SoundManager.getInstance().getIsMuted());
-
   const [isVoiceMuted, setIsVoiceMuted] = useState(() => hostAnnouncer.isVoiceMuted());
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onPointer = (e: PointerEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
 
   const handleToggleMute = () => {
     const muted = SoundManager.getInstance().toggleMute();
@@ -58,15 +78,15 @@ export function HostHeader({
 
   const handleReturnToLobby = () => {
     SoundManager.getInstance().playSFX(sounds.CLICK);
+    setMenuOpen(false);
     if (window.confirm(t("common.confirmReturnLobby", "Mevcut oyunu bitirip lobiye dönmek istiyor musunuz?"))) {
-      if (onReturnToLobby) {
-        onReturnToLobby();
-      }
+      onReturnToLobby?.();
     }
   };
 
   const handleExitHome = () => {
     SoundManager.getInstance().playSFX(sounds.CLICK);
+    setMenuOpen(false);
     if (window.confirm(t(exitConfirmKey))) {
       if (onExitToHome) {
         onExitToHome();
@@ -79,140 +99,122 @@ export function HostHeader({
   if (!room) return null;
 
   const isMiniGameActive = room.status !== "night_lobby" && (room.active_game && room.active_game !== "none");
+  const venueName = room.venue_name && room.venue_name !== "HENGAME" ? room.venue_name : null;
 
   return (
-    <header className="flex justify-between items-center mb-6 relative z-20 bg-[#08080f]/85 p-3.5 md:p-5 rounded-[2rem] border border-white/15 backdrop-blur-3xl shadow-[0_15px_40px_-10px_rgba(0,0,0,0.8)] select-none">
-      
-      {/* Brand & Venue Logo + Navigation Back Buttons */}
-      <div className="flex items-center gap-3 md:gap-4">
-        
-        {/* Lobiye Dön Butonu (Oyun aktifken) */}
-        {isMiniGameActive && onReturnToLobby && (
-          <button
-            onClick={handleReturnToLobby}
-            aria-label={t("common.returnToLobby")}
-            className="flex items-center gap-2 text-xs font-mono font-bold text-alaz-orange hover:text-white bg-alaz-orange/10 hover:bg-alaz-orange border border-alaz-orange/40 hover:border-alaz-orange px-3.5 py-2 rounded-2xl transition-all active:scale-95 cursor-pointer shadow-[0_0_15px_rgba(255,85,0,0.25)]"
-            title={t("common.returnToLobby", "LOBİYE DÖN")}
-          >
-            <LayoutGrid className="w-4 h-4" />
-            <span className="hidden sm:inline uppercase tracking-wider">{t("common.returnToLobby", "LOBİYE DÖN")}</span>
-          </button>
+    <header className="relative z-20 flex items-center justify-between h-20 mb-6 select-none">
+      <div className="flex items-center gap-4 min-w-0">
+        {room.venue_logo_url ? (
+          <img src={room.venue_logo_url} alt="" className="w-12 h-12 object-contain rounded-xl" />
+        ) : (
+          <span className="w-3 h-3 rounded-full bg-accent" aria-hidden="true" />
         )}
+        <span className="text-3xl font-extrabold tracking-tight text-ink">HENGAME</span>
+        {venueName && <span className="text-2xl text-ink-2 truncate max-w-[480px]">· {venueName}</span>}
+      </div>
 
-        {/* Ana Sayfa Çıkış Butonu */}
-        <button
-          onClick={handleExitHome}
-          aria-label={t(exitLabelKey)}
-          className="flex items-center gap-1.5 text-xs font-mono font-bold text-white/70 hover:text-white bg-white/5 hover:bg-white/15 border border-white/15 hover:border-white/40 px-3.5 py-2 rounded-2xl transition-all active:scale-95 cursor-pointer"
-          title={t(exitLabelKey)}
-        >
-          <Home className="w-4 h-4 text-cyan-400" />
-          <span className="hidden md:inline uppercase tracking-wider">{t(exitLabelKey)}</span>
-        </button>
+      <div className="flex items-center gap-6">
+        <div className="flex items-baseline gap-3">
+          <span className="text-2xl text-ink-2">{t("hostHeader.roomCode")}</span>
+          <span className="text-5xl font-mono font-extrabold tracking-[0.12em] text-ink">{room.code || "…"}</span>
+        </div>
 
-        {/* Venue Avatar & Name */}
-        <div className="flex items-center gap-3 pl-2 border-l border-white/10">
-          {room.venue_logo_url ? (
-            <img
-              src={room.venue_logo_url}
-              alt="Venue Logo"
-              className="w-9 h-9 object-contain rounded-xl border border-white/20 bg-black/40 p-1"
-            />
-          ) : (
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-alaz-orange/20 to-yellow-500/20 border border-alaz-orange/40 flex items-center justify-center shadow-[0_0_15px_rgba(255,85,0,0.3)]">
-              <Sparkles className="w-4 h-4 text-alaz-orange animate-pulse" />
-            </div>
-          )}
-          <div className="hidden sm:block">
-            <div className="flex items-center gap-1.5">
-              <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              <span className="text-[9px] font-mono font-bold tracking-[0.2em] uppercase text-emerald-400">
-                LIVE TV
-              </span>
-            </div>
-            <h1 className="text-sm md:text-base font-black tracking-tight uppercase text-white drop-shadow-md font-sans truncate max-w-[160px]">
-              {room.venue_name || "HENGAME"}
-            </h1>
-          </div>
+        <div ref={menuRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-label={t("hostHeader.menu")}
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            className="w-14 h-14 rounded-2xl flex items-center justify-center text-ink-3 hover:text-ink hover:bg-surface-2 transition-colors"
+          >
+            <MoreHorizontal className="w-8 h-8" />
+          </button>
+
+          <AnimatePresence>
+            {menuOpen && (
+              <motion.div
+                key="host-menu"
+                role="menu"
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.15 }}
+                className="absolute right-0 top-full mt-3 w-[420px] surface rounded-2xl p-2 flex flex-col"
+              >
+                {isMiniGameActive && onReturnToLobby && (
+                  <MenuItem icon={<LayoutGrid className="w-6 h-6" />} onClick={handleReturnToLobby}>
+                    {t("common.returnToLobby")}
+                  </MenuItem>
+                )}
+                {onTriggerAdBreak && (
+                  <MenuItem
+                    icon={<Radio className="w-6 h-6" />}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onTriggerAdBreak();
+                    }}
+                  >
+                    {t("hostHeader.adBreak")}
+                  </MenuItem>
+                )}
+                {onEndGameEarly && (
+                  <MenuItem
+                    icon={<Flag className="w-6 h-6" />}
+                    tone="bad"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onEndGameEarly();
+                    }}
+                  >
+                    {t("hostHeader.endEarly")}
+                  </MenuItem>
+                )}
+                <MenuItem icon={isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />} onClick={handleToggleMute}>
+                  {isMuted ? t("common.soundOn") : t("common.soundOff")}
+                </MenuItem>
+                <MenuItem icon={isVoiceMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />} onClick={handleToggleVoice}>
+                  {isVoiceMuted ? t("hostHeader.voiceOn") : t("hostHeader.voiceOff")}
+                </MenuItem>
+                <div className="flex items-center justify-between gap-4 px-4 py-3">
+                  <span className="text-2xl text-ink-2">{t("hostHeader.language")}</span>
+                  <LanguageSwitcher />
+                </div>
+                <div className="h-px bg-line my-1" />
+                <MenuItem icon={<Home className="w-6 h-6" />} onClick={handleExitHome}>
+                  {t(exitLabelKey)}
+                </MenuItem>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
-
-      {/* Round & Status Center Pill */}
-      {(room.status === "playing" ||
-        room.status === "review" ||
-        room.status === "standings" ||
-        room.status === "finished") && (
-        <motion.div 
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2.5 px-4 md:px-6 py-2 border border-white/20 rounded-full bg-white/[0.06] shadow-[0_0_25px_rgba(255,255,255,0.05)] backdrop-blur-xl"
-        >
-          <NeonIcon
-            type="history"
-            color="white"
-            className="w-3.5 h-3.5 animate-spin-slow opacity-80"
-          />
-          <span className="text-white font-black text-xs tracking-[0.2em] uppercase font-mono">
-            {t("hostHeader.roundLabel", room.current_round, room.total_rounds)}
-          </span>
-        </motion.div>
-      )}
-
-      {/* Control Actions & Room Code */}
-      <div className="flex items-center gap-2.5 md:gap-3.5">
-        {onTriggerAdBreak && (
-          <button
-            onClick={onTriggerAdBreak}
-            aria-label={t("hostHeader.adBreak")}
-            title={t("hostHeader.adBreak")}
-            className="text-[11px] text-white/80 hover:text-white border border-white/15 hover:border-white/40 bg-white/5 hover:bg-white/15 px-3.5 py-2 rounded-2xl uppercase tracking-[0.15em] font-bold transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
-          >
-            <Radio className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden md:inline">{t("hostHeader.adBreak")}</span>
-          </button>
-        )}
-
-        <LanguageSwitcher />
-
-        <button
-          onClick={handleToggleMute}
-          className="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/80 hover:text-white transition-all active:scale-95 cursor-pointer"
-          aria-label={isMuted ? t("common.soundOn") : t("common.soundOff")}
-          title={isMuted ? t("common.soundOn") : t("common.soundOff")}
-        >
-          {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
-        </button>
-
-        <button
-          onClick={handleToggleVoice}
-          className="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/80 hover:text-white transition-all active:scale-95 cursor-pointer"
-          aria-label={isVoiceMuted ? t("hostHeader.voiceOn") : t("hostHeader.voiceOff")}
-          title={isVoiceMuted ? t("hostHeader.voiceOn") : t("hostHeader.voiceOff")}
-        >
-          {isVoiceMuted ? <MicOff className="w-4 h-4 text-red-400" /> : <Mic className="w-4 h-4 text-emerald-400" />}
-        </button>
-
-        {onEndGameEarly && (
-          <button
-            onClick={onEndGameEarly}
-            className="text-[10px] text-red-400 hover:text-red-300 border border-red-500/30 hover:bg-red-500/20 bg-red-950/40 px-3 py-2 rounded-2xl uppercase tracking-[0.15em] font-bold transition-all active:scale-95 cursor-pointer"
-          >
-            {t("hostHeader.endEarly")}
-          </button>
-        )}
-
-        {/* Room Code OLED Badge */}
-        <BeamBorder color="orange" radius="1rem" className="shadow-[0_0_20px_rgba(255,85,0,0.25)]">
-          <div className="flex items-center gap-2 bg-[#090912] px-3.5 py-1.5 md:py-2 rounded-[calc(1rem-1.5px)]">
-            <span className="text-[9px] text-gray-400 uppercase tracking-[0.15em] font-mono font-bold">
-              {t("hostHeader.roomCode")}
-            </span>
-            <span className="text-lg md:text-xl font-mono font-black tracking-widest text-alaz-orange">
-              {room.code || "..."}
-            </span>
-          </div>
-        </BeamBorder>
-      </div>
     </header>
+  );
+}
+
+function MenuItem({
+  icon,
+  children,
+  onClick,
+  tone,
+}: {
+  icon: ReactNode;
+  children: ReactNode;
+  onClick: () => void;
+  tone?: "bad";
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      onClick={onClick}
+      className={`flex items-center gap-4 px-4 py-3 rounded-xl text-2xl font-semibold text-left transition-colors hover:bg-surface-2 ${
+        tone === "bad" ? "text-bad" : "text-ink"
+      }`}
+    >
+      <span className="text-ink-3">{icon}</span>
+      {children}
+    </button>
   );
 }

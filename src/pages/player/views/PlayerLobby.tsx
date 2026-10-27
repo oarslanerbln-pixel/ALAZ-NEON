@@ -9,7 +9,7 @@ import { LanguageSwitcher } from "../../../components/LanguageSwitcher";
 import { PlayerStageScreen } from "../components/PlayerStageScreen";
 import type { Player, Room } from "../../../types/database";
 import { nightRankOf } from "../../../lib/nightLeague";
-import { CardSpotlight, NumberTicker } from "../../../components/fx";
+import { NumberTicker } from "../../../components/fx";
 
 interface PlayerLobbyProps {
   room: Room | null;
@@ -78,7 +78,6 @@ export function PlayerLobby({ room, roomId, playerId }: PlayerLobbyProps) {
       className="relative flex flex-col min-h-[calc(100dvh-8rem)] text-center overflow-hidden"
     >
       <PlayerBackground />
-      <div className="absolute inset-0 bg-black/80 pointer-events-none" />
 
       <div className="relative z-10 flex justify-end">
         <LanguageSwitcher />
@@ -86,7 +85,7 @@ export function PlayerLobby({ room, roomId, playerId }: PlayerLobbyProps) {
 
       <div className="relative z-10 flex-1 flex flex-col">
         <PlayerStageScreen
-          icon={<Check className="w-12 h-12 text-alaz-orange" strokeWidth={2.5} />}
+          icon={<Check className="w-12 h-12 text-accent" strokeWidth={2.5} />}
           tone="orange"
           title={t("lobby.readyTitle")}
           body={t("lobby.readyBody")}
@@ -94,54 +93,46 @@ export function PlayerLobby({ room, roomId, playerId }: PlayerLobbyProps) {
           hint={null}
         >
           <span
-            className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm font-bold text-emerald-300"
+            className="inline-flex items-center gap-2 rounded-full bg-surface border border-line px-4 py-2 text-sm text-ink"
             role="status"
             aria-live="polite"
           >
-            <span className="w-2 h-2 rounded-full bg-emerald-400 motion-safe:animate-pulse" aria-hidden="true" />
+            <span className="w-2 h-2 rounded-full bg-ok" aria-hidden="true" />
             {t("waitingRoom.playersConnected", playerCount)}
           </span>
 
           {standing && (
-            <CardSpotlight
-              color="orange"
-              ambient={true}
-              radius="1rem"
-              className="w-full max-w-xs border-amber-300/30"
-              innerClassName="px-5 py-4 backdrop-blur-md bg-amber-300/[0.08]"
-            >
-              <p className="text-[11px] font-black uppercase tracking-[0.25em] text-amber-200/80">{t("lobby.nightTitle")}</p>
-              <div className="mt-2 flex items-baseline justify-between gap-3">
-                <span className="text-2xl font-black text-white tabular-nums">{t("lobby.nightRank", standing.rank, standing.total)}</span>
-                <span className="text-sm font-bold text-amber-200 tabular-nums">
-                  <NumberTicker value={standing.points} suffix={` ${t("lobby.nightPoints", "").trim()}`} className="text-amber-200 font-bold" />
-                </span>
+            <div className="w-full max-w-xs surface rounded-2xl px-5 py-4 text-left">
+              <p className="text-sm text-ink-2">{t("lobby.nightTitle")}</p>
+              <div className="mt-1 flex items-baseline justify-between gap-3">
+                <span className="text-2xl font-extrabold text-ink tabular-nums">{t("lobby.nightRank", standing.rank, standing.total)}</span>
+                <NumberTicker value={standing.points} suffix={` ${t("lobby.nightPoints", "").trim()}`} className="text-base font-semibold text-accent tabular-nums" />
               </div>
-            </CardSpotlight>
+            </div>
           )}
         </PlayerStageScreen>
       </div>
 
       <div className="relative z-10 flex flex-col gap-3 pb-2">
         {isClassic && room && (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-md">
-            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-white/50 mb-3">
+          <div className="surface rounded-2xl p-4">
+            <p className="text-sm text-ink-2 mb-3">
               {t("waitingRoom.categoriesTitle")}
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               {categories.map((cat) => (
-                <span key={cat} className="rounded-full bg-white/10 px-3 py-1.5 text-sm font-bold text-white">
+                <span key={cat} className="rounded-full bg-surface-2 px-3 py-1.5 text-sm font-semibold text-ink">
                   {cat}
                 </span>
               ))}
             </div>
-            <p className="mt-3 text-sm font-semibold text-white/60">
+            <p className="mt-3 text-sm text-ink-2">
               {t("waitingRoom.roundsLabel", String(room.total_rounds))} · {t("waitingRoom.timerLabel", String(room.timer_setting))}
             </p>
           </div>
         )}
 
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 min-h-16 flex items-center backdrop-blur-md">
+        <div className="surface rounded-2xl px-4 py-3 min-h-16 flex items-center">
           <AnimatePresence mode="wait">
             <motion.p
               key={tipIdx}
@@ -149,7 +140,7 @@ export function PlayerLobby({ room, roomId, playerId }: PlayerLobbyProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.25 }}
-              className="w-full text-sm text-white/85 leading-snug text-left flex gap-3"
+              className="w-full text-sm text-ink-2 leading-snug text-left flex gap-3"
             >
               <span className="text-lg leading-none" aria-hidden="true">{TIPS[tipIdx].icon}</span>
               <span>{t(TIPS[tipIdx].key)}</span>

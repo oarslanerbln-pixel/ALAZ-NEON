@@ -103,16 +103,16 @@ export function PlayerPlaying({
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={TWEEN.enter}
-        className="sticky top-14 z-20 -mx-2 px-2 py-2 backdrop-blur-xl bg-[#090912]/85 border-b border-white/[0.06] rounded-2xl shadow-[0_10px_25px_rgba(0,0,0,0.4)]"
+        className="sticky top-14 z-20 -mx-2 px-2 py-2 bg-[#090912]/85 border-b border-white/[0.06] rounded-2xl shadow-[0_10px_25px_rgba(0,0,0,0.4)]"
       >
         <div className="flex items-center justify-between gap-3 mb-1.5">
           {/* Hedef Harf Rozeti */}
-          <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-white/[0.05] border border-alaz-orange/40 shadow-[0_0_15px_rgba(255,85,0,0.15)]">
-            <Zap className="w-3.5 h-3.5 text-alaz-orange animate-pulse" />
-            <span className="text-[11px] font-mono font-bold text-white/50 uppercase tracking-widest">
+          <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-white/[0.05] border border-alaz-orange/40">
+            <Zap className="w-3.5 h-3.5 text-alaz-orange" />
+            <span className="text-xs tabular-nums font-bold text-white/50 uppercase tracking-widest">
               HARF
             </span>
-            <span className="text-base font-black font-mono text-alaz-orange leading-none">
+            <span className="text-base font-black tabular-nums text-alaz-orange leading-none">
               {activeLetter}
             </span>
           </div>
@@ -132,14 +132,14 @@ export function PlayerPlaying({
                     transition={{ duration: 0.25 }}
                     className={`w-3.5 h-1.5 rounded-full ${
                       isCatFilled
-                        ? "shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+                        ? ""
                         : "border border-white/10"
                     }`}
                   />
                 );
               })}
             </div>
-            <span className="text-[11px] font-mono font-bold text-white/70 tabular-nums">
+            <span className="text-xs tabular-nums font-bold text-white/70">
               {filledCount}/{totalCount}
             </span>
           </div>
@@ -153,7 +153,7 @@ export function PlayerPlaying({
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={SPRING.snappy}
-              className="flex items-center justify-center gap-1.5 py-1 px-3 mt-1 rounded-lg bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 text-[10px] font-mono font-bold tracking-wider uppercase shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+              className="flex items-center justify-center gap-1.5 py-1 px-3 mt-1 rounded-lg bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 text-xs tabular-nums font-bold tracking-wider uppercase"
             >
               <Zap className="w-3 h-3 text-emerald-400 fill-emerald-400" />
               <span>{t("arena.allReady")} {t("arena.speedBonusActive")}</span>
@@ -189,9 +189,9 @@ export function PlayerPlaying({
                 y: isFocused ? -2 : 0,
               }}
               transition={SPRING.snappy}
-              className={`rounded-2xl transition-all duration-300 p-4 border relative overflow-hidden backdrop-blur-2xl ${
+              className={`rounded-2xl transition-all duration-300 p-4 border relative overflow-hidden  ${
                 isJoker
-                  ? "bg-gradient-to-br from-[#1a1608]/95 via-[#120f05]/95 to-[#0d0b04]/95 border-amber-400/70 shadow-[0_0_35px_rgba(251,191,36,0.25)]"
+                  ? "bg-gradient-to-br from-[#1a1608]/95 via-[#120f05]/95 to-[#0d0b04]/95 border-amber-400/70 "
                   : isFocused
                   ? "bg-[#121224]/95 border-alaz-orange/70 shadow-[0_10px_30px_rgba(255,85,0,0.18)]"
                   : "bg-[#0b0b14]/85 border-white/[0.08] hover:border-white/15"
@@ -212,7 +212,7 @@ export function PlayerPlaying({
                   className="text-xs font-bold uppercase tracking-[0.18em] text-white/80 flex items-center gap-2 cursor-pointer select-none"
                 >
                   <span
-                    className={`font-mono text-[11px] font-black ${
+                    className={`tabular-nums text-xs font-black ${
                       isJoker ? "text-amber-400" : "text-alaz-orange/80"
                     }`}
                   >
@@ -226,15 +226,15 @@ export function PlayerPlaying({
                   type="button"
                   onClick={() => toggleJoker(cat)}
                   disabled={isLocked}
-                  className={`touch-target px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase transition-all flex items-center gap-1.5 active:scale-95 border ${
+                  className={`touch-target px-2.5 py-1 rounded-full text-xs font-black tracking-wider uppercase transition-all flex items-center gap-1.5 active:scale-95 border ${
                     isJoker
-                      ? "bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-black border-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.6)]"
+                      ? "bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-black border-amber-300 "
                       : "bg-white/[0.04] text-white/40 hover:text-white/80 border-white/10 hover:border-white/20"
                   }`}
                 >
                   <Sparkles
                     className={`w-3 h-3 ${
-                      isJoker ? "text-black fill-black animate-spin-slow" : "text-amber-400/60"
+                      isJoker ? "text-black fill-black " : "text-amber-400/60"
                     }`}
                   />
                   <span>2X JOKER</span>
@@ -275,7 +275,7 @@ export function PlayerPlaying({
                     <motion.div
                       initial={{ scale: 0.5, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
-                      className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 text-[10px] font-mono font-bold"
+                      className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 text-xs tabular-nums font-bold"
                     >
                       <Check className="w-3 h-3 text-emerald-400" />
                       <span>{activeLetter}</span>
@@ -285,7 +285,7 @@ export function PlayerPlaying({
                     <motion.div
                       initial={{ scale: 0.5, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
-                      className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-500/20 border border-rose-400/50 text-rose-300 text-[10px] font-mono font-bold"
+                      className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-500/20 border border-rose-400/50 text-rose-300 text-xs tabular-nums font-bold"
                     >
                       <AlertCircle className="w-3 h-3 text-rose-400" />
                       <span>{activeLetter}...</span>
@@ -296,7 +296,7 @@ export function PlayerPlaying({
 
               {/* Alt Bilgi: Hata veya Joker Durumu */}
               {matchState === false && (
-                <p className="text-[10px] text-rose-400/90 font-mono mt-1.5 flex items-center gap-1">
+                <p className="text-xs text-rose-400/90 tabular-nums mt-1.5 flex items-center gap-1">
                   <span>⚠️ {t("arena.letterMismatch", activeLetter)}</span>
                 </p>
               )}
@@ -318,7 +318,7 @@ export function PlayerPlaying({
         <div
           className={`rounded-3xl transition-all duration-300 p-[1.5px] ${
             allFilled
-              ? "bg-gradient-to-r from-emerald-400 via-cyan-400 to-alaz-orange shadow-[0_0_30px_rgba(16,185,129,0.35)]"
+              ? "bg-gradient-to-r from-emerald-400 via-cyan-400 to-alaz-orange "
               : ""
           }`}
         >
@@ -335,7 +335,7 @@ export function PlayerPlaying({
             holdText={t("game.submitting")}
           />
         </div>
-        <p className="text-[10px] text-center text-white/45 font-medium uppercase tracking-[0.2em] mt-3">
+        <p className="text-xs text-center text-white/45 font-medium uppercase tracking-[0.2em] mt-3">
           {t("game.earlyHint")}
         </p>
       </motion.div>

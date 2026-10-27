@@ -53,12 +53,12 @@ export function PlayerSlingshotController({ room, player }: PlayerGameProps) {
             exit={{ opacity: 0, scale: 1.05 }}
             className="flex-1 flex flex-col items-center justify-center p-6 text-center"
           >
-            <div className="w-20 h-20 rounded-3xl bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center text-4xl mb-6 shadow-[0_0_30px_#10b981]">
+            <div className="w-20 h-20 rounded-3xl bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center text-4xl mb-6">
               ⚽
             </div>
             <h1 className="text-3xl font-black text-white mb-2">{gameTitle("slingshot")}</h1>
             <p className="text-gray-400 text-sm max-w-xs mb-8">{t("slingshot.playerIntroBody")}</p>
-            <div className="px-5 py-2.5 rounded-full bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 font-mono text-xs font-bold animate-pulse">
+            <div className="px-5 py-2.5 rounded-full bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 tabular-nums text-xs font-bold">
               {t("slingshot.watchTv")}
             </div>
           </motion.div>
@@ -85,15 +85,15 @@ export function PlayerSlingshotController({ room, player }: PlayerGameProps) {
             className="flex-1 flex flex-col items-center justify-center p-6 text-center"
           >
             <div className="text-5xl mb-4">🏆</div>
-            <h2 className="text-xs font-mono tracking-[0.3em] uppercase text-emerald-400 font-bold mb-1">
+            <h2 className="text-xs tabular-nums tracking-[0.3em] uppercase text-emerald-400 font-bold mb-1">
               {t("slingshot.playerRevealEyebrow")}
             </h2>
             <h1 className="text-3xl font-black text-white mb-6">{t("slingshot.playerRevealTitle")}</h1>
-            <div className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-400/30 backdrop-blur-md mb-8">
-              <div className="text-xs text-gray-400 uppercase font-mono mb-1">{t("slingshot.yourScore")}</div>
-              <div className="text-4xl font-mono font-black text-emerald-300">{player.total_score || 0}</div>
+            <div className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-400/30 mb-8">
+              <div className="text-xs text-gray-400 uppercase tabular-nums mb-1">{t("slingshot.yourScore")}</div>
+              <div className="text-4xl tabular-nums font-black text-emerald-300">{player.total_score || 0}</div>
             </div>
-            <p className="text-xs text-gray-400 font-mono">{t("slingshot.rankingOnTv")}</p>
+            <p className="text-xs text-gray-400 tabular-nums">{t("slingshot.rankingOnTv")}</p>
           </motion.div>
         )}
       </AnimatePresence>

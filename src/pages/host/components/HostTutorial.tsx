@@ -58,7 +58,7 @@ export function HostTutorial({ room, onComplete }: Props) {
       }`} />
       
       <div className="z-10 w-full max-w-5xl px-8 flex flex-col items-center">
-        <h3 className="text-gray-500 font-bold tracking-[0.5em] uppercase mb-12 animate-pulse">{t("tutorial.howToPlay")}</h3>
+        <h3 className="text-gray-500 font-bold tracking-[0.5em] uppercase mb-12">{t("tutorial.howToPlay")}</h3>
         
         <AnimatePresence mode="wait">
           <motion.div
@@ -67,13 +67,13 @@ export function HostTutorial({ room, onComplete }: Props) {
             animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
             exit={{ opacity: 0, x: -50, filter: "blur(10px)" }}
             transition={{ duration: 0.5, ease: "easeOut" }}
-            className={`w-full p-16 rounded-3xl bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl relative overflow-hidden group`}
+            className={`w-full p-16 rounded-3xl bg-black/40  border border-white/10 shadow-2xl relative overflow-hidden group`}
           >
             {/* Glassmorphism shine */}
             <div className="absolute top-0 left-0 w-[200%] h-[200%] -translate-x-1/2 -translate-y-1/2 bg-[linear-gradient(45deg,transparent_40%,rgba(255,255,255,0.1)_50%,transparent_60%)] animate-[shine_6s_infinite]" />
             
             <div className="flex flex-col md:flex-row items-center gap-12 relative z-10">
-              <div className="text-8xl md:text-[120px] filter drop-shadow-[0_0_30px_rgba(255,255,255,0.4)] animate-bounce" style={{ animationDuration: '3s' }}>
+              <div className="text-8xl md:text-[120px] filter" style={{ animationDuration: '3s' }}>
                 {currentSlide.icon}
               </div>
               <div className="flex-1 text-center md:text-left">
@@ -94,7 +94,7 @@ export function HostTutorial({ room, onComplete }: Props) {
             <div 
               key={i} 
               className={`h-2 rounded-full transition-all duration-500 ${
-                i === step ? 'w-16 bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)]' : 'w-4 bg-white/20'
+                i === step ? 'w-16 bg-white ' : 'w-4 bg-white/20'
               }`} 
             />
           ))}
@@ -106,7 +106,7 @@ export function HostTutorial({ room, onComplete }: Props) {
           onClick={handleNext}
           className={`px-12 py-5 font-black text-xl uppercase tracking-widest transition-all rounded-full ${
             step === content.length - 1
-              ? 'bg-white text-black shadow-[0_0_30px_rgba(255,255,255,0.6)]'
+              ? 'bg-white text-black '
               : 'bg-white/10 text-white border border-white/20 hover:bg-white/20'
           }`}
         >

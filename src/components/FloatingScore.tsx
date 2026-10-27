@@ -37,7 +37,7 @@ export function FloatingScore({ items, className = "" }: Props) {
               }}
               exit={{ opacity: 0 }}
               transition={{ duration: DURATION.cinematic, ease: EASE.out, times: [0, 0.2, 0.7, 1] }}
-              className="absolute font-black text-3xl font-premium tracking-wider select-none tabular-nums drop-shadow-[0_0_15px_currentColor] will-change-transform"
+              className="absolute font-black text-3xl tracking-wider select-none tabular-nums will-change-transform"
               style={{ color }}
             >
               {item.prefix ?? (isPositive ? "+" : "")}

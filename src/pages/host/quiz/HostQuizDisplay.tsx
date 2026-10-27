@@ -3,27 +3,24 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import { collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
-import { ParticleBackground } from "../../../components/ParticleBackground";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
 import { clearRoomAnswers, resetPlayersForNewGame } from "../../../lib/gameReset";
 import { SoundManager, sounds } from "../../../lib/audio";
 import { getQuizQuestions } from "../../../lib/quizQuestions";
 import { recentQuestionIds, rememberQuestions } from "../../../lib/questionHistory";
 import { toMillis } from "../../../lib/timestamps";
-import { KineticSpark } from "../../../components/KineticSpark";
 
 import type { Answer } from "../../../types/database";
 
 import { HostQuizIntro } from "./views/HostQuizIntro";
 import { QuizLeaderboard, type PreviousRanking } from "./QuizLeaderboard";
 import { TimerRing } from "../../../components/TimerRing";
-import { BeamBorder } from "../../../components/fx/BeamBorder";
-import { KineticText, NumberTicker, ShimmerButton } from "../../../components/fx";
+import { NumberTicker } from "../../../components/fx";
 import { HostHeader } from "../components/HostHeader";
 import { HostLobby } from "../views/HostLobby";
 import { HostTutorial } from "../components/HostTutorial";
 import { useLocale } from "../../../hooks/useLocale";
-import { DURATION, EASE, SPRING } from "../../../lib/motion";
+import { DURATION, EASE } from "../../../lib/motion";
 import { grantGameRewards } from "../../../lib/rewards";
 import { useVenue } from "../../../contexts/VenueContextCore";
 
@@ -396,101 +393,35 @@ export function HostQuizDisplay({
     await updateRoomStatus("quiz_lobby", { current_round: 0, current_question_index: 0, ...NIGHT_ROUND_OPEN });
   };
 
-  // Color scheme mappings for options
-  // Themed optic laser color schemes for 4 options
-  const optionStyles = {
-    A: {
-      border: "border-cyan-400/60",
-      text: "text-cyan-300",
-      bg: "bg-cyan-500/15",
-      glow: "shadow-[0_0_35px_rgba(0,243,255,0.3)]",
-      corner: "border-cyan-400",
-      dot: "bg-cyan-400 shadow-[0_0_8px_#00f3ff]",
-    },
-    B: {
-      border: "border-purple-400/60",
-      text: "text-purple-300",
-      bg: "bg-purple-500/15",
-      glow: "shadow-[0_0_35px_rgba(192,132,252,0.3)]",
-      corner: "border-purple-400",
-      dot: "bg-purple-400 shadow-[0_0_8px_#c084fc]",
-    },
-    C: {
-      border: "border-alaz-orange/60",
-      text: "text-orange-300",
-      bg: "bg-alaz-orange/15",
-      glow: "shadow-[0_0_35px_rgba(255,85,0,0.3)]",
-      corner: "border-alaz-orange",
-      dot: "bg-alaz-orange shadow-[0_0_8px_#ff5500]",
-    },
-    D: {
-      border: "border-pink-400/60",
-      text: "text-pink-300",
-      bg: "bg-pink-500/15",
-      glow: "shadow-[0_0_35px_rgba(244,114,182,0.3)]",
-      corner: "border-pink-400",
-      dot: "bg-pink-400 shadow-[0_0_8px_#f472b6]",
-    },
-  };
+  const critical = gameState === "question_active" && timeLeft <= 5;
 
   return (
     <TVScaleFrame>
-      <div 
-        className="w-full h-full flex flex-col p-8 overflow-hidden bg-black text-white relative"
-        data-tension={gameState === "question_active" && timeLeft <= 5 ? "high" : undefined}
-      >
-        <ParticleBackground speedMultiplier={gameState === "question_active" && timeLeft <= 5 ? 5 : 1} />
-        
-        {/* Volumetrik Stüdyo Işıkları (Blender Lighting & Scenography) */}
-        <div
-          aria-hidden="true"
-          className="absolute -top-36 left-1/4 w-[460px] h-[720px] bg-gradient-to-b from-cyan-400/20 via-cyan-400/5 to-transparent blur-3xl pointer-events-none -rotate-12 -z-10"
-        />
-        <div
-          aria-hidden="true"
-          className="absolute -top-36 right-1/4 w-[460px] h-[720px] bg-gradient-to-b from-alaz-orange/20 via-alaz-orange/5 to-transparent blur-3xl pointer-events-none rotate-12 -z-10"
-        />
-        <div
-          aria-hidden="true"
-          className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-white/[0.03] to-transparent pointer-events-none -z-10"
-        />
-
-        {/* Gerilim Vinyeti: Son 5 saniyede nabız atan reaktör kriz halkası */}
-        {gameState === "question_active" && timeLeft <= 5 && (
-          <>
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(255,0,40,0.45)_100%)] pointer-events-none z-0" />
-            <div aria-hidden="true" className="absolute inset-0 pointer-events-none z-0 tension-heartbeat-glow" />
-          </>
-        )}
-
-        <HostHeader 
-          room={room} 
-          onEndGameEarly={() => { grantQuizRewards(); updateRoomStatus("finished"); }} 
+      <div className="w-full h-full flex flex-col px-24 py-12 overflow-hidden relative">
+        <HostHeader
+          room={room}
+          onEndGameEarly={() => { grantQuizRewards(); updateRoomStatus("finished"); }}
           onReturnToLobby={() => updateRoomStatus("night_lobby", { active_game: "none" })}
         />
 
-        <div className="flex-1 flex items-center justify-center relative w-full z-10 mt-6">
+        <div className="flex-1 flex items-center justify-center relative w-full min-h-0">
           <AnimatePresence mode="wait">
-            
+
             {/* LOBBY */}
             {gameState === "quiz_lobby" && (
               <motion.div
                 key="quiz_lobby"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, y: -50 }}
-                className="w-full flex flex-col items-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: DURATION.base }}
+                className="w-full h-full flex flex-col items-center"
               >
                 <div className="text-center mb-8">
-                  <span className="px-6 py-2 rounded-full border border-blue-500/40 bg-blue-500/10 text-blue-400 font-mono tracking-widest text-sm uppercase">
-                    ⚡ {t("quiz.subtitle")} ⚡
-                  </span>
-                  <h1 className="text-6xl md:text-7xl font-black text-white tracking-widest uppercase mt-3 drop-shadow-[0_0_40px_rgba(59,130,246,0.9)]">
-                    {t("quiz.title")}
-                  </h1>
+                  <p className="text-2xl text-ink-2">{t("quiz.subtitle")}</p>
+                  <h1 className="text-7xl font-extrabold text-ink tracking-tight mt-2">{t("quiz.title")}</h1>
                 </div>
-
-                <div className="w-full h-full relative">
+                <div className="w-full flex-1 min-h-0 relative">
                   <HostLobby
                     room={room}
                     players={players}
@@ -506,7 +437,7 @@ export function HostQuizDisplay({
               <HostTutorial room={room} onComplete={handleTutorialComplete} />
             )}
 
-            {/* CYBER INTRO */}
+            {/* INTRO */}
             {gameState === "quiz_intro" && (
               <HostQuizIntro onComplete={onIntroComplete} />
             )}
@@ -515,44 +446,30 @@ export function HostQuizDisplay({
             {gameState === "question_intro" && (
               <motion.div
                 key="intro"
-                initial={{ opacity: 0, y: 40 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 1.05 }}
-                className="flex flex-col items-center justify-center w-full max-w-5xl text-center"
+                exit={{ opacity: 0 }}
+                transition={{ duration: DURATION.base, ease: EASE.out }}
+                className="flex flex-col items-center justify-center w-full text-center"
               >
-                {/* Round Badge */}
-                <div className="flex items-center gap-4 mb-6">
-                  <span className="px-6 py-2 rounded-full bg-blue-600/30 border border-blue-500 text-blue-400 font-mono font-bold tracking-widest uppercase text-xl">
-                    {t("quiz.questionCounter", currentRoundNum, totalRounds)}
-                  </span>
-                  {currentQuestion?.category && (
-                    <span className="px-6 py-2 rounded-full bg-alaz-orange/20 border border-alaz-orange text-alaz-orange font-mono font-bold tracking-widest uppercase text-xl">
-                      {currentQuestion.category}
-                    </span>
-                  )}
-                  {isFinalRound && (
-                    <span className="px-6 py-2 rounded-full bg-red-600/30 border border-red-500 text-red-400 font-black tracking-widest uppercase text-xl animate-pulse">
-                      {t("quiz.finalDouble")}
-                    </span>
-                  )}
-                </div>
+                <QuestionMeta
+                  counter={t("quiz.questionCounter", currentRoundNum, totalRounds)}
+                  category={currentQuestion?.category}
+                  finalLabel={isFinalRound ? t("quiz.finalDouble") : undefined}
+                />
 
                 {!currentQuestion ? (
-                  <div className="text-white/50 text-2xl animate-pulse">{t("quiz.loading")}</div>
+                  <div className="text-ink-2 text-3xl mt-10">{t("quiz.loading")}</div>
                 ) : (
                   <>
-                    <div className="bg-black/80 border-2 border-blue-500/40 p-16 w-full rounded-2xl shadow-[0_0_60px_rgba(59,130,246,0.25)] relative overflow-hidden backdrop-blur-md">
-                      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-500" />
-                      <h1 className="text-4xl md:text-6xl font-black text-white leading-tight">
-                        {currentQuestion.text}
-                      </h1>
-                    </div>
-
+                    <h1 className="mt-8 max-w-[1500px] text-[68px] font-extrabold text-ink leading-[1.15] tracking-tight text-balance">
+                      {currentQuestion.text}
+                    </h1>
                     <button
                       onClick={startQuestionTimer}
-                      className="mt-12 px-16 py-6 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-black text-3xl uppercase tracking-widest rounded-xl shadow-[0_0_40px_rgba(59,130,246,0.7)] transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center gap-4"
+                      className="btn-primary mt-16 px-16 h-24 text-3xl uppercase tracking-wide"
                     >
-                      <span>⚡</span> {t("quiz.startTimer")}
+                      {t("quiz.startTimer")}
                     </button>
                   </>
                 )}
@@ -566,111 +483,70 @@ export function HostQuizDisplay({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex flex-col items-center justify-center w-full max-w-7xl"
+                transition={{ duration: DURATION.base }}
+                className="flex flex-col w-full h-full"
               >
                 {!currentQuestion ? (
-                  <div className="text-white/50 text-2xl animate-pulse">{t("quiz.loading")}</div>
+                  <div className="m-auto text-ink-2 text-3xl">{t("quiz.loading")}</div>
                 ) : (
                   <>
-                    {/* Üst çubuk: soru/kategori · süre halkası · canlı cevap sayacı.
-                        Halka eskiden soru kartıyla şıklar arasında kendi
-                        satırındaydı; uzun bir soruda şıklar ve "süreyi bitir"
-                        düğmesi 1080'lik tuvalin altından taşıyordu. */}
-                    <div className="grid grid-cols-[1fr_auto_1fr] items-center w-full mb-6 px-4">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className="px-4 py-1.5 rounded-md bg-white/10 border border-white/20 text-gray-300 font-mono text-lg uppercase font-bold">
-                          {t("quiz.questionCounter", currentRoundNum, totalRounds)}
-                        </span>
-                        {currentQuestion.category && (
-                          <span className="px-4 py-1.5 rounded-md bg-alaz-orange/20 border border-alaz-orange text-alaz-orange font-mono text-lg uppercase font-bold">
-                            {currentQuestion.category}
-                          </span>
-                        )}
-                      </div>
-
+                    {/* Soru bilgisi · süre halkası (ekranın tek odak animasyonu). */}
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center w-full">
+                      <QuestionMeta
+                        align="left"
+                        counter={t("quiz.questionCounter", currentRoundNum, totalRounds)}
+                        category={currentQuestion.category}
+                        finalLabel={isFinalRound ? t("quiz.finalDouble") : undefined}
+                      />
                       <TimerRing
                         timeLeft={timeLeft}
                         maxTime={room.timer_setting || 30}
-                        tone={timeLeft <= 5 ? "critical" : timeLeft <= 10 ? "warning" : "calm"}
-                        size={128}
+                        tone={critical ? "critical" : "calm"}
+                        size={144}
+                        strokeWidth={5}
                       >
-                        {/* Son 5 saniye: her saniye rakam küçük bir vuruşla değişir. */}
-                        <motion.span
-                          key={timeLeft <= 5 ? timeLeft : "calm"}
-                          initial={timeLeft <= 5 ? { scale: 1.35, opacity: 0.4 } : false}
-                          animate={{ scale: 1, opacity: 1 }}
-                          transition={SPRING.snappy}
-                          className={`inline-block text-5xl font-black tabular-nums tracking-tighter ${timeLeft <= 5 ? "text-red-500" : "text-white"}`}
-                        >
+                        <span className={`text-6xl font-extrabold tabular-nums ${critical ? "text-bad" : "text-ink"}`}>
                           {timeLeft}
-                        </motion.span>
+                        </span>
                       </TimerRing>
+                      <div />
+                    </div>
 
-                      {/* Live Answered Tracker */}
-                      <div className="justify-self-end flex items-center gap-3 bg-black/60 border border-cyan-500/40 px-6 py-2 rounded-full shadow-[0_0_20px_rgba(6,182,212,0.3)]">
-                        <span className="w-3 h-3 rounded-full bg-cyan-400 animate-ping" />
-                        <span className="font-mono font-bold text-cyan-400 text-lg">
+                    <h1 className="mt-8 mx-auto max-w-[1500px] text-center text-[68px] font-extrabold text-ink leading-[1.15] tracking-tight text-balance">
+                      {currentQuestion.text}
+                    </h1>
+
+                    <div className="grid grid-cols-2 gap-6 w-full mt-auto">
+                      {(["A", "B", "C", "D"] as const).map((opt) => (
+                        <div key={opt} className="surface rounded-3xl px-8 py-7 flex items-center gap-7 min-w-0">
+                          <OptionLetter letter={opt} />
+                          <span className="text-[44px] font-semibold text-ink leading-tight min-w-0">
+                            {currentQuestion.options[opt]}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Cevap ilerlemesi + personelin süreyi erken bitirmesi */}
+                    <div className="mt-8 grid grid-cols-[1fr_auto_1fr] items-center">
+                      <div />
+                      <div className="flex items-center gap-6">
+                        <div className="w-80 h-3 rounded-full bg-surface-2 overflow-hidden">
+                          <motion.div
+                            className="h-full bg-accent origin-left"
+                            initial={false}
+                            animate={{ scaleX: players.length ? answeredCount / players.length : 0 }}
+                            transition={{ duration: DURATION.base, ease: EASE.out }}
+                          />
+                        </div>
+                        <span className="text-3xl text-ink-2 tabular-nums">
                           {t("quiz.liveAnswered", answeredCount, players.length)}
                         </span>
                       </div>
-                    </div>
-
-                    {/* Soru kartı: kenarında süzülen ışık, süre azaldıkça kırmızıya döner. */}
-                    <BeamBorder
-                      rgb={timeLeft <= 5 ? "239,68,68" : "56,189,248"}
-                      duration={timeLeft <= 5 ? 2 : 6}
-                      radius="1.75rem"
-                      className="w-full mb-8 shadow-[0_0_60px_rgba(59,130,246,0.25)]"
-                      innerClassName="bg-[#05070d]/95"
-                    >
-                      <div className="p-10 text-center">
-                        <KineticText
-                          text={currentQuestion.text}
-                          as="h1"
-                          animation="pullUp"
-                          className="text-3xl md:text-5xl font-black text-white leading-snug text-balance"
-                        />
-                      </div>
-                    </BeamBorder>
-
-                    {/* 4 Optic Laser Options Grid */}
-                    <div className="grid grid-cols-2 gap-6 w-full mb-6">
-                      {(["A", "B", "C", "D"] as const).map((opt, i) => {
-                        const style = optionStyles[opt];
-                        return (
-                          <motion.div
-                            key={opt}
-                            initial={{ opacity: 0, y: 16 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 + i * 0.08 }}
-                            className="w-full"
-                          >
-                            <div
-                              className={`relative p-6 rounded-2xl border-2 ${style.border} ${style.glow} bg-black/75 backdrop-blur-xl flex items-center gap-5 overflow-hidden group`}
-                            >
-                              {/* Optic Laser Corners */}
-                              <div className={`absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 ${style.corner}`} />
-                              <div className={`absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 ${style.corner}`} />
-
-                              <div className={`w-16 h-16 ${style.bg} border-2 ${style.border} rounded-xl flex items-center justify-center text-3xl font-black ${style.text} shrink-0`}>
-                                {opt}
-                              </div>
-                              <div className="text-2xl md:text-3xl font-bold text-white text-left flex-1 leading-snug">
-                                {currentQuestion.options[opt]}
-                              </div>
-                            </div>
-                          </motion.div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Manual End Early Button */}
-                    <div className="mt-4">
                       <button
                         onClick={endQuestion}
-                        className="px-8 py-2.5 bg-red-950/60 hover:bg-red-900 border border-red-500/50 hover:border-red-500 text-red-400 font-bold uppercase tracking-widest text-sm transition-all rounded-full flex items-center gap-3 shadow-[0_0_20px_rgba(239,68,68,0.3)] active:scale-95"
+                        className="justify-self-end px-6 h-14 rounded-2xl text-2xl font-semibold text-ink-3 hover:text-ink hover:bg-surface-2 transition-colors"
                       >
-                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                         {t("quiz.endTimer")}
                       </button>
                     </div>
@@ -679,43 +555,41 @@ export function HostQuizDisplay({
               </motion.div>
             )}
 
-            {/* QUESTION REVEAL (Vote breakdown + Correct Option + Speed Demon + Fun Fact) */}
+            {/* QUESTION REVEAL (oy dağılımı + doğru şık + en hızlı + bilgi notu) */}
             {gameState === "question_reveal" && (
               <motion.div
                 key="reveal"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex flex-col items-center justify-center w-full max-w-6xl"
+                transition={{ duration: DURATION.base }}
+                className="flex flex-col w-full h-full"
               >
                 {!currentQuestion ? (
-                  <div className="text-white/50 text-2xl animate-pulse">{t("quiz.loading")}</div>
+                  <div className="m-auto text-ink-2 text-3xl">{t("quiz.loading")}</div>
                 ) : (
                   <>
-                    <div className="flex items-center justify-between w-full mb-6">
-                      <span className="text-2xl font-black text-emerald-400 uppercase tracking-widest flex items-center gap-3 drop-shadow-[0_0_15px_rgba(52,211,153,0.8)]">
-                        <span className="text-3xl">🎯</span> {t("quiz.correctAnswer")}
-                      </span>
-
-                      {/* Speed Demon Spotlight - 24K Gold Badge */}
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-3xl font-extrabold text-ok">{t("quiz.correctAnswer")}</span>
                       {fastestWinner && (
-                        <motion.div 
-                          initial={{ opacity: 0, x: 20, scale: 0.9 }}
-                          animate={{ opacity: 1, x: 0, scale: 1 }}
-                          transition={SPRING.bouncy}
-                          className="bg-gradient-to-r from-amber-500/25 via-yellow-400/20 to-amber-500/25 border-2 border-amber-400/80 px-6 py-2 rounded-full flex items-center gap-3 shadow-[0_0_30px_rgba(251,191,36,0.6)] backdrop-blur-xl"
+                        <motion.span
+                          initial={{ opacity: 0, x: 16 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: DURATION.base, ease: EASE.out }}
+                          className="text-2xl text-ink-2"
                         >
-                          <span className="text-2xl">⚡</span>
-                          <span className="text-amber-300 font-black uppercase text-sm tracking-wider">
-                            {t("quiz.fastestPlayer")}: <strong className="text-white font-bold ml-1">{fastestWinner.nickname}</strong> ({fastestWinner.timeTakenSec}s)
-                          </span>
-                        </motion.div>
+                          {t("quiz.fastestPlayer")}: <strong className="text-ink font-semibold">{fastestWinner.nickname}</strong>{" "}
+                          <span className="tabular-nums">({fastestWinner.timeTakenSec}s)</span>
+                        </motion.span>
                       )}
                     </div>
 
-                    {/* Options with Supernova Highlight & Vote Breakdown Bars */}
-                    <div className="grid grid-cols-2 gap-6 w-full mb-8">
-                      {(["A", "B", "C", "D"] as const).map(opt => {
+                    <h2 className="mt-6 text-center text-5xl font-extrabold text-ink leading-tight text-balance">
+                      {currentQuestion.text}
+                    </h2>
+
+                    <div className="grid grid-cols-2 gap-6 w-full mt-auto">
+                      {(["A", "B", "C", "D"] as const).map((opt) => {
                         const revealed = revealedOption(room, currentQIndex);
                         const isCorrect = revealed === opt;
                         const isDimmed = revealed !== null && !isCorrect;
@@ -725,48 +599,29 @@ export function HostQuizDisplay({
                         return (
                           <motion.div
                             key={opt}
-                            animate={{ scale: isCorrect ? 1.04 : 1, opacity: isDimmed ? 0.3 : 1 }}
-                            transition={isCorrect ? { ...SPRING.bouncy, delay: 0.15 } : { duration: DURATION.slow, ease: EASE.out }}
-                            className={`p-6 rounded-2xl border-2 relative overflow-hidden flex flex-col justify-between transition-all duration-500 ${
-                              isCorrect
-                                ? "bg-gradient-to-br from-emerald-950/90 via-emerald-900/60 to-black/90 border-emerald-400 shadow-[0_0_75px_rgba(52,211,153,0.85)]"
-                                : "bg-black/60 border-white/10"
+                            animate={{ opacity: isDimmed ? 0.45 : 1 }}
+                            transition={{ duration: DURATION.base, ease: EASE.out }}
+                            className={`relative overflow-hidden rounded-3xl px-8 py-6 border-2 ${
+                              isCorrect ? "bg-ok/10 border-ok" : "bg-surface border-line"
                             }`}
                           >
-                            {/* Optic Laser Corners for Correct Option */}
-                            {isCorrect && (
-                              <>
-                                <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-emerald-400 shadow-[0_0_10px_#34d399]" />
-                                <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-emerald-400 shadow-[0_0_10px_#34d399]" />
-                              </>
-                            )}
-
                             {/* Oy yüzdesi dolgusu */}
                             <motion.div
                               initial={{ scaleX: 0 }}
                               animate={{ scaleX: percentage / 100 }}
-                              transition={{ duration: 1, ease: EASE.out }}
-                              className={`absolute inset-0 origin-left ${isCorrect ? "bg-emerald-500/25" : "bg-white/5"} pointer-events-none`}
+                              transition={{ duration: 0.6, ease: EASE.out }}
+                              className={`absolute inset-0 origin-left pointer-events-none ${isCorrect ? "bg-ok/15" : "bg-white/[0.04]"}`}
                             />
-
-                            <div className="flex items-center gap-4 relative z-10">
-                              <div className={`w-16 h-16 rounded-xl flex items-center justify-center text-3xl font-black shrink-0 ${
-                                isCorrect ? "bg-emerald-400 text-black shadow-[0_0_25px_rgba(52,211,153,0.9)]" : "border-2 border-white/20 text-gray-400"
-                              }`}>
-                                {opt}
-                              </div>
-                              <div className={`text-2xl md:text-3xl font-bold flex-1 text-left ${isCorrect ? "text-emerald-200 font-black drop-shadow-[0_0_12px_rgba(52,211,153,0.6)]" : "text-gray-400"}`}>
+                            <div className="relative flex items-center gap-7">
+                              <OptionLetter letter={opt} state={isCorrect ? "correct" : "idle"} />
+                              <span className={`flex-1 min-w-0 text-[44px] font-semibold leading-tight ${isCorrect ? "text-ink" : "text-ink-2"}`}>
                                 {currentQuestion.options[opt]}
-                              </div>
-                            </div>
-
-                            {/* Vote stats footer */}
-                            <div className="flex justify-between items-center mt-4 pt-3 border-t border-white/10 relative z-10 text-sm font-mono">
-                              <span className={`text-lg ${isCorrect ? "text-emerald-300 font-bold" : "text-gray-400"}`}>
-                                {t("quiz.voteCount", count)}
                               </span>
-                              <span className={`font-black text-xl tabular-nums ${isCorrect ? "text-emerald-300" : "text-gray-400"}`}>
-                                %{percentage}
+                              <span className="text-right shrink-0">
+                                <span className={`block text-4xl font-extrabold tabular-nums ${isCorrect ? "text-ok" : "text-ink-2"}`}>
+                                  {percentage}%
+                                </span>
+                                <span className="block text-2xl text-ink-3 tabular-nums">{t("quiz.voteCount", count)}</span>
                               </span>
                             </div>
                           </motion.div>
@@ -774,39 +629,25 @@ export function HostQuizDisplay({
                       })}
                     </div>
 
-                    {/* Fun Fact Card */}
-                    {currentQuestion.funFact && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 15 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="w-full bg-gradient-to-r from-blue-950/40 via-purple-950/30 to-blue-950/40 border border-blue-500/40 p-6 rounded-xl mb-8 flex items-start gap-4 shadow-[0_0_30px_rgba(59,130,246,0.2)]"
+                    <div className="mt-8 flex items-center gap-8">
+                      {currentQuestion.funFact ? (
+                        <p className="flex-1 text-2xl text-ink-2 leading-snug">
+                          <span className="font-semibold text-ink">{t("quiz.funFactTitle")}</span> {currentQuestion.funFact}
+                        </p>
+                      ) : (
+                        <div className="flex-1" />
+                      )}
+                      {/* Puanlama bitip doğru şık odaya yazılmadan basılırsa TV
+                          sıralamaya geçip endQuestion'ın son yazımıyla cevap
+                          ekranına geri zıplıyordu: düğme o zamana kadar kapalı. */}
+                      <button
+                        onClick={showLeaderboard}
+                        disabled={revealedOption(room, currentQIndex) === null}
+                        className="btn-primary shrink-0 px-12 h-20 text-3xl uppercase tracking-wide"
                       >
-                        <span className="text-3xl">💡</span>
-                        <div className="text-left">
-                          <h4 className="text-cyan-400 font-black uppercase text-sm tracking-widest mb-1">
-                            {t("quiz.funFactTitle")}
-                          </h4>
-                          <p className="text-gray-200 text-lg font-medium leading-relaxed">
-                            {currentQuestion.funFact}
-                          </p>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {/* Puanlama bitip doğru şık odaya yazılmadan basılırsa TV
-                        sıralamaya geçip endQuestion'ın son yazımıyla cevap
-                        ekranına geri zıplıyordu: düğme o zamana kadar kapalı. */}
-                    <ShimmerButton
-                      onClick={showLeaderboard}
-                      disabled={revealedOption(room, currentQIndex) === null}
-                      color="yellow"
-                      thickness={2}
-                      radius="1rem"
-                      innerClassName="px-14 py-5 bg-gradient-to-r from-amber-400 to-yellow-400 text-black font-black text-2xl uppercase tracking-widest flex items-center gap-4 shadow-[0_0_40px_rgba(251,191,36,0.5)]"
-                    >
-                      <span>{t("quiz.seeRanking")}</span>
-                      <span className="text-2xl">➔</span>
-                    </ShimmerButton>
+                        {t("quiz.seeRanking")}
+                      </button>
+                    </div>
                   </>
                 )}
               </motion.div>
@@ -816,19 +657,16 @@ export function HostQuizDisplay({
             {gameState === "quiz_leaderboard" && (
               <motion.div
                 key="leaderboard"
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="flex flex-col items-center justify-center w-full max-w-4xl"
+                transition={{ duration: DURATION.base, ease: EASE.out }}
+                className="flex flex-col items-center justify-center w-full max-w-5xl"
               >
                 <div className="text-center mb-8">
-                  <h2 className="text-5xl font-black text-white tracking-[0.2em] uppercase drop-shadow-[0_0_30px_rgba(255,77,0,0.8)]">
-                    {t("quiz.currentRanking")}
-                  </h2>
+                  <h2 className="text-6xl font-extrabold text-ink tracking-tight">{t("quiz.currentRanking")}</h2>
                   {currentRoundNum + 1 === totalRounds && (
-                    <p className="text-alaz-orange font-bold uppercase tracking-widest mt-2 animate-pulse text-lg">
-                      {t("quiz.finalRoundDouble")}
-                    </p>
+                    <p className="text-accent font-semibold mt-3 text-3xl">{t("quiz.finalRoundDouble")}</p>
                   )}
                 </div>
 
@@ -839,113 +677,110 @@ export function HostQuizDisplay({
                   onSettled={setLastRanking}
                 />
 
-                <ShimmerButton
-                  onClick={nextQuestion}
-                  color="blue"
-                  thickness={2}
-                  radius="1rem"
-                  innerClassName="px-14 py-5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-black text-2xl uppercase tracking-widest flex items-center gap-4 shadow-[0_0_40px_rgba(59,130,246,0.6)]"
-                >
-                  <span>{currentRoundNum >= totalRounds ? t("quiz.finishGame") : t("quiz.nextQuestion")}</span>
-                  <span className="text-2xl">➔</span>
-                </ShimmerButton>
+                <button onClick={nextQuestion} className="btn-primary mt-10 px-14 h-20 text-3xl uppercase tracking-wide">
+                  {currentRoundNum >= totalRounds ? t("quiz.finishGame") : t("quiz.nextQuestion")}
+                </button>
               </motion.div>
             )}
 
-            {/* GRAND FINALE — 3-TIER CYBERPUNK PODIUM */}
+            {/* FİNAL — ilk üç */}
             {gameState === "finished" && (
               <motion.div
                 key="finished"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="flex flex-col items-center justify-center w-full max-w-5xl text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: DURATION.base }}
+                className="flex flex-col items-center justify-center w-full max-w-6xl text-center"
               >
-                {/* Logo kendi başına ~430px yer kaplıyordu; podyumla birlikte
-                    "yeni oyun" düğmesi 1080'lik tuvalin altına taşıyordu. */}
-                <div className="h-[260px] w-full flex items-center justify-center">
-                  <KineticSpark className="scale-[0.62]" />
-                </div>
+                <h1 className="text-7xl font-extrabold text-accent tracking-tight">{t("quiz.champion")}</h1>
 
-                <h1 className="text-6xl md:text-7xl font-black text-alaz-orange mb-2 uppercase drop-shadow-[0_0_40px_rgba(255,77,0,0.9)] tracking-widest">
-                  {t("quiz.champion")}
-                </h1>
-                
                 {players.length > 0 && (() => {
-                  const sorted = [...players].sort((a,b) => b.total_score - a.total_score);
-                  const first = sorted[0];
-                  const second = sorted[1];
-                  const third = sorted[2];
-
+                  const [first, second, third] = [...players].sort((a, b) => b.total_score - a.total_score);
                   return (
-                    <div className="w-full flex items-end justify-center gap-6 my-10 min-h-[300px]">
-                      {/* 2nd Place */}
-                      {second && (
-                        <motion.div 
-                          initial={{ opacity: 0, y: 50 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.3 }}
-                          className="flex-1 max-w-xs bg-gradient-to-b from-slate-400/20 to-black/80 border-2 border-slate-300 p-6 rounded-2xl flex flex-col items-center shadow-[0_0_30px_rgba(203,213,225,0.3)]"
-                        >
-                          <div className="text-4xl mb-2">🥈</div>
-                          <span className="text-xs font-mono uppercase text-slate-300 font-bold tracking-widest mb-1">
-                            {t("quiz.podium2nd")}
-                          </span>
-                          <h3 className="text-2xl font-black text-white mb-2 truncate w-full">{second.nickname}</h3>
-                          <div className="text-2xl font-black text-slate-300"><NumberTicker value={second.total_score} delay={0.6} /> {t("quiz.pts")}</div>
-                        </motion.div>
-                      )}
-
-                      {/* 1st Place (Champion) */}
-                      {first && (
-                        <motion.div 
-                          initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                          animate={{ opacity: 1, y: 0, scale: 1.08 }}
-                          transition={{ delay: 0.5, type: "spring", bounce: 0.4 }}
-                          className="flex-1 max-w-sm bg-gradient-to-b from-amber-500/30 to-black/90 border-4 border-amber-400 p-8 rounded-2xl flex flex-col items-center shadow-[0_0_60px_rgba(251,191,36,0.6)] z-20"
-                        >
-                          <div className="text-6xl mb-2 animate-bounce">👑</div>
-                          <span className="text-sm font-mono uppercase text-amber-400 font-black tracking-widest mb-1">
-                            {t("quiz.podium1st")}
-                          </span>
-                          <h2 className="text-4xl font-black text-white mb-3 truncate w-full">{first.nickname}</h2>
-                          <div className="text-4xl font-black text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.8)]">
-                            <NumberTicker value={first.total_score} delay={0.9} /> {t("quiz.pts")}
-                          </div>
-                        </motion.div>
-                      )}
-
-                      {/* 3rd Place */}
-                      {third && (
-                        <motion.div 
-                          initial={{ opacity: 0, y: 50 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.1 }}
-                          className="flex-1 max-w-xs bg-gradient-to-b from-amber-900/20 to-black/80 border-2 border-amber-700 p-6 rounded-2xl flex flex-col items-center shadow-[0_0_30px_rgba(180,83,9,0.3)]"
-                        >
-                          <div className="text-4xl mb-2">🥉</div>
-                          <span className="text-xs font-mono uppercase text-amber-600 font-bold tracking-widest mb-1">
-                            {t("quiz.podium3rd")}
-                          </span>
-                          <h3 className="text-2xl font-black text-white mb-2 truncate w-full">{third.nickname}</h3>
-                          <div className="text-2xl font-black text-amber-600"><NumberTicker value={third.total_score} delay={0.6} /> {t("quiz.pts")}</div>
-                        </motion.div>
-                      )}
+                    <div className="w-full grid grid-cols-3 items-end gap-8 my-14">
+                      <PodiumCard player={second} label={t("quiz.podium2nd")} pts={t("quiz.pts")} delay={0.2} height="h-[300px]" />
+                      <PodiumCard player={first} label={t("quiz.podium1st")} pts={t("quiz.pts")} delay={0.5} height="h-[380px]" winner />
+                      <PodiumCard player={third} label={t("quiz.podium3rd")} pts={t("quiz.pts")} delay={0} height="h-[260px]" />
                     </div>
                   );
                 })()}
 
-                <button
-                  onClick={resetGame}
-                  className="px-14 py-5 border-2 border-white/40 text-white hover:bg-white hover:text-black font-black text-2xl uppercase tracking-widest rounded-xl transition-all shadow-[0_0_30px_rgba(255,255,255,0.3)]"
-                >
+                <button onClick={resetGame} className="btn-secondary px-12 h-20 text-3xl uppercase tracking-wide">
                   {t("quiz.newGame")}
                 </button>
               </motion.div>
             )}
-            
+
           </AnimatePresence>
         </div>
       </div>
     </TVScaleFrame>
+  );
+}
+
+/** "Frage 2 / 5 · Nachtleben" — sayı vurgu renginde, gerisi ikincil. */
+function QuestionMeta({
+  counter,
+  category,
+  finalLabel,
+  align = "center",
+}: {
+  counter: string;
+  category?: string;
+  finalLabel?: string;
+  align?: "left" | "center";
+}) {
+  return (
+    <div className={`flex items-center gap-4 text-3xl text-ink-2 ${align === "left" ? "" : "justify-center"}`}>
+      <span className="font-semibold tabular-nums">{counter}</span>
+      {category && <span>· {category}</span>}
+      {finalLabel && <span className="ml-2 px-4 py-1 rounded-xl bg-accent text-bg text-2xl font-extrabold">{finalLabel}</span>}
+    </div>
+  );
+}
+
+function OptionLetter({ letter, state = "idle" }: { letter: QuizOption; state?: "idle" | "correct" }) {
+  return (
+    <span
+      className={`w-20 h-20 shrink-0 rounded-2xl border-2 flex items-center justify-center text-4xl font-extrabold ${
+        state === "correct" ? "bg-ok border-ok text-bg" : "border-accent/60 text-accent"
+      }`}
+    >
+      {letter}
+    </span>
+  );
+}
+
+function PodiumCard({
+  player,
+  label,
+  pts,
+  delay,
+  height,
+  winner = false,
+}: {
+  player?: Player;
+  label: string;
+  pts: string;
+  delay: number;
+  height: string;
+  winner?: boolean;
+}) {
+  if (!player) return <div />;
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: DURATION.base, ease: EASE.out }}
+      className={`${height} rounded-3xl flex flex-col items-center justify-end p-8 ${
+        winner ? "bg-accent/10 border-2 border-accent" : "surface"
+      }`}
+    >
+      <span className={`text-2xl font-semibold ${winner ? "text-accent" : "text-ink-2"}`}>{label}</span>
+      <span className={`mt-3 font-extrabold text-ink truncate w-full ${winner ? "text-6xl" : "text-4xl"}`}>{player.nickname}</span>
+      <span className={`mt-2 font-extrabold tabular-nums ${winner ? "text-5xl text-accent" : "text-3xl text-ink-2"}`}>
+        <NumberTicker value={player.total_score} delay={delay + 0.3} /> {pts}
+      </span>
+    </motion.div>
   );
 }
