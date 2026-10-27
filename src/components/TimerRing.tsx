@@ -43,7 +43,10 @@ export function TimerRing({
   const color = TONE_COLOR[tone];
 
   return (
-    <div style={{ width: size, height: size }} className={`relative ${className}`}>
+    // Kendi katmanı: halka her karede yeniden çizilirken TV tuvalinin geri
+    // kalanı (tek büyük katman) her karede yeniden boyanmasın — GPU'suz TV'de
+    // quiz ekranını 16 fps'te tutan buydu.
+    <div style={{ width: size, height: size, willChange: "transform" }} className={`relative ${className}`}>
       <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full -rotate-90" aria-hidden="true">
         {/* Ray */}
         <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={strokeWidth} />
