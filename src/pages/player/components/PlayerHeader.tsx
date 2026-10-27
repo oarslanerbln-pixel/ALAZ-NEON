@@ -136,7 +136,7 @@ export function PlayerHeader({
           {/* Quick Mute */}
           <button
             onClick={handleToggleMute}
-            className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 flex items-center justify-center text-white/50 hover:text-white transition-all active:scale-90"
+            className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 flex items-center justify-center text-white/50 hover:text-white transition-all active:scale-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             aria-label={isMuted ? t("common.soundOn") : t("common.soundOff")}
           >
             {isMuted ? <VolumeX className="w-3.5 h-3.5 text-red-400" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
@@ -150,7 +150,7 @@ export function PlayerHeader({
                 navigate("/");
               }
             }}
-            className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-red-500/20 border border-white/10 hover:border-red-500/40 flex items-center justify-center text-white/40 hover:text-red-400 transition-all active:scale-90"
+            className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-red-500/20 border border-white/10 hover:border-red-500/40 flex items-center justify-center text-white/40 hover:text-red-400 transition-all active:scale-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             aria-label={t("common.leaveGame")}
           >
             <LogOut className="w-3 h-3" />
