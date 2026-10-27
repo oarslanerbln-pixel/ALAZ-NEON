@@ -37,6 +37,7 @@ export function PlayerJoin() {
   const { profile, updateNickname } = useUserProfile();
   const { t } = useLocale();
   const [nicknamePrefilledFrom, setNicknamePrefilledFrom] = useState<string | null>(null);
+  const [nicknameTouched, setNicknameTouched] = useState(false);
   // QR ile gelen ve bu odada zaten kaydı olan misafiri formu hiç göstermeden
   // eski kaydına geri götürüyoruz (bkz. lib/roomSession.ts). Kontrol bitene
   // kadar form yerine bekleme ekranı: yoksa form bir an görünüp kayboluyor.
@@ -49,7 +50,10 @@ export function PlayerJoin() {
   // vb. aynı desen) — effect içinde yapmak fazladan bir render turu
   // doğuruyordu. nicknamePrefilledFrom, kullanıcı alanı sonradan elle
   // değiştirse bile aynı profile için tekrar üzerine yazmamayı sağlıyor.
-  if (profile?.nickname && nicknamePrefilledFrom !== profile.nickname && !nickname) {
+  // Misafir alana bir kez dokunduysa hiç doldurma: alanı silip yazmaya
+  // başladığı anda profil gelirse boş alan "PLAYER_xxxx" ile doluyor, yazılan
+  // ad onun arkasına ekleniyordu ("PLAYER_Oi4GGAST", E2E'de yakalandı).
+  if (profile?.nickname && !nicknameTouched && nicknamePrefilledFrom !== profile.nickname && !nickname) {
     setNickname(profile.nickname);
     setNicknamePrefilledFrom(profile.nickname);
   }
@@ -315,7 +319,10 @@ export function PlayerJoin() {
                     autoFocus={!!urlCode}
                     autoCapitalize="characters"
                     value={nickname}
-                    onChange={(e) => setNickname(e.target.value)}
+                    onChange={(e) => {
+                      setNicknameTouched(true);
+                      setNickname(e.target.value);
+                    }}
                     placeholder={t("join.nicknamePlaceholderShort")}
                     maxLength={15}
                     className="w-full px-6 py-5 text-center text-xl tracking-[0.3em] uppercase font-black focus:outline-none bg-transparent text-white placeholder:text-white/20"
