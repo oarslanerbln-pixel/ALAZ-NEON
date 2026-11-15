@@ -14,6 +14,8 @@ import { PLAYER_GAME_CONTROLLERS } from "../pages/player/gameControllers";
 import { PlayerGameShell } from "../pages/player/components/PlayerGameShell";
 import { LetterSpinner } from "../components/LetterSpinner";
 import { HostPlaying } from "../pages/host/views/HostPlaying";
+import { HostLobby } from "../pages/host/views/HostLobby";
+import { HostHeader } from "../pages/host/components/HostHeader";
 import { Slingshot3DArena } from "../components/slingshot/Slingshot3DArena";
 import { SlingshotController } from "../components/slingshot/SlingshotController";
 
@@ -23,6 +25,7 @@ import { SlingshotController } from "../components/slingshot/SlingshotController
  * kontrol (taşma, kesilme, dokunma hedefleri) için:
  *
  *   /__screens?side=host&game=quiz&status=question_active&n=8
+ *   /__screens?side=host&game=arena&status=lobby&n=8   (Arena lobisi; `status=playing` oyun)
  *   /__screens?side=player&game=bomb&status=bomb_active&me=0
  *   /__screens?side=host&game=showcase&slide=1   (TV tanıtım döngüsü)
  *
@@ -90,6 +93,7 @@ function mockRoom(game: RoutedGame | "dashboard" | "showcase", status: RoomStatu
 }
 
 const noop = async () => {};
+const ARENA_CATEGORIES = ["ŞEHİR", "HAYVAN", "MEYVE / SEBZE", "ÜNLÜ KİŞİ"];
 
 export function ScreenPreview() {
   const [params] = useSearchParams();
@@ -127,16 +131,32 @@ export function ScreenPreview() {
           </TVScaleFrame>
         );
       }
+      // HostDisplay'in kabı: başlık + kenar payı. Kapsız çizilen ekran,
+      // üretimde olmayan bir "kenara yapışma" kusuru gösteriyordu.
       return (
         <TVScaleFrame>
-          <HostPlaying
-            currentLetter={params.get("letter") ?? "A"}
-            timeLeft={left}
-            maxTime={room.timer_setting}
-            categories={["ŞEHİR", "HAYVAN", "MEYVE / SEBZE", "ÜNLÜ KİŞİ"]}
-            submittedPlayerIds={players.slice(0, Math.min(3, players.length)).map((p) => p.id)}
-            playersCount={players.length}
-          />
+          <div className="w-full h-full flex flex-col px-24 py-12 overflow-hidden">
+            <HostHeader room={room} />
+            <div className="flex-1 flex justify-center items-center relative w-full h-full min-h-0 overflow-hidden">
+              {status === "lobby" ? (
+                <HostLobby
+                  room={{ ...room, active_game: "scattegories", categories: ARENA_CATEGORIES }}
+                  players={players}
+                  onStartGame={() => {}}
+                  onUpdateCategories={() => {}}
+                />
+              ) : (
+                <HostPlaying
+                  currentLetter={params.get("letter") ?? "A"}
+                  timeLeft={left}
+                  maxTime={room.timer_setting}
+                  categories={ARENA_CATEGORIES}
+                  submittedPlayerIds={players.slice(0, Math.min(3, players.length)).map((p) => p.id)}
+                  playersCount={players.length}
+                />
+              )}
+            </div>
+          </div>
         </TVScaleFrame>
       );
     }
