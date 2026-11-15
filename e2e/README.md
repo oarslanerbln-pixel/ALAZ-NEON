@@ -17,7 +17,7 @@ C: diski doluysa tarayıcıları ve emülatör jar'ını başka diske alın:
 
 | Parça | Ne yapar |
 |---|---|
-| `firebase emulators:exec --only auth,firestore --project demo-hurrem-e2e` | Auth (9099) ve Firestore (8080) emülatörü; `demo-` projesi gerçek bir projeye hiç bağlanmaz |
+| `firebase emulators:exec --only auth,firestore --project demo-hengame-e2e` | Auth (9099) ve Firestore (8080) emülatörü; `demo-` projesi gerçek bir projeye hiç bağlanmaz |
 | `e2e/support/firestore-meter.mjs` (8081) | Emülatörün önünde sayaçlı vekil: faturalanan okuma/yazmaları sayar; `POST /__meter/drop-next-answer-ack` bir sonraki cevabın onayını düşürür |
 | `npm run build:e2e` + `vite preview` (4173) | Üretim paketi, `VITE_FIREBASE_EMULATOR_HOST` ile emülatöre bağlı (`src/lib/firebase.ts`, yalnız `demo-` projede açılır) |
 | `e2e/support/devices.ts` | Telefon/TV bağlamları; localhost dışına giden her isteği engeller (üretim Firebase, TTS, CDN) |

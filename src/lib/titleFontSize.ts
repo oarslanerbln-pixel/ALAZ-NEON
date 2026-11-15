@@ -4,7 +4,7 @@
  *
  * Sabit `clamp(3.25rem, 17vw, 18rem)` yalnızca "HENGAME" (7 karakter) için
  * doğruydu. Mekan markalaşması geldikten sonra başlık artık mekanın adını
- * basıyor ve uzun bir ad taşıyordu: tarayıcıda ölçüldü, "HÜRREM SULTAN"
+ * basıyor ve uzun bir ad taşıyordu: tarayıcıda ölçüldü, "BERLIN LOUNGE"
  * (13 karakter) 1920px'lik bir TV'de 2340px yer kaplayıp iki yanından ~420px
  * kırpılıyordu — hem TV'de hem mobilde.
  *

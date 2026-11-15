@@ -11,7 +11,7 @@ import { defineConfig } from "@playwright/test";
  *
  * Emülatörleri `npm run test:e2e` başlatır (firebase emulators:exec).
  */
-export const E2E_PROJECT_ID = "demo-hurrem-e2e";
+export const E2E_PROJECT_ID = "demo-hengame-e2e";
 const PORT = 4173;
 
 const appEnv = {
