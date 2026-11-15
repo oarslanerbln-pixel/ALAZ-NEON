@@ -109,7 +109,7 @@ export function RewardVerify() {
   }
 
   if (!authUser || !isStaff) {
-    return <StaffAccessNotice title="Ödül Doğrula" user={authUser} />;
+    return <StaffAccessNotice titleKey="admin.rewardsTitle" user={authUser} />;
   }
 
   return (
