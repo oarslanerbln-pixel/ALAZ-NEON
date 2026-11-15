@@ -86,7 +86,7 @@ varlıklarla gelir (Blender; bkz. `docs/game-design-review.md`).
 |---|---|---|
 | `bg` / `surface` / `surface-2` | #0B0B10 / #15151C / #1E1E27 | zemin, kart, kart içi öğe |
 | `line` | beyaz %8 | ince kenar |
-| `ink` / `ink-2` / `ink-3` | #F5F5F7 / #A1A1AA / #71717A | metin kademeleri |
+| `ink` / `ink-2` / `ink-3` | #F5F5F7 / #A1A1AA / #8A8A93 | metin kademeleri |
 | `accent` | mekânın rengi (varsayılan amber #F5A524) | **tek vurgu**; `VenueContext` ezer |
 | `ok` / `bad` | yeşil / kırmızı | yalnızca doğru/yanlış, can |
 
