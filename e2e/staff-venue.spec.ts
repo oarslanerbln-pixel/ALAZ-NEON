@@ -99,7 +99,7 @@ test("kayıt olan sıradan hesap personel değildir: ayar yazamaz", async ({ bro
   await forceGerman(guest);
   try {
     await login(guest.page, "guest@e2e.test", "e2e-guest-pass");
-    await expect(guest.page.getByText(/personeli hesabı değil/)).toBeVisible({ timeout: 20_000 });
+    await expect(guest.page.getByText(/ist kein Personalkonto/)).toBeVisible({ timeout: 20_000 });
     await expect(guest.page.getByRole("button", { name: "Markayı Kaydet" })).toHaveCount(0);
     // Doğrudan yazma denemesini kural reddeder: test/firestore.rules.test.ts
     // → "KAYIT OLAN HERHANGİ BİRİ markayı değiştiremez".
