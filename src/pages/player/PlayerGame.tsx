@@ -299,6 +299,7 @@ export function PlayerGame() {
               currentRound={currentRound || 1}
               totalRounds={room?.total_rounds || 3}
               gameTitle="HENGAME ARENA"
+              tip={t("intro.arenaTip")}
             />
           )}
 

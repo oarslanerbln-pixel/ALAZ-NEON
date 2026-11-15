@@ -147,7 +147,7 @@ export function PlayerBombController({ room, player }: Props) {
   // Tur rozeti yok: bomba son kişi kalana kadar sürüyor, "TUR n / 3"
   // hiçbir zaman doğru değildi.
   if (room.status === "bomb_intro") {
-    return <PlayerIntroVideo gameTitle="HENGAME BOMB" />;
+    return <PlayerIntroVideo gameTitle="HENGAME BOMB" tip={t("bomb.typeAndThrow")} />;
   }
 
   if (room.status === "bomb_explosion") {
