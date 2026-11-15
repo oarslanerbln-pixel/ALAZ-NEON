@@ -4,7 +4,7 @@
  * projede böyle bir anahtar yoktur). Uygulamanın kendisi her zaman
  * güvenlik kurallarına tabi istemci SDK'sıyla konuşur.
  */
-export const PROJECT_ID = "demo-hurrem-e2e";
+export const PROJECT_ID = "demo-hengame-e2e";
 const FIRESTORE = "http://127.0.0.1:8080";
 const AUTH = "http://127.0.0.1:9099";
 const METER = "http://127.0.0.1:8081";

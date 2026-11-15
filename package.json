@@ -15,8 +15,8 @@
     "test:scripts": "node --test scripts/rules-drift.test.mjs",
     "test:rules": "firebase emulators:exec --only firestore --project alaz-neon-rules-test \"vitest run --config vitest.rules.config.ts\"",
     "build:e2e": "vite build --mode e2e --outDir dist-e2e",
-    "test:e2e": "firebase emulators:exec --only auth,firestore --project demo-hurrem-e2e \"playwright test --project=kafe\"",
-    "test:e2e:measure": "firebase emulators:exec --only auth,firestore --project demo-hurrem-e2e \"playwright test --project=measure\""
+    "test:e2e": "firebase emulators:exec --only auth,firestore --project demo-hengame-e2e \"playwright test --project=kafe\"",
+    "test:e2e:measure": "firebase emulators:exec --only auth,firestore --project demo-hengame-e2e \"playwright test --project=measure\""
   },
   "dependencies": {
     "@fontsource/inter": "^5.3.0",

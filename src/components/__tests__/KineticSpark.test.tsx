@@ -24,7 +24,7 @@ describe("KineticSpark Component", () => {
 /**
  * Mekan markalaşması geldikten sonra bu başlık artık mekanın adını basıyor.
  * Boyut yalnızca ekran genişliğine bağlıyken uzun adlar taşıyordu: tarayıcıda
- * ölçüldü, "HÜRREM SULTAN" 1920px'lik bir TV'de 2340px yer kaplayıp iki
+ * ölçüldü, "BERLIN LOUNGE" 1920px'lik bir TV'de 2340px yer kaplayıp iki
  * yanından ~420px kırpılıyordu.
  *
  * Render edilen stil üzerinden değil SAF FONKSİYON üzerinden test ediliyor:
@@ -34,7 +34,7 @@ describe("KineticSpark Component", () => {
 describe("titleFontSize — mekan adı uzunluğuna göre ölçek", () => {
   it("uzun mekan adında 17vw tavanının altına iner (taşmayı önler)", () => {
     // 135 / 13 karakter ≈ 10.38vw
-    expect(titleFontSize("HÜRREM SULTAN")).toContain("10.38vw");
+    expect(titleFontSize("BERLIN LOUNGE")).toContain("10.38vw");
   });
 
   it("kısa adlarda 17vw tavanı korunur (eski davranış değişmedi)", () => {
