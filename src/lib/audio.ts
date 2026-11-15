@@ -170,28 +170,6 @@ export class SoundManager {
           setTimeout(() => ctx.close(), 500);
           break;
         }
-        case "synth:siren": {
-          const osc = ctx.createOscillator();
-          const g = ctx.createGain();
-          osc.type = "square";
-          osc.frequency.setValueAtTime(600, now);
-          osc.frequency.linearRampToValueAtTime(1200, now + 0.5);
-          osc.frequency.linearRampToValueAtTime(600, now + 1.0);
-          osc.frequency.linearRampToValueAtTime(1200, now + 1.5);
-          osc.frequency.linearRampToValueAtTime(600, now + 2.0);
-          
-          g.gain.setValueAtTime(0, now);
-          g.gain.linearRampToValueAtTime(0.3, now + 0.1);
-          g.gain.setValueAtTime(0.3, now + 1.9);
-          g.gain.linearRampToValueAtTime(0, now + 2.0);
-          
-          osc.connect(g);
-          g.connect(master);
-          osc.start(now);
-          osc.stop(now + 2.0);
-          setTimeout(() => ctx.close(), 2500);
-          break;
-        }
         case "synth:boom": {
           // Sinematik patlama: alçalan sinüs + gürültü kuyruğu
           const osc = ctx.createOscillator();
@@ -226,43 +204,6 @@ export class SoundManager {
           noise.start(now);
           noise.stop(now + 1.3);
           setTimeout(() => ctx.close(), 2000);
-          break;
-        }
-        case "synth:glitch": {
-          // Dijital bozulma: kare dalga sıçramaları + kısa gürültü patlamaları
-          for (let i = 0; i < 7; i++) {
-            const t = now + i * 0.055;
-            const osc = ctx.createOscillator();
-            const g = ctx.createGain();
-            osc.type = "square";
-            osc.frequency.setValueAtTime(180 + Math.random() * 2600, t);
-            g.gain.setValueAtTime(0, t);
-            g.gain.linearRampToValueAtTime(0.18, t + 0.005);
-            g.gain.exponentialRampToValueAtTime(0.001, t + 0.045);
-            osc.connect(g);
-            g.connect(master);
-            osc.start(t);
-            osc.stop(t + 0.05);
-          }
-          const buf = ctx.createBuffer(1, ctx.sampleRate * 0.4, ctx.sampleRate);
-          const d = buf.getChannelData(0);
-          for (let i = 0; i < d.length; i++) {
-            d[i] = Math.random() > 0.75 ? Math.random() * 2 - 1 : 0;
-          }
-          const noise = ctx.createBufferSource();
-          noise.buffer = buf;
-          const nf = ctx.createBiquadFilter();
-          nf.type = "highpass";
-          nf.frequency.value = 1400;
-          const ng = ctx.createGain();
-          ng.gain.setValueAtTime(0.22, now);
-          ng.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-          noise.connect(nf);
-          nf.connect(ng);
-          ng.connect(master);
-          noise.start(now);
-          noise.stop(now + 0.4);
-          setTimeout(() => ctx.close(), 700);
           break;
         }
         case "synth:tick_urgent": {
@@ -497,9 +438,7 @@ export const sounds = {
   LOBBY_AMBIENT: "/audio/lobby-ambient.mp3",
   GAME_PULSE: "/audio/game-pulse.mp3",
   // Uzun/atmosferik efektler (yerel dosya)
-  SIREN: "/audio/siren.mp3",
   CINEMATIC_BOOM: "/audio/cinematic-boom.mp3",
-  CYBER_GLITCH: "/audio/cyber-glitch.mp3",
   // Kısa SFX — zaten kod içinde üretiliyor, dosya gerekmiyor
   START_JAZZ: "synth:burn",
   SUCCESS: "synth:success",
@@ -516,7 +455,5 @@ export const sounds = {
 const SYNTH_FALLBACK: Record<string, string> = {
   [sounds.LOBBY_AMBIENT]: "synth:pad",
   [sounds.GAME_PULSE]: "synth:pad",
-  [sounds.SIREN]: "synth:siren",
   [sounds.CINEMATIC_BOOM]: "synth:boom",
-  [sounds.CYBER_GLITCH]: "synth:glitch",
 };

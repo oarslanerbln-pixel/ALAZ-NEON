@@ -57,7 +57,7 @@ veriyle render edildi; yazı boyutu, taşma, kare hızı ölçüldü.
 | 7 | En parlak öğe personel düğmesi | Amber dolgulu "Rangliste anzeigen", "Nächste Frage"; her soru personel tıklamasıyla ilerliyor |
 | 8 | Ses çoğunlukla sentez | Müzik dosyalarından yalnız `game-pulse.mp3` var, gerisi osilatör yedeği; spiker yalnız `vo/de` ve oda diline bakmıyor |
 | 9 | Tasarım sistemi yarım | 353 eski renk sınıfı (33 dosya) takma adla vurguya bağlı; 54 ham `duration` |
-| 10 | Yönetim ekranları yalnız Türkçe | `src/pages/admin/` altındaki üç sayfada `useLocale` yok |
+| 10 | Yönetim ekranları yalnız Türkçe | `src/pages/admin/` altındaki üç sayfada `useLocale` yok; bilinçli olabilir (`a11yLabels.test.ts` notu), karar ürün sahibinde |
 
 İyi haber: ölçülen dört TV ekranı yazılım çizimiyle 60 fps (Ekim denetiminde
 10–15 fps). Tasarıma hareket bütçesi var, yeter ki kurallar içinde kalsın.
@@ -79,7 +79,8 @@ payı %5 (96×54 px). Soru, şık ve sıralama tuvali doldurur. `/__screens`
 Başlık yazı tipi: iki üç aday gerçek ekranlarda yan yana gösterilir, ürün
 sahibi seçer; İ ı ş ğ ß ä glifleri şart. Emoji yerine tek simge seti. Üç
 dilde ton yeniden yazımı (savaş/siber dili çıkar). Yönetim ekranları
-yerelleşir. Mekânla ortak marka: logo ve ad lobide, podyumda, telefon
+yerelleşir (ürün sahibi isterse). Ton değişirken e2e seçicileri de güncellenir
+(`e2e/support/cafe.ts` "KRIEGER" yer tutucusuna bağlı). Mekânla ortak marka: logo ve ad lobide, podyumda, telefon
 başlığında. Eski renk sınıfları anlamsal tokenlara taşınır, takma ad köprüsü
 kalkar, lint kuralı gelir; ham `duration` değerleri tokenlara iner.
 
@@ -105,6 +106,7 @@ mekânda 20–40 telefonla prova (P10).
 | TV sesi | İki durum da desteklenir (yukarıda, Kısıtlar) |
 | Öncelik | Misafirin gördüğü ekranlar; satış sayfaları Faz 4'te |
 | Kısa katılım alan adı | Açık — harcama kararı; QR'ı da seyreltir (sürüm 5 → 2) |
+| Yönetim ekranlarının dili | Açık — yalnız Türkçe kalsın mı, üç dil mi |
 | Blaze planı | Açık — harcama kararı; 20 kişilik gece Spark okuma kotasına yakın |
 
 Uygulayıcının kendi çağrıları (ürün sahibi düzeltebilir): faz başına tek PR;

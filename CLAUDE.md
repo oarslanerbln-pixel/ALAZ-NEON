@@ -84,6 +84,7 @@ Bunları baştan sona okuma, hedefli `grep` ile gir:
 Ayrıntılı kodlama standartları: `docs/coding-standards.md`.
 Görsel dil (tokenlar, tek vurgu rengi, TV'de min. 24 px, yasaklar): `docs/motion-system.md` §6.
 Oyun kataloğu, gecelik skor ekonomisi ve yol haritası: `docs/game-design-review.md`.
+Onaylı görsel yön ("Lounge") ve faz planı: `docs/superpowers/specs/2026-11-15-lounge-yon-design.md`.
 Ödülü yalnızca personel oturumu yazar (`lib/rewards` → `canGrantRewards`); profil (`users`) yalnızca sahibine, cevaplar (`answers`) sahibine ve host'a okunur.
 Oyun skorunu `lib/scoreWrites` ile yaz; gecelik lig (F1 sıra puanı) oyun bitişinde
 `lib/nightAwards.finishNightRound` ile, yeni oyun başlarken `NIGHT_ROUND_OPEN`.

@@ -37,9 +37,9 @@
 - Modify: `src/pages/host/views/HostLobby.tsx`, `src/lib/i18n.ts`, `src/dev/ScreenPreview.tsx`
 
 **Interfaces:**
-- Produces: `LOBBY_WALL_SLOTS = 10`;
+- Produces: `LOBBY_WALL_SLOTS = 8`;
   `lobbyWall<T extends { created_at: number }>(players: readonly T[], slots: number): { shown: T[]; hidden: number }`;
-  `initialsOf(nickname: string): string`.
+  `initialsOf(nickname: string, locale?: string): string`.
 
 - [ ] **Step 1: Başarısız testi yaz**
 
@@ -61,7 +61,7 @@ expect(initialsOf(" ")).toBe("?");
 - [ ] **Step 2:** `npx vitest run src/lib/__tests__/lobbyWall.test.ts` → FAIL (modül yok).
 - [ ] **Step 3:** `lobbyWall`, `initialsOf`, `LOBBY_WALL_SLOTS` uygula. Girdi dizisi değiştirilmez.
 - [ ] **Step 4:** Aynı komut → PASS.
-- [ ] **Step 5:** `HostLobby.tsx`: `fixed inset-0` yörünge katmanını ve "Oyuncu Bağlandı" hapını kaldır; kök `flex flex-col gap-6 mx-auto`; kartların altına `grid grid-cols-5 gap-4` duvar (iki satır; taşma `common.morePlayers`). Sabit metinler: `hostLobby.waitingRoom` (yeni), `lobby.roomCode`, `dashboard.joinBody`, `lobby.quickPresets` (yeni), `hostLobby.minutes` (yeni, `(n) => …`); `alt=""`.
+- [ ] **Step 5:** `HostLobby.tsx`: `fixed inset-0` yörünge katmanını ve "Oyuncu Bağlandı" hapını kaldır; duvar kartların sağında tek sütun (alttaki iki satırlık şerit 1080 tuvale sığmadı; taşma `common.morePlayers`); tuval içindeki `lg:`/`xl:` kırılımları kalkar. Sabit metinler: `hostLobby.waitingRoom` (yeni), `lobby.roomCode`, `dashboard.joinBody`, `lobby.quickPresets` (yeni), `hostLobby.minutes` (yeni, `(n) => …`); `alt=""`.
 - [ ] **Step 6:** `ScreenPreview.tsx`: `game=arena&status=lobby` Arena lobisini üretimdeki kapla (`px-24 py-12` + `HostHeader`) çizer.
 - [ ] **Step 7:** `/__screens` ile quiz, bomb, arena lobisi `n=0`, `n=8`, `n=40` ekran görüntüsü: rozet içeriğe binmiyor, tuval taşmıyor.
 - [ ] **Step 8:** Commit `fix(lobby): isim rozetleri içeriğin üstüne binmesin, sabit metinler çevrilsin`.
@@ -69,11 +69,11 @@ expect(initialsOf(" ")).toBe("?");
 ### Görev 2: Sabit metinler — bomba etiketi, 404, personel uyarısı
 
 **Files:**
-- Modify: `src/pages/host/bomb/Cyber3DBomb.tsx:89`, `src/pages/NotFoundPage.tsx`, `src/components/StaffAccessNotice.tsx`, `src/pages/admin/{VenueSettings,RewardVerify,NightlyReport}.tsx` (yalnız `title`), `src/lib/i18n.ts`
+- Modify: `src/pages/host/bomb/Cyber3DBomb.tsx:89`, `src/pages/NotFoundPage.tsx`, `src/components/StaffAccessNotice.tsx`, `src/pages/admin/{VenueSettings,RewardVerify,NightlyReport}.tsx` (`title` → `titleKey`), `src/lib/i18n.ts`
 - Test: `src/pages/__tests__/NotFoundPage.test.tsx`
 
 **Interfaces:**
-- Produces (yeni anahtarlar): `bomb.fuse`, `notFound.title`, `notFound.body`, `staff.loginRequired`, `staff.notStaff` (`(email) => …`), `staff.thisAccount`, `staff.ownerHint`, `admin.venueTitle`, `admin.rewardsTitle`, `admin.reportTitle`. Yeniden kullanılan: `game.backHome`, `host.login`, `profile.logout`.
+- Produces (yeni anahtarlar): `bomb.fuse`, `notFound.title`, `notFound.body`, `staff.loginRequired`, `staff.notStaff`, `staff.thisAccount`, `staff.ownerHint`, `admin.venueTitle`, `admin.rewardsTitle`, `admin.reportTitle`. Yeniden kullanılan: `game.backHome`, `host.login`, `profile.logout`.
 
 - [ ] **Step 1:** Test: `setLocale("de")` → `NotFoundPage` "Seite nicht gefunden" gösterir, "Sinyal" içermez; `setLocale("tr")` → "Sayfa bulunamadı".
 - [ ] **Step 2:** Çalıştır → FAIL.

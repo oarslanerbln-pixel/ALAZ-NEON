@@ -18,51 +18,24 @@ ALAZ NEON tarzı oyunlarda cihazlar arası haberleşme Firestore üzerinden ger�
   * `players`: Odadaki oyuncuları tutar.
   * `answers`: Oyuncuların verdikleri cevapları tutar (puanlama Host tarafında yapılır ve `players` dökümanlarına yansıtılır).
 
-## 2. Tasarım Dili ve Estetik (DOOH & Neon Cyberpunk)
+## 2. Tasarım Dili (v3 + "Lounge" yönü)
 
-Projenin estetiği, nargile kafeler ve gece kulüpleri gibi loş ve hareketli mekanlara hitap etmelidir.
+Tek doğruluk kaynağı `docs/motion-system.md` §6 ve onaylı yön belgesi
+`docs/superpowers/specs/2026-11-15-lounge-yon-design.md`. Kısaca:
 
-* **Renk Paleti:** Siyah arkaplan ağırlıklı. Vurgu renkleri (Neon Orange, Cyber Yellow, Magenta, Electric Blue).
-* **Efektler:**
-  * `Framer Motion` kullanılarak akıcı geçişler (AnimatePresence ile `wait` modunda) yapılmalıdır.
-  * Neon parlamaları için `box-shadow` veya tailwind `drop-shadow` kullanılmalıdır.
-  * Glassmorphism: Yarı saydam arka planlar (`bg-white/10`, `backdrop-blur-md`).
-* **TV Ekranı (HostDisplay):**
-  * Uzaktan rahat okunabilmesi için büyük fontlar (font-black, uppercase, tracking-widest).
-  * Arka planda dinamik, dikkat çekici ama göz yormayan animasyonlar (örneğin Particle Background, Kinetic Spark).
-* **Mobil Oyuncu Ekranı (PlayerGame):**
-  * Kullanıcı dostu, büyük dokunmatik butonlar (iOS/Android uyumlu).
-  * Titreşim geri bildirimi (`window.navigator.vibrate`) gibi etkileşimi artıran mikro-etkileşimler.
+* **Sade ama premium.** Koyu nötr zemin, iki yüzey tonu, TEK vurgu rengi (mekânın rengi), Inter. Neon parlama, cam/bulanıklık (`backdrop-blur`), gradyan metin, parçacık arka planı YOK.
+* **Hareket:** yalnız `transform`/`opacity`, geçişler ≤ 250 ms, ekran başına tek odak animasyonu, sonsuz döngü yok. "Wow" yalnız gecenin birkaç anında.
+* **Yasak:** saniyede 3'ten fazla parlama, siren, "sistem hacklendi" türü alarm dili; savaş/siber jargon.
+* **TV (1920×1080 sabit tuval, `TVScaleFrame`):** en küçük yazı 24 px; tuval içinde `md:`/`lg:`/`xl:` kırılımı kullanma (görünüm alanına bakar, tablet host'ta yerleşimi bozar).
+* **Telefon:** bekle/hazırlan/bitti ekranları `PlayerStageScreen`; birincil geri bildirim titreşim.
+* **Ses:** TV sesi mekânda açık da olabilir kapalı da; hiçbir bilgi yalnız sesle verilmez.
 
-### Görsel dil v2 (Ekim 2026) — önce bunu oku
+## 3. Yeni Oyun Modu Ekleme
 
-Yeni ekran yazmadan önce `docs/motion-system.md` §6'ya bak. Kısaca:
-* Telefonda bekleme/hazırlan/bitti → `PlayerStageScreen` (kendi bekleme ekranını yazma).
-* TV oyun açılışı → `GameIntroCinematic` (başlık, 3 adım, iki renk ver).
-* Işık/doku efektleri → `src/components/fx/` (BeamBorder, AuroraBackdrop, GridPattern, RevealText).
-* Yasak: saniyede 3'ten fazla yanıp sönme, siren, "sistem hacklendi" türü alarm dili.
-
-## 2.1. Görsel Geri Bildirim ve Tension (Gerilim) Sistemi
-
-Oyuncu etkileşimlerini güçlendirmek ve atmosferik gerilimi yönetmek için özel bir Tension sistemi ve animasyon standartları kullanılmalıdır:
-
-* **Zamana Dayalı Gerilim (Tension System):**
-  * Oyunlarda süre 10 saniyenin altına düştüğünde ana sarmalayıcı (wrapper) bileşenlere (örn: `PlayerGame.tsx`, `HostPlaying.tsx`) `data-tension="high"` özelliği (attribute) eklenir.
-  * Bu özellik, `index.css`'te tanımlı CSS değişkenlerini (`--color-neon-blue`, `--color-dark-bg` vb.) global olarak ezerek ekranı alarm tonlarına (kırmızı) çevirir ve alt bileşenleri anında etkiler.
-* **Kritik Geri Bildirimler (Feedback Animations):**
-  * Oyuncunun etkileşimlerinde (cevap gönderme) durum kontrolü için `submitStatus` ("success" | "error") state'i kullanılmalıdır.
-  * `framer-motion`'ın `<AnimatePresence>` bileşeni ile başarılı durumlarda ekrana kısa süreli mix-blend overlay (neon flaş), hatalı durumlarda glitch/shake sarsıntı efektleri eklenmelidir.
-* **Zamanın Bitmesi (Time Up / Cinematic Transitions):**
-  * Host (TV) ekranlarında süre bittiğinde (`timeLeft === 0`), Firestore state'i `review` statüsüne geçmeden hemen önceki o kısa (0-2 saniyelik) aralıkta, ekranı sarsan ve "SÜRE BİTTİ" yazan devasa bir görsel patlama (`scale bounce`) gösterilmelidir. Oyunlar arası geçişler her zaman sinematik ve abartılı olmalıdır.
-
-## 3. Oyun İçi Modülerlik (Mini Oyunlar Ekleme)
-
-Eğer sisteme yeni bir mini-oyun (Örn: Şarkı Tahmin, Hafıza Oyunu vs.) eklenecekse şu adımlar izlenir:
-
-1.  **State Machine:** `types/database.ts` dosyasında `RoomStatus` veya `GameType` union tiplerine yeni oyununuzun adını ve statülerini ekleyin (Örn: `memory_active`).
-2.  **Host Yönlendirmesi:** `HostDisplay.tsx` içinde `room.active_game === "memory"` ise doğrudan `<HostMemoryDisplay />` komponentini return edin. Bu sayede her oyun kendi Host mantığına sahip olur, core akışı kirletmez.
-3.  **Player Yönlendirmesi:** `PlayerGame.tsx` içinde `room.active_game === "memory"` ise doğrudan `<PlayerMemoryController />` komponentini return edin.
-4.  **Admin Paneli:** `VenueSettings.tsx` veya ilgili admin ayar kısmında oyunun aktiflik durumu, özel ayarları yönetilebilir yapılmalıdır.
+`CLAUDE.md` → "Konvansiyonlar": `GameType` + `gameCatalog.ts` kartı +
+`host/gameDisplays.ts` + `player/gameControllers.ts`. Hangi oyunun oynandığını
+yalnız `lib/gameRouting.ts` çözer; `HostDisplay`/`PlayerGame` içine elle
+`active_game === "…"` dalı ekleme. Kontrol listesi: `docs/game-design-review.md` §5.
 
 ## 4. Sponsor ve DOOH Reklam Ağları
 
@@ -77,4 +50,4 @@ Uygulamanın gelir modeli sadece yazılım satışından değil, reklam ağı (D
 
 ## Kullanım Kılavuzu
 
-Yeni bir ALAZ NEON kopyası, farklı bir gece kulübü oyunu veya interaktif bir B2B sunum sistemi yazarken, AI asistanı olarak **önce bu dökümanı okuyup**, yeni geliştirmeleri bu prensiplere (Firestore pub/sub modeli, Host-Driven State Machine, Cyberpunk Neon estetiği) uygun şekilde kodlamalısınız.
+Yeni bir ALAZ NEON kopyası, farklı bir gece kulübü oyunu veya interaktif bir B2B sunum sistemi yazarken, AI asistanı olarak **önce bu dökümanı okuyup**, yeni geliştirmeleri bu prensiplere (Firestore pub/sub modeli, Host-Driven State Machine, sade tek vurgulu görsel dil) uygun şekilde kodlamalısınız.
