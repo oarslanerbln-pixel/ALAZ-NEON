@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { getJoinUrl } from "../roomUrls";
+import { getJoinAddress, getJoinUrl } from "../roomUrls";
 
 const originalLocation = window.location;
 
@@ -40,5 +40,11 @@ describe("getJoinUrl", () => {
     setLocation({ protocol: "https:", hostname: "hengametv.com", port: "", host: "hengametv.com" });
 
     expect(getJoinUrl()).toBe("https://hengametv.com/join");
+  });
+
+  it("ekranda yazılan adres protokolsüz ve oda kodsuz", () => {
+    setLocation({ protocol: "https:", hostname: "hengametv.com", port: "", host: "hengametv.com" });
+
+    expect(getJoinAddress()).toBe("hengametv.com/join");
   });
 });

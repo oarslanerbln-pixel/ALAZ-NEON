@@ -114,7 +114,7 @@ export function ScreenPreview() {
     if (game === "showcase") {
       return (
         <TVScaleFrame>
-          <HostShowcase joinUrl="https://alaz-neon-web.web.app/join?code=4821" roomCode="4821" onClose={() => {}} initialIndex={Number(params.get("slide") ?? 0)} />
+          <HostShowcase roomCode="4821" onClose={() => {}} initialIndex={Number(params.get("slide") ?? 0)} />
         </TVScaleFrame>
       );
     }
