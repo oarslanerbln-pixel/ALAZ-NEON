@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { QRCodeSVG } from "qrcode.react";
 import { useNavigate } from "react-router-dom";
 
 import { SoundManager, sounds } from "../../../lib/audio";
@@ -24,7 +23,8 @@ import { nightStandings, rankDeltas } from "../../../lib/nightLeague";
 import { SHOWCASE_IDLE_MS } from "../../../lib/showcase";
 import { useIdle } from "../../../hooks/useIdle";
 import { HostShowcase } from "./HostShowcase";
-import { getJoinUrl } from "../../../lib/roomUrls";
+import { getJoinAddress } from "../../../lib/roomUrls";
+import { JoinQr } from "../../../components/JoinQr";
 
 /** QR kartının altında 1080'lik tuvale kaydırmasız sığan misafir satırı. */
 const DASHBOARD_LIST_MAX = 5;
@@ -171,7 +171,6 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
     await updateRoomStatus(initialStatus, extraUpdates);
   };
 
-  const joinUrl = getJoinUrl(room.code);
 
   // Gecenin liderleri: night_score F1 sıra puanlarıyla birikir (lib/nightLeague).
   // Eşitlikte ada göre — snapshot sırası değişince liste titremesin.
@@ -201,9 +200,10 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
             <div className="surface rounded-3xl p-8 flex flex-col items-center text-center">
               <h3 className="text-4xl font-extrabold text-ink tracking-tight">{t("dashboard.joinTitle")}</h3>
               <p className="mt-2 text-2xl text-ink-2 leading-snug text-balance">{t("dashboard.joinBody")}</p>
-              <div className="mt-6 bg-white p-4 rounded-2xl">
-                <QRCodeSVG data-testid="join-qr" value={joinUrl} size={240} bgColor="#ffffff" fgColor="#000000" level="H" marginSize={1} />
+              <div className="mt-6">
+                <JoinQr roomCode={room.code} size={320} testId="join-qr" />
               </div>
+              <p className="mt-4 text-2xl text-ink-2 break-all">{getJoinAddress()}</p>
               {rewardsBlocked && (
                 <p className="mt-4 text-2xl text-accent text-balance">{t("dashboard.rewardsNeedStaff")}</p>
               )}
@@ -308,7 +308,6 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
         {showShowcase && (
           <HostShowcase
             key="showcase"
-            joinUrl={joinUrl}
             roomCode={room.code}
             venuePromos={venue.promo_images}
           />

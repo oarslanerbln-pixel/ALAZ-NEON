@@ -29,3 +29,12 @@ export function getJoinUrl(roomCode?: string | null): string {
   const codeParam = roomCode ? `?code=${encodeURIComponent(roomCode)}` : "";
   return `${protocol}//${targetHost}/join${codeParam}`;
 }
+
+/**
+ * Ekranda yazıyla gösterilen katılım adresi ("ornek.app/join"): QR'ı
+ * okutamayan misafir oda kodunu nereye yazacağını bilsin. Protokol ve oda
+ * kodu yok; kod zaten yanında büyük yazıyla duruyor.
+ */
+export function getJoinAddress(): string {
+  return getJoinUrl().replace(/^https?:\/\//, "");
+}

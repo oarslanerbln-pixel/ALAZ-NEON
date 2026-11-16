@@ -137,7 +137,7 @@ export function VenueSettings() {
 
   // Giriş yok ya da hesap personel değil — ikisini de tek ekran anlatıyor.
   if (!authUser || !isStaff) {
-    return <StaffAccessNotice title="Mekan Ayarları" user={authUser} />;
+    return <StaffAccessNotice titleKey="admin.venueTitle" user={authUser} />;
   }
 
   return (

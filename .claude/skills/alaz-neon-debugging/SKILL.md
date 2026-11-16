@@ -18,7 +18,7 @@ This skill provides a structured approach for an agent to troubleshoot bugs, bla
 
 2. **Routing & Component Lifecycle**:
    - Both `HostDisplay.tsx` and `PlayerGame.tsx` rely on early returns.
-   - **CRITICAL**: If a component does not explicitly handle a `room.status` value, it may return `null` or silently fail, resulting in a **black screen**. Always ensure all game states (`lobby`, `intro`, `active`, `buzzed`, `reveal`, `review`, `standings`, `finished`) are accounted for, even if just to show a loading fallback.
+   - **CRITICAL**: If a component does not explicitly handle a `room.status` value, it may return `null` or silently fail, resulting in a **black screen**. Always ensure all game states (see `RoomStatus` in `src/types/database.ts`) are accounted for, even if just to show a loading fallback.
 
 ## Common Bug Archetypes & How to Fix Them
 
@@ -29,7 +29,7 @@ This skill provides a structured approach for an agent to troubleshoot bugs, bla
 **Investigation Steps**:
 
 - Identify which screen (Host or Player) and which state (`room.status`).
-- Look at the main router (`PlayerGame.tsx` or `HostDisplay.tsx`). Did it route to a sub-controller (e.g., `PlayerSensorController`)?
+- Look at the main router (`PlayerGame.tsx` or `HostDisplay.tsx`). Did it route to a sub-controller (e.g., `PlayerQuizController`, resolved via `lib/gameRouting.ts`)?
 - Inside the sub-controller, check the `if (room.status === "...")` chain. Does it have a fallback for unknown states or `lobby`? If it returns `null` at the bottom, that's your black screen.
 - Check for `undefined` references in arrays (e.g., `room.quiz_questions?.[index]`) or object keys (e.g., `results[0]?.answers`). Wrap them in safe optional chaining.
 
@@ -50,7 +50,7 @@ This skill provides a structured approach for an agent to troubleshoot bugs, bla
 **Investigation Steps**:
 
 - Verify `z-index` layering. Backgrounds should be `z-0` or `z-10`. Interactive UI elements should be `z-40` or `z-50`.
-- Verify `pointer-events-none` is applied to decorative overlays (e.g., CRT scanlines, particles) so they don't block clicks.
+- Verify `pointer-events-none` is applied to decorative overlays (e.g., the confetti canvas) so they don't block clicks.
 
 ### 4. Audio Not Playing
 

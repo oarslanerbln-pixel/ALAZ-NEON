@@ -1,15 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { JoinQr } from "../../../components/JoinQr";
 import { motion, AnimatePresence } from "framer-motion";
 import { NeonIcon } from "../../../components/NeonIcon";
 import { useLocale } from "../../../hooks/useLocale";
 import { getCategoryPresets } from "../../../lib/categoryPresets";
-import { upperTL } from "../../../lib/stringUtils";
-import { Users, QrCode, Play, Clock, X } from "lucide-react";
+import { LOBBY_WALL_SLOTS, initialsOf, lobbyWall } from "../../../lib/lobbyWall";
+import { DURATION, EASE } from "../../../lib/motion";
+import { Play, X } from "lucide-react";
 import type { Player } from "../../../types/database";
 import { NumberTicker } from "../../../components/fx";
 import { playGermanVoiceover } from "../../../lib/germanVoiceover";
-import { getJoinUrl } from "../../../lib/roomUrls";
+import { getJoinAddress, getJoinUrl } from "../../../lib/roomUrls";
 
 const CAFE_IMAGES = [
   "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=1920",
@@ -69,6 +71,7 @@ export function HostLobby({
   const activeGame = room?.active_game || room?.game_type || "scattegories";
   const requiresCategories = activeGame === "scattegories";
   const canStart = players.length >= 1 && (!requiresCategories || currentCategories.length >= 1);
+  const wall = lobbyWall(players, LOBBY_WALL_SLOTS);
 
   // Countdown State
   const [countdownEnd, setCountdownEnd] = useState<number | null>(null);
@@ -161,7 +164,7 @@ export function HostLobby({
               animate={{ scale: 1.12 }}
               transition={{ duration: 10, ease: "linear" }}
               src={CAFE_IMAGES[bgIndex]}
-              alt="Background"
+              alt=""
               className="w-full h-full object-cover object-center opacity-40"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/60 pointer-events-none" />
@@ -202,14 +205,8 @@ export function HostLobby({
                   </p>
                 </div>
                 <div className="w-px h-16 bg-white/20" />
-                <div className="bg-white p-3 rounded-2xl shadow-xl">
-                  <QRCodeSVG
-                    value={getJoinUrl(room?.code)}
-                    size={90}
-                    bgColor="#ffffff"
-                    fgColor="#000000"
-                    level="H"
-                  />
+                <div className="bg-white p-3 rounded-2xl">
+                  <QRCodeSVG value={getJoinUrl(room?.code)} size={240} bgColor="#ffffff" fgColor="#000000" level="M" marginSize={1} />
                 </div>
              </div>
           </motion.div>
@@ -231,73 +228,42 @@ export function HostLobby({
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 1.04 }}
-      className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-4 gap-8 select-none"
+      className="w-full flex items-start justify-center gap-8 select-none"
     >
+      {/* Tuval sabit 1920 px (TVScaleFrame): görünüm alanına bağlı lg:/xl:
+          kırılımları tablet host'ta yerleşimi bozuyordu, o yüzden yok. */}
+      <div className="flex-1 min-w-0 max-w-7xl grid grid-cols-4 gap-8">
       {/* ════════════════ LEFT: JOIN STAGE & CATEGORIES ════════════════ */}
-      <div className="surface lg:col-span-3 rounded-[2.5rem] p-8 md:p-12 text-left relative overflow-hidden">
+      <div className={`surface col-span-3 rounded-[2.5rem] text-left relative overflow-hidden ${requiresCategories ? "p-8" : "p-12"}`}>
 
-        <div className="relative z-10 flex flex-col xl:flex-row items-start gap-10">
-          
-          <div className="flex-1 space-y-8">
-            <div>
+        <div className={`relative z-10 flex flex-col ${requiresCategories ? "gap-6" : "gap-8"}`}>
+          <div className="flex items-center gap-10">
+            {/* QR masadan okunsun: Arena'da kategori paneline yer kalsın diye biraz küçük. */}
+            {room?.code && <JoinQr roomCode={room.code} size={requiresCategories ? 240 : 440} />}
+
+            <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-3">
-                <span className="w-2.5 h-2.5 rounded-full bg-alaz-orange" />
-                <span className="text-xs tabular-nums font-bold tracking-[0.3em] uppercase text-alaz-orange">
-                  LOBİ BEKLEME SALONU
+                <span className="w-2.5 h-2.5 rounded-full bg-accent" />
+                <span className="text-xs font-bold tracking-[0.3em] uppercase text-accent">
+                  {t("hostLobby.waitingRoom")}
                 </span>
               </div>
-              <h2 className="text-white text-3xl md:text-5xl font-black tracking-tight uppercase font-sans">
-                {t("lobby.title")}
-              </h2>
-              <p className="text-gray-400 text-sm md:text-base max-w-lg leading-relaxed font-medium mt-2">
-                {t("lobby.subtitle", room?.total_rounds || 3)}
-              </p>
-            </div>
+              <h2 className="text-ink text-5xl font-extrabold tracking-tight uppercase">{t("lobby.title")}</h2>
+              {!requiresCategories && <p className="text-ink-2 text-base leading-relaxed mt-2">{t("dashboard.joinBody")}</p>}
 
-            {/* Room Code & QR Showcase Card */}
-            <div className="surface-2 rounded-3xl p-6 flex flex-wrap items-center gap-6">
-              {/* Room Code */}
-              <div className="flex-1 min-w-[200px]">
-                <span className="text-gray-400 uppercase tracking-[0.25em] text-xs tabular-nums font-bold block mb-2">
-                  ODAYA KATILMA KODU
-                </span>
-                <div className="text-5xl md:text-7xl font-black tracking-widest text-alaz-orange tabular-nums">
-                  {room?.code || "...."}
-                </div>
-                <div className="flex items-center gap-2 mt-3 text-xs text-gray-300 font-medium">
-                  <QrCode className="w-4 h-4 text-cyan-400" />
-                  <span>Kameranızla QR kodu okutun</span>
-                </div>
+              <span className={`text-ink-2 uppercase tracking-[0.25em] text-xs font-bold block mb-1 ${requiresCategories ? "mt-4" : "mt-8"}`}>
+                {t("lobby.roomCode")}
+              </span>
+              <div className="text-8xl font-extrabold tracking-widest text-accent tabular-nums leading-none">
+                {room?.code || "...."}
               </div>
-
-              {/* QR Code */}
-              {room?.code && (
-                <div className="bg-white p-3.5 rounded-2xl flex items-center justify-center shrink-0">
-                  <QRCodeSVG
-                    value={getJoinUrl(room.code)}
-                    size={155}
-                    bgColor="#ffffff"
-                    fgColor="#000000"
-                    level="H"
-                    marginSize={0}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Connected Player Count summary */}
-            <div className="flex items-center gap-4 text-sm text-gray-300 font-medium">
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-xl">
-                <Users className="w-4 h-4 text-emerald-400" />
-                <NumberTicker value={players.length} className="tabular-nums font-bold text-white text-sm" />
-                <span className="text-xs text-gray-400">Oyuncu Bağlandı</span>
-              </div>
+              <p className="mt-4 text-base text-ink break-all">{getJoinAddress()}</p>
             </div>
           </div>
 
           {/* Categories Panel (For Word Arena / Scattegories) */}
           {requiresCategories && (
-            <div className="w-full xl:w-96 space-y-6 bg-black/60 p-6 md:p-8 rounded-3xl border border-white/10 shadow-2xl shrink-0">
+            <div className="w-full space-y-4 surface-2 p-6 rounded-3xl">
               
               <div className="flex items-center justify-between">
                 <div>
@@ -314,7 +280,7 @@ export function HostLobby({
               {/* Presets */}
               <div className="space-y-2.5">
                 <span className="text-gray-400 uppercase tracking-[0.2em] text-xs tabular-nums font-bold block">
-                  HIZLI PRESETLER
+                  {t("lobby.quickPresets")}
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {Object.keys(presets).map((name) => (
@@ -334,7 +300,7 @@ export function HostLobby({
               </div>
 
               {/* Active Categories List */}
-              <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto p-3 bg-black/40 rounded-2xl border border-white/5 custom-scrollbar">
+              <div className="flex flex-wrap gap-2 max-h-[124px] overflow-hidden">
                 <AnimatePresence>
                   {currentCategories.map((cat, idx) => (
                     <motion.div
@@ -342,9 +308,9 @@ export function HostLobby({
                       initial={{ x: -10, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
                       exit={{ x: 10, opacity: 0 }}
-                      className="bg-white/5 text-white/90 px-4 py-2.5 rounded-xl text-xs font-bold border border-white/10 flex items-center justify-between uppercase tracking-wider"
+                      className="bg-white/5 text-white/90 pl-4 pr-2 py-2 rounded-xl text-xs font-bold border border-white/10 flex items-center gap-2 uppercase tracking-wider"
                     >
-                      <span className="truncate pr-3">{cat}</span>
+                      <span className="truncate max-w-[280px]">{cat}</span>
                       <button
                         onClick={() => handleRemoveCategory(idx)}
                         className="text-gray-500 hover:text-red-400 transition-colors p-1"
@@ -386,7 +352,7 @@ export function HostLobby({
       </div>
 
       {/* ════════════════ RIGHT: PLAYER ROSTER & LAUNCH ════════════════ */}
-      <div className="surface lg:col-span-1 rounded-[2.5rem] p-8 flex flex-col justify-between text-center relative overflow-hidden">
+      <div className="surface col-span-1 rounded-[2.5rem] p-8 flex flex-col justify-between text-center relative overflow-hidden">
 
         <div className="relative z-10">
           <div className="w-20 h-20 bg-accent/10 border border-accent/40 rounded-3xl flex items-center justify-center mx-auto mb-6">
@@ -428,18 +394,16 @@ export function HostLobby({
              <button
                 onClick={() => startCountdown(5)}
                 disabled={!canStart}
-                className="flex-1 py-2.5 bg-white/5 border border-white/10 rounded-xl text-gray-400 hover:text-white hover:border-white/30 text-xs tabular-nums font-bold uppercase tracking-wider disabled:opacity-30 transition-all flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 bg-white/5 border border-white/10 rounded-xl text-gray-400 hover:text-white hover:border-white/30 text-xs tabular-nums font-bold uppercase whitespace-nowrap disabled:opacity-30 transition-all flex items-center justify-center"
              >
-                <Clock className="w-3 h-3 text-cyan-400" />
-                <span>5 Dk</span>
+                <span>{t("hostLobby.minutes", 5)}</span>
              </button>
              <button
                 onClick={() => startCountdown(10)}
                 disabled={!canStart}
-                className="flex-1 py-2.5 bg-white/5 border border-white/10 rounded-xl text-gray-400 hover:text-white hover:border-white/30 text-xs tabular-nums font-bold uppercase tracking-wider disabled:opacity-30 transition-all flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 bg-white/5 border border-white/10 rounded-xl text-gray-400 hover:text-white hover:border-white/30 text-xs tabular-nums font-bold uppercase whitespace-nowrap disabled:opacity-30 transition-all flex items-center justify-center"
              >
-                <Clock className="w-3 h-3 text-amber-400" />
-                <span>10 Dk</span>
+                <span>{t("hostLobby.minutes", 10)}</span>
              </button>
           </div>
 
@@ -451,44 +415,38 @@ export function HostLobby({
         </div>
       </div>
 
-      {/* Oyuncu avatarları: yerinde sabit, yalnızca girişte belirir */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-[5]">
-        <AnimatePresence>
-          {players.map((p, i) => {
-            const angle = (i * 137.5) * (Math.PI / 180);
-            const radius = 26 + (i * 5) % 18;
-
-            return (
-              <motion.div
-                key={p.id}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{
-                  opacity: 1,
-                  scale: 1,
-                  x: `calc(-50% + ${Math.cos(angle) * radius}vw)`,
-                  y: `calc(-50% + ${Math.sin(angle) * radius}vh)`,
-                }}
-                transition={{ duration: 0.25, ease: "easeOut" }}
-                className="absolute left-1/2 top-1/2 surface px-5 py-3 rounded-2xl flex items-center gap-3.5"
-              >
-                <div className="w-10 h-10 rounded-xl surface-2 flex items-center justify-center shrink-0 tabular-nums font-black text-white text-xs">
-                  {upperTL(p.nickname.substring(0, 2))}
-                </div>
-                <div className="flex flex-col items-start pr-2">
-                  <p className="text-xs font-black text-white uppercase tracking-wider truncate max-w-[130px]">
-                    {p.nickname}
-                  </p>
-                  {p.team_name && (
-                    <p className="text-xs text-alaz-orange tabular-nums font-bold uppercase tracking-tight leading-none truncate max-w-[130px] mt-1">
-                      {p.team_name}
-                    </p>
-                  )}
-                </div>
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
       </div>
+
+      {/* Oyuncu duvarı: akış içinde, içeriğin üstüne binmez (bkz. lib/lobbyWall). */}
+      <ul aria-label={t("dashboard.playersCount", players.length)} className="w-[416px] shrink-0 flex flex-col gap-3">
+        {players.length === 0 && (
+          <li className="rounded-2xl border border-dashed border-line px-4 h-16 flex items-center text-xs text-ink-3">
+            {t("dashboard.waiting")}
+          </li>
+        )}
+        {wall.shown.map((p) => (
+          <motion.li
+            key={p.id}
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: DURATION.base, ease: EASE.out }}
+            className="surface rounded-2xl px-4 h-16 flex items-center gap-3 min-w-0"
+          >
+            <span
+              aria-hidden="true"
+              className="w-12 h-12 rounded-xl surface-2 flex items-center justify-center shrink-0 text-xs font-extrabold text-ink"
+            >
+              {initialsOf(p.nickname, locale)}
+            </span>
+            <span className="text-xs font-semibold text-ink truncate">{p.nickname}</span>
+          </motion.li>
+        ))}
+        {wall.hidden > 0 && (
+          <li className="surface-2 rounded-2xl px-4 h-16 flex items-center text-xs font-semibold text-ink-2 tabular-nums">
+            {t("common.morePlayers", wall.hidden)}
+          </li>
+        )}
+      </ul>
     </motion.div>
   );
 }

@@ -7,6 +7,11 @@ import { Volume2, VolumeX, Radio, Sparkles } from "lucide-react";
 
 interface PlayerIntroVideoProps {
   gameTitle?: string;
+  /**
+   * Oynanan oyunun tek cümlelik kuralı. Zorunlu: eskiden bileşen her oyunda
+   * Arena'nın ipucunu ("en hızlı ve özgün kelimeleri yaz") gösteriyordu.
+   */
+  tip: string;
   /** İkisi de verilirse tur rozeti görünür (bomba turları sabit sayıda değil). */
   currentRound?: number;
   totalRounds?: number;
@@ -21,6 +26,7 @@ interface PlayerIntroVideoProps {
  */
 export function PlayerIntroVideo({
   gameTitle = "HENGAME ARENA",
+  tip,
   currentRound,
   totalRounds,
 }: PlayerIntroVideoProps) {
@@ -70,7 +76,7 @@ export function PlayerIntroVideo({
           <button
             type="button"
             onClick={toggleSound}
-            aria-label={isMuted ? "Sesi Aç" : "Sesi Kapat"}
+            aria-label={isMuted ? t("common.soundOn") : t("common.soundOff")}
             className="w-7 h-7 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 flex items-center justify-center text-white/80 active:scale-90 transition-all"
           >
             {isMuted ? (
@@ -133,7 +139,7 @@ export function PlayerIntroVideo({
             <Radio className="w-4 h-4 text-alaz-orange" />
           </div>
           <p className="text-xs font-semibold text-white/80 leading-snug">
-            {t("intro.arenaTip")}
+            {tip}
           </p>
         </div>
 

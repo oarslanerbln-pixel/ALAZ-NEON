@@ -166,7 +166,7 @@ export function NightlyReport() {
   }
 
   if (!authUser || !isStaff) {
-    return <StaffAccessNotice title="Gecelik Rapor" user={authUser} />;
+    return <StaffAccessNotice titleKey="admin.reportTitle" user={authUser} />;
   }
 
   const redemptionRate =

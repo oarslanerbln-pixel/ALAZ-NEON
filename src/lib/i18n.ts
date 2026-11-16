@@ -1140,6 +1140,7 @@ const translations = {
     de: "Schreib ein gültiges Wort und wirf die Bombe weiter!",
     en: "Type a valid word and throw the bomb!",
   },
+  "bomb.fuse": { tr: "Fitil", de: "Zündschnur", en: "Fuse" },
   "bomb.atAnotherTable": { tr: "Bomba başka masada!", de: "Die Bombe ist an einem anderen Tisch!", en: "The bomb is at another table!" },
   "bomb.lastWord": { tr: "SON SÖYLENEN KELİME", de: "ZULETZT GESAGTES WORT", en: "LAST WORD SAID" },
   "bomb.throwing": { tr: "ATIYOR...", de: "WIRD GEWORFEN...", en: "THROWING..." },
@@ -1197,6 +1198,11 @@ const translations = {
     tr: "Hedef harfle en hızlı ve özgün kelimeleri yaz, hız bonusunu kap!",
     de: "Schreibe die schnellsten und einzigartigsten Wörter, hol dir den Speed-Bonus!",
     en: "Type the fastest and most unique words, claim the speed bonus!",
+  },
+  "intro.quizTip": {
+    tr: "Soru TV'de, şıklar telefonunda. Hızlı cevap daha çok puan getirir.",
+    de: "Die Frage steht auf dem TV, die Antworten auf deinem Handy. Wer schnell antwortet, holt mehr Punkte.",
+    en: "The question is on the TV, the answers on your phone. Faster answers score more.",
   },
   "intro.quiz.titleShort": { tr: "QUIZ", de: "QUIZ", en: "QUIZ" },
   "intro.quiz.step1": { tr: "Soru TV'de, şıklar telefonunda", de: "Frage auf dem TV, Antworten auf dem Handy", en: "Question on the TV, answers on your phone" },
@@ -1431,6 +1437,42 @@ const translations = {
   "hostLobby.joinWithCode": { tr: "Kodla Katıl", de: "Mit Code beitreten", en: "Join with Code" },
   "hostLobby.wait5min": { tr: "5 Dk Bekle", de: "5 Min warten", en: "Wait 5 Min" },
   "hostLobby.wait10min": { tr: "10 Dk Bekle", de: "10 Min warten", en: "Wait 10 Min" },
+  "hostLobby.waitingRoom": { tr: "Bekleme salonu", de: "Warteraum", en: "Waiting room" },
+  "hostLobby.minutes": {
+    tr: (n: string | number) => `${n} dk`,
+    de: (n: string | number) => `${n} Min`,
+    en: (n: string | number) => `${n} min`,
+  },
+  "lobby.quickPresets": { tr: "Hazır setler", de: "Schnellauswahl", en: "Quick presets" },
+
+  // ═══════════════════════════════════════════
+  // 404 ve yönetim ekranlarının kapısı
+  // ═══════════════════════════════════════════
+  "notFound.title": { tr: "Sayfa bulunamadı", de: "Seite nicht gefunden", en: "Page not found" },
+  "notFound.body": {
+    tr: "Aradığın sayfa taşınmış ya da hiç var olmamış olabilir.",
+    de: "Die Seite wurde verschoben oder hat nie existiert.",
+    en: "The page may have moved or never existed.",
+  },
+  "admin.venueTitle": { tr: "Mekan Ayarları", de: "Location-Einstellungen", en: "Venue Settings" },
+  "admin.rewardsTitle": { tr: "Ödül Doğrula", de: "Prämie prüfen", en: "Verify Reward" },
+  "admin.reportTitle": { tr: "Gecelik Rapor", de: "Abendbericht", en: "Nightly Report" },
+  "staff.loginRequired": {
+    tr: "Bu ekran yalnızca işletme hesabıyla giriş yapıldığında açılır.",
+    de: "Diese Seite ist nur mit dem Betriebskonto zugänglich.",
+    en: "This screen opens only when signed in with a venue account.",
+  },
+  "staff.thisAccount": { tr: "Bu hesap", de: "Dieses Konto", en: "This account" },
+  "staff.notStaff": {
+    tr: "bir işletme personeli hesabı değil. Yönetim ekranları yalnızca mekan sahibinin yetkilendirdiği hesaplara açık.",
+    de: "ist kein Personalkonto. Die Verwaltung steht nur Konten offen, die der Betreiber freigeschaltet hat.",
+    en: "is not a staff account. Admin screens are open only to accounts the venue owner has authorised.",
+  },
+  "staff.ownerHint": {
+    tr: "Mekan sahibiyseniz: Firebase Console → Firestore → staff koleksiyonuna bu hesabın kimliğiyle bir doküman ekleyin.",
+    de: "Als Betreiber: Firebase Console → Firestore → in der Sammlung staff ein Dokument mit der Kennung dieses Kontos anlegen.",
+    en: "If you own the venue: Firebase Console → Firestore → add a document with this account's ID to the staff collection.",
+  },
 
   // ═══════════════════════════════════════════
   // HOST HEADER (reklam arası butonu)

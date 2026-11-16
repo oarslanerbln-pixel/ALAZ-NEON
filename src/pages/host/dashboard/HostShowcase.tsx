@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { QRCodeSVG } from "qrcode.react";
+import { JoinQr } from "../../../components/JoinQr";
+import { getJoinAddress } from "../../../lib/roomUrls";
 
 import { useLocale } from "../../../hooks/useLocale";
 import { DURATION, EASE } from "../../../lib/motion";
 import { buildShowcaseSlides, nextShowcaseIndex, SHOWCASE_IMAGE_MS } from "../../../lib/showcase";
 
 interface HostShowcaseProps {
-  joinUrl: string;
   roomCode: string;
   venuePromos?: string[];
   /**
@@ -29,7 +29,7 @@ interface HostShowcaseProps {
  * kare bırakıyordu. Görseller yalnızca `scale` ile yavaşça yaklaşır (Ken
  * Burns); hareketi azaltmada durur, video yerine poster gelir.
  */
-export function HostShowcase({ joinUrl, roomCode, venuePromos, onClose, initialIndex = 0 }: HostShowcaseProps) {
+export function HostShowcase({ roomCode, venuePromos, onClose, initialIndex = 0 }: HostShowcaseProps) {
   const { t } = useLocale();
   const reduced = useReducedMotion() ?? false;
   const slides = useMemo(() => buildShowcaseSlides(venuePromos, reduced), [venuePromos, reduced]);
@@ -112,10 +112,9 @@ export function HostShowcase({ joinUrl, roomCode, venuePromos, onClose, initialI
           <span className="text-white font-black text-3xl uppercase tracking-[0.12em]">{t("attract.scanToJoin")}</span>
           <span className="text-white/60 text-lg font-bold uppercase tracking-[0.3em]">{t("hostHeader.roomCode")}</span>
           <span className="text-alaz-orange tabular-nums font-black text-5xl tracking-widest">{roomCode}</span>
+          <span className="text-white/80 text-2xl">{getJoinAddress()}</span>
         </div>
-        <div className="bg-white p-3 rounded-2xl">
-          <QRCodeSVG value={joinUrl} size={196} bgColor="#ffffff" fgColor="#000000" level="H" />
-        </div>
+        <JoinQr roomCode={roomCode} size={320} />
       </div>
 
       {/* Sol üstte: sağ üst köşe videonun kendi logosuna ayrıldı. */}

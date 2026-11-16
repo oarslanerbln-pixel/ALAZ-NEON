@@ -203,6 +203,7 @@ export function PlayerQuizController({ room, player }: PlayerQuizControllerProps
           {(gameState === "quiz_intro" || (gameState === "question_intro" && questionIndex === 0)) ? (
             <PlayerIntroVideo
               gameTitle="HENGAME QUIZ"
+              tip={t("intro.quizTip")}
               currentRound={currentRound}
               totalRounds={totalRounds}
             />

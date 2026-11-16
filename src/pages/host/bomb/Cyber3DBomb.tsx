@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { SPRING } from "../../../lib/motion";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface Cyber3DBombProps {
   timeLeft: number;
@@ -16,6 +17,7 @@ export function Cyber3DBomb({
   maxTime = 15,
   className = "",
 }: Cyber3DBombProps) {
+  const { t } = useLocale();
   const isCritical = timeLeft <= 5;
   const isWarning = timeLeft <= 8 && !isCritical;
   const fraction = Math.min(1, Math.max(0, timeLeft / maxTime));
@@ -86,7 +88,7 @@ export function Cyber3DBomb({
                 isCritical ? "text-bad" : "text-white/40"
               }`}
             >
-              CRITICAL FUSE
+              {t("bomb.fuse")}
             </span>
 
             {/* Rakam */}
