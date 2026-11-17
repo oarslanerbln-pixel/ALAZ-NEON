@@ -1,6 +1,7 @@
 
 import type { Locale } from "../lib/i18n";
 import type { FieldValue, Timestamp } from "firebase/firestore";
+import type { RaceState } from "../lib/race";
 
 export type RoomStatus =
   | "night_lobby"
@@ -27,10 +28,14 @@ export type RoomStatus =
   | "ad_break"
   | "slingshot_intro"
   | "slingshot_active"
-  | "slingshot_reveal";
+  | "slingshot_reveal"
+  | "race_intro"
+  | "race_vote"
+  | "race_move"
+  | "race_finished";
 
 export type GameMode = "individual" | "team";
-export type GameType = "scattegories" | "quiz" | "bomb" | "slingshot";
+export type GameType = "scattegories" | "quiz" | "bomb" | "slingshot" | "race";
 
 export type QuizOption = "A" | "B" | "C" | "D";
 
@@ -120,6 +125,10 @@ export interface Room {
   // Slingshot: turun bitiş zamanı; aynı zamanda turun şutlarını ayıran
   // anahtar (lib/slingshot.slingshotRoundKey). Şutlar `answers`'ta.
   slingshot_end_time?: number;
+  // NOVA (zarlı takım yarışı): takımlar, piyonlar, zarlar ve son turun
+  // hamleleri. Yalnız host yazar; piyon oyları `answers` koleksiyonunda
+  // (bkz. lib/race).
+  race?: RaceState | null;
   // Mekan markalaması — oda açılırken o anki aktif mekan profilinden
   // KOPYALANIR (canlı referans değil). Böylece bir mekana satış sonrası
   // marka değiştirilse bile geçmiş odaların/demoların markası değişmez.

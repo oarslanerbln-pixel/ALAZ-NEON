@@ -15,6 +15,7 @@ const GAME_LABEL: Record<GameType, string> = {
   quiz: "Quiz",
   bomb: "Bomba",
   slingshot: "Yörünge Sapanı",
+  race: "Nova",
 };
 
 function rangeFor(preset: RangePreset): { start: number; end: number } {

@@ -168,6 +168,13 @@ export function HostDashboard({ room, players, updateRoomStatus }: HostDashboard
       extraUpdates = { ...extraUpdates, slingshot_end_time: 0 };
     }
 
+    if (game === "race") {
+      // Takımlar ve tahta TV ekranında kurulur (HostRaceDisplay); önceki
+      // oyunun durumu taşınmasın.
+      initialStatus = "race_intro";
+      extraUpdates = { ...extraUpdates, race: null };
+    }
+
     await updateRoomStatus(initialStatus, extraUpdates);
   };
 

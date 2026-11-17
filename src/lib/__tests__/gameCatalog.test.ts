@@ -18,7 +18,7 @@ const LOCALES: Locale[] = ["tr", "de", "en"];
  * silindigi icin calisma zamaninda ayrica listelenmek zorunda; gercek koruma
  * gameCatalog.ts'teki exhaustiveness kontrolu, bu liste onun ikinci kordonu.
  */
-const EXPECTED_GAME_IDS = ["scattegories", "quiz", "bomb", "slingshot"] as const;
+const EXPECTED_GAME_IDS = ["scattegories", "quiz", "bomb", "race", "slingshot"] as const;
 
 describe("oyun katalogu", () => {
   it("her oyun modunun bir dashboard karti var", () => {
@@ -52,10 +52,10 @@ describe("oyun katalogu", () => {
     }
   });
 
-  it("yalnızca Arena, Quiz ve Bomb oynanabilir; Yörünge Sapanı kilitli", () => {
+  it("yalnızca Arena, Quiz, Bomb ve Nova oynanabilir; Yörünge Sapanı kilitli", () => {
     const active = GAME_CARDS.filter((g) => !g.isComingSoon).map((g) => g.id);
     const locked = GAME_CARDS.filter((g) => g.isComingSoon).map((g) => g.id);
-    expect(active.sort()).toEqual(["bomb", "quiz", "scattegories"]);
+    expect(active.sort()).toEqual(["bomb", "quiz", "race", "scattegories"]);
     expect(locked).toEqual(["slingshot"]);
   });
 

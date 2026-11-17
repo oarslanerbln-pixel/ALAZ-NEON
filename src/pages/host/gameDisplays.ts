@@ -20,6 +20,7 @@ type Loader = () => Promise<{ default: ComponentType<HostGameProps> }>;
 const HOST_GAME_LOADERS: Record<RoutedGame, Loader> = {
   quiz: () => import("./quiz/HostQuizDisplay").then((m) => ({ default: m.HostQuizDisplay })),
   bomb: () => import("./bomb/HostBombDisplay").then((m) => ({ default: m.HostBombDisplay })),
+  race: () => import("./race/HostRaceDisplay").then((m) => ({ default: m.HostRaceDisplay })),
   slingshot: () => import("./slingshot/HostSlingshotDisplay").then((m) => ({ default: m.HostSlingshotDisplay })),
 };
 
