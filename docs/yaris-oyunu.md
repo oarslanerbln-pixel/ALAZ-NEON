@@ -126,10 +126,10 @@ Telefonda video yok. Bütçe: ilk yük ≤ 385 KB gz, GPU'suz TV 1080p ≥ 24 fp
 
 | Ölçüm | Sonuç | Sınır |
 |---|---|---|
-| İlk yük (`scripts/audit/bundle-size.mjs`) | 349,0 KB gz (öncesi 347) | ≤ 385 KB |
-| NOVA parçaları (tembel) | TV 5,9 KB + telefon 2,3 KB + kurallar 2,3 KB gz | — |
-| TV kare hızı, GPU'suz 1080p (`novaBoard`) | 33 fps; 4× CPU kısıtlı 39 fps (görsel yükseltmeden önce 31 / 45) | ≥ 24 fps |
-| TV kare hızı, GPU'suz 4K | 20 fps (quiz 18–20 fps ile aynı düzey) | hedef 1080p |
+| İlk yük (`scripts/audit/bundle-size.mjs`) | 349,1 KB gz (öncesi 347) | ≤ 385 KB |
+| NOVA parçaları (tembel) | TV 6,1 KB + telefon 2,3 KB + kurallar 2,3 KB gz; Blender görselleri `public/race/` 26 KB | — |
+| TV kare hızı, GPU'suz 1080p (`novaBoard`) | 35 ve 25 fps (iki tur); 4× CPU kısıtlı 39 ve 32 fps. Aynı turlarda quiz 38–39 fps | ≥ 24 fps |
+| TV kare hızı, GPU'suz 4K | 26 ve 20 fps (aynı turlarda quiz 19 ve 13 fps) | hedef 1080p |
 | TV taşması (1080p, 4K) | yok | yok |
 | Tur süresi, 4 takım, herkes hemen oy verince | 10,1 sn | — |
 | Birim / kural / uçtan uca | 364 / 98 / 20 geçti (sapan testi kilitli, atlanıyor) | hepsi yeşil |
@@ -137,6 +137,11 @@ Telefonda video yok. Bütçe: ilk yük ≤ 385 KB gz, GPU'suz TV 1080p ≥ 24 fp
 Tur süresi tahminden (~20–25 sn) kısa çıktı: en uzun tur oy süresi (8 sn) +
 oynatma (~6–8 sn) ≈ 15 sn. 18 tur sınırıyla oyun ~3–4,5 dk + açılış (~10 sn)
 sürer; 6–8 dk isteniyorsa `RACE_MAX_ROUNDS` 26–28 yapılabilir (tek sabit).
+
+Kare hızı turları makine %40–65 CPU yükündeyken alındı (aynı makinede başka
+işler çalışıyordu). %65–87 yükte NOVA ve quiz birlikte 21 fps'e düştü; o turlar
+tabloya alınmadı. Pay ince: ikinci turda 25 fps. Sınırın altına düşerse ilk
+aday, ayrı katmanda oynayan piyon görsellerini küçültmek.
 
 Ekran görüntüleri: `docs/gorsel/nova/` (`E2E_SHOTS=1` ile `e2e/nova.spec.ts`
 yeniden üretir).
