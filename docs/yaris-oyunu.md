@@ -92,6 +92,11 @@ Gerçek tur süresi E2E'de ölçülüp tur sınırı ona göre ayarlanır.
 
 ## 6. Görsel dil ve varlıklar
 
+Tahta düz SVG: gece göğü zemini (tohumlu, sabit 90 yıldız), yörünge bandı,
+sekiz köşeli yıldız çekirdek, hamle izi (geçilecek kareler + varış halkası),
+yakalamada tek seferlik halka patlaması, bir kez yuvarlanan zar, kazananda
+konfeti. SVG filtresi/bulanıklık yok (yazılım çiziminde pahalı).
+
 `docs/motion-system.md` §6: düz kart, TV'de en küçük 24 px, sonsuz döngü yok,
 ekran başına tek odak animasyonu. **Tek vurgu korunur:** takımlar biçimle
 (▲ ■ ● ◆) ve adla ayrılır; `accent` yalnız o an oynayan takımda (telefonda
@@ -122,9 +127,9 @@ Telefonda video yok. Bütçe: ilk yük ≤ 385 KB gz, GPU'suz TV 1080p ≥ 24 fp
 | Ölçüm | Sonuç | Sınır |
 |---|---|---|
 | İlk yük (`scripts/audit/bundle-size.mjs`) | 349,0 KB gz (öncesi 347) | ≤ 385 KB |
-| NOVA parçaları (tembel) | TV 4,9 KB + telefon 2,1 KB + kurallar 2,2 KB gz | — |
-| TV kare hızı, GPU'suz 1080p (`novaBoard`) | 31 fps; 4× CPU kısıtlı 45 fps | ≥ 24 fps |
-| TV kare hızı, GPU'suz 4K | 21 fps (quiz 20 fps ile aynı düzey) | hedef 1080p |
+| NOVA parçaları (tembel) | TV 5,9 KB + telefon 2,3 KB + kurallar 2,3 KB gz | — |
+| TV kare hızı, GPU'suz 1080p (`novaBoard`) | 33 fps; 4× CPU kısıtlı 39 fps (görsel yükseltmeden önce 31 / 45) | ≥ 24 fps |
+| TV kare hızı, GPU'suz 4K | 20 fps (quiz 18–20 fps ile aynı düzey) | hedef 1080p |
 | TV taşması (1080p, 4K) | yok | yok |
 | Tur süresi, 4 takım, herkes hemen oy verince | 10,1 sn | — |
 | Birim / kural / uçtan uca | 364 / 98 / 20 geçti (sapan testi kilitli, atlanıyor) | hepsi yeşil |

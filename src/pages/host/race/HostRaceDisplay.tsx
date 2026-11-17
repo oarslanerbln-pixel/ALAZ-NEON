@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 
+import { ConfettiCanvas } from "../../../components/ConfettiCanvas";
 import { RaceDie } from "../../../components/race/RaceDie";
 import { RaceGlyph } from "../../../components/race/RaceGlyph";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
@@ -11,6 +12,7 @@ import { db } from "../../../lib/firebase";
 import { GAME_CARDS, gameTitle } from "../../../lib/gameCatalog";
 import { DURATION, EASE } from "../../../lib/motion";
 import { finishNightRound, NIGHT_ROUND_OPEN } from "../../../lib/nightAwards";
+import { pawnPoint } from "../../../lib/raceLayout";
 import { teamPoints } from "../../../lib/nightLeague";
 import {
   RACE_FINISH,
@@ -62,6 +64,11 @@ interface Playback {
 interface RoundVotes {
   key: string;
   byPlayer: Record<string, number>;
+}
+
+/** Takımın iki piyonunun toplam adımı (ilerleme çubuğu için). */
+function teamSteps(pawns: RacePawns, team: RaceTeamId): number {
+  return (pawns[team] ?? []).reduce((sum, p) => sum + Math.min(p, RACE_FINISH), 0);
 }
 
 const RACE_CARD = GAME_CARDS.find((c) => c.id === "race")!;
@@ -265,6 +272,14 @@ export function HostRaceDisplay({ room, players, updateRoomStatus }: HostGamePro
   const inPlay = race !== null && (status === "race_vote" || status === "race_move");
   const shownPawns = playback?.pawns ?? race?.pawns ?? {};
   const activeMove = status === "race_move" ? (playback?.move ?? null) : null;
+  const trail =
+    activeMove && activeMove.pawn !== null
+      ? { team: activeMove.team, pawn: activeMove.pawn, from: shownPawns[activeMove.team]?.[activeMove.pawn] ?? activeMove.to, to: activeMove.to }
+      : null;
+  const burst =
+    activeMove && activeMove.pawn !== null && (playback?.returning.length ?? 0) > 0
+      ? { key: `${roundKey}-${activeMove.team}-${activeMove.bonus ? "b" : "a"}`, at: pawnPoint(activeMove.team, activeMove.pawn, activeMove.to) }
+      : null;
 
   return (
     <TVScaleFrame>
@@ -317,7 +332,14 @@ export function HostRaceDisplay({ room, players, updateRoomStatus }: HostGamePro
                 transition={{ duration: DURATION.base }}
               >
                 <div className="h-full aspect-square shrink-0">
-                  <HostRaceBoard teams={race.teams} pawns={shownPawns} activeTeam={activeMove?.team ?? null} returning={playback?.returning} />
+                  <HostRaceBoard
+                    teams={race.teams}
+                    pawns={shownPawns}
+                    activeTeam={activeMove?.team ?? null}
+                    trail={trail}
+                    returning={playback?.returning}
+                    burst={burst}
+                  />
                 </div>
 
                 <div className="flex-1 min-w-0 flex flex-col gap-5">
@@ -365,8 +387,15 @@ export function HostRaceDisplay({ room, players, updateRoomStatus }: HostGamePro
                               {status === "race_vote" ? `${voted}/${ids.length}` : t("race.members", ids.length)} ·{" "}
                               {t("race.homeCount", homeCount(shownPawns, team), RACE_PAWNS)}
                             </p>
+                            {/* Takımın toplam yolu: iki piyonun adımları. */}
+                            <div className="mt-2 h-2 rounded-full bg-surface-2 overflow-hidden">
+                              <div
+                                className={`h-full w-full origin-left rounded-full transition-transform duration-200 ${active ? "bg-accent" : "bg-ink-3"}`}
+                                style={{ transform: `scaleX(${teamSteps(shownPawns, team) / (RACE_PAWNS * RACE_FINISH)})` }}
+                              />
+                            </div>
                           </div>
-                          <RaceDie value={die} size={84} active={active} rollKey={`${roundKey}-${active && activeMove?.bonus ? "b" : "a"}`} />
+                          <RaceDie key={`${roundKey}-${active && activeMove?.bonus ? "b" : "a"}`} value={die} size={84} active={active} />
                         </li>
                       );
                     })}
@@ -407,6 +436,7 @@ export function HostRaceDisplay({ room, players, updateRoomStatus }: HostGamePro
                     <HostRaceBoard teams={race.teams} pawns={race.pawns} activeTeam={race.winners[0] ?? null} />
                   </div>
                 )}
+                {race && race.winners.length > 0 && <ConfettiCanvas trigger autoCannon className="pointer-events-none" />}
                 <div className="flex-1 min-w-0 flex flex-col gap-6" data-testid="race-finished">
                   <p className="text-3xl font-semibold text-ink-2">
                     {!race || race.winners.length === 0 ? t("race.noWinner") : race.winners.length > 1 ? t("race.winners") : t("race.winner")}

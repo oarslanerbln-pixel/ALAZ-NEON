@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 
 import { RaceDie } from "../../../components/race/RaceDie";
-import { RaceGlyph } from "../../../components/race/RaceGlyph";
+import { RaceGlyph, RaceShape } from "../../../components/race/RaceGlyph";
 import { useLocale } from "../../../hooks/useLocale";
 import { countdownDeadline, remainingMs } from "../../../lib/countdown";
 import { db } from "../../../lib/firebase";
@@ -129,7 +129,7 @@ export function PlayerRaceController({ room, player }: PlayerGameProps) {
               ? t("race.hintCapture")
               : null;
       const where = progress <= 0 ? t("race.atBase") : progress >= RACE_FINISH ? t("race.inCore") : t("race.onRing", progress, RACE_FINISH);
-      return { pawn, to, hint, where };
+      return { pawn, to, hint, where, progress };
     });
     const canMove = options.some((o) => o.to !== null);
 
@@ -157,7 +157,7 @@ export function PlayerRaceController({ room, player }: PlayerGameProps) {
                 <span className="truncate">{t(TEAM_KEY[team])}</span>
               </p>
             </div>
-            <RaceDie value={roll} size={72} active rollKey={roundKey} label={`${t("race.yourDie")}: ${roll}`} />
+            <RaceDie key={roundKey} value={roll} size={72} active label={`${t("race.yourDie")}: ${roll}`} />
           </div>
 
           <h1 className="text-2xl font-extrabold text-ink">{t("race.pickPawn")}</h1>
@@ -172,9 +172,28 @@ export function PlayerRaceController({ room, player }: PlayerGameProps) {
                 onClick={() => vote(o.pawn)}
                 className="flex-1 min-h-28 rounded-3xl border-2 border-line bg-surface px-6 py-5 text-left transition-colors duration-150 active:border-accent active:bg-surface-2 disabled:opacity-40"
               >
-                <span className="block text-3xl font-extrabold text-ink">{t("race.pawn", o.pawn + 1)}</span>
-                <span className="block text-base text-ink-2 tabular-nums">{o.where}</span>
-                {o.hint && <span className={`mt-1 block text-base font-semibold ${o.to === null ? "text-ink-3" : "text-accent"}`}>{o.hint}</span>}
+                <span className="flex items-center gap-4">
+                  <svg width={64} height={64} viewBox="-34 -34 68 68" aria-hidden="true" className="shrink-0">
+                    <RaceShape team={team} r={30} className={o.to === null ? "fill-ink-3" : "fill-accent"} />
+                    <text y={team === "fire" ? 15 : 11} textAnchor="middle" fontSize={30} fontWeight={800} className="fill-bg">
+                      {o.pawn + 1}
+                    </text>
+                  </svg>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-2xl font-extrabold text-ink">{t("race.pawn", o.pawn + 1)}</span>
+                    <span className="block text-base text-ink-2 tabular-nums">{o.where}</span>
+                    {o.hint && (
+                      <span className={`block text-base font-semibold ${o.to === null ? "text-ink-3" : "text-accent"}`}>{o.hint}</span>
+                    )}
+                  </span>
+                </span>
+                {/* Yol çubuğu: dolu kısım şimdiki yer, soluk kısım bu zarla varılacak yer. */}
+                <span className="relative mt-4 block h-2 overflow-hidden rounded-full bg-surface-2" aria-hidden="true">
+                  {o.to !== null && (
+                    <span className="absolute inset-y-0 left-0 rounded-full bg-accent/40" style={{ width: `${(o.to / RACE_FINISH) * 100}%` }} />
+                  )}
+                  <span className="absolute inset-y-0 left-0 rounded-full bg-accent" style={{ width: `${(Math.min(o.progress, RACE_FINISH) / RACE_FINISH) * 100}%` }} />
+                </span>
               </button>
             ))}
           </div>

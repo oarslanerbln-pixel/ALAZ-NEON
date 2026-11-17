@@ -62,3 +62,37 @@ export function pawnPoint(team: RaceTeamId, pawn: number, progress: number): Poi
   if (cell !== null) return cellPoint(cell);
   return lanePoint(team, Math.min(RACE_LANE, progress - RACE_RING));
 }
+
+/** Çekirdeğin sekiz köşeli yıldız yolu (SVG `d`); bir köşe tepede. */
+export function novaPath(outer: number, inner: number, points = 8): string {
+  const parts: string[] = [];
+  for (let i = 0; i < points * 2; i++) {
+    const p = polar(i % 2 === 0 ? outer : inner, -90 + (i * 180) / points);
+    parts.push(`${i === 0 ? "M" : "L"}${p.x} ${p.y}`);
+  }
+  return `${parts.join(" ")} Z`;
+}
+
+export interface Star extends Point {
+  r: number;
+  o: number;
+}
+
+/**
+ * Zemindeki sabit yıldızlar. Tohumlu üretilir: her cihazda ve her çizimde
+ * aynı gökyüzü (rastgelelik render'da değil).
+ */
+export function starField(count: number, seed = 7): Star[] {
+  let s = seed;
+  const next = () => {
+    s = (s * 1664525 + 1013904223) % 4294967296;
+    return s / 4294967296;
+  };
+  const limit = BOARD_VIEW / 2 - 12;
+  return Array.from({ length: count }, () => {
+    const p = polar(Math.sqrt(next()) * limit, next() * 360);
+    return { ...p, r: Math.round((0.9 + next() * 1.9) * 10) / 10, o: Math.round((0.18 + next() * 0.5) * 100) / 100 };
+  });
+}
+
+export const STARS: readonly Star[] = starField(90);
