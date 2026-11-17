@@ -19,6 +19,7 @@ her oyun eşit ağırlıkta, "tutarlı olan şampiyon olur". Kod: `lib/nightLeag
 | HENGAME ARENA | Oynanabilir | Bilgi · kelime | Oyun skoru | Klasik isim-şehir; en uzun mod |
 | HENGAME QUIZ | Oynanabilir | Bilgi · hız | Oyun skoru (1000 + hız 100–500, seri ×1.2/×1.5; final ×2) | Gecenin omurgası |
 | HENGAME BOMB | Oynanabilir | Kelime · gerilim | Dayanılan rakip sayısı | Bomba sahibi ayrılırsa devrediliyor; kategori yoksa odanın dilindeki hazır listeden |
+| HENGAME NOVA | Oynanabilir | Takım · zar | Kazanan takımın üyesine 10, diğerlerine 1 (`teamPoints`) | Zarlı yarış tahtası; zar ve tahta host'ta, piyon oyu `answers`'ta; ödül yok. Bkz. `docs/yaris-oyunu.md` |
 | YÖRÜNGE SAPANI | Kilitli | Refleks · şut | Oyun skoru (gol başına 100) | Kodda duruyor; uçtan uca testi yeşil olana kadar kilitli |
 
 **Kaldırılan modlar (Ekim 2026 sonu, ürün sahibinin kararı):** mekanda yalnız

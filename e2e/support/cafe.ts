@@ -117,7 +117,7 @@ async function dismissShowcaseOnAction(tv: Page): Promise<void> {
  */
 export async function startGameFromDashboard(
   tv: Page,
-  game: "QUIZ" | "ARENA" | "BOMB" | "YÖRÜNGE SAPANI",
+  game: "QUIZ" | "ARENA" | "BOMB" | "NOVA" | "YÖRÜNGE SAPANI",
   configure?: (modal: Page) => Promise<void>,
 ): Promise<void> {
   // Amiral gemisi modlar "HENGAME <AD>", diğerleri kendi iki kelimelik adıyla.

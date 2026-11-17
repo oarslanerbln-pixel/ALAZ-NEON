@@ -9,7 +9,7 @@ import {
   startGameFromDashboard,
   type Phone,
 } from "./support/cafe";
-import { playQuiz, skipHostTutorial, wrongOption } from "./support/games";
+import { playQuiz, returnToNightLobby, skipHostTutorial, wrongOption } from "./support/games";
 import { adminGet, clearAuth, clearFirestore, meterRead, meterReset } from "./support/emulator";
 import { recordMetric, summarize } from "./support/metrics";
 
@@ -213,6 +213,12 @@ test("TV kare hızı ve taşma — 1080p ve 4K", async ({ browser }) => {
     await tv.page.getByRole("button", { name: "TIMER STARTEN" }).click({ timeout: 60_000 });
     await expect(tv.page.getByText(/SPIELER BEREIT/)).toBeVisible();
     await sample("quizQuestion");
+
+    // NOVA: tahta, zarlar ve piyon hareketi (telefonlar kapalı; oylar süreyle kapanır).
+    await returnToNightLobby(tv);
+    await startGameFromDashboard(tv.page, "NOVA");
+    await expect.poll(async () => (await adminGet(`rooms/${tv.roomId}`))?.status, { timeout: 60_000 }).toMatch(/race_vote|race_move/);
+    await sample("novaBoard");
     // --headed + E2E_GPU=1: makinenin gerçek GPU'su; başsız: yazılım çizimi
     // (SwiftShader) — GPU'su zayıf bir TV kutusuna daha yakın.
     recordMetric(process.env.E2E_GPU ? "tvFrames_gpu" : "tvFrames_software", results);

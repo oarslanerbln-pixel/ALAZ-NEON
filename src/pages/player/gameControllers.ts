@@ -16,5 +16,6 @@ export interface PlayerGameProps {
 export const PLAYER_GAME_CONTROLLERS: Record<RoutedGame, ComponentType<PlayerGameProps>> = {
   quiz: lazy(() => import("./quiz/PlayerQuizController").then((m) => ({ default: m.PlayerQuizController }))),
   bomb: lazy(() => import("./bomb/PlayerBombController").then((m) => ({ default: m.PlayerBombController }))),
+  race: lazy(() => import("./race/PlayerRaceController").then((m) => ({ default: m.PlayerRaceController }))),
   slingshot: lazy(() => import("./slingshot/PlayerSlingshotController").then((m) => ({ default: m.PlayerSlingshotController }))),
 };
