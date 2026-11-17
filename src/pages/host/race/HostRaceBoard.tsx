@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
+import { pawnAsset } from "../../../components/race/raceAssets";
 import { RaceShape } from "../../../components/race/RaceGlyph";
 import { gameTitle } from "../../../lib/gameCatalog";
 import { RACE_FINISH, RACE_LANE, RACE_PAWNS, RACE_RING, gateCell, type RacePawns, type RaceTeamId } from "../../../lib/race";
@@ -17,7 +18,10 @@ import {
   type Point,
 } from "../../../lib/raceLayout";
 
-const PAWN_RADIUS = 31;
+const PAWN_RADIUS = 40;
+/** Render edilmiş piyon görselinin tahtadaki kenarı (görselde kenar boşluğu var). */
+const PAWN_IMAGE = 128;
+const PAWN_PCT = (PAWN_IMAGE / BOARD_VIEW) * 100;
 const CELL_DOT = 27;
 const TRACK_WIDTH = 86;
 /** Bir karelik adımın süresi (sn). TV oynatıcısındaki adım aralığından kısa olmalı. */
@@ -86,13 +90,8 @@ export function HostRaceBoard({ teams, pawns, activeTeam, trail = null, returnin
   const trailSteps = trail ? Array.from({ length: Math.max(0, trail.to - trail.from) }, (_, i) => trail.from + i + 1) : [];
 
   return (
-    <svg
-      viewBox={`${-half} ${-half} ${BOARD_VIEW} ${BOARD_VIEW}`}
-      className="h-full w-full"
-      role="img"
-      aria-label={gameTitle("race")}
-      data-testid="race-board"
-    >
+    <div className="relative h-full w-full [container-type:size]" data-testid="race-board">
+      <svg viewBox={`${-half} ${-half} ${BOARD_VIEW} ${BOARD_VIEW}`} className="absolute inset-0 h-full w-full" role="img" aria-label={gameTitle("race")}>
       <Backdrop />
 
       {/* İniş yolları ve üsler */}
@@ -180,8 +179,14 @@ export function HostRaceBoard({ teams, pawns, activeTeam, trail = null, returnin
           </motion.g>
         )}
       </AnimatePresence>
+      </svg>
 
-      {/* Piyonlar: oynayan takım en üstte çizilir. */}
+      {/*
+        Piyonlar SVG'nin üstünde ayrı bir HTML katmanında: render edilmiş görsel
+        SVG içinde taşınınca yazılım çiziminde kare hızı 33'ten 24'e düşüyordu;
+        burada her piyon kendi bileşik katmanında yalnız transform ile oynar.
+        Oynayan takım en üstte çizilir.
+      */}
       {[...teams]
         .sort((a, b) => Number(a === activeTeam) - Number(b === activeTeam))
         .flatMap((team) =>
@@ -191,27 +196,31 @@ export function HostRaceBoard({ teams, pawns, activeTeam, trail = null, returnin
             const moving = trail?.team === team && trail.pawn === pawn;
             const flyingHome = returning.some((r) => r.team === team && r.pawn === pawn);
             return (
-              <motion.g
+              <motion.div
                 key={`${team}-${pawn}`}
                 data-testid={`race-pawn-${team}-${pawn}`}
                 data-progress={progress}
+                className="absolute aspect-square"
+                style={{ width: `${PAWN_PCT}%`, left: `${50 - PAWN_PCT / 2}%`, top: `${50 - PAWN_PCT / 2}%`, willChange: "transform" }}
                 initial={false}
-                animate={{ x: p.x, y: p.y, scale: moving ? 1.18 : 1 }}
+                animate={{ x: `${(p.x / PAWN_IMAGE) * 100}%`, y: `${(p.y / PAWN_IMAGE) * 100}%`, scale: moving ? 1.18 : 1 }}
                 transition={{ duration: flyingHome ? PAWN_HOME_SEC : PAWN_STEP_SEC, ease: flyingHome ? [0.2, 0, 0, 1] : "linear" }}
-                style={{ willChange: "transform" }}
               >
-                {/* Düz gölge: piyonu zeminden ayırır (bulanıklık yok). */}
-                <g transform="translate(0 7)" opacity={0.55}>
-                  <RaceShape team={team} r={PAWN_RADIUS} className="fill-bg" />
-                </g>
-                <RaceShape team={team} r={PAWN_RADIUS} className={active ? "fill-accent stroke-bg" : "fill-ink stroke-bg"} strokeWidth={3} />
-                <text y={team === "fire" ? 15 : 11} textAnchor="middle" fontSize={32} fontWeight={800} className="fill-bg tabular-nums">
+                {/* Düz gölge ve oynayan takımın vurgu halkası (bulanıklık yok). */}
+                <span className="absolute bottom-[12%] left-[18%] right-[18%] h-[22%] rounded-[50%] bg-bg/60" />
+                {active && <span className="absolute inset-[9%] rounded-full border-[0.4cqw] border-accent bg-accent/25" />}
+                <img src={pawnAsset(team)} alt="" decoding="async" draggable={false} className="absolute inset-0 h-full w-full" />
+                <span
+                  className={`absolute inset-0 flex items-center justify-center text-[3.4cqw] font-extrabold leading-none text-bg tabular-nums ${
+                    team === "fire" ? "pt-[22%]" : ""
+                  }`}
+                >
                   {pawn + 1}
-                </text>
-              </motion.g>
+                </span>
+              </motion.div>
             );
           }),
         )}
-    </svg>
+    </div>
   );
 }

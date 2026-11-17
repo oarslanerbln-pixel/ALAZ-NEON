@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 
 import { ConfettiCanvas } from "../../../components/ConfettiCanvas";
+import { preloadRaceAssets } from "../../../components/race/raceAssets";
 import { RaceDie } from "../../../components/race/RaceDie";
 import { RaceGlyph } from "../../../components/race/RaceGlyph";
 import { TVScaleFrame } from "../../../components/TVScaleFrame";
@@ -125,6 +126,8 @@ export function HostRaceDisplay({ room, players, updateRoomStatus }: HostGamePro
     },
     [updateRoomStatus],
   );
+
+  useEffect(() => preloadRaceAssets(), []);
 
   // Dashboard'dan "lobby" ile açılan odalar için.
   useEffect(() => {
@@ -395,7 +398,7 @@ export function HostRaceDisplay({ room, players, updateRoomStatus }: HostGamePro
                               />
                             </div>
                           </div>
-                          <RaceDie key={`${roundKey}-${active && activeMove?.bonus ? "b" : "a"}`} value={die} size={84} active={active} />
+                          <RaceDie key={`${roundKey}-${active && activeMove?.bonus ? "b" : "a"}`} value={die} size={104} active={active} />
                         </li>
                       );
                     })}

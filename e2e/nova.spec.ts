@@ -92,7 +92,8 @@ test("HENGAME NOVA: oy, hamle, eve gönderme ve kazanan takım; gece ligi puanı
     for (const p of phones) {
       await expect(p.page.getByTestId("race-vote")).toBeVisible({ timeout: 20_000 });
       await p.page.getByTestId("race-pawn-0").click();
-      await expect(p.page.getByText("Stimme gezählt")).toBeVisible();
+      // Son oy verilince tur hemen kapanabilir: "oy alındı" ya da "hamleler ana ekranda".
+      await expect(p.page.getByText(/Stimme gezählt|Die Züge laufen auf dem Hauptbildschirm/)).toBeVisible();
     }
     await expect
       .poll(async () => (await adminQuery("answers", "room_id", tv.roomId)).filter((a) => a.round_letter === `race-${first.game_id}-1`).length)

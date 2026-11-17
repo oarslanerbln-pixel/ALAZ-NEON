@@ -17,7 +17,7 @@ export const CELL_RADIUS = 36;
 export const CORE_RADIUS = 112;
 const BASE_RADIUS = 496;
 const LANE_STEP = 96;
-const CORE_SLOT_RADIUS = 62;
+const CORE_SLOT_RADIUS = 76;
 
 function polar(radius: number, degrees: number): Point {
   const rad = (degrees * Math.PI) / 180;
@@ -45,13 +45,13 @@ export function lanePoint(team: RaceTeamId, step: number): Point {
 
 /** Üsteki piyonun yeri: kapının dışında, iki piyon yan yana. */
 export function basePoint(team: RaceTeamId, pawn: number): Point {
-  return polar(BASE_RADIUS, cellAngle(gateCell(team)) + (pawn === 0 ? -5 : 5));
+  return polar(BASE_RADIUS, cellAngle(gateCell(team)) + (pawn === 0 ? -7 : 7));
 }
 
 /** Çekirdekteki piyonun yeri: takımın çeyreğinde, iki piyon yan yana. */
 export function corePoint(team: RaceTeamId, pawn: number): Point {
   const quarter = (RACE_TEAM_IDS.indexOf(team) * 360) / RACE_TEAM_IDS.length;
-  return polar(CORE_SLOT_RADIUS, -90 + quarter + (pawn === 0 ? -24 : 24));
+  return polar(CORE_SLOT_RADIUS, -90 + quarter + (pawn === 0 ? -34 : 34));
 }
 
 /** Piyonun tahtadaki yeri (ilerlemeye göre). */

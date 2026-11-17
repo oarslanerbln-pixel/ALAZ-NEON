@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 
 import { RaceDie } from "../../../components/race/RaceDie";
-import { RaceGlyph, RaceShape } from "../../../components/race/RaceGlyph";
+import { pawnAsset } from "../../../components/race/raceAssets";
+import { RaceGlyph } from "../../../components/race/RaceGlyph";
 import { useLocale } from "../../../hooks/useLocale";
 import { countdownDeadline, remainingMs } from "../../../lib/countdown";
 import { db } from "../../../lib/firebase";
@@ -157,7 +158,7 @@ export function PlayerRaceController({ room, player }: PlayerGameProps) {
                 <span className="truncate">{t(TEAM_KEY[team])}</span>
               </p>
             </div>
-            <RaceDie key={roundKey} value={roll} size={72} active label={`${t("race.yourDie")}: ${roll}`} />
+            <RaceDie key={roundKey} value={roll} size={96} active label={`${t("race.yourDie")}: ${roll}`} />
           </div>
 
           <h1 className="text-2xl font-extrabold text-ink">{t("race.pickPawn")}</h1>
@@ -173,12 +174,12 @@ export function PlayerRaceController({ room, player }: PlayerGameProps) {
                 className="flex-1 min-h-28 rounded-3xl border-2 border-line bg-surface px-6 py-5 text-left transition-colors duration-150 active:border-accent active:bg-surface-2 disabled:opacity-40"
               >
                 <span className="flex items-center gap-4">
-                  <svg width={64} height={64} viewBox="-34 -34 68 68" aria-hidden="true" className="shrink-0">
-                    <RaceShape team={team} r={30} className={o.to === null ? "fill-ink-3" : "fill-accent"} />
-                    <text y={team === "fire" ? 15 : 11} textAnchor="middle" fontSize={30} fontWeight={800} className="fill-bg">
+                  <span className="relative block h-24 w-24 shrink-0" aria-hidden="true">
+                    <img src={pawnAsset(team)} alt="" width={96} height={96} decoding="async" draggable={false} className="block h-full w-full" />
+                    <span className={`absolute inset-0 flex items-center justify-center text-2xl font-extrabold text-bg ${team === "fire" ? "pt-3" : ""}`}>
                       {o.pawn + 1}
-                    </text>
-                  </svg>
+                    </span>
+                  </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-2xl font-extrabold text-ink">{t("race.pawn", o.pawn + 1)}</span>
                     <span className="block text-base text-ink-2 tabular-nums">{o.where}</span>
