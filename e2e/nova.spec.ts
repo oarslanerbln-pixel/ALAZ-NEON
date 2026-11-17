@@ -1,4 +1,4 @@
-import { test, expect, type Browser } from "@playwright/test";
+import { test, expect, type Browser, type Page } from "@playwright/test";
 import {
   closeAll,
   expectTvPlayerCount,
@@ -36,6 +36,11 @@ type Race = {
   moves: Array<{ team: string; pawn: number | null; roll: number; bonus: boolean; captured: unknown[] }>;
   winners: string[];
   finished: boolean;
+};
+
+/** `E2E_SHOTS=1`: belge için ekran görüntüsü (docs/gorsel/nova). */
+const shot = async (page: Page, name: string) => {
+  if (process.env.E2E_SHOTS) await page.screenshot({ path: `docs/gorsel/nova/${name}.png` });
 };
 
 const roomOf = (id: string) => adminGet(`rooms/${id}`);
@@ -103,12 +108,16 @@ test("HENGAME NOVA: oy, hamle, eve gönderme ve kazanan takım; gece ligi puanı
     await rig(tv, second, { fire: [4, 0], earth: [1, 0], air: [0, 0], water: [0, 0] }, { fire: 3, earth: 2, air: 1, water: 1 });
     const fire = phoneOf("fire");
     await expect(fire.page.getByText("Schickt einen Gegner heim!")).toBeVisible({ timeout: 10_000 });
+    await shot(fire.page, "telefon-oy");
+    await shot(tv.page, "tv-oylama");
     await fire.page.getByTestId("race-pawn-0").click();
     // earth 2. piyonunu çıkarır; 1. piyon kapıda kalır.
     await phoneOf("earth").page.getByTestId("race-pawn-1").click();
     await phoneOf("air").page.getByTestId("race-pawn-0").click();
     await phoneOf("water").page.getByTestId("race-pawn-0").click();
     await expect(tv.page.getByTestId("race-banner")).toHaveText("Feuer schickt Erde zurück zur Basis!", { timeout: 30_000 });
+    await tv.page.waitForTimeout(700);
+    await shot(tv.page, "tv-eve-gonderme");
     const third = await waitForVote(tv, 3);
     expect(third.pawns.fire, "fire earth'ün kapısında").toEqual([7, 0]);
     expect(third.pawns.earth, "earth'ün 1. piyonu üsse döndü").toEqual([0, 2]);
@@ -125,6 +134,9 @@ test("HENGAME NOVA: oy, hamle, eve gönderme ve kazanan takım; gece ligi puanı
     await expect(tv.page.getByTestId("race-finished")).toContainText("Feuer");
     await expect(fire.page.getByText("Dein Team hat gewonnen!")).toBeVisible({ timeout: 15_000 });
     await expect(phoneOf("earth").page.getByText("Spiel vorbei")).toBeVisible({ timeout: 15_000 });
+    await tv.page.waitForTimeout(1_500);
+    await shot(tv.page, "tv-kazanan");
+    await shot(fire.page, "telefon-kazanan");
 
     // Gece ligi: kazanan takımın üyesine 10, diğerlerine katılım puanı.
     await expect.poll(async () => (await roomOf(tv.roomId))?.night_awarded, { timeout: 15_000 }).toBe(true);

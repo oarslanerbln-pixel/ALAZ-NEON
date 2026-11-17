@@ -116,3 +116,22 @@ Telefonda video yok. Bütçe: ilk yük ≤ 385 KB gz, GPU'suz TV 1080p ≥ 24 fp
 | Piyon | Takım başına 2, 24 kare | 3 piyon, ikisi eve (daha uzun, daha çok seçim) |
 | Süre | 18 tur sınırı (~6–7,5 dk) | 14 tur (~5 dk) · 22 tur (~8–9 dk) |
 | Ödül | Yalnız gece ligi puanı | Kazanan takımın her üyesine mekan ödülü (takım 10 kişi olabilir) |
+
+## 8. Ölçümler (17.11.2026, yerel)
+
+| Ölçüm | Sonuç | Sınır |
+|---|---|---|
+| İlk yük (`scripts/audit/bundle-size.mjs`) | 349,0 KB gz (öncesi 347) | ≤ 385 KB |
+| NOVA parçaları (tembel) | TV 4,9 KB + telefon 2,1 KB + kurallar 2,2 KB gz | — |
+| TV kare hızı, GPU'suz 1080p (`novaBoard`) | 31 fps; 4× CPU kısıtlı 45 fps | ≥ 24 fps |
+| TV kare hızı, GPU'suz 4K | 21 fps (quiz 20 fps ile aynı düzey) | hedef 1080p |
+| TV taşması (1080p, 4K) | yok | yok |
+| Tur süresi, 4 takım, herkes hemen oy verince | 10,1 sn | — |
+| Birim / kural / uçtan uca | 364 / 98 / 20 geçti (sapan testi kilitli, atlanıyor) | hepsi yeşil |
+
+Tur süresi tahminden (~20–25 sn) kısa çıktı: en uzun tur oy süresi (8 sn) +
+oynatma (~6–8 sn) ≈ 15 sn. 18 tur sınırıyla oyun ~3–4,5 dk + açılış (~10 sn)
+sürer; 6–8 dk isteniyorsa `RACE_MAX_ROUNDS` 26–28 yapılabilir (tek sabit).
+
+Ekran görüntüleri: `docs/gorsel/nova/` (`E2E_SHOTS=1` ile `e2e/nova.spec.ts`
+yeniden üretir).
