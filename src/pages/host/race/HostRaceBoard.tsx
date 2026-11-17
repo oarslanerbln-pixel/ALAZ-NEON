@@ -52,7 +52,7 @@ export function HostRaceBoard({ teams, pawns, activeTeam, returning = [] }: Host
           <g key={cell} transform={`translate(${p.x} ${p.y})`}>
             <circle
               r={CELL_RADIUS}
-              className={gate ? (gate === activeTeam ? "fill-surface-2 stroke-accent" : "fill-surface-2 stroke-ink-3") : "fill-surface stroke-line"}
+              className={gate ? (gate === activeTeam ? "fill-surface-2 stroke-accent" : "fill-surface-2 stroke-ink-3") : "fill-surface stroke-ink-3/50"}
               strokeWidth={gate ? 4 : 2}
             />
             {gate && <RaceShape team={gate} r={13} className={gate === activeTeam ? "fill-accent/40" : "fill-ink-3/50"} />}

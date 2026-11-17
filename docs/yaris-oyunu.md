@@ -1,7 +1,9 @@
-# Zarlı yarış tahtası oyunu — taslak (17.11.2026)
+# HENGAME NOVA — zarlı takım yarışı (17.11.2026)
 
-Durum: **taslak, onay bekliyor.** Kod yok. Onaylanacaklar: ad, takım kurulumu,
-piyon sayısı, süre (§7).
+Durum: **uygulandı.** Kararlar 17.11.2026'da önerildiği gibi onaylandı (§7).
+Kod: `src/lib/race.ts` (kurallar, saf ve testli), `src/lib/raceLayout.ts`
+(tahta geometrisi), `src/pages/host/race/`, `src/pages/player/race/`,
+`e2e/nova.spec.ts`. Oyun kimliği `race`.
 
 **Özgünlük sınırı.** İlham, zarla ilerlenen ve rakip piyonun başa gönderildiği
 geleneksel yarış oyunları ailesi (Pachisi/Ludo türü). Belirli bir ticari ürünün
@@ -57,8 +59,12 @@ takımlar renkle değil **biçimle** ayrılır, kurallar parti için yeniden yaz
    eşitlikte ortak galibiyet).
 
 **Puan.** Gece ligi: kazanan takımın her üyesine 10, diğerlerine 1
-(`teamPoints`). Oyun içi skor takım ilerlemesidir; telefondan beyan yok, zar
-host'ta.
+(`teamPoints`). Oyuncu belgesine oyun skoru yazılmaz (her yazım odadaki
+telefonlara okuma düşürür); sıralama odadaki tahtadan hesaplanır. Telefondan
+beyan yok, zar host'ta. Mekan ödülü yok.
+
+**Oy.** `answers/{oda}_{oyuncu}_race-{oyun}-{tur}`: kimlik sabit olduğu için
+aynı tura ikinci oy "güncelleme" sayılır ve kural reddeder.
 
 ## 5. Akış ve durumlar
 
@@ -101,7 +107,7 @@ Blender açılınca (yerel, ücretsiz render; gelene kadar SVG/Framer yedeği):
 
 Telefonda video yok. Bütçe: ilk yük ≤ 385 KB gz, GPU'suz TV 1080p ≥ 24 fps.
 
-## 7. Onay bekleyen kararlar
+## 7. Kararlar (onaylanan: "Öneri" sütunu)
 
 | Karar | Öneri | Seçenekler |
 |---|---|---|

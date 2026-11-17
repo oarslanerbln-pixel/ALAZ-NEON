@@ -1012,3 +1012,37 @@ describe("denetim 2026-10 — misafir konsolu", () => {
     });
   });
 });
+
+describe("NOVA — zar ve tahta host'ta, oy answers'ta", () => {
+  beforeEach(() => seed());
+
+  const vote = (pawn: string) => ({
+    room_id: ROOM_ID,
+    player_id: PLAYER_ID,
+    round_letter: "race-1-1",
+    data: { type: "race_vote", pawn },
+  });
+
+  it("oyuncu zarı ya da tahtayı (race) yazamaz", async () => {
+    await assertFails(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { race: { dice: { fire: 6 } } }));
+    await assertFails(updateDoc(doc(asPlayer(), "rooms", ROOM_ID), { status: "race_finished" }));
+  });
+
+  it("host tahtayı yazabilir", async () => {
+    await assertSucceeds(
+      updateDoc(doc(asHost(), "rooms", ROOM_ID), { status: "race_vote", race: { round: 1, dice: { fire: 3 }, pawns: { fire: [0, 0] } } }),
+    );
+  });
+
+  it("oyuncu tur başına tek oy verir: sabit kimlikli ikinci yazım reddedilir", async () => {
+    const ref = doc(asPlayer(), "answers", `${ROOM_ID}_${PLAYER_ID}_race-1-1`);
+    await assertSucceeds(setDoc(ref, vote("0")));
+    await assertFails(setDoc(ref, vote("1")));
+  });
+
+  it("oyuncu başkasının adına oy veremez", async () => {
+    await assertFails(
+      setDoc(doc(asPlayer(), "answers", `${ROOM_ID}_${OTHER_PLAYER_ID}_race-1-1`), { ...vote("0"), player_id: OTHER_PLAYER_ID }),
+    );
+  });
+});

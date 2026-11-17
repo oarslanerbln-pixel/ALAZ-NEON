@@ -8,7 +8,8 @@ ekranını, misafirler QR ile telefondan **player** ekranını açar. Backend yo
 Yığın: React 19 + TypeScript + Vite 7 + Tailwind 4 + Firebase 12 + Framer Motion.
 
 Oyun kataloğu bilerek dar: oynanabilir modlar HENGAME ARENA (`scattegories`),
-QUIZ ve BOMB; YÖRÜNGE SAPANI (`slingshot`) kodda ama kilitli (`isComingSoon`).
+QUIZ, BOMB ve NOVA (`race`, zarlı takım yarışı; `docs/yaris-oyunu.md`);
+YÖRÜNGE SAPANI (`slingshot`) kodda ama kilitli (`isComingSoon`).
 Kaldırılan modlar ve gerekçesi: `docs/game-design-review.md` §1.
 
 ## Komutlar

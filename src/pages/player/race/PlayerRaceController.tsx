@@ -150,17 +150,14 @@ export function PlayerRaceController({ room, player }: PlayerGameProps) {
         <div className="flex-1 flex flex-col gap-5 px-5 py-6" data-testid="race-vote">
           <VoteTimer key={roundKey} endsAt={race.vote_ends_at} live={roundKey !== firstKey} />
           <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-sm text-ink-2">{t("race.yourTeam")}</p>
               <p className="flex items-center gap-2 text-2xl font-extrabold text-ink">
                 <RaceGlyph team={team} size={28} active />
                 <span className="truncate">{t(TEAM_KEY[team])}</span>
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <p className="text-sm text-ink-2 text-right max-w-24">{t("race.yourDie")}</p>
-              <RaceDie value={roll} size={64} active rollKey={roundKey} />
-            </div>
+            <RaceDie value={roll} size={72} active rollKey={roundKey} label={`${t("race.yourDie")}: ${roll}`} />
           </div>
 
           <h1 className="text-2xl font-extrabold text-ink">{t("race.pickPawn")}</h1>

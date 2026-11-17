@@ -28,10 +28,12 @@ C: diski doluysa tarayıcıları ve emülatör jar'ını başka diske alın:
 
 - `cafe-night.spec.ts` — QR → lobi → quiz → kazanan TV'de → gece lobisi →
   QR'sız aynı profille sonraki oyun.
-- `game-modes.spec.ts` — açık her mod bir tur (Arena, Quiz, Bomb), aynı gece
-  ikinci quiz; karuselde yalnız üç oynanabilir mod ve tek kilitli kart
+- `game-modes.spec.ts` — Arena, Quiz ve Bomb birer tur, aynı gece
+  ikinci quiz; karuselde yalnız dört oynanabilir mod ve tek kilitli kart
   (YÖRÜNGE SAPANI), kilitli kartın başlatılamaması. Sapanın tur testi kilit
   açılana kadar `test.skip`.
+- `nova.spec.ts` — HENGAME NOVA: oy, hamle, eve gönderme, kazanan takım ve
+  gece ligi puanı; iki oyuncuyla oysuz tur, erken bitirme, tekrar oynama.
 - `resilience.spec.ts` — wifi kopması, sayfa yenileme, geç katılım, aynı
   takma ad, telefon kilidi (CDP ile sayfa dondurma), host'un hızlı geçtiği
   yavaş telefonlar (4× CPU kısıtı), cevap onayının yolda kaybolması (vekilde

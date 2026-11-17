@@ -217,11 +217,11 @@ test.skip("YÖRÜNGE SAPANI: telefonun şutu TV'ye ulaşır, sonuçlanır, gol p
   }
 });
 
-test("kilitli mod (BALD VERFÜGBAR) TV'den başlatılamaz; gece lobisinde yalnız 3 oynanabilir mod var", async ({ browser }) => {
+test("kilitli mod (BALD VERFÜGBAR) TV'den başlatılamaz; gece lobisinde yalnız 4 oynanabilir mod var", async ({ browser }) => {
   const tv = await openNight(browser);
   try {
-    // Oyun kartları: üç oynanabilir mod, sonda tek kilitli mod.
-    for (const name of ["HENGAME ARENA", "HENGAME QUIZ", "HENGAME BOMB"]) {
+    // Oyun kartları: dört oynanabilir mod, sonda tek kilitli mod.
+    for (const name of ["HENGAME ARENA", "HENGAME QUIZ", "HENGAME BOMB", "HENGAME NOVA"]) {
       await expect(tv.page.getByRole("button", { name, exact: true })).toHaveCount(1);
     }
     const locked = tv.page.getByRole("button", { name: /\(Locked\)$/ });
